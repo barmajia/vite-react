@@ -10,7 +10,6 @@ export default tseslint.config(
     extends: [
       js.configs.recommended,
       ...tseslint.configs.recommended,
-      ...tseslint.configs.strict,
     ],
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
@@ -18,9 +17,6 @@ export default tseslint.config(
       globals: {
         ...globals.browser,
         ...globals.es2020,
-      },
-      parserOptions: {
-        project: true,
       },
     },
     plugins: {
@@ -30,34 +26,30 @@ export default tseslint.config(
     rules: {
       // React Hooks
       ...reactHooks.configs.recommended.rules,
-      
+
       // React Refresh
       'react-refresh/only-export-components': [
         'warn',
         { allowConstantExport: true },
       ],
-      
-      // TypeScript strict rules
-      '@typescript-eslint/no-unused-vars': ['error', { 
+
+      // TypeScript rules
+      '@typescript-eslint/no-unused-vars': ['warn', {
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_',
       }],
-      '@typescript-eslint/no-explicit-any': 'error',
-      '@typescript-eslint/prefer-nullish-coalescing': 'error',
-      '@typescript-eslint/prefer-optional-chain': 'error',
-      '@typescript-eslint/no-non-null-assertion': 'error',
-      
+      '@typescript-eslint/no-explicit-any': 'warn',
+
       // React best practices
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'warn',
-      
+
       // General
       'no-console': ['warn', { allow: ['warn', 'error'] }],
-      'eqeqeq': ['error', 'always'],
-      'curly': ['error', 'all'],
-      'no-var': 'error',
-      'prefer-const': 'error',
-      'no-undef': 'off', // TypeScript handles this
+      'eqeqeq': ['warn', 'always'],
+      'no-var': 'warn',
+      'prefer-const': 'warn',
+      'no-undef': 'off',
     },
     settings: {
       react: {

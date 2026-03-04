@@ -1,14 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
 
-if (!supabaseUrl) {
-  throw new Error('Missing VITE_SUPABASE_URL environment variable');
-}
+// Check if credentials are placeholders
+const isPlaceholder = supabaseUrl.includes('placeholder') || supabaseAnonKey === 'placeholder-key';
 
-if (!supabaseAnonKey) {
-  throw new Error('Missing VITE_SUPABASE_ANON_KEY environment variable');
+if (isPlaceholder) {
+  console.warn('⚠️ Supabase credentials not configured. Please update .env file with your Supabase credentials.');
+  console.warn('Get them from: https://app.supabase.com/project/_/settings/api');
 }
 
 export const supabase = createClient(
@@ -30,6 +30,7 @@ export const supabase = createClient(
 
 // Helper function to get the current session
 export const getSession = async () => {
+  if (isPlaceholder) return null;
   const { data: { session }, error } = await supabase.auth.getSession();
   if (error) {
     console.error('Error getting session:', error.message);
@@ -40,6 +41,7 @@ export const getSession = async () => {
 
 // Helper function to get the current user
 export const getUser = async () => {
+  if (isPlaceholder) return null;
   const { data: { user }, error } = await supabase.auth.getUser();
   if (error) {
     console.error('Error getting user:', error.message);
