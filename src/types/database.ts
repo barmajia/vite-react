@@ -1,0 +1,241 @@
+/**
+ * Aurora E-commerce Database Types
+ * Generated from Supabase schema for customer-facing application
+ */
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
+// ==================== User Types ====================
+export interface User {
+  id: string;
+  email: string | null;
+  full_name: string | null;
+  avatar_url: string | null;
+  phone: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  full_name?: string;
+  avatar_url?: string;
+  phone?: string;
+}
+
+// ==================== Product Types ====================
+export interface Product {
+  id: string;
+  title: string;
+  description: string | null;
+  price: number;
+  quantity: number;
+  images: Json; // Array of image URLs
+  category: string | null;
+  seller_id: string;
+  title_description: string | null; // tsvector for search
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductWithDetails extends Product {
+  average_rating?: number;
+  review_count?: number;
+  seller_name?: string;
+}
+
+// ==================== Cart Types ====================
+export interface CartItem {
+  id: string;
+  user_id: string;
+  asin: string; // Product ID
+  quantity: number;
+  created_at: string;
+  updated_at: string;
+  product?: Product;
+}
+
+export interface CartItemWithProduct extends CartItem {
+  product: Product;
+}
+
+// ==================== Order Types ====================
+export type OrderStatus = 
+  | 'pending'
+  | 'confirmed'
+  | 'processing'
+  | 'shipped'
+  | 'delivered'
+  | 'cancelled'
+  | 'refunded';
+
+export type PaymentStatus = 
+  | 'pending'
+  | 'paid'
+  | 'failed'
+  | 'refunded';
+
+export interface Order {
+  id: string;
+  user_id: string;
+  seller_id: string;
+  status: OrderStatus;
+  total: number;
+  payment_status: PaymentStatus;
+  shipping_address_snapshot: Json;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrderItem {
+  id: string;
+  order_id: string;
+  product_id: string;
+  quantity: number;
+  price: number;
+  title: string;
+  image_url: string | null;
+  created_at: string;
+}
+
+export interface OrderWithItems extends Order {
+  items: OrderItem[];
+}
+
+// ==================== Address Types ====================
+export interface ShippingAddress {
+  id: string;
+  user_id: string;
+  full_name: string;
+  address_line1: string;
+  address_line2: string | null;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  phone: string;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// ==================== Review Types ====================
+export interface Review {
+  id: string;
+  user_id: string;
+  asin: string; // Product ID
+  rating: number;
+  comment: string | null;
+  created_at: string;
+  updated_at: string;
+  user?: UserProfile;
+}
+
+// ==================== Conversation & Message Types ====================
+export interface Conversation {
+  id: string;
+  user_id: string;
+  seller_id: string;
+  last_message_at: string;
+  created_at: string;
+  updated_at: string;
+  seller?: UserProfile;
+  last_message?: Message;
+}
+
+export interface Message {
+  id: string;
+  conversation_id: string;
+  sender_id: string;
+  content: string;
+  is_read: boolean;
+  created_at: string;
+  sender?: UserProfile;
+}
+
+// ==================== Notification Types ====================
+export type NotificationType = 
+  | 'order_update'
+  | 'message'
+  | 'promotion'
+  | 'review'
+  | 'system';
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  is_read: boolean;
+  action_url: string | null;
+  created_at: string;
+}
+
+// ==================== Database Schema Type ====================
+export interface Database {
+  public: {
+    Tables: {
+      users: {
+        Row: User;
+        Insert: Omit<User, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<User, 'id' | 'created_at'>>;
+      };
+      products: {
+        Row: Product;
+        Insert: Omit<Product, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Product, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      cart: {
+        Row: CartItem;
+        Insert: Omit<CartItem, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<CartItem, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      orders: {
+        Row: Order;
+        Insert: Omit<Order, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Order, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      order_items: {
+        Row: OrderItem;
+        Insert: Omit<OrderItem, 'id' | 'created_at'>;
+        Update: Partial<Omit<OrderItem, 'id' | 'created_at'>>;
+      };
+      shipping_addresses: {
+        Row: ShippingAddress;
+        Insert: Omit<ShippingAddress, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<ShippingAddress, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      reviews: {
+        Row: Review;
+        Insert: Omit<Review, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Review, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      conversations: {
+        Row: Conversation;
+        Insert: Omit<Conversation, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Conversation, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      messages: {
+        Row: Message;
+        Insert: Omit<Message, 'id' | 'created_at'>;
+        Update: Partial<Omit<Message, 'id' | 'created_at'>>;
+      };
+      notifications: {
+        Row: Notification;
+        Insert: Omit<Notification, 'id' | 'created_at'>;
+        Update: Partial<Omit<Notification, 'id' | 'created_at'>>;
+      };
+    };
+    Views: {};
+    Functions: {};
+    Enums: {};
+  };
+}

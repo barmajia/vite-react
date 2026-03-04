@@ -1,68 +1,72 @@
-:root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-}
-
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
+@layer base {
   :root {
-    color: #213547;
-    background-color: #ffffff;
+    /* Light Mode */
+    --background: 0 0% 100%; /* #FFFFFF */
+    --foreground: 0 0% 0%; /* #000000 */
+    --card: 0 0% 97%; /* #F8F8F8 */
+    --card-foreground: 0 0% 0%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 0%;
+    --primary: 262 83% 58%; /* #7C3AED - Violet accent */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 0%;
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 262 83% 58%;
+    --radius: 0.5rem;
   }
-  a:hover {
-    color: #747bff;
+
+  .dark {
+    /* Dark Mode */
+    --background: 0 0% 0%; /* #000000 - Pure Black */
+    --foreground: 0 0% 100%; /* #FFFFFF */
+    --card: 0 0% 7%; /* #121212 - Surface */
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 7%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 0% 100%; /* White accent for dark mode */
+    --primary-foreground: 0 0% 0%;
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 65%;
+    --accent: 0 0% 100%; /* White accent */
+    --accent-foreground: 0 0% 0%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 20%;
+    --input: 0 0% 20%;
+    --ring: 0 0% 100%;
   }
-  button {
-    background-color: #f9f9f9;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Inter", "Geist Sans", system-ui, sans-serif;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
   }
 }
