@@ -1,34 +1,158 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import type { Product } from '@/types/database';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import type { Product, ProductWithDetails } from "@/types/database";
 
-export const productKeys = {
-  all: ['products'] as const,
-  lists: () => [...productKeys.all, 'list'] as const,
-  list: (filters: { search?: string; category?: string }) => [...productKeys.lists(), filters] as const,
-  details: () => [...productKeys.all, 'detail'] as const,
-  detail: (id: string) => [...productKeys.details(), id] as const,
-};
+interface UseProductsOptions {
+  page?: number;
+  limit?: number;
+  search?: string;
+  category?: string;
+  brand?: string;
+  minPrice?: number;
+  maxPrice?: number;
+  sortBy?: "created_at" | "price" | "title";
+  sortOrder?: "asc" | "desc";
+}
 
-export function useProducts(filters?: { search?: string; category?: string }) {
+/**
+ * Hook to fetch products with filtering, sorting, and pagination
+ */
+export function useProducts(options: UseProductsOptions = {}) {
+  const {
+    page = 1,
+    limit = 20,
+    search,
+    category,
+    brand,
+    minPrice,
+    maxPrice,
+    sortBy = "created_at",
+    sortOrder = "desc",
+  } = options;
+
   return useQuery({
-    queryKey: productKeys.list(filters || {}),
+    queryKey: [
+      "products",
+      {
+        page,
+        limit,
+        search,
+        category,
+        brand,
+        minPrice,
+        maxPrice,
+        sortBy,
+        sortOrder,
+      },
+    ],
     queryFn: async () => {
-      let query = supabase
-        .from('products')
-        .select('*');
+      let query = supabase.from("products").select(
+        `
+          *,
+          seller:seller_id (
+            id,
+            full_name
+          )
+        `,
+        { count: "exact" },
+      );
 
-      if (filters?.category) {
-        query = query.eq('category', filters.category);
+      // Apply filters
+      if (search) {
+        query = query.or(
+          `title.ilike.%${search}%,description.ilike.%${search}%`,
+        );
       }
 
-      if (filters?.search) {
-        query = query.textSearch('title_description', filters.search!, {
-          config: 'english',
-        });
+      if (category) {
+        query = query.eq("category", category);
       }
 
-      const { data, error } = await query;
+      if (brand) {
+        query = query.eq("brand_id", brand);
+      }
+
+      if (minPrice !== undefined) {
+        query = query.gte("price", minPrice);
+      }
+
+      if (maxPrice !== undefined) {
+        query = query.lte("price", maxPrice);
+      }
+
+      // Apply sorting
+      query = query.order(sortBy, { ascending: sortOrder === "asc" });
+
+      // Apply pagination
+      const from = (page - 1) * limit;
+      const to = from + limit - 1;
+      query = query.range(from, to);
+
+      const { data, error, count } = await query;
+
+      if (error) throw error;
+
+      return {
+        products: data as ProductWithDetails[],
+        totalCount: count || 0,
+        totalPages: Math.ceil((count || 0) / limit),
+        currentPage: page,
+      };
+    },
+  });
+}
+
+/**
+ * Hook to fetch a single product by ASIN
+ */
+export function useProduct(asin: string) {
+  return useQuery({
+    queryKey: ["product", asin],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select(
+          `
+          *,
+          seller:seller_id (
+            id,
+            full_name
+          ),
+          reviews (
+            id,
+            rating,
+            comment,
+            created_at,
+            user:user_id (
+              id,
+              full_name,
+              avatar_url
+            )
+          )
+        `,
+        )
+        .eq("id", asin)
+        .single();
+
+      if (error) throw error;
+      return data as ProductWithDetails & { reviews: any[] };
+    },
+    enabled: !!asin,
+  });
+}
+
+/**
+ * Hook to fetch featured products
+ */
+export function useFeaturedProducts(limit: number = 8) {
+  return useQuery({
+    queryKey: ["featured-products", limit],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(limit);
 
       if (error) throw error;
       return data as Product[];
@@ -36,65 +160,89 @@ export function useProducts(filters?: { search?: string; category?: string }) {
   });
 }
 
-export function useProduct(id: string) {
+/**
+ * Hook to fetch products by category
+ */
+export function useProductsByCategory(categoryId: string, limit: number = 8) {
   return useQuery({
-    queryKey: productKeys.detail(id),
+    queryKey: ["products-by-category", categoryId, limit],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('id', id)
-        .single();
+        .from("products")
+        .select("*")
+        .eq("category", categoryId)
+        .order("created_at", { ascending: false })
+        .limit(limit);
 
       if (error) throw error;
-      return data as Product;
+      return data as Product[];
     },
-    enabled: !!id,
+    enabled: !!categoryId,
   });
 }
 
-export function useProductReviews(productId: string) {
+/**
+ * Hook to fetch related products (same category, excluding current product)
+ */
+export function useRelatedProducts(
+  categoryId: string | null,
+  excludeAsin: string,
+  limit: number = 4,
+) {
   return useQuery({
-    queryKey: ['reviews', productId],
+    queryKey: ["related-products", categoryId, excludeAsin, limit],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('reviews')
-        .select(`
-          *,
-          user:users (
-            id,
-            full_name,
-            avatar_url
-          )
-        `)
-        .eq('asin', productId)
-        .order('created_at', { ascending: false });
+      let query = supabase
+        .from("products")
+        .select("*")
+        .neq("id", excludeAsin)
+        .order("created_at", { ascending: false })
+        .limit(limit);
+
+      if (categoryId) {
+        query = query.eq("category", categoryId);
+      }
+
+      const { data, error } = await query;
 
       if (error) throw error;
-      return data || [];
+      return data as Product[];
     },
-    enabled: !!productId,
+    enabled: !!excludeAsin,
   });
 }
 
+/**
+ * Hook to add a review
+ */
 export function useAddReview() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ productId, rating, comment }: { productId: string; rating: number; comment?: string }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      
+    mutationFn: async ({
+      asin,
+      rating,
+      comment,
+    }: {
+      asin: string;
+      rating: number;
+      comment?: string;
+    }) => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
-        throw new Error('You must be signed in to leave a review');
+        throw new Error("You must be signed in to write a review");
       }
 
       const { data, error } = await supabase
-        .from('reviews')
+        .from("reviews")
         .insert({
+          asin,
           user_id: user.id,
-          asin: productId,
           rating,
-          comment: comment ?? null,
+          comment,
         })
         .select()
         .single();
@@ -102,8 +250,8 @@ export function useAddReview() {
       if (error) throw error;
       return data;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['reviews', variables.productId] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["product"] });
     },
   });
 }

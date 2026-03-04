@@ -30,8 +30,11 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
 
   useEffect(() => {
     const root = window.document.documentElement;
+    // Remove both classes first
     root.classList.remove('light', 'dark');
+    // Add the current theme class
     root.classList.add(theme);
+    // Store preference
     localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
