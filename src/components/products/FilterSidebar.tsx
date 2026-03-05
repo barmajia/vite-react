@@ -118,8 +118,8 @@ function FilterContent({
   categories,
   brands,
 }: {
-  filters: any;
-  updateFilters: (f: Partial<any>) => void;
+  filters: Record<string, string>;
+  updateFilters: (f: Partial<Record<string, string>>) => void;
   clearFilters: () => void;
   categories: { id: string; name: string }[];
   brands: { id: string; name: string }[];

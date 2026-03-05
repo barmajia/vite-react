@@ -62,7 +62,7 @@ export function ResetPassword() {
         toast.success('Password updated successfully!');
         navigate(ROUTES.LOGIN);
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);

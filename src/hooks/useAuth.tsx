@@ -30,7 +30,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setLoading(false);
     });
 
-    const { data: { subscription } } = onAuthStateChange((_event, sessionData) => {
+    const { data: { subscription } } = onAuthStateChange((_event, sessionData: Session | null) => {
       setSession(sessionData);
       setUser(sessionData?.user ?? null);
       setLoading(false);

@@ -70,7 +70,7 @@ export function Signup() {
         toast.success('Account created! Please check your email to verify your account.');
         navigate(ROUTES.LOGIN);
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);

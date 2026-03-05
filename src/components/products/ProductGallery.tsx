@@ -41,7 +41,7 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isFullscreen]);
+  }, [isFullscreen, navigate]);
 
   return (
     <>

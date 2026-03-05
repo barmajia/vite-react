@@ -22,7 +22,7 @@ export function Login() {
   });
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
-  const from = (location.state as any)?.from?.pathname || ROUTES.HOME;
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname || ROUTES.HOME;
 
   const validateForm = () => {
     const newErrors: { email?: string; password?: string } = {};
@@ -58,7 +58,7 @@ export function Login() {
         toast.success('Welcome back!');
         navigate(from, { replace: true });
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);

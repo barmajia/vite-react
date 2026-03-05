@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, Session } from '@supabase/supabase-js';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-key';
@@ -52,7 +52,7 @@ export const getUser = async () => {
 
 // Auth state change listener
 export const onAuthStateChange = (
-  callback: (event: string, session: any) => void
+  callback: (event: string, session: Session | null) => void
 ) => {
   return supabase.auth.onAuthStateChange(callback);
 };

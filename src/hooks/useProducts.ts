@@ -146,7 +146,16 @@ export function useProduct(asin: string) {
         .single();
 
       if (error) throw error;
-      return data as ProductWithDetails & { reviews: any[] };
+      return data as ProductWithDetails & {
+        reviews: Array<{
+          id: string;
+          rating: number;
+          comment: string | null;
+          created_at: string;
+          user_id: string;
+          user: { full_name: string | null } | null;
+        }>;
+      };
     },
     enabled: !!asin,
   });

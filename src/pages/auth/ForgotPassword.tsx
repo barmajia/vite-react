@@ -47,7 +47,7 @@ export function ForgotPassword() {
         setIsSubmitted(true);
         toast.success('Password reset email sent! Check your inbox.');
       }
-    } catch (err) {
+    } catch (_err) {
       toast.error('An unexpected error occurred');
     } finally {
       setIsLoading(false);

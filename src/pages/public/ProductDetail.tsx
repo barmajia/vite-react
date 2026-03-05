@@ -51,7 +51,7 @@ export function ProductDetail() {
     try {
       await addItem(product, quantity);
       toast.success('Added to cart!');
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to add to cart');
     }
   };
@@ -64,7 +64,7 @@ export function ProductDetail() {
           text: product?.description || undefined,
           url: window.location.href,
         });
-      } catch (err) {
+      } catch (_err) {
         // User cancelled or share failed
       }
     } else {
@@ -91,7 +91,7 @@ export function ProductDetail() {
       toast.success('Review submitted!');
       setReviewDialogOpen(false);
       setReviewData({ rating: 5, comment: '' });
-    } catch (err) {
+    } catch (_err) {
       toast.error('Failed to submit review');
     }
   };
@@ -350,31 +350,35 @@ export function ProductDetail() {
 
         {product.reviews && product.reviews.length > 0 ? (
           <div className="space-y-4">
-            {product.reviews.map((review) => (
-              <div key={review.id} className="p-4 border rounded-lg">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                      <span className="font-medium text-sm">
-                        {(review.user as any)?.full_name?.[0]?.toUpperCase() || 'U'}
-                      </span>
+            {product.reviews.map((review) => {
+              const userName = typeof review === 'object' && review !== null && 'user' in review && review.user 
+                ? (review.user as { full_name?: string | null })?.full_name 
+                : null;
+              const displayName = userName || 'Anonymous';
+              const initial = displayName[0]?.toUpperCase() || 'U';
+              
+              return (
+                <div key={review.id} className="p-4 border rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                        <span className="font-medium text-sm">{initial}</span>
+                      </div>
+                      <div>
+                        <p className="font-medium">{displayName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {formatDate(review.created_at)}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium">
-                        {(review.user as any)?.full_name || 'Anonymous'}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatDate(review.created_at)}
-                      </p>
-                    </div>
+                    <StarRating rating={review.rating} size="sm" />
                   </div>
-                  <StarRating rating={review.rating} size="sm" />
+                  {review.comment && (
+                    <p className="mt-3 text-muted-foreground">{review.comment}</p>
+                  )}
                 </div>
-                {review.comment && (
-                  <p className="mt-3 text-muted-foreground">{review.comment}</p>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <EmptyState

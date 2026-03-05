@@ -42,7 +42,7 @@ export function ProductList() {
     const params = new URLSearchParams(searchParams);
     params.set('page', String(currentPage));
     setSearchParams(params, { replace: true });
-  }, [currentPage]);
+  }, [currentPage, searchParams, setSearchParams]);
 
   const handleSortChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const [field, order] = e.target.value.split('-');
