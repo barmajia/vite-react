@@ -48,21 +48,6 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        // Aurora custom colors
-        aurora: {
-          dark: {
-            bg: "#000000",
-            surface: "#121212",
-          },
-          light: {
-            bg: "#FFFFFF",
-            surface: "#F8F8F8",
-          },
-          accent: {
-            light: "#7C3AED", // Violet for light mode
-            dark: "#FFFFFF",  // White for dark mode
-          },
-        },
       },
       borderRadius: {
         lg: "var(--radius)",

@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { SlidersHorizontal, Grid, List } from 'lucide-react';
+import { Grid, List } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select';
 import { ProductGrid } from '@/components/products/ProductGrid';
 import { FilterSidebar } from '@/components/products/FilterSidebar.tsx';
 import { Pagination } from '@/components/shared/Pagination';
 import { useProducts } from '@/hooks/useProducts';
-import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 
 export function ProductList() {

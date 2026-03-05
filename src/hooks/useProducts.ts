@@ -46,16 +46,25 @@ export function useProducts(options: UseProductsOptions = {}) {
       },
     ],
     queryFn: async () => {
-      let query = supabase.from("products").select(
-        `
-          *,
-          seller:seller_id (
-            id,
-            full_name
-          )
+      let query = supabase
+        .from("products")
+        .select(
+          `
+          id,
+          title,
+          description,
+          price,
+          quantity,
+          images,
+          category,
+          seller_id,
+          created_at,
+          average_rating,
+          review_count
         `,
-        { count: "exact" },
-      );
+          { count: "exact" },
+        )
+        .eq("status", "active");
 
       // Apply filters
       if (search) {
@@ -113,21 +122,23 @@ export function useProduct(asin: string) {
         .from("products")
         .select(
           `
-          *,
-          seller:seller_id (
-            id,
-            full_name
-          ),
+          id,
+          title,
+          description,
+          price,
+          quantity,
+          images,
+          category,
+          seller_id,
+          created_at,
+          average_rating,
+          review_count,
           reviews (
             id,
             rating,
             comment,
             created_at,
-            user:user_id (
-              id,
-              full_name,
-              avatar_url
-            )
+            user_id
           )
         `,
         )
@@ -151,11 +162,12 @@ export function useFeaturedProducts(limit: number = 8) {
       const { data, error } = await supabase
         .from("products")
         .select("*")
+        .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(limit);
 
       if (error) throw error;
-      return data as Product[];
+      return data as unknown as Product[];
     },
   });
 }
@@ -171,11 +183,12 @@ export function useProductsByCategory(categoryId: string, limit: number = 8) {
         .from("products")
         .select("*")
         .eq("category", categoryId)
+        .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(limit);
 
       if (error) throw error;
-      return data as Product[];
+      return data as unknown as Product[];
     },
     enabled: !!categoryId,
   });
@@ -196,6 +209,7 @@ export function useRelatedProducts(
         .from("products")
         .select("*")
         .neq("id", excludeAsin)
+        .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(limit);
 
@@ -206,9 +220,31 @@ export function useRelatedProducts(
       const { data, error } = await query;
 
       if (error) throw error;
-      return data as Product[];
+      return data as unknown as Product[];
     },
     enabled: !!excludeAsin,
+  });
+}
+
+/**
+ * Hook to fetch seller info by user ID
+ */
+export function useSeller(sellerId: string | undefined) {
+  return useQuery({
+    queryKey: ["seller", sellerId],
+    queryFn: async () => {
+      if (!sellerId) return null;
+
+      const { data, error } = await supabase
+        .from("users")
+        .select("user_id, full_name, avatar_url")
+        .eq("user_id", sellerId)
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!sellerId,
   });
 }
 

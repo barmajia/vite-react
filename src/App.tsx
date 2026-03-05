@@ -1,114 +1,87 @@
-import { useTheme } from '@/hooks/useTheme';
-import { Moon, Sun, ShoppingCart, User, Search, Star } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
+import { ThemeProvider } from '@/hooks/useTheme';
+import { AuthProvider } from '@/hooks/useAuth';
+import { Toaster } from 'sonner';
+import { Layout } from '@/components/layout/Layout';
+import { Home } from '@/pages/public/Home';
+import { ProductList } from '@/pages/public/ProductList';
+import { ProductDetail } from '@/pages/public/ProductDetail';
+import { About } from '@/pages/public/About';
+import { Contact } from '@/pages/public/Contact';
+import { Help } from '@/pages/public/Help';
+import { Login } from '@/pages/auth/Login';
+import { Signup } from '@/pages/auth/Signup';
+import { ForgotPassword } from '@/pages/auth/ForgotPassword';
+import { ResetPassword } from '@/pages/auth/ResetPassword';
+import { NotFound } from '@/pages/errors/NotFound';
+import { ServerError } from '@/pages/errors/ServerError';
+
+// Placeholder components for customer pages
+function Cart() { return <div className="text-center py-12"><h1 className="text-2xl font-bold">Cart Page</h1><p className="text-muted-foreground mt-2">Coming soon in Phase 2</p></div>; }
+function Checkout() { return <div className="text-center py-12"><h1 className="text-2xl font-bold">Checkout Page</h1><p className="text-muted-foreground mt-2">Coming soon in Phase 2</p></div>; }
+function OrderSuccess() { return <div className="text-center py-12"><h1 className="text-2xl font-bold">Order Success Page</h1><p className="text-muted-foreground mt-2">Coming soon in Phase 2</p></div>; }
+function Profile() { return <div className="text-center py-12"><h1 className="text-2xl font-bold">Profile Page</h1><p className="text-muted-foreground mt-2">Coming soon in Phase 3</p></div>; }
+function Orders() { return <div className="text-center py-12"><h1 className="text-2xl font-bold">Orders Page</h1><p className="text-muted-foreground mt-2">Coming soon in Phase 2</p></div>; }
+function OrderDetail() { return <div className="text-center py-12"><h1 className="text-2xl font-bold">Order Detail Page</h1><p className="text-muted-foreground mt-2">Coming soon in Phase 2</p></div>; }
+function Wishlist() { return <div className="text-center py-12"><h1 className="text-2xl font-bold">Wishlist Page</h1><p className="text-muted-foreground mt-2">Coming soon in Phase 3</p></div>; }
+function Addresses() { return <div className="text-center py-12"><h1 className="text-2xl font-bold">Addresses Page</h1><p className="text-muted-foreground mt-2">Coming soon in Phase 3</p></div>; }
+function Reviews() { return <div className="text-center py-12"><h1 className="text-2xl font-bold">Reviews Page</h1><p className="text-muted-foreground mt-2">Coming soon in Phase 5</p></div>; }
+function Messages() { return <div className="text-center py-12"><h1 className="text-2xl font-bold">Messages Page</h1><p className="text-muted-foreground mt-2">Coming soon in Phase 4</p></div>; }
+function Conversation() { return <div className="text-center py-12"><h1 className="text-2xl font-bold">Conversation Page</h1><p className="text-muted-foreground mt-2">Coming soon in Phase 4</p></div>; }
+function Notifications() { return <div className="text-center py-12"><h1 className="text-2xl font-bold">Notifications Page</h1><p className="text-muted-foreground mt-2">Coming soon in Phase 4</p></div>; }
+function Settings() { return <div className="text-center py-12"><h1 className="text-2xl font-bold">Settings Page</h1><p className="text-muted-foreground mt-2">Coming soon in Phase 5</p></div>; }
+function Categories() { return <div className="text-center py-12"><h1 className="text-2xl font-bold">Categories Page</h1><p className="text-muted-foreground mt-2">Coming soon</p></div>; }
+function CategoryProducts() { return <div className="text-center py-12"><h1 className="text-2xl font-bold">Category Products Page</h1><p className="text-muted-foreground mt-2">Coming soon</p></div>; }
+function Brands() { return <div className="text-center py-12"><h1 className="text-2xl font-bold">Brands Page</h1><p className="text-muted-foreground mt-2">Coming soon</p></div>; }
+function BrandProducts() { return <div className="text-center py-12"><h1 className="text-2xl font-bold">Brand Products Page</h1><p className="text-muted-foreground mt-2">Coming soon</p></div>; }
 
 function App() {
-  const { theme, toggleTheme } = useTheme();
-
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      {/* Header */}
-      <header className="border-b border-border sticky top-0 z-50 bg-background/95 backdrop-blur">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link to="/" className="text-2xl font-bold">
-              <span className="text-primary">AURORA</span>
-            </Link>
-            
-            <div className="flex-1 max-w-xl mx-8">
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search products..."
-                  className="w-full px-4 py-2 pl-10 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              </div>
-            </div>
+    <ThemeProvider>
+      <AuthProvider>
+        <Toaster position="top-right" richColors />
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            {/* Public Routes */}
+            <Route index element={<Home />} />
+            <Route path="products" element={<ProductList />} />
+            <Route path="product/:asin" element={<ProductDetail />} />
+            <Route path="categories" element={<Categories />} />
+            <Route path="category/:id" element={<CategoryProducts />} />
+            <Route path="brands" element={<Brands />} />
+            <Route path="brand/:id" element={<BrandProducts />} />
+            <Route path="about" element={<About />} />
+            <Route path="contact" element={<Contact />} />
+            <Route path="help" element={<Help />} />
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-md border border-input hover:bg-accent hover:text-accent-foreground"
-              >
-                {theme === 'dark' ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
-              </button>
-              
-              <Link to="/cart" className="p-2 rounded-md hover:bg-accent relative">
-                <ShoppingCart className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-primary-foreground text-xs font-bold rounded-full flex items-center justify-center">
-                  0
-                </span>
-              </Link>
-              
-              <Link to="/profile" className="p-2 rounded-md hover:bg-accent">
-                <User className="w-5 h-5" />
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+            {/* Auth Routes */}
+            <Route path="login" element={<Login />} />
+            <Route path="signup" element={<Signup />} />
+            <Route path="forgot-password" element={<ForgotPassword />} />
+            <Route path="reset-password" element={<ResetPassword />} />
 
-      {/* Main */}
-      <main className="container mx-auto px-4 py-8">
-        {/* Hero */}
-        <section className="mb-12 p-8 rounded-2xl border bg-card">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Welcome to <span className="text-primary">Aurora</span>
-          </h1>
-          <p className="text-lg text-muted-foreground mb-6">
-            Discover premium products from verified sellers worldwide.
-          </p>
-          <button className="px-6 py-3 bg-primary text-primary-foreground font-medium rounded-md hover:opacity-90">
-            Shop Now
-          </button>
-        </section>
+            {/* Customer Routes (Protected) */}
+            <Route path="cart" element={<Cart />} />
+            <Route path="checkout" element={<Checkout />} />
+            <Route path="order-success/:id" element={<OrderSuccess />} />
+            <Route path="profile" element={<Profile />} />
+            <Route path="orders" element={<Orders />} />
+            <Route path="orders/:id" element={<OrderDetail />} />
+            <Route path="wishlist" element={<Wishlist />} />
+            <Route path="addresses" element={<Addresses />} />
+            <Route path="reviews" element={<Reviews />} />
+            <Route path="messages" element={<Messages />} />
+            <Route path="messages/:id" element={<Conversation />} />
+            <Route path="notifications" element={<Notifications />} />
+            <Route path="settings" element={<Settings />} />
 
-        {/* Categories */}
-        <section className="mb-8 flex gap-2 flex-wrap">
-          {['All', 'Electronics', 'Fashion', 'Home', 'Sports', 'Beauty'].map((cat) => (
-            <button
-              key={cat}
-              className="px-4 py-2 rounded-full text-sm bg-card border border-border hover:border-primary transition-colors"
-            >
-              {cat}
-            </button>
-          ))}
-        </section>
-
-        {/* Products */}
-        <section>
-          <h2 className="text-2xl font-bold mb-6">Featured Products</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="border border-border rounded-lg overflow-hidden">
-                <div className="aspect-square bg-muted" />
-                <div className="p-4">
-                  <h3 className="font-medium mb-2">Product {i}</h3>
-                  <div className="flex items-center gap-1 mb-2">
-                    <Star className="w-4 h-4 fill-primary text-primary" />
-                    <span className="text-sm">4.5</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-lg font-bold">$99.99</span>
-                    <button className="p-2 bg-primary text-primary-foreground rounded-full">
-                      <ShoppingCart className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      </main>
-
-      {/* Footer */}
-      <footer className="border-t border-border mt-auto py-8">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          © 2026 Aurora. All rights reserved.
-        </div>
-      </footer>
-    </div>
+            {/* Error Routes */}
+            <Route path="error" element={<ServerError />} />
+            <Route path="*" element={<NotFound />} />
+          </Route>
+        </Routes>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

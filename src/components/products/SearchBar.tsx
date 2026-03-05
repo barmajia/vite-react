@@ -11,7 +11,8 @@ export function SearchBar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const debouncedSearch = debounce((searchQuery: string) => {
+  const debouncedSearch = debounce((...args: unknown[]) => {
+    const searchQuery = args[0] as string;
     if (searchQuery.trim()) {
       const params = new URLSearchParams(location.search);
       params.set('q', searchQuery.trim());

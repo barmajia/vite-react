@@ -1,4 +1,4 @@
-import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Search, Menu, Moon, Sun, Bell, LogOut } from 'lucide-react';
 import { useState } from 'react';
 import { useTheme } from '@/hooks/useTheme';
@@ -24,7 +24,6 @@ export function Header() {
   const { user, signOut } = useAuth();
   const { itemCount } = useCart();
   const navigate = useNavigate();
-  const location = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
@@ -50,8 +49,6 @@ export function Header() {
       .slice(0, 2);
   };
 
-  const isActive = (path: string) => location.pathname === path;
-
   return (
     <>
       <header className="border-b border-border sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -59,11 +56,39 @@ export function Header() {
           <div className="flex h-16 items-center gap-4">
             {/* Logo */}
             <Link to={ROUTES.HOME} className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">A</span>
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-lg">A</span>
               </div>
               <span className="text-xl font-bold hidden sm:inline-block">AURORA</span>
             </Link>
+
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex items-center gap-6 ml-8">
+              <Link
+                to={ROUTES.PRODUCTS}
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+              >
+                Products
+              </Link>
+              <Link
+                to={ROUTES.CATEGORIES}
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+              >
+                Categories
+              </Link>
+              <Link
+                to={ROUTES.ABOUT}
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+              >
+                About
+              </Link>
+              <Link
+                to={ROUTES.CONTACT}
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+              >
+                Contact
+              </Link>
+            </nav>
 
             {/* Mobile Menu Button */}
             <Button

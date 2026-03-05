@@ -2,7 +2,6 @@ import { useState, useRef, useEffect } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { getProductImage } from '@/lib/utils';
 import type { Json } from '@/types/database';
 
 interface ProductGalleryProps {
@@ -15,7 +14,7 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  const imageList = Array.isArray(images) ? images : [];
+  const imageList = Array.isArray(images) ? (images as string[]) : [];
   const allImages = imageList.length > 0 ? imageList : ['/placeholder-product.png'];
 
   const openFullscreen = (index: number) => {

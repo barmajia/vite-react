@@ -1,6 +1,5 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { X, User, ShoppingCart, Bell, MapPin, Star, Settings, LogOut, MessageSquare, Home, Search, Menu } from 'lucide-react';
+import { X, User, ShoppingCart, Bell, MapPin, Star, Settings, LogOut, MessageSquare, Home, Search, ShoppingBag } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { ROUTES } from '@/lib/constants';
@@ -24,6 +23,9 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
   const menuItems = [
     { icon: Home, label: 'Home', href: ROUTES.HOME },
     { icon: Search, label: 'Products', href: ROUTES.PRODUCTS },
+    { icon: ShoppingBag, label: 'Categories', href: ROUTES.CATEGORIES },
+    { icon: User, label: 'About', href: ROUTES.ABOUT },
+    { icon: MessageSquare, label: 'Contact', href: ROUTES.CONTACT },
     { icon: ShoppingCart, label: 'Cart', href: ROUTES.CART },
   ];
 
@@ -58,8 +60,8 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">
           <Link to={ROUTES.HOME} className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">A</span>
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-lg">A</span>
             </div>
             <span className="text-xl font-bold">AURORA</span>
           </Link>

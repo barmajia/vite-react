@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { ROUTES, PRICE_RANGE } from '@/lib/constants';
+import { ROUTES } from '@/lib/constants';
 
 interface FilterSidebarProps {
   categories?: { id: string; name: string }[];
@@ -118,8 +118,8 @@ function FilterContent({
   categories,
   brands,
 }: {
-  filters: typeof filters;
-  updateFilters: (f: Partial<typeof filters>) => void;
+  filters: any;
+  updateFilters: (f: Partial<any>) => void;
   clearFilters: () => void;
   categories: { id: string; name: string }[];
   brands: { id: string; name: string }[];

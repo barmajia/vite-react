@@ -4,50 +4,50 @@
 
 @layer base {
   :root {
-    /* Light Mode */
+    /* Light Mode - Monochrome */
     --background: 0 0% 100%; /* #FFFFFF */
-    --foreground: 0 0% 0%; /* #000000 */
-    --card: 0 0% 97%; /* #F8F8F8 */
-    --card-foreground: 0 0% 0%;
+    --foreground: 0 0% 5%; /* #0D0D0D */
+    --card: 0 0% 98%; /* #FAFAFA */
+    --card-foreground: 0 0% 5%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 0%;
-    --primary: 262 83% 58%; /* #7C3AED - Violet accent */
+    --popover-foreground: 0 0% 5%;
+    --primary: 0 0% 5%; /* #0D0D0D - Black */
     --primary-foreground: 0 0% 100%;
     --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 0%;
+    --secondary-foreground: 0 0% 5%;
     --muted: 0 0% 96%;
     --muted-foreground: 0 0% 45%;
-    --accent: 262 83% 58%;
+    --accent: 0 0% 10%; /* #1A1A1A - Dark Gray */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 90%;
     --input: 0 0% 90%;
-    --ring: 262 83% 58%;
+    --ring: 0 0% 5%; /* Black ring */
     --radius: 0.5rem;
   }
 
   .dark {
-    /* Dark Mode */
+    /* Dark Mode - Pure Black & White */
     --background: 0 0% 0%; /* #000000 - Pure Black */
     --foreground: 0 0% 100%; /* #FFFFFF */
-    --card: 0 0% 7%; /* #121212 - Surface */
+    --card: 0 0% 5%; /* #0D0D0D - Surface */
     --card-foreground: 0 0% 100%;
-    --popover: 0 0% 7%;
+    --popover: 0 0% 5%;
     --popover-foreground: 0 0% 100%;
-    --primary: 0 0% 100%; /* White accent for dark mode */
+    --primary: 0 0% 100%; /* #FFFFFF - White */
     --primary-foreground: 0 0% 0%;
     --secondary: 0 0% 15%;
     --secondary-foreground: 0 0% 100%;
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 65%;
-    --accent: 0 0% 100%; /* White accent */
-    --accent-foreground: 0 0% 0%;
+    --accent: 0 0% 20%; /* #333333 - Gray */
+    --accent-foreground: 0 0% 100%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 0 0% 100%;
     --border: 0 0% 20%;
     --input: 0 0% 20%;
-    --ring: 0 0% 100%;
+    --ring: 0 0% 100%; /* White ring */
   }
 }
 

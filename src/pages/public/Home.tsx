@@ -5,19 +5,18 @@ import { ProductGrid } from '@/components/products/ProductGrid';
 import { useFeaturedProducts } from '@/hooks/useProducts';
 import { ROUTES } from '@/lib/constants';
 import { Skeleton } from '@/components/ui/skeleton';
-import { getProductImage } from '@/lib/utils';
 
 export function Home() {
   const { data: featuredProducts, isLoading } = useFeaturedProducts(8);
   const navigate = useNavigate();
 
   const categories = [
-    { id: '1', name: 'Electronics', icon: '📱', color: 'from-blue-500 to-cyan-500' },
-    { id: '2', name: 'Fashion', icon: '👕', color: 'from-pink-500 to-rose-500' },
-    { id: '3', name: 'Home & Garden', icon: '🏠', color: 'from-green-500 to-emerald-500' },
-    { id: '4', name: 'Sports', icon: '⚽', color: 'from-orange-500 to-amber-500' },
-    { id: '5', name: 'Beauty', icon: '💄', color: 'from-purple-500 to-violet-500' },
-    { id: '6', name: 'Books', icon: '📚', color: 'from-yellow-500 to-orange-500' },
+    { id: '1', name: 'Electronics', icon: '📱', color: 'from-gray-700 to-gray-900' },
+    { id: '2', name: 'Fashion', icon: '👕', color: 'from-gray-600 to-gray-800' },
+    { id: '3', name: 'Home & Garden', icon: '🏠', color: 'from-gray-500 to-gray-700' },
+    { id: '4', name: 'Sports', icon: '⚽', color: 'from-gray-400 to-gray-600' },
+    { id: '5', name: 'Beauty', icon: '💄', color: 'from-gray-300 to-gray-500' },
+    { id: '6', name: 'Books', icon: '📚', color: 'from-gray-200 to-gray-400' },
   ];
 
   const features = [
@@ -46,24 +45,24 @@ export function Home() {
   return (
     <div className="space-y-16 pb-16">
       {/* Hero Section */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-purple-600 to-indigo-700 text-white">
+      <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-accent to-muted text-background">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
         <div className="relative px-6 py-16 md:py-24 md:px-12">
           <div className="max-w-3xl space-y-6">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm backdrop-blur">
+            <div className="inline-flex items-center gap-2 rounded-full bg-background/10 px-4 py-2 text-sm backdrop-blur">
               <Zap className="h-4 w-4" />
               <span>New Season Arrivals</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
               Discover Premium Products
             </h1>
-            <p className="text-lg md:text-xl text-white/80 max-w-2xl">
+            <p className="text-lg md:text-xl text-background/80 max-w-2xl">
               Shop from thousands of verified sellers. Quality meets convenience with Aurora's curated marketplace.
             </p>
             <div className="flex flex-wrap gap-4">
               <Button
                 size="lg"
-                className="bg-white text-primary hover:bg-white/90"
+                className="bg-background text-foreground hover:bg-background/90"
                 onClick={() => navigate(ROUTES.PRODUCTS)}
               >
                 Shop Now
@@ -72,7 +71,7 @@ export function Home() {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-white text-white hover:bg-white/10"
+                className="border-background text-background hover:bg-background/10"
                 onClick={() => navigate(ROUTES.CATEGORIES)}
               >
                 Browse Categories
@@ -80,8 +79,8 @@ export function Home() {
             </div>
           </div>
         </div>
-        <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute -top-24 -left-24 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-background/10 rounded-full blur-3xl" />
+        <div className="absolute -top-24 -left-24 w-64 h-64 bg-background/10 rounded-full blur-3xl" />
       </section>
 
       {/* Categories */}
@@ -164,22 +163,22 @@ export function Home() {
       </section>
 
       {/* Newsletter */}
-      <section className="rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 text-white p-8 md:p-12">
+      <section className="rounded-2xl bg-gradient-to-br from-primary via-accent to-muted text-background p-8 md:p-12">
         <div className="max-w-2xl mx-auto text-center space-y-6">
           <h2 className="text-3xl font-bold">Stay in the Loop</h2>
-          <p className="text-white/80">
+          <p className="text-background/80">
             Subscribe to our newsletter for exclusive deals, new arrivals, and insider-only discounts.
           </p>
           <form className="flex flex-col sm:flex-row gap-3" onSubmit={(e) => e.preventDefault()}>
             <input
               type="email"
               placeholder="Enter your email"
-              className="flex-1 px-4 py-3 rounded-lg bg-white/10 border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/30"
+              className="flex-1 px-4 py-3 rounded-lg bg-background/10 border border-background/20 text-background placeholder:text-background/60 focus:outline-none focus:ring-2 focus:ring-background/30"
             />
             <Button
               type="submit"
               size="lg"
-              className="bg-white text-gray-900 hover:bg-white/90 whitespace-nowrap"
+              className="bg-background text-foreground hover:bg-background/90 whitespace-nowrap"
             >
               Subscribe
             </Button>
