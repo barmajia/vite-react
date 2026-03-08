@@ -36,7 +36,7 @@ export function useCheckout() {
 
   const calculateOrderTotal = () => {
     const subtotal = items.reduce(
-      (sum, item) => sum + (item.product?.price || 0) * item.quantity,
+      (sum, item) => sum + ((item.salePrice ?? item.price) || 0) * item.quantity,
       0
     );
     const shipping = subtotal > 50 ? 0 : 5.99;
@@ -53,86 +53,69 @@ export function useCheckout() {
     mutationFn: async (addressData: CheckoutFormData) => {
       if (!user) throw new Error('User not authenticated');
 
-      const { shipping, tax, total } = calculateOrderTotal();
+      const { shipping, tax } = calculateOrderTotal();
 
       if (items.length === 0) {
         throw new Error('Cart is empty');
       }
 
-      // Group items by seller
-      const itemsBySeller = new Map<string, typeof items>();
-      items.forEach((item) => {
-        const sellerId = item.product?.seller_id || 'unknown';
-        if (!itemsBySeller.has(sellerId)) {
-          itemsBySeller.set(sellerId, []);
-        }
-        itemsBySeller.get(sellerId)!.push(item);
-      });
+      // Group items by product (simplified - single order for all items)
+      const orderItems = items.map((item) => ({
+        product_id: item.productId,
+        quantity: item.quantity,
+        price: item.salePrice ?? item.price,
+        title: item.name,
+        image_url: item.image_url,
+      }));
 
-      const orders: { id: string; seller_id: string }[] = [];
+      // Calculate total for this order
+      const orderTotal = orderItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0
+      );
 
-      // Create separate order for each seller
-      for (const [sellerId, sellerItems] of itemsBySeller.entries()) {
-        const sellerTotal = sellerItems.reduce(
-          (sum, item) => sum + (item.product?.price || 0) * item.quantity,
-          0
-        );
-        const sellerShipping = (shipping * (sellerItems.length / items.length));
-        const sellerTax = (tax * (sellerItems.length / items.length));
+      // Create single order (simplified - no seller splitting)
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user.id,
+          seller_id: 'system', // Simplified - you can get from product if needed
+          status: 'pending',
+          total: orderTotal + shipping + tax,
+          payment_status: 'pending',
+          shipping_address_snapshot: {
+            full_name: addressData.fullName,
+            address_line1: addressData.addressLine1,
+            address_line2: addressData.addressLine2,
+            city: addressData.city,
+            state: addressData.state,
+            postal_code: addressData.postalCode,
+            country: addressData.country,
+            phone: addressData.phone,
+          },
+        })
+        .select()
+        .single();
 
-        // Create order
-        const { data: orderData, error: orderError } = await supabase
-          .from('orders')
-          .insert({
-            user_id: user.id,
-            seller_id: sellerId,
-            status: 'pending',
-            total: sellerTotal + sellerShipping + sellerTax,
-            payment_status: 'pending',
-            shipping_address_snapshot: {
-              full_name: addressData.fullName,
-              address_line1: addressData.addressLine1,
-              address_line2: addressData.addressLine2,
-              city: addressData.city,
-              state: addressData.state,
-              postal_code: addressData.postalCode,
-              country: addressData.country,
-              phone: addressData.phone,
-            },
-          })
-          .select()
-          .single();
+      if (orderError) throw orderError;
 
-        if (orderError) throw orderError;
+      // Create order items
+      const dbOrderItems = orderItems.map((item) => ({
+        order_id: orderData.id,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price: item.price,
+        title: item.title,
+        image_url: item.image_url,
+      }));
 
-        // Create order items
-        const orderItems = sellerItems.map((item) => ({
-          order_id: orderData.id,
-          product_id: item.asin,
-          quantity: item.quantity,
-          price: item.product?.price || 0,
-          title: item.product?.title || '',
-          image_url: Array.isArray(item.product?.images) ? item.product.images[0] : null,
-        }));
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(dbOrderItems);
 
-        const { error: itemsError } = await supabase
-          .from('order_items')
-          .insert(orderItems);
+      if (itemsError) throw itemsError;
 
-        if (itemsError) throw itemsError;
-
-        // Update product inventory
-        for (const item of sellerItems) {
-          await supabase.rpc('decrement_product_quantity', {
-            product_id: item.asin,
-            quantity_to_decrement: item.quantity,
-          });
-        }
-
-        orders.push({ id: orderData.id, seller_id: sellerId });
-      }
-
-      return { orders, total };
+      return { orderId: orderData.id, total: orderData.total };
     },
     onSuccess: async (data) => {
       await clearCart();
@@ -153,8 +136,8 @@ export function useCheckout() {
         });
       }
 
-      // Navigate to first order success page
-      navigate(`/order-success/${data.orders[0].id}`);
+      // Navigate to order success page
+      navigate(`/order-success/${data.orderId}`);
     },
   });
 

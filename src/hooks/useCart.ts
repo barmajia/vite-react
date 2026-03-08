@@ -1,250 +1,138 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { supabase } from '@/lib/supabase';
-import type { Product } from '@/types/database';
 
 export interface CartItem {
-  id: string;
-  user_id: string;
-  asin: string;
+  productId: string;
   quantity: number;
-  created_at: string;
-  updated_at: string;
-  product?: Product | null;
+  // Snapshot of product data
+  name: string;
+  price: number;
+  salePrice?: number | null;
+  image_url?: string | null;
+  slug?: string;
+  stock_quantity?: number;
+}
+
+interface CartSummary {
+  subtotal: number;
+  itemCount: number;
+  estimatedTotal: number;
 }
 
 interface CartStore {
   items: CartItem[];
+  isOpen: boolean;
   isLoading: boolean;
   error: string | null;
-  
-  fetchCart: () => Promise<void>;
-  addItem: (product: Product, quantity?: number) => Promise<void>;
-  removeItem: (productId: string) => Promise<void>;
-  updateQuantity: (productId: string, quantity: number) => Promise<void>;
-  clearCart: () => Promise<void>;
-  getTotal: () => number;
+
+  // Actions
+  addItem: (product: Omit<CartItem, 'quantity'>) => void;
+  removeItem: (productId: string) => void;
+  updateQuantity: (productId: string, quantity: number) => void;
+  clearCart: () => void;
+  toggleCart: () => void;
+  setOpen: (open: boolean) => void;
+
+  // Computed
+  getSummary: () => CartSummary;
   getItemCount: () => number;
+  isInCart: (productId: string) => boolean;
 }
 
 export const useCartStore = create<CartStore>()(
   persist(
     (set, get) => ({
       items: [],
+      isOpen: false,
       isLoading: false,
       error: null,
 
-      fetchCart: async () => {
-        set({ isLoading: true, error: null });
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
+      addItem: (product) => {
+        set((state) => {
+          const existing = state.items.find((i) => i.productId === product.productId);
           
-          if (!user) {
-            set({ items: [], isLoading: false });
-            return;
+          if (existing) {
+            return {
+              items: state.items.map((i) =>
+                i.productId === product.productId
+                  ? { ...i, quantity: i.quantity + 1 }
+                  : i
+              ),
+            };
           }
-
-          const { data, error } = await supabase
-            .from('cart')
-            .select(`
-              *,
-              product:products (
-                id,
-                title,
-                price,
-                images,
-                quantity
-              )
-            `)
-            .eq('user_id', user.id);
-
-          if (error) throw error;
-
-          set({ items: data || [], isLoading: false });
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'Failed to fetch cart',
-            isLoading: false 
-          });
-        }
+          
+          return {
+            items: [...state.items, { ...product, quantity: 1 }],
+          };
+        });
       },
 
-      addItem: async (product: Product, quantity: number = 1) => {
-        set({ isLoading: true, error: null });
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          
-          if (!user) {
-            throw new Error('You must be signed in to add items to cart');
-          }
-
-          const existingItem = get().items.find(
-            (item) => item.asin === product.id
-          );
-
-          if (existingItem) {
-            await get().updateQuantity(
-              product.id,
-              Math.min(existingItem.quantity + quantity, product.quantity)
-            );
-            return;
-          }
-
-          const { data, error } = await supabase
-            .from('cart')
-            .insert({
-              user_id: user.id,
-              asin: product.id,
-              quantity,
-            })
-            .select(`
-              *,
-              product:products (
-                id,
-                title,
-                price,
-                images,
-                quantity
-              )
-            `)
-            .single();
-
-          if (error) throw error;
-
-          set((state) => ({
-            items: [...state.items, data],
-            isLoading: false,
-          }));
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'Failed to add item',
-            isLoading: false 
-          });
-        }
+      removeItem: (productId) => {
+        set((state) => ({
+          items: state.items.filter((i) => i.productId !== productId),
+        }));
       },
 
-      removeItem: async (productId: string) => {
-        set({ isLoading: true, error: null });
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          
-          if (!user) {
-            throw new Error('You must be signed in');
-          }
-
-          const { error } = await supabase
-            .from('cart')
-            .delete()
-            .eq('user_id', user.id)
-            .eq('asin', productId);
-
-          if (error) throw error;
-
-          set((state) => ({
-            items: state.items.filter((item) => item.asin !== productId),
-            isLoading: false,
-          }));
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'Failed to remove item',
-            isLoading: false 
-          });
+      updateQuantity: (productId, quantity) => {
+        if (quantity < 1) {
+          return get().removeItem(productId);
         }
+        set((state) => ({
+          items: state.items.map((i) =>
+            i.productId === productId ? { ...i, quantity } : i
+          ),
+        }));
       },
 
-      updateQuantity: async (productId: string, quantity: number) => {
-        if (quantity <= 0) {
-          await get().removeItem(productId);
-          return;
-        }
+      clearCart: () => set({ items: [] }),
 
-        set({ isLoading: true, error: null });
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          
-          if (!user) {
-            throw new Error('You must be signed in');
-          }
+      toggleCart: () => set((state) => ({ isOpen: !state.isOpen })),
 
-          const { error } = await supabase
-            .from('cart')
-            .update({ quantity })
-            .eq('user_id', user.id)
-            .eq('asin', productId);
+      setOpen: (open) => set({ isOpen: open }),
 
-          if (error) throw error;
-
-          set((state) => ({
-            items: state.items.map((item) =>
-              item.asin === productId ? { ...item, quantity } : item
-            ),
-            isLoading: false,
-          }));
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'Failed to update quantity',
-            isLoading: false 
-          });
-        }
-      },
-
-      clearCart: async () => {
-        set({ isLoading: true, error: null });
-        try {
-          const { data: { user } } = await supabase.auth.getUser();
-          
-          if (!user) {
-            set({ items: [], isLoading: false });
-            return;
-          }
-
-          const { error } = await supabase
-            .from('cart')
-            .delete()
-            .eq('user_id', user.id);
-
-          if (error) throw error;
-
-          set({ items: [], isLoading: false });
-        } catch (error) {
-          set({ 
-            error: error instanceof Error ? error.message : 'Failed to clear cart',
-            isLoading: false 
-          });
-        }
-      },
-
-      getTotal: () => {
-        return get().items.reduce(
-          (total, item) => total + (item.product?.price ?? 0) * item.quantity,
-          0
+      getSummary: () => {
+        const { items } = get();
+        return items.reduce(
+          (summary, item) => {
+            const price = item.salePrice ?? item.price;
+            summary.subtotal += price * item.quantity;
+            summary.itemCount += item.quantity;
+            return summary;
+          },
+          { subtotal: 0, itemCount: 0, estimatedTotal: 0 } as CartSummary
         );
       },
 
       getItemCount: () => {
-        return get().items.reduce((count, item) => count + item.quantity, 0);
+        return get().items.reduce((sum, i) => sum + i.quantity, 0);
+      },
+
+      isInCart: (productId) => {
+        return get().items.some((i) => i.productId === productId);
       },
     }),
     {
       name: 'aurora-cart-storage',
-      partialize: (state) => ({ items: state.items }),
     }
   )
 );
 
 export const useCart = () => {
   const store = useCartStore();
-  
+
   return {
     items: store.items,
+    isOpen: store.isOpen,
     isLoading: store.isLoading,
     error: store.error,
-    total: store.getTotal(),
+    total: store.getSummary().subtotal,
     itemCount: store.getItemCount(),
-    fetchCart: store.fetchCart,
     addItem: store.addItem,
     removeItem: store.removeItem,
     updateQuantity: store.updateQuantity,
     clearCart: store.clearCart,
+    toggleCart: store.toggleCart,
+    setOpen: store.setOpen,
+    isInCart: store.isInCart,
   };
 };

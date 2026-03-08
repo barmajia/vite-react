@@ -33,40 +33,37 @@ export function OrderReview({
 
         {/* Items List */}
         <div className="space-y-3 max-h-64 overflow-y-auto">
-          {items.map((item) => {
-            const product = item.product;
-            if (!product) return null;
-
-            return (
-              <div key={item.asin} className="flex gap-3">
-                <div className="w-16 h-16 bg-muted rounded overflow-hidden flex-shrink-0">
+          {items.map((item) => (
+            <div key={item.productId} className="flex gap-3">
+              <div className="w-16 h-16 bg-muted rounded overflow-hidden flex-shrink-0">
+                {item.image_url ? (
                   <img
-                    src={
-                      Array.isArray(product.images) && product.images.length > 0
-                        ? (product.images[0] as string)
-                        : '/placeholder.png'
-                    }
-                    alt={product.title}
+                    src={item.image_url}
+                    alt={item.name}
                     className="w-full h-full object-cover"
                   />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <Link
-                    to={`/product/${item.asin}`}
-                    className="text-sm font-medium hover:text-accent line-clamp-2"
-                  >
-                    {product.title}
-                  </Link>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Qty: {item.quantity}
-                  </p>
-                  <p className="text-sm font-medium mt-1">
-                    ${(product.price * item.quantity).toFixed(2)}
-                  </p>
-                </div>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">
+                    No image
+                  </div>
+                )}
               </div>
-            );
-          })}
+              <div className="flex-1 min-w-0">
+                <Link
+                  to={`/product/${item.productId}`}
+                  className="text-sm font-medium hover:text-accent line-clamp-2"
+                >
+                  {item.name}
+                </Link>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Qty: {item.quantity}
+                </p>
+                <p className="text-sm font-medium mt-1">
+                  ${((item.salePrice ?? item.price) * item.quantity).toFixed(2)}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
 
         <Separator />

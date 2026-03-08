@@ -19,56 +19,14 @@ import { CategoriesPage } from "@/features/categories/pages/CategoriesPage";
 import { CategoryProductsPage } from "@/features/categories/pages/CategoryProductsPage";
 import { CartPage } from "@/features/cart/pages/CartPage";
 import { CheckoutPage } from "@/features/checkout/pages/CheckoutPage";
+import { OrderSuccessPage } from "@/features/orders/pages/OrderSuccessPage";
+import { OrdersListPage } from "@/features/orders/pages/OrdersListPage";
+import { OrderDetailPage } from "@/features/orders/pages/OrderDetailPage";
+import { ProfilePage } from "@/features/profile/pages/ProfilePage";
+import { AddressesPage } from "@/features/addresses/pages/AddressesPage";
+import { WishlistPage } from "@/features/wishlist/pages/WishlistPage";
 
 // Placeholder components for customer pages
-function OrderSuccess() {
-  return (
-    <div className="text-center py-12">
-      <h1 className="text-2xl font-bold">Order Success Page</h1>
-      <p className="text-muted-foreground mt-2">Coming soon in Phase 2</p>
-    </div>
-  );
-}
-function Profile() {
-  return (
-    <div className="text-center py-12">
-      <h1 className="text-2xl font-bold">Profile Page</h1>
-      <p className="text-muted-foreground mt-2">Coming soon in Phase 3</p>
-    </div>
-  );
-}
-function Orders() {
-  return (
-    <div className="text-center py-12">
-      <h1 className="text-2xl font-bold">Orders Page</h1>
-      <p className="text-muted-foreground mt-2">Coming soon in Phase 2</p>
-    </div>
-  );
-}
-function OrderDetail() {
-  return (
-    <div className="text-center py-12">
-      <h1 className="text-2xl font-bold">Order Detail Page</h1>
-      <p className="text-muted-foreground mt-2">Coming soon in Phase 2</p>
-    </div>
-  );
-}
-function Wishlist() {
-  return (
-    <div className="text-center py-12">
-      <h1 className="text-2xl font-bold">Wishlist Page</h1>
-      <p className="text-muted-foreground mt-2">Coming soon in Phase 3</p>
-    </div>
-  );
-}
-function Addresses() {
-  return (
-    <div className="text-center py-12">
-      <h1 className="text-2xl font-bold">Addresses Page</h1>
-      <p className="text-muted-foreground mt-2">Coming soon in Phase 3</p>
-    </div>
-  );
-}
 function Reviews() {
   return (
     <div className="text-center py-12">
@@ -155,12 +113,12 @@ function App() {
             {/* Customer Routes (Protected) */}
             <Route path="cart" element={<CartPage />} />
             <Route path="checkout" element={<CheckoutPage />} />
-            <Route path="order-success/:id" element={<OrderSuccess />} />
-            <Route path="profile" element={<Profile />} />
-            <Route path="orders" element={<Orders />} />
-            <Route path="orders/:id" element={<OrderDetail />} />
-            <Route path="wishlist" element={<Wishlist />} />
-            <Route path="addresses" element={<Addresses />} />
+            <Route path="order-success/:id" element={<OrderSuccessPage />} />
+            <Route path="profile" element={<ProfilePage />} />
+            <Route path="orders" element={<OrdersListPage />} />
+            <Route path="orders/:id" element={<OrderDetailPage />} />
+            <Route path="wishlist" element={<WishlistPage />} />
+            <Route path="addresses" element={<AddressesPage />} />
             <Route path="reviews" element={<Reviews />} />
             <Route path="messages" element={<Messages />} />
             <Route path="messages/:id" element={<Conversation />} />
