@@ -24,5 +24,22 @@ export default defineConfig({
     sourcemap: false,
     minify: 'esbuild',
     target: 'esnext',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+          ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-select', '@radix-ui/react-tabs'],
+          query: ['@tanstack/react-query'],
+          supabase: ['@supabase/supabase-js'],
+          utils: ['clsx', 'tailwind-merge', 'class-variance-authority'],
+          state: ['zustand'],
+          icons: ['lucide-react'],
+        },
+      },
+    },
+    chunkSizeWarningLimit: 1000,
+  },
+  esbuild: {
+    drop: process.env.NODE_ENV === 'production' ? ['console', 'debugger'] : [],
   },
 });

@@ -4,14 +4,22 @@ A modern, production-ready e-commerce web application built with React, Vite, Ty
 
 ## Tech Stack
 
-- **Frontend Framework:** React 18.3+ with TypeScript
+### Frontend
+- **Framework:** React 18.3+ with TypeScript
 - **Build Tool:** Vite 5.4+
 - **Styling:** Tailwind CSS with CSS Variables for theming
 - **UI Components:** Shadcn/UI (Radix UI primitives)
 - **State Management:** Zustand (client state), TanStack Query (server state)
-- **Backend/Auth:** Supabase (PostgreSQL, Auth, Realtime, Storage)
 - **Routing:** React Router DOM v6
 - **Notifications:** Sonner
+
+### Backend (Supabase)
+- **Database:** PostgreSQL 15+ with advanced extensions
+- **Authentication:** Supabase Auth (Email/Password, OAuth ready)
+- **Real-time:** Supabase Realtime for messaging & live updates
+- **Storage:** Supabase Storage for product images & avatars
+- **API:** Auto-generated RESTful API + GraphQL (pg_graphql)
+- **Security:** Row Level Security (RLS) on all tables
 
 ## Design System
 
@@ -147,24 +155,65 @@ src/
 
 ## Database Schema
 
-The application uses the following main tables:
-- `users` - User profiles
-- `products` - Product catalog
-- `cart` - Shopping cart items
-- `orders` - Order records
-- `order_items` - Order line items
-- `shipping_addresses` - Saved addresses
-- `reviews` - Product reviews
-- `conversations` & `messages` - Seller communication
-- `notifications` - In-app notifications
+The application uses a comprehensive PostgreSQL schema with the following tables:
+
+### Core Tables
+| Table | Description |
+|-------|-------------|
+| `users` | User profiles with email, full_name, avatar, phone |
+| `products` | Product catalog with full-text search (tsvector), pricing, inventory |
+| `cart` | Shopping cart items linked to users and products |
+| `orders` | Order records with status tracking and payment status |
+| `order_items` | Order line items with price snapshots |
+| `shipping_addresses` | Saved user addresses with default flag |
+| `reviews` | Product reviews with ratings and comments |
+
+### Communication Tables
+| Table | Description |
+|-------|-------------|
+| `conversations` | Buyer-seller conversation threads |
+| `messages` | Real-time chat messages |
+| `notifications` | In-app notifications (order updates, messages, promotions) |
+
+### Analytics Tables (Seller Dashboard)
+| Table | Description |
+|-------|-------------|
+| `sales` | Sales tracking for analytics |
+| `customers` | Customer database for sellers |
+
+### Key Features
+- **Full-Text Search**: Products use PostgreSQL `tsvector` for efficient search
+- **Status Tracking**: Orders progress through `pending → confirmed → processing → shipped → delivered`
+- **Payment States**: Track payment status (`pending`, `paid`, `failed`, `refunded`)
+- **Real-time Updates**: Conversations and notifications use Supabase Realtime
+- **Row Level Security (RLS)**: All tables have RLS policies for data protection
+
+### Database Functions
+- `calculate_seller_analytics()` - Computes seller KPIs, top products, customer data
+- Automatic triggers for `updated_at` timestamps
+- Aggregation functions for product ratings and review counts
 
 ## Security
 
-- Row Level Security (RLS) enabled on all tables
-- All routes protected with Supabase Auth
-- Strict TypeScript typing
-- Input validation on all forms
-- No sensitive data exposed client-side
+### Authentication & Authorization
+- **Supabase Auth**: JWT-based authentication with automatic token refresh
+- **Row Level Security (RLS)**: All tables have RLS policies ensuring users can only access their own data
+- **Protected Routes**: All application routes require authentication
+- **Role-based Access**: Different permissions for buyers, sellers, and admins
+
+### Data Protection
+- **Input Validation**: All forms validate and sanitize user input
+- **Type Safety**: Strict TypeScript typing prevents runtime errors
+- **No Exposed Secrets**: Environment variables stored securely, no sensitive data client-side
+- **Secure Headers**: Custom application headers for API requests
+
+### PostgreSQL Extensions
+The backend leverages powerful PostgreSQL extensions:
+- `pg_cron` - Scheduled jobs and background tasks
+- `pg_graphql` - GraphQL API endpoint
+- `pg_stat_statements` - Query performance monitoring
+- `pgmq` - Message queue for async operations
+- `hypopg` - Hypothetical indexes for query optimization
 
 ## Deployment
 
@@ -178,6 +227,75 @@ Deployed on Vercel with automatic previews for pull requests.
    - `VITE_SUPABASE_ANON_KEY`
    - `VITE_APP_URL`
 3. Deploy
+
+## Backend Architecture
+
+### Supabase Configuration
+
+The application connects to Supabase via the official JavaScript client with the following setup:
+
+```typescript
+// src/lib/supabase.ts
+createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+  },
+  global: {
+    headers: {
+      'x-application-name': 'aurora-ecommerce',
+    },
+  },
+});
+```
+
+### Data Fetching Patterns
+
+**Products with Filtering & Pagination:**
+```typescript
+// Using useProducts hook
+const { data, isLoading } = useProducts({
+  page: 1,
+  limit: 20,
+  category: 'electronics',
+  minPrice: 100,
+  maxPrice: 500,
+  sortBy: 'price',
+  sortOrder: 'asc',
+});
+```
+
+**Single Product with Reviews:**
+```typescript
+// Using useProduct hook
+const { data: product } = useProduct(asin);
+// Includes nested reviews array
+```
+
+**Real-time Messaging:**
+```typescript
+// Conversations and messages use Supabase Realtime
+// for instant updates when new messages arrive
+```
+
+### Query Optimization
+
+- **TanStack Query**: Caches and deduplicates API requests
+- **Pagination**: Products loaded in chunks (default: 20 per page)
+- **Selective Columns**: Only fetch required columns to reduce payload
+- **Full-Text Search**: PostgreSQL `tsvector` for efficient product search
+- **Database Indexes**: Optimized indexes on frequently queried columns
+
+### Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `VITE_SUPABASE_URL` | Your Supabase project URL | `https://xxx.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous/public key | `eyJhbG...` |
+| `VITE_APP_URL` | Application base URL | `http://localhost:5173` |
+
+> ⚠️ **Important**: Never commit `.env` files. Use `.env.example` as a template.
 
 ## License
 
