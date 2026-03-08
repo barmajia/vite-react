@@ -161,7 +161,7 @@ export interface Message {
 }
 
 // ==================== Notification Types ====================
-export type NotificationType = 
+export type NotificationType =
   | 'order_update'
   | 'message'
   | 'promotion'
@@ -179,6 +179,24 @@ export interface Notification {
   created_at: string;
 }
 
+// ==================== Category Types ====================
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  image_url: string | null;
+  parent_id: string | null;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CategoryWithProducts extends Category {
+  product_count?: number;
+}
+
 // ==================== Database Schema Type ====================
 export interface Database {
   public: {
@@ -187,6 +205,11 @@ export interface Database {
         Row: User;
         Insert: Omit<User, 'id' | 'created_at' | 'updated_at'>;
         Update: Partial<Omit<User, 'id' | 'created_at'>>;
+      };
+      categories: {
+        Row: Category;
+        Insert: Omit<Category, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Category, 'id' | 'created_at' | 'updated_at'>>;
       };
       products: {
         Row: Product;

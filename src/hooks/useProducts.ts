@@ -7,6 +7,7 @@ interface UseProductsOptions {
   limit?: number;
   search?: string;
   category?: string;
+  categorySlug?: string;
   brand?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -23,6 +24,7 @@ export function useProducts(options: UseProductsOptions = {}) {
     limit = 20,
     search,
     category,
+    categorySlug,
     brand,
     minPrice,
     maxPrice,
@@ -38,6 +40,7 @@ export function useProducts(options: UseProductsOptions = {}) {
         limit,
         search,
         category,
+        categorySlug,
         brand,
         minPrice,
         maxPrice,
@@ -75,6 +78,10 @@ export function useProducts(options: UseProductsOptions = {}) {
 
       if (category) {
         query = query.eq("category", category);
+      }
+
+      if (categorySlug) {
+        query = query.eq("category_slug", categorySlug);
       }
 
       if (brand) {
