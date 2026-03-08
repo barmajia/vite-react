@@ -12,34 +12,41 @@ export function CategoryProductsPage() {
     isLoading: categoryLoading,
     error: categoryError,
   } = useCategoryBySlug(slug!);
+
   const {
     data: productsData,
     isLoading: productsLoading,
-    error: productsError,
   } = useProducts({
-    categorySlug: slug,
+    category: category?.name,
     page: 1,
     limit: 20,
   });
 
-  const error = categoryError || productsError;
-  const isLoading = categoryLoading || productsLoading;
-
-  if (error) {
+  if (categoryError) {
     return (
       <Alert variant="destructive" className="max-w-2xl mx-auto mt-8">
-        <AlertDescription>{error.message}</AlertDescription>
+        <AlertDescription>{categoryError.message}</AlertDescription>
       </Alert>
     );
   }
 
-  if (!category) {
+  if (!category && !categoryLoading) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
         <h1 className="text-2xl font-bold mb-2">Category not found</h1>
         <p className="text-muted-foreground">
           The category you're looking for doesn't exist or is inactive.
         </p>
+      </div>
+    );
+  }
+
+  if (!category) {
+    return (
+      <div className="container mx-auto px-4 py-12">
+        <div className="flex justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent"></div>
+        </div>
       </div>
     );
   }
@@ -53,7 +60,7 @@ export function CategoryProductsPage() {
         )}
       </div>
 
-      <ProductGrid products={productsData?.products ?? []} isLoading={isLoading} />
+      <ProductGrid products={productsData?.products ?? []} isLoading={productsLoading} />
     </div>
   );
 }
