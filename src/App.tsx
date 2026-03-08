@@ -17,24 +17,10 @@ import { NotFound } from "@/pages/errors/NotFound";
 import { ServerError } from "@/pages/errors/ServerError";
 import { CategoriesPage } from "@/features/categories/pages/CategoriesPage";
 import { CategoryProductsPage } from "@/features/categories/pages/CategoryProductsPage";
+import { CartPage } from "@/features/cart/pages/CartPage";
+import { CheckoutPage } from "@/features/checkout/pages/CheckoutPage";
 
 // Placeholder components for customer pages
-function Cart() {
-  return (
-    <div className="text-center py-12">
-      <h1 className="text-2xl font-bold">Cart Page</h1>
-      <p className="text-muted-foreground mt-2">Coming soon in Phase 2</p>
-    </div>
-  );
-}
-function Checkout() {
-  return (
-    <div className="text-center py-12">
-      <h1 className="text-2xl font-bold">Checkout Page</h1>
-      <p className="text-muted-foreground mt-2">Coming soon in Phase 2</p>
-    </div>
-  );
-}
 function OrderSuccess() {
   return (
     <div className="text-center py-12">
@@ -167,8 +153,8 @@ function App() {
             <Route path="reset-password" element={<ResetPassword />} />
 
             {/* Customer Routes (Protected) */}
-            <Route path="cart" element={<Cart />} />
-            <Route path="checkout" element={<Checkout />} />
+            <Route path="cart" element={<CartPage />} />
+            <Route path="checkout" element={<CheckoutPage />} />
             <Route path="order-success/:id" element={<OrderSuccess />} />
             <Route path="profile" element={<Profile />} />
             <Route path="orders" element={<Orders />} />
