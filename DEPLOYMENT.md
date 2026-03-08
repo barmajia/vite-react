@@ -38,6 +38,25 @@ Created `.vercelignore` to exclude unnecessary files from builds:
 ### 4. Production Console Cleanup
 Added `esbuild.drop` to remove `console.log` and `debugger` statements in production builds.
 
+### 5. Vercel SPA Routing Configuration
+Created `vercel.json` to handle client-side routing for Single Page Application:
+
+```json
+{
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+**Why this is needed:**
+- Direct navigation to `/contact` would return 404 without this
+- Vercel needs to serve `index.html` for all routes
+- React Router then handles the route client-side
+
 ---
 
 ## 📊 Expected Build Improvements
@@ -133,6 +152,7 @@ Run: `npm run analyze`
 - [x] Grid.svg asset created
 - [x] .vercelignore file created
 - [x] Console.log removal in production
+- [x] vercel.json for SPA routing
 - [ ] Environment variables set in Vercel
 - [ ] Supabase Auth redirects configured
 - [ ] Test build locally: `npm run build && npm run preview`
