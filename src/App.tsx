@@ -25,6 +25,7 @@ import { OrderDetailPage } from "@/features/orders/pages/OrderDetailPage";
 import { ProfilePage } from "@/features/profile/pages/ProfilePage";
 import { AddressesPage } from "@/features/addresses/pages/AddressesPage";
 import { WishlistPage } from "@/features/wishlist/pages/WishlistPage";
+import { NotificationsPage } from "@/features/notifications/pages/NotificationsPage";
 
 // Placeholder components for customer pages
 function Reviews() {
@@ -47,14 +48,6 @@ function Conversation() {
   return (
     <div className="text-center py-12">
       <h1 className="text-2xl font-bold">Conversation Page</h1>
-      <p className="text-muted-foreground mt-2">Coming soon in Phase 4</p>
-    </div>
-  );
-}
-function Notifications() {
-  return (
-    <div className="text-center py-12">
-      <h1 className="text-2xl font-bold">Notifications Page</h1>
       <p className="text-muted-foreground mt-2">Coming soon in Phase 4</p>
     </div>
   );
@@ -122,7 +115,7 @@ function App() {
             <Route path="reviews" element={<Reviews />} />
             <Route path="messages" element={<Messages />} />
             <Route path="messages/:id" element={<Conversation />} />
-            <Route path="notifications" element={<Notifications />} />
+            <Route path="notifications" element={<NotificationsPage />} />
             <Route path="settings" element={<Settings />} />
 
             {/* Error Routes */}

@@ -26,7 +26,17 @@ export function useAddresses() {
   });
 
   const createAddressMutation = useMutation({
-    mutationFn: async (address: Omit<ShippingAddress, 'id' | 'created_at' | 'updated_at'>) => {
+    mutationFn: async (address: {
+      full_name: string;
+      address_line1: string;
+      address_line2: string;
+      city: string;
+      state: string;
+      postal_code: string;
+      country: string;
+      phone: string;
+      is_default: boolean;
+    }) => {
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase

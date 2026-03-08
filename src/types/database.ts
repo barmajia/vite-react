@@ -160,25 +160,6 @@ export interface Message {
   sender?: UserProfile;
 }
 
-// ==================== Notification Types ====================
-export type NotificationType =
-  | 'order_update'
-  | 'message'
-  | 'promotion'
-  | 'review'
-  | 'system';
-
-export interface Notification {
-  id: string;
-  user_id: string;
-  type: NotificationType;
-  title: string;
-  message: string;
-  is_read: boolean;
-  action_url: string | null;
-  created_at: string;
-}
-
 // ==================== Category Types ====================
 export interface Category {
   id: string;
@@ -195,6 +176,26 @@ export interface Category {
 
 export interface CategoryWithProducts extends Category {
   product_count?: number;
+}
+
+// ==================== Notification Types ====================
+export type NotificationType = 'order_update' | 'message' | 'promotion' | 'review' | 'system';
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: NotificationType | null;
+  title: string;
+  message: string;
+  is_read: boolean;
+  metadata: Record<string, any> | null;
+  created_at: string;
+}
+
+export interface NotificationSummary {
+  total: number;
+  unread: number;
+  byType: Partial<Record<NotificationType, number>>;
 }
 
 // ==================== Database Schema Type ====================
@@ -255,6 +256,16 @@ export interface Database {
         Row: Notification;
         Insert: Omit<Notification, 'id' | 'created_at'>;
         Update: Partial<Omit<Notification, 'id' | 'created_at'>>;
+      };
+      wishlists: {
+        Row: {
+          id: string;
+          user_id: string;
+          product_id: string;
+          created_at: string;
+        };
+        Insert: Omit<{ id: string; user_id: string; product_id: string; created_at: string }, 'id' | 'created_at'>;
+        Update: Partial<Omit<{ id: string; user_id: string; product_id: string; created_at: string }, 'id' | 'created_at'>>;
       };
     };
     Views: Record<string, never>;

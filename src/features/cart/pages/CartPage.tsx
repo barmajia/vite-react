@@ -4,7 +4,6 @@ import { useCart } from '@/hooks/useCart';
 import { CartItem } from '../components/CartItem';
 import { CartSummary } from '../components/CartSummary';
 import { CartEmpty } from '../components/CartEmpty';
-import { Skeleton } from '@/components/ui/skeleton';
 
 export function CartPage() {
   const navigate = useNavigate();

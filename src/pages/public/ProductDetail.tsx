@@ -49,7 +49,14 @@ export function ProductDetail() {
     if (!product) return;
 
     try {
-      await addItem(product, quantity);
+      addItem({
+        productId: product.id,
+        name: product.title,
+        price: product.price,
+        salePrice: null,
+        image_url: Array.isArray(product.images) ? (product.images[0] as string) : null,
+        stock_quantity: product.quantity,
+      });
       toast.success('Added to cart!');
     } catch (_err) {
       toast.error('Failed to add to cart');

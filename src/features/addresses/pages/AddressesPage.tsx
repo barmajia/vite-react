@@ -7,7 +7,6 @@ import { AddressForm } from '../components/AddressForm';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Plus, MapPin } from 'lucide-react';
-import type { ShippingAddress } from '@/types/database';
 
 export function AddressesPage() {
   const { user, loading } = useAuth();
@@ -39,7 +38,17 @@ export function AddressesPage() {
     return <Navigate to="/login" replace />;
   }
 
-  const handleSave = async (data: Omit<ShippingAddress, 'id' | 'created_at' | 'updated_at'>) => {
+  const handleSave = async (data: {
+    full_name: string;
+    address_line1: string;
+    address_line2: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    country: string;
+    phone: string;
+    is_default: boolean;
+  }) => {
     if (editingId) {
       await updateAddress({ id: editingId, updates: data });
       setEditingId(null);
