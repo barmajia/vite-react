@@ -23,24 +23,27 @@ export function OrderSuccessPage() {
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', id],
     queryFn: async () => {
+      // Fetch order first
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
-        .select(`
-          *,
-          items:order_items (
-            id,
-            product_id,
-            quantity,
-            price,
-            title,
-            image_url
-          )
-        `)
+        .select('*')
         .eq('id', id)
         .single();
 
       if (orderError) throw orderError;
-      return orderData;
+
+      // Fetch order items
+      const { data: items, error: itemsError } = await supabase
+        .from('order_items')
+        .select('*')
+        .eq('order_id', id);
+
+      if (itemsError) throw itemsError;
+
+      return {
+        ...orderData,
+        items: items || [],
+      };
     },
     enabled: !!id,
   });

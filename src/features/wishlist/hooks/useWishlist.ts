@@ -6,7 +6,7 @@ import type { Product } from '@/types/database';
 export interface WishlistItem {
   id: string;
   user_id: string;
-  product_id: string;
+  asin: string;
   created_at: string;
   product?: Product;
 }
@@ -20,49 +20,45 @@ export function useWishlist() {
     queryFn: async () => {
       if (!user) return [];
 
+      // Fetch wishlist items (no join - table uses 'asin' text field)
       const { data, error } = await supabase
-        .from('wishlists')
-        .select(`
-          *,
-          product:products (
-            id,
-            title,
-            price,
-            images,
-            quantity,
-            category,
-            seller_id
-          )
-        `)
+        .from('wishlist')
+        .select('*')
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data as WishlistItem[];
+      if (!data || data.length === 0) return [];
+
+      // Fetch products separately using id (wishlist.asin = products.id)
+      const asins = data.map((w) => w.asin);
+      const { data: products, error: productsError } = await supabase
+        .from('products')
+        .select('id, title, price, images, quantity, category, seller_id')
+        .in('id', asins);
+
+      if (productsError) throw productsError;
+
+      // Combine wishlist items with product data
+      return data.map((item) => ({
+        ...item,
+        product: products?.find((p) => p.id === item.asin),
+      })) as WishlistItem[];
     },
     enabled: !!user,
   });
 
   const addToWishlistMutation = useMutation({
-    mutationFn: async (productId: string) => {
+    mutationFn: async (asin: string) => {
       if (!user) throw new Error('Not authenticated');
 
       const { data, error } = await supabase
-        .from('wishlists')
+        .from('wishlist')
         .insert({
           user_id: user.id,
-          product_id: productId,
+          asin: asin,
         })
-        .select(`
-          *,
-          product:products (
-            id,
-            title,
-            price,
-            images,
-            quantity
-          )
-        `)
+        .select()
         .single();
 
       if (error) {
@@ -81,7 +77,7 @@ export function useWishlist() {
   const removeFromWishlistMutation = useMutation({
     mutationFn: async (itemId: string) => {
       const { error } = await supabase
-        .from('wishlists')
+        .from('wishlist')
         .delete()
         .eq('id', itemId);
 
@@ -92,18 +88,18 @@ export function useWishlist() {
     },
   });
 
-  const toggleWishlist = async (productId: string, itemId?: string) => {
+  const toggleWishlist = async (asin: string, itemId?: string) => {
     if (itemId) {
       await removeFromWishlistMutation.mutateAsync(itemId);
       return false; // Removed
     } else {
-      await addToWishlistMutation.mutateAsync(productId);
+      await addToWishlistMutation.mutateAsync(asin);
       return true; // Added
     }
   };
 
-  const isInWishlist = (productId: string) => {
-    return items?.some((item) => item.product_id === productId) || false;
+  const isInWishlist = (asin: string) => {
+    return items?.some((item) => item.asin === asin) || false;
   };
 
   return {
