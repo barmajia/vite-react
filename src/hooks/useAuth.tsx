@@ -49,13 +49,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return { error: error as Error | null };
   };
 
-  const signUp = async (email: string, password: string, fullName?: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    fullName?: string,
+    accountType: 'buyer' | 'seller' = 'buyer',
+  ) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: {
           full_name: fullName,
+          account_type: accountType,
         },
       },
     });
