@@ -4,14 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Upload, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
 export function ProfileSettings() {
   const { profile, updateProfile, isUpdatingProfile } = useSettings();
-  const [avatarPreview, setAvatarPreview] = useState(profile?.avatar_url || '');
   const [formData, setFormData] = useState({
     full_name: profile?.full_name || '',
     phone: profile?.phone || '',
@@ -29,14 +28,11 @@ export function ProfileSettings() {
 
     // For demo, just use local URL - in production upload to Supabase Storage
     const localUrl = URL.createObjectURL(file);
-    setAvatarPreview(localUrl);
     setFormData({ ...formData, avatar_url: localUrl });
     toast.success('Avatar updated (upload to storage in production)');
   };
 
   if (!profile) return null;
-
-  const initials = profile.full_name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) || 'U';
 
   return (
     <Card>
@@ -50,12 +46,11 @@ export function ProfileSettings() {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Avatar */}
           <div className="flex items-center gap-6">
-            <Avatar className="h-24 w-24">
-              <AvatarImage src={avatarPreview} />
-              <AvatarFallback className="text-2xl bg-accent text-white">
-                {initials}
-              </AvatarFallback>
-            </Avatar>
+            <Avatar
+              name={profile.full_name || profile.email}
+              src={formData.avatar_url || profile.avatar_url}
+              size="lg"
+            />
             <div>
               <Label htmlFor="avatar">Profile Picture</Label>
               <div className="flex gap-2 mt-2">

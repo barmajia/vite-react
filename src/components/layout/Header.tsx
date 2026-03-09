@@ -23,7 +23,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ROUTES } from "@/lib/constants";
 import { MobileNav } from "./MobileNav";
@@ -48,16 +48,6 @@ export function Header() {
   const handleSignOut = async () => {
     await signOut();
     navigate(ROUTES.HOME);
-  };
-
-  const getInitials = (name: string | null) => {
-    if (!name) return "U";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
   };
 
   return (
@@ -197,12 +187,11 @@ export function Header() {
                       size="icon"
                       className="rounded-full"
                     >
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src={user.user_metadata.avatar_url} />
-                        <AvatarFallback>
-                          {getInitials(user.user_metadata.full_name)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <Avatar
+                        name={user.user_metadata.full_name || user.email}
+                        src={user.user_metadata.avatar_url}
+                        size="md"
+                      />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">

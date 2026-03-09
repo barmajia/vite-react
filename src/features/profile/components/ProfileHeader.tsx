@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -42,12 +42,12 @@ export function ProfileHeader({ user, isOwnProfile, onEdit }: ProfileHeaderProps
       <CardContent className="relative pt-16 pb-6">
         <div className="flex items-start gap-4">
           {/* Avatar */}
-          <Avatar className="h-24 w-24 border-4 border-background -mt-12">
-            <AvatarImage src={user.avatar_url || undefined} />
-            <AvatarFallback className="text-2xl">
-              {user.full_name?.[0]?.toUpperCase() || user.email[0].toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <Avatar
+            name={user.full_name || user.email}
+            src={user.avatar_url}
+            size="xl"
+            className="border-4 border-background -mt-12"
+          />
 
           {/* User Info */}
           <div className="flex-1 min-w-0">

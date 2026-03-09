@@ -1,7 +1,7 @@
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar } from '@/components/ui/avatar';
 import type { User } from '@supabase/supabase-js';
 
 interface ProfileFormProps {
@@ -30,23 +30,15 @@ export function ProfileForm({
   onEdit,
   onCancel,
 }: ProfileFormProps) {
-  const initials = formData.fullName
-    .split(' ')
-    .map((n) => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-
   return (
     <div className="space-y-6">
       {/* Avatar */}
       <div className="flex items-center gap-4">
-        <Avatar className="w-24 h-24">
-          <AvatarImage src={formData.avatarUrl || user?.user_metadata?.avatar_url} />
-          <AvatarFallback className="text-2xl bg-accent text-white">
-            {initials || 'U'}
-          </AvatarFallback>
-        </Avatar>
+        <Avatar
+          name={formData.fullName || user?.email}
+          src={formData.avatarUrl || user?.user_metadata?.avatar_url}
+          size="lg"
+        />
         <div>
           <h3 className="font-semibold text-lg">{formData.fullName || 'User'}</h3>
           <p className="text-sm text-muted-foreground">{user?.email}</p>

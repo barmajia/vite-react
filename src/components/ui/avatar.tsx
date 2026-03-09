@@ -23,26 +23,27 @@ const sizeClasses = {
 const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
   ({ className, name, src, alt = "", size = "md", ...props }, ref) => {
     const initials = getInitials(name);
-    const bgColor = getColorFromName(name);
-    const textColor = getContrastingTextColor(bgColor);
+    const textColor = getColorFromName(name);
+    const bgColor = getBackgroundColor();
 
     const [imageError, setImageError] = React.useState(false);
     const showImage = src && !imageError;
 
     return (
-    <div
-      ref={ref}
-      className={cn(
-          "relative flex shrink-0 overflow-hidden rounded-full items-center justify-center font-semibold",
+      <div
+        ref={ref}
+        className={cn(
+          "relative flex shrink-0 overflow-hidden rounded-full items-center justify-center font-semibold border",
           sizeClasses[size],
           className,
-      )}
+        )}
         style={{
           backgroundColor: showImage ? "transparent" : bgColor,
           color: showImage ? "inherit" : textColor,
+          borderColor: textColor,
         }}
         title={name || undefined}
-      {...props}
+        {...props}
       >
         {showImage ? (
           <img
@@ -50,7 +51,7 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
             alt={alt || name || ""}
             className="aspect-square h-full w-full object-cover"
             onError={() => setImageError(true)}
-    />
+          />
         ) : (
           <span className="uppercase">{initials}</span>
         )}
