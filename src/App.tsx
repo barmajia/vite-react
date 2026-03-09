@@ -26,6 +26,7 @@ import { ProfilePage } from "@/features/profile/pages/ProfilePage";
 import { AddressesPage } from "@/features/addresses/pages/AddressesPage";
 import { WishlistPage } from "@/features/wishlist/pages/WishlistPage";
 import { NotificationsPage } from "@/features/notifications/pages/NotificationsPage";
+import { SettingsPage } from "@/features/settings/pages/SettingsPage";
 
 // Placeholder components for customer pages
 function Reviews() {
@@ -116,7 +117,7 @@ function App() {
             <Route path="messages" element={<Messages />} />
             <Route path="messages/:id" element={<Conversation />} />
             <Route path="notifications" element={<NotificationsPage />} />
-            <Route path="settings" element={<Settings />} />
+            <Route path="settings" element={<SettingsPage />} />
 
             {/* Error Routes */}
             <Route path="error" element={<ServerError />} />
