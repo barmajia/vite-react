@@ -1,15 +1,25 @@
+import { useState } from 'react';
 import { Link, Navigate } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '../hooks/useProfile';
+import { useFullProfile } from '@/hooks/useFullProfile';
 import { ProfileForm } from '../components/ProfileForm';
 import { ChangePassword } from '../components/ChangePassword';
+import { ProfileHeader } from '../components/ProfileHeader';
+import { StatsCards } from '../components/StatsCards';
+import { AddressesSection } from '../components/AddressesSection';
+import { ProfileSettings } from '../components/ProfileSettings';
+import { SellerProfileDetails } from '../components/SellerProfileDetails';
+import { CustomerProfileDetails } from '../components/CustomerProfileDetails';
+import { DeliveryProfileDetails } from '../components/DeliveryProfileDetails';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Package, Heart, MapPin, MessageSquare, Bell, Settings, LogOut } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Package, Heart, MapPin, MessageSquare, Bell } from 'lucide-react';
 
 export function ProfilePage() {
   const { user, loading } = useAuth();
+  const [activeTab, setActiveTab] = useState('overview');
+  
   const {
     formData,
     updateFormData,
@@ -21,7 +31,9 @@ export function ProfilePage() {
     isChangingPassword,
   } = useProfile();
 
-  if (loading) {
+  const { data: fullProfile, isLoading: profileLoading } = useFullProfile();
+
+  if (loading || profileLoading) {
     return (
       <div className="max-w-4xl mx-auto py-16">
         <div className="flex justify-center">
@@ -35,105 +47,242 @@ export function ProfilePage() {
     return <Navigate to="/login" replace />;
   }
 
-  const menuItems = [
-    { icon: Package, label: 'My Orders', href: '/orders' },
-    { icon: Heart, label: 'Wishlist', href: '/wishlist' },
-    { icon: MapPin, label: 'Addresses', href: '/addresses' },
-    { icon: MessageSquare, label: 'Messages', href: '/messages' },
-    { icon: Bell, label: 'Notifications', href: '/notifications' },
-    { icon: Settings, label: 'Settings', href: '/settings' },
-  ];
+  if (!fullProfile) {
+    return (
+      <div className="max-w-2xl mx-auto text-center py-16">
+        <h2 className="text-2xl font-bold mb-4">Profile not found</h2>
+        <p className="text-muted-foreground">Unable to load your profile.</p>
+      </div>
+    );
+  }
 
-  return (
-    <div className="max-w-4xl mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-8">My Account</h1>
+  const { core, seller, customer, delivery, addresses, stats } = fullProfile;
+  const isOwnProfile = true;
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Sidebar Menu */}
-        <div className="space-y-2">
-          {menuItems.map((item) => (
-            <Link
-              key={item.href}
-              to={item.href}
-              className="flex items-center gap-3 p-3 rounded-lg hover:bg-muted transition-colors"
-            >
-              <item.icon className="w-5 h-5 text-muted-foreground" />
-              <span className="font-medium">{item.label}</span>
-            </Link>
-          ))}
-          <button
-            onClick={async () => {
-              await supabase.auth.signOut();
-              window.location.reload();
-            }}
-            className="flex items-center gap-3 p-3 rounded-lg hover:bg-destructive/10 text-destructive transition-colors w-full"
-          >
-            <LogOut className="w-5 h-5" />
-            <span className="font-medium">Sign Out</span>
-          </button>
+  // Handle edit button click - navigate to settings tab
+  const handleEdit = () => {
+    setActiveTab('settings');
+    setIsEditing(true);
+  };
+
+  if (loading || profileLoading) {
+    return (
+      <div className="max-w-4xl mx-auto py-16">
+        <div className="flex justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
         </div>
+      </div>
+    );
+  }
 
-        {/* Main Content */}
-        <div className="md:col-span-2 space-y-6">
-          {/* Profile Information */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ProfileForm
-                user={user}
-                formData={formData}
-                updateFormData={updateFormData}
-                onSave={saveProfile}
-                isSaving={isSaving}
-                isEditing={isEditing}
-                onEdit={() => setIsEditing(true)}
-                onCancel={() => setIsEditing(false)}
-              />
-            </CardContent>
-          </Card>
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
 
-          {/* Change Password */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Security</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ChangePassword
-                onChangePassword={changePassword}
-                isChanging={isChangingPassword}
-              />
-            </CardContent>
-          </Card>
+  if (!fullProfile) {
+    return (
+      <div className="max-w-2xl mx-auto text-center py-16">
+        <h2 className="text-2xl font-bold mb-4">Profile not found</h2>
+        <p className="text-muted-foreground">Unable to load your profile.</p>
+      </div>
+    );
+  }
 
-          {/* Account Stats */}
+  // Render role-specific details
+  const renderRoleDetails = () => {
+    switch (core.account_type) {
+      case 'seller':
+      case 'factory':
+        return seller && <SellerProfileDetails data={seller} />;
+      case 'customer':
+        return customer && <CustomerProfileDetails data={customer} />;
+      case 'delivery':
+        return delivery && <DeliveryProfileDetails data={delivery} />;
+      case 'middleman':
+        return (
           <Card>
-            <CardHeader>
-              <CardTitle>Account Overview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-2xl font-bold">0</p>
-                  <p className="text-sm text-muted-foreground">Total Orders</p>
-                </div>
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-2xl font-bold">$0.00</p>
-                  <p className="text-sm text-muted-foreground">Total Spent</p>
-                </div>
-              </div>
-              <Separator className="my-4" />
-              <p className="text-sm text-muted-foreground">
-                Member since {new Date(user.created_at).toLocaleDateString('en-US', {
-                  month: 'long',
-                  year: 'numeric',
-                })}
+            <CardContent className="p-6">
+              <p className="text-muted-foreground">
+                Middleman profile details coming soon...
               </p>
             </CardContent>
           </Card>
-        </div>
+        );
+      default:
+        return (
+          <Card>
+            <CardContent className="p-6">
+              <p className="text-muted-foreground">
+                Profile details for this account type coming soon...
+              </p>
+            </CardContent>
+          </Card>
+        );
+    }
+  };
+
+  return (
+    <div className="max-w-6xl mx-auto py-8 space-y-8">
+      {/* Header */}
+      <ProfileHeader
+        user={core}
+        isOwnProfile={isOwnProfile}
+        onEdit={handleEdit}
+      />
+
+      {/* Stats Overview */}
+      <StatsCards stats={stats} accountType={core.account_type} />
+
+      {/* Quick Links Sidebar */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <Link
+          to="/orders"
+          className="flex items-center gap-3 p-4 rounded-lg border hover:bg-muted transition-colors"
+        >
+          <Package className="w-5 h-5 text-muted-foreground" />
+          <div>
+            <p className="font-medium">Orders</p>
+            <p className="text-xs text-muted-foreground">{stats.orders.totalOrders} total</p>
+          </div>
+        </Link>
+        <Link
+          to="/wishlist"
+          className="flex items-center gap-3 p-4 rounded-lg border hover:bg-muted transition-colors"
+        >
+          <Heart className="w-5 h-5 text-muted-foreground" />
+          <div>
+            <p className="font-medium">Wishlist</p>
+            <p className="text-xs text-muted-foreground">{stats.wishlist.count} items</p>
+          </div>
+        </Link>
+        <Link
+          to="/addresses"
+          className="flex items-center gap-3 p-4 rounded-lg border hover:bg-muted transition-colors"
+        >
+          <MapPin className="w-5 h-5 text-muted-foreground" />
+          <div>
+            <p className="font-medium">Addresses</p>
+            <p className="text-xs text-muted-foreground">{addresses.length} saved</p>
+          </div>
+        </Link>
+        <Link
+          to="/messages"
+          className="flex items-center gap-3 p-4 rounded-lg border hover:bg-muted transition-colors"
+        >
+          <MessageSquare className="w-5 h-5 text-muted-foreground" />
+          <div>
+            <p className="font-medium">Messages</p>
+            <p className="text-xs text-muted-foreground">Coming soon</p>
+          </div>
+        </Link>
+        <Link
+          to="/notifications"
+          className="flex items-center gap-3 p-4 rounded-lg border hover:bg-muted transition-colors"
+        >
+          <Bell className="w-5 h-5 text-muted-foreground" />
+          <div>
+            <p className="font-medium">Notifications</p>
+            <p className="text-xs text-muted-foreground">{stats.notifications.unread} unread</p>
+          </div>
+        </Link>
       </div>
+
+      {/* Tabbed Content */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="addresses">Addresses</TabsTrigger>
+          {isOwnProfile && <TabsTrigger value="settings">Settings</TabsTrigger>}
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-6">
+          {/* Account Details */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Account Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <span className="text-sm text-muted-foreground">Account Type</span>
+                  <p className="font-medium capitalize">{core.account_type}</p>
+                </div>
+                <div>
+                  <span className="text-sm text-muted-foreground">Member Since</span>
+                  <p className="font-medium">
+                    {new Date(core.created_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                    })}
+                  </p>
+                </div>
+                <div>
+                  <span className="text-sm text-muted-foreground">Email</span>
+                  <p className="font-medium">{core.email}</p>
+                </div>
+                <div>
+                  <span className="text-sm text-muted-foreground">Phone</span>
+                  <p className="font-medium">{core.phone || 'Not provided'}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Role-Specific Details */}
+          {renderRoleDetails()}
+
+          {/* Addresses Preview */}
+          {addresses.length > 0 && (
+            <AddressesSection addresses={addresses.slice(0, 2)} showViewAll editable={false} />
+          )}
+        </TabsContent>
+
+        <TabsContent value="addresses">
+          <AddressesSection addresses={addresses} editable={isOwnProfile} />
+        </TabsContent>
+
+        <TabsContent value="settings">
+          <div className="grid gap-6 md:grid-cols-2">
+            {/* Profile Form */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Profile Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ProfileForm
+                  user={user}
+                  formData={formData}
+                  updateFormData={updateFormData}
+                  onSave={saveProfile}
+                  isSaving={isSaving}
+                  isEditing={isEditing}
+                  onEdit={() => setIsEditing(true)}
+                  onCancel={() => setIsEditing(false)}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Change Password */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Security</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ChangePassword
+                  onChangePassword={changePassword}
+                  isChanging={isChangingPassword}
+                />
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Additional Settings */}
+          <div className="mt-6">
+            <ProfileSettings userId={core.user_id} />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

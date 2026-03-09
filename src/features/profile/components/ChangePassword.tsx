@@ -5,12 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface ChangePasswordProps {
-  onChangePassword: (current: string, newPassword: string) => Promise<void>;
+  onChangePassword: (newPassword: string) => Promise<void>;
   isChanging: boolean;
 }
 
 export function ChangePassword({ onChangePassword, isChanging }: ChangePasswordProps) {
-  const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -31,11 +30,11 @@ export function ChangePassword({ onChangePassword, isChanging }: ChangePasswordP
     }
 
     try {
-      await onChangePassword(currentPassword, newPassword);
-      setCurrentPassword('');
+      await onChangePassword(newPassword);
       setNewPassword('');
       setConfirmPassword('');
       setShowForm(false);
+      setError('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to change password');
     }
@@ -60,17 +59,6 @@ export function ChangePassword({ onChangePassword, isChanging }: ChangePasswordP
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="currentPassword">Current Password</Label>
-            <Input
-              id="currentPassword"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="Enter current password"
-            />
-          </div>
-
           <div>
             <Label htmlFor="newPassword">New Password</Label>
             <Input
@@ -106,7 +94,6 @@ export function ChangePassword({ onChangePassword, isChanging }: ChangePasswordP
               variant="outline"
               onClick={() => {
                 setShowForm(false);
-                setCurrentPassword('');
                 setNewPassword('');
                 setConfirmPassword('');
                 setError('');

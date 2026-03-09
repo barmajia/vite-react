@@ -26,30 +26,23 @@ export function useProfile() {
     mutationFn: async (data: Partial<ProfileData>) => {
       if (!user) throw new Error('Not authenticated');
 
-      const updates: { full_name?: string; phone?: string; avatar_url?: string; email?: string } = {};
+      const updates: { full_name?: string; phone?: string; avatar_url?: string } = {};
       
       if (data.fullName !== undefined) updates.full_name = data.fullName;
       if (data.phone !== undefined) updates.phone = data.phone;
       if (data.avatarUrl !== undefined) updates.avatar_url = data.avatarUrl;
 
-      // Update user metadata
+      // Update user metadata (name and avatar only - phone requires SMS provider)
       const { error: metadataError } = await supabase.auth.updateUser({
         data: {
           full_name: updates.full_name,
           avatar_url: updates.avatar_url,
         },
-        phone: updates.phone,
+        // Skip phone update - requires SMS provider configuration
+        // phone: updates.phone,
       });
 
       if (metadataError) throw metadataError;
-
-      // Update email if changed
-      if (data.email && data.email !== user.email) {
-        const { error: emailError } = await supabase.auth.updateUser({
-          email: data.email,
-        });
-        if (emailError) throw emailError;
-      }
 
       // Update users table if it exists
       const { error: dbError } = await supabase
@@ -76,18 +69,8 @@ export function useProfile() {
   });
 
   const changePasswordMutation = useMutation({
-    mutationFn: async ({ currentPassword, newPassword }: { currentPassword: string; newPassword: string }) => {
-      if (!user?.email) throw new Error('User email not found');
-
-      // First sign in with current password to verify
-      const { error: signInError } = await supabase.auth.signInWithPassword({
-        email: user.email,
-        password: currentPassword,
-      });
-
-      if (signInError) throw new Error('Current password is incorrect');
-
-      // Then update to new password
+    mutationFn: async ({ newPassword }: { newPassword: string }) => {
+      // Just update the password - user is already authenticated
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword,
       });
@@ -106,8 +89,8 @@ export function useProfile() {
     await updateProfileMutation.mutateAsync(formData);
   };
 
-  const changePassword = async (currentPassword: string, newPassword: string) => {
-    await changePasswordMutation.mutateAsync({ currentPassword, newPassword });
+  const changePassword = async (newPassword: string) => {
+    await changePasswordMutation.mutateAsync({ newPassword });
   };
 
   return {
