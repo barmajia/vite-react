@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 export function AddressSettings() {
   const { addresses } = useSettings();
 
-  const handleDelete = (id: string) => {
+  const handleDelete = () => {
     if (confirm('Are you sure you want to delete this address?')) {
       toast.success('Address deleted (implement in production)');
     }
@@ -72,7 +72,7 @@ export function AddressSettings() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => handleDelete(address.id)}
+                  onClick={() => handleDelete()}
                   className="text-destructive"
                 >
                   <Trash2 className="h-4 w-4 mr-1" />

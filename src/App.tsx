@@ -53,14 +53,6 @@ function Conversation() {
     </div>
   );
 }
-function Settings() {
-  return (
-    <div className="text-center py-12">
-      <h1 className="text-2xl font-bold">Settings Page</h1>
-      <p className="text-muted-foreground mt-2">Coming soon in Phase 5</p>
-    </div>
-  );
-}
 
 function Brands() {
   return (

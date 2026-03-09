@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import { Eye, MapPin, Mail, Phone, MessageSquare } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -33,19 +33,18 @@ export function PrivacySettings() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Select
-            value={privacy.profileVisibility}
-            onValueChange={(v) => setPrivacy({ ...privacy, profileVisibility: v as any })}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="public">Public - Anyone can view</SelectItem>
-              <SelectItem value="connections_only">Connections Only</SelectItem>
-              <SelectItem value="private">Private - Only me</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="space-y-2">
+            <Label>Profile Visibility</Label>
+            <select
+              value={privacy.profileVisibility}
+              onChange={(e) => setPrivacy({ ...privacy, profileVisibility: e.target.value })}
+              className="w-full p-2 border rounded-md bg-background"
+            >
+              <option value="public">Public - Anyone can view</option>
+              <option value="connections_only">Connections Only</option>
+              <option value="private">Private - Only me</option>
+            </select>
+          </div>
         </CardContent>
       </Card>
 
@@ -69,8 +68,8 @@ export function PrivacySettings() {
                 <Label>{item.label}</Label>
               </div>
               <Switch
-                checked={privacy[item.key as keyof typeof privacy]}
-                onCheckedChange={(v) => {
+                checked={privacy[item.key as keyof typeof privacy] as boolean}
+                onCheckedChange={(v: boolean) => {
                   setPrivacy({ ...privacy, [item.key]: v });
                   toast.success('Setting updated');
                 }}
