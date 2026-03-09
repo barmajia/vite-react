@@ -71,7 +71,7 @@ export function Home() {
               <Button
                 size="lg"
                 variant="outline"
-                className="border-background text-background hover:bg-background/10"
+                className="border-2 border-background bg-background/10 text-foreground hover:bg-background/20"
                 onClick={() => navigate(ROUTES.CATEGORIES)}
               >
                 Browse Categories
