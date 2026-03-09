@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { getInitials, getAvatarColor } from "@/utils/avatarUtils";
+import { getInitials } from "@/utils/avatarUtils";
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   name?: string | null;
@@ -19,7 +19,6 @@ const sizeClasses = {
 const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
   ({ className, name, src, alt = "", size = "md", ...props }, ref) => {
     const initials = getInitials(name);
-    const avatarColor = getAvatarColor(name);
 
     const [imageError, setImageError] = React.useState(false);
     const showImage = src && !imageError;
@@ -29,16 +28,13 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
         ref={ref}
         className={cn(
           "relative flex shrink-0 overflow-hidden rounded-full items-center justify-center font-semibold border-2 backdrop-blur",
-          // Light mode: colored background with white text
-          "border-transparent text-white",
-          // Dark mode: dark background with white text and white border
+          // Light mode: transparent white background like header, black text
+          "bg-white/80 border-black text-black",
+          // Dark mode: transparent black background like header, white text
           "dark:bg-black/80 dark:border-white dark:text-white",
           sizeClasses[size],
-          className
+          className,
         )}
-        style={{
-          backgroundColor: showImage ? "transparent" : avatarColor,
-        }}
         title={name || undefined}
         {...props}
       >
@@ -54,7 +50,7 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
         )}
       </div>
     );
-  }
+  },
 );
 Avatar.displayName = "Avatar";
 
