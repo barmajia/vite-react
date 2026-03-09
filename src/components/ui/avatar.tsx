@@ -1,6 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import { getInitials } from "@/utils/avatarUtils";
+import { getInitials, getAvatarColor } from "@/utils/avatarUtils";
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   name?: string | null;
@@ -19,6 +19,7 @@ const sizeClasses = {
 const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
   ({ className, name, src, alt = "", size = "md", ...props }, ref) => {
     const initials = getInitials(name);
+    const avatarColor = getAvatarColor(name);
 
     const [imageError, setImageError] = React.useState(false);
     const showImage = src && !imageError;
@@ -53,7 +54,7 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
         )}
       </div>
     );
-  },
+  }
 );
 Avatar.displayName = "Avatar";
 

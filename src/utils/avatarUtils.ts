@@ -22,38 +22,27 @@ export const getInitials = (fullName: string | null | undefined): string => {
 };
 
 /**
- * Generate a consistent color from a name string
- * Returns colored text for white background
+ * Generate a consistent HSL color from a name string
+ * Same name will always produce the same vibrant color
+ * Used for light mode background
  */
-export const getColorFromName = (name: string | null | undefined): string => {
-  if (!name) return "#64748b"; // Default slate-500
+export const getAvatarColor = (name: string | null | undefined): string => {
+  if (!name) return 'hsl(210, 10%, 85%)'; // Default gray
 
-  // Simple hash function to generate consistent color from string
+  // Generate consistent hue from name string
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
-
-  // Map to a set of pleasant colors (darker for white background)
-  const colors = [
-    "#2563EB", // Blue-600
-    "#059669", // Green-600
-    "#D97706", // Amber-600
-    "#DC2626", // Red-600
-    "#7C3AED", // Violet-600
-    "#DB2777", // Pink-600
-    "#0891B2", // Cyan-600
-    "#65A30D", // Lime-600
-    "#EA580C", // Orange-600
-    "#0D9488", // Teal-600
-  ];
-
-  // Use absolute value of hash to pick a color
-  return colors[Math.abs(hash) % colors.length];
+  
+  const hue = Math.abs(hash) % 360;
+  
+  // Vibrant color (saturation 70%, lightness 60%)
+  return `hsl(${hue}, 70%, 60%)`;
 };
 
 /**
- * Get white background color
+ * Get white background color for light mode
  */
 export const getBackgroundColor = (): string => {
   return "#ffffff"; // Pure white
