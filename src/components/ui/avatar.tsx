@@ -28,11 +28,16 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
         ref={ref}
         className={cn(
           "relative flex shrink-0 overflow-hidden rounded-full items-center justify-center font-semibold border-2 backdrop-blur",
-          "bg-white/80 border-black text-black",
+          // Light mode: colored background with white text
+          "border-transparent text-white",
+          // Dark mode: dark background with white text and white border
           "dark:bg-black/80 dark:border-white dark:text-white",
           sizeClasses[size],
-          className,
+          className
         )}
+        style={{
+          backgroundColor: showImage ? "transparent" : avatarColor,
+        }}
         title={name || undefined}
         {...props}
       >
