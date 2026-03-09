@@ -24,7 +24,6 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
   ({ className, name, src, alt = "", size = "md", ...props }, ref) => {
     const initials = getInitials(name);
     const textColor = getColorFromName(name);
-    const bgColor = getBackgroundColor();
 
     const [imageError, setImageError] = React.useState(false);
     const showImage = src && !imageError;
