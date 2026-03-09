@@ -1,10 +1,6 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
-import {
-  getInitials,
-  getColorFromName,
-  getBackgroundColor,
-} from "@/utils/avatarUtils";
+import { getInitials } from "@/utils/avatarUtils";
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   name?: string | null;
@@ -23,7 +19,6 @@ const sizeClasses = {
 const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
   ({ className, name, src, alt = "", size = "md", ...props }, ref) => {
     const initials = getInitials(name);
-    const textColor = getColorFromName(name);
 
     const [imageError, setImageError] = React.useState(false);
     const showImage = src && !imageError;
@@ -32,15 +27,12 @@ const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
       <div
         ref={ref}
         className={cn(
-          "relative flex shrink-0 overflow-hidden rounded-full items-center justify-center font-semibold border",
+          "relative flex shrink-0 overflow-hidden rounded-full items-center justify-center font-semibold border-2 backdrop-blur",
+          "bg-white/80 border-black text-black",
+          "dark:bg-black/80 dark:border-white dark:text-white",
           sizeClasses[size],
           className,
         )}
-        style={{
-          backgroundColor: showImage ? "transparent" : bgColor,
-          color: showImage ? "inherit" : textColor,
-          borderColor: textColor,
-        }}
         title={name || undefined}
         {...props}
       >

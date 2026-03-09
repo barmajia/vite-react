@@ -5,18 +5,18 @@
  * Takes first letter of first name and first letter of second name
  */
 export const getInitials = (fullName: string | null | undefined): string => {
-  if (!fullName || typeof fullName !== 'string') return '?';
+  if (!fullName || typeof fullName !== "string") return "?";
 
   // Trim and split by spaces
   const names = fullName.trim().split(/\s+/);
 
-  if (names.length === 0) return '?';
+  if (names.length === 0) return "?";
 
   // Get first letter of the first name
   const firstInitial = names[0][0];
 
   // Get first letter of the second name (only second word, not last)
-  const secondInitial = names.length > 1 ? names[1][0] : '';
+  const secondInitial = names.length > 1 ? names[1][0] : "";
 
   return `${firstInitial}${secondInitial}`.toUpperCase();
 };
@@ -26,7 +26,7 @@ export const getInitials = (fullName: string | null | undefined): string => {
  * Returns colored text for white background
  */
 export const getColorFromName = (name: string | null | undefined): string => {
-  if (!name) return '#64748b'; // Default slate-500
+  if (!name) return "#64748b"; // Default slate-500
 
   // Simple hash function to generate consistent color from string
   let hash = 0;
@@ -36,16 +36,16 @@ export const getColorFromName = (name: string | null | undefined): string => {
 
   // Map to a set of pleasant colors (darker for white background)
   const colors = [
-    '#2563EB', // Blue-600
-    '#059669', // Green-600
-    '#D97706', // Amber-600
-    '#DC2626', // Red-600
-    '#7C3AED', // Violet-600
-    '#DB2777', // Pink-600
-    '#0891B2', // Cyan-600
-    '#65A30D', // Lime-600
-    '#EA580C', // Orange-600
-    '#0D9488', // Teal-600
+    "#2563EB", // Blue-600
+    "#059669", // Green-600
+    "#D97706", // Amber-600
+    "#DC2626", // Red-600
+    "#7C3AED", // Violet-600
+    "#DB2777", // Pink-600
+    "#0891B2", // Cyan-600
+    "#65A30D", // Lime-600
+    "#EA580C", // Orange-600
+    "#0D9488", // Teal-600
   ];
 
   // Use absolute value of hash to pick a color
@@ -56,7 +56,7 @@ export const getColorFromName = (name: string | null | undefined): string => {
  * Get white background color
  */
 export const getBackgroundColor = (): string => {
-  return '#ffffff'; // Pure white
+  return "#ffffff"; // Pure white
 };
 
 /**
@@ -65,7 +65,7 @@ export const getBackgroundColor = (): string => {
  */
 export const getContrastingTextColor = (bgColor: string): string => {
   // Convert hex to RGB
-  const hex = bgColor.replace('#', '');
+  const hex = bgColor.replace("#", "");
   const r = parseInt(hex.substr(0, 2), 16);
   const g = parseInt(hex.substr(2, 2), 16);
   const b = parseInt(hex.substr(4, 2), 16);
@@ -74,5 +74,5 @@ export const getContrastingTextColor = (bgColor: string): string => {
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
   // Return black for light backgrounds, white for dark
-  return luminance > 0.5 ? '#000000' : '#ffffff';
+  return luminance > 0.5 ? "#000000" : "#ffffff";
 };
