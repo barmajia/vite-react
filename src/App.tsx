@@ -27,6 +27,8 @@ import { AddressesPage } from "@/features/addresses/pages/AddressesPage";
 import { WishlistPage } from "@/features/wishlist/pages/WishlistPage";
 import { NotificationsPage } from "@/features/notifications/pages/NotificationsPage";
 import { SettingsPage } from "@/features/settings/pages/SettingsPage";
+import { Inbox } from "@/pages/messaging/Inbox";
+import { Chat } from "@/pages/messaging/Chat";
 
 // Placeholder components for customer pages
 function Reviews() {
@@ -34,22 +36,6 @@ function Reviews() {
     <div className="text-center py-12">
       <h1 className="text-2xl font-bold">Reviews Page</h1>
       <p className="text-muted-foreground mt-2">Coming soon in Phase 5</p>
-    </div>
-  );
-}
-function Messages() {
-  return (
-    <div className="text-center py-12">
-      <h1 className="text-2xl font-bold">Messages Page</h1>
-      <p className="text-muted-foreground mt-2">Coming soon in Phase 4</p>
-    </div>
-  );
-}
-function Conversation() {
-  return (
-    <div className="text-center py-12">
-      <h1 className="text-2xl font-bold">Conversation Page</h1>
-      <p className="text-muted-foreground mt-2">Coming soon in Phase 4</p>
     </div>
   );
 }
@@ -106,8 +92,8 @@ function App() {
             <Route path="wishlist" element={<WishlistPage />} />
             <Route path="addresses" element={<AddressesPage />} />
             <Route path="reviews" element={<Reviews />} />
-            <Route path="messages" element={<Messages />} />
-            <Route path="messages/:id" element={<Conversation />} />
+            <Route path="messages" element={<Inbox />} />
+            <Route path="messages/:conversationId" element={<Chat />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="settings" element={<SettingsPage />} />
 

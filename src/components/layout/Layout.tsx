@@ -1,12 +1,15 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
+import { FloatingActionButton } from '@/components/shared/FloatingActionButton';
+import { useAuth } from '@/hooks/useAuth';
 
 const noLayoutRoutes = ['/login', '/signup', '/forgot-password', '/reset-password'];
 
 export function Layout() {
   const location = useLocation();
   const showLayout = !noLayoutRoutes.includes(location.pathname);
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -17,6 +20,7 @@ export function Layout() {
         </div>
       </main>
       {showLayout && <Footer />}
+      {showLayout && user && <FloatingActionButton />}
     </div>
   );
 }

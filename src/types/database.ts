@@ -18,6 +18,8 @@ export interface User {
   full_name: string | null;
   avatar_url: string | null;
   phone: string | null;
+  latitude: number | null;
+  longitude: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -28,6 +30,8 @@ export interface UserProfile {
   full_name?: string;
   avatar_url?: string;
   phone?: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 // ==================== Product Types ====================

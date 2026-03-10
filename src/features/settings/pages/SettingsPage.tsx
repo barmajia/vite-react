@@ -8,6 +8,7 @@ import { AddressSettings } from '../components/AddressSettings';
 import { NotificationSettings } from '../components/NotificationSettings';
 import { PrivacySettings } from '../components/PrivacySettings';
 import { SecuritySettings } from '../components/SecuritySettings';
+import { LocationSettings } from '@/components/shared/LocationSettings';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
@@ -18,6 +19,7 @@ import {
   Bell,
   Eye,
   Lock,
+  Locate,
 } from 'lucide-react';
 
 export function SettingsPage() {
@@ -57,6 +59,7 @@ export function SettingsPage() {
     ...(profile.account_type !== 'customer'
       ? [{ id: 'business', label: 'Business', icon: Building2 }]
       : []),
+    { id: 'location', label: 'Location', icon: Locate },
     { id: 'addresses', label: 'Addresses', icon: MapPin },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'privacy', label: 'Privacy', icon: Eye },
@@ -101,6 +104,11 @@ export function SettingsPage() {
         {/* Business Settings */}
         <TabsContent value="business">
           <BusinessSettings accountType={profile.account_type} />
+        </TabsContent>
+
+        {/* Location Settings */}
+        <TabsContent value="location">
+          <LocationSettings />
         </TabsContent>
 
         {/* Address Settings */}
