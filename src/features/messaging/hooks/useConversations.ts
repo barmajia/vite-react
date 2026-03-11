@@ -1,9 +1,9 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
 import { useEffect } from 'react';
 import { subscribeToConversations } from '../lib/supabase-realtime';
 import { useAuth } from '@/hooks/useAuth';
 import type { ConversationWithParticipants } from '../types/messaging';
+import { getConversationsWithDetails, getUserConversationIds } from '../lib/supabase-messaging';
 
 export const useConversations = () => {
   const { user } = useAuth();
@@ -12,57 +12,33 @@ export const useConversations = () => {
   const fetchConversations = async () => {
     if (!user) throw new Error('User not authenticated');
 
-    // Get conversations where user is either the buyer or seller
-    const { data: conversations, error: convError } = await supabase
-      .from('conversations')
-      .select(`
-        id,
-        user_id,
-        seller_id,
-        last_message_at,
-        created_at,
-        messages (
-          id,
-          content,
-          sender_id,
-          is_read,
-          created_at
-        )
-      `)
-      .or(`user_id.eq.${user.id},seller_id.eq.${user.id}`)
-      .order('last_message_at', { ascending: false, nullsFirst: false });
+    // Step 1: Get conversation IDs from participants table
+    const conversationIds = await getUserConversationIds(user.id);
 
-    if (convError) throw convError;
+    if (conversationIds.length === 0) {
+      return [];
+    }
 
-    // Fetch participant details for each conversation
-    const conversationsWithDetails = await Promise.all(
-      (conversations || []).map(async (conv: any) => {
-        const otherUserId = conv.user_id === user.id ? conv.seller_id : conv.user_id;
-        
-        const { data: otherUser } = await supabase
-          .from('users')
-          .select('id, full_name, avatar_url')
-          .eq('id', otherUserId)
-          .single();
+    // Step 2: Get full conversation details
+    const conversations = await getConversationsWithDetails(user.id, conversationIds);
 
-        const unreadCount = (conv.messages || []).filter(
-          (m: any) => m.sender_id !== user.id && !m.is_read
-        ).length;
+    // Transform: calculate unread count, extract other user
+    return conversations.map((conv: any) => {
+      const otherParticipant = conv.conversation_participants?.find(
+        (p: any) => p.user_id !== user.id
+      );
 
-        const lastMessage = conv.messages && conv.messages.length > 0 
-          ? conv.messages[0].content 
-          : null;
+      const unreadCount = conv.messages?.filter(
+        (m: any) => m.sender_id !== user.id && !m.is_read
+      ).length || 0;
 
-        return {
-          ...conv,
-          otherUser,
-          unreadCount,
-          last_message: lastMessage,
-        } as ConversationWithParticipants;
-      })
-    );
-
-    return conversationsWithDetails;
+      return {
+        ...conv,
+        otherUser: otherParticipant?.users || null,
+        unreadCount,
+        last_message: conv.last_message,
+      } as ConversationWithParticipants;
+    });
   };
 
   const { data, isLoading, error, refetch } = useQuery({

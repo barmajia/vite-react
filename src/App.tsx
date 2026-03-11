@@ -30,6 +30,12 @@ import { SettingsPage } from "@/features/settings/pages/SettingsPage";
 import { Inbox } from "@/pages/messaging/Inbox";
 import { Chat } from "@/pages/messaging/Chat";
 
+// Factory pages
+import { FactoryDashboardPage } from "@/pages/factory/FactoryDashboardPage";
+import { FactoryProductionPage } from "@/pages/factory/FactoryProductionPage";
+import { FactoryQuotesPage } from "@/pages/factory/FactoryQuotesPage";
+import { FactoryConnectionsPage } from "@/pages/factory/FactoryConnectionsPage";
+
 // Placeholder components for customer pages
 function Reviews() {
   return (
@@ -96,6 +102,12 @@ function App() {
             <Route path="messages/:conversationId" element={<Chat />} />
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="settings" element={<SettingsPage />} />
+
+            {/* Factory Routes (Protected) */}
+            <Route path="factory" element={<FactoryDashboardPage />} />
+            <Route path="factory/production" element={<FactoryProductionPage />} />
+            <Route path="factory/quotes" element={<FactoryQuotesPage />} />
+            <Route path="factory/connections" element={<FactoryConnectionsPage />} />
 
             {/* Error Routes */}
             <Route path="error" element={<ServerError />} />

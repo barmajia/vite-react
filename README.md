@@ -1,9 +1,9 @@
 # Aurora E-commerce
 
-A modern, production-ready full-stack e-commerce web application built with React, Vite, TypeScript, Tailwind CSS, and Supabase. Features a minimalist, high-contrast luxury tech aesthetic with dark/light mode support.
+A modern, production-ready full-stack e-commerce web application built with React, Vite, TypeScript, Tailwind CSS, and Supabase. Features a minimalist, high-contrast luxury tech aesthetic with dark/light mode support and real-time messaging.
 
 **Version:** 1.0.0  
-**Status:** Production Ready (Phase 1-3 Complete)
+**Status:** Production Ready (Phase 1-4 Complete)
 
 ---
 
@@ -57,12 +57,27 @@ The app will run at `http://localhost:5173`
 - Order tracking: `pending → confirmed → processing → shipped → delivered`
 - Payment status tracking (`pending`, `paid`, `failed`, `refunded`)
 
+#### 💬 Real-Time Messaging (NEW)
+- Buyer-seller conversations
+- Live message delivery via Supabase Realtime
+- Typing indicators
+- Read receipts (✓✓)
+- Unread message count badges
+- Last message preview with timestamps
+
+#### 🌍 Geolocation (NEW)
+- Browser-based location detection
+- Find nearby sellers
+- Distance calculations
+- Auto-save location to profile
+- Manual coordinate input support
+
 #### 👤 User Features
 - Profile management with avatar upload
 - Address management (multiple shipping addresses)
 - Wishlist functionality
 - Notifications system
-- Settings pages (profile, account, business, privacy, security)
+- Settings pages (profile, account, business, privacy, security, location)
 
 #### 🎨 UI/UX
 - Dark/Light theme toggle (persisted)
@@ -74,8 +89,7 @@ The app will run at `http://localhost:5173`
 
 ### Upcoming Features
 
-- 🔄 Real-time messaging (Phase 4)
-- 🔄 Reviews management page (Phase 5)
+- 🔮 Reviews management page (Phase 5)
 - 🔮 Brands feature
 - 🔮 Analytics dashboard (seller)
 - 🔮 Admin panel
@@ -92,9 +106,9 @@ The app will run at `http://localhost:5173`
 | **TypeScript** | 5.5.3 | Type safety |
 | **Vite** | 5.4.1 | Build tool & dev server |
 | **Tailwind CSS** | 3.4.1 | Styling with CSS variables |
-| **Shadcn/UI** | - | 11 Radix UI primitives |
+| **Shadcn/UI** | - | 11+ Radix UI primitives |
 | **Zustand** | 5.0.11 | Client state management |
-| **TanStack Query** | 5.90.21 | Server state & caching |
+| **TanStack Query** | ^5.90.21 | Server state & caching |
 | **React Router DOM** | 7.13.1 | Client-side routing |
 | **Sonner** | 2.0.7 | Toast notifications |
 | **Lucide React** | 0.577.0 | Icon library |
@@ -129,7 +143,7 @@ vite-react/
 │   │   ├── layout/           # Header, Footer, MobileNav, Layout
 │   │   ├── products/         # ProductCard, ProductGrid, ProductGallery, StarRating
 │   │   ├── shared/           # LoadingSpinner, EmptyState, Pagination
-│   │   ├── ui/               # 14 Shadcn/UI components
+│   │   ├── ui/               # 14+ Shadcn/UI components
 │   │   ├── ErrorBoundary.tsx
 │   │   ├── ToastProvider.tsx
 │   │   └── VercelAnalytics.tsx
@@ -139,30 +153,33 @@ vite-react/
 │   │   ├── cart/             # Shopping cart
 │   │   ├── categories/       # Product categories
 │   │   ├── checkout/         # Checkout flow
+│   │   ├── messaging/        # Real-time messaging (NEW)
 │   │   ├── notifications/    # Notifications
 │   │   ├── orders/           # Order management
 │   │   ├── products/         # Products listing & details
 │   │   ├── profile/          # User profile
-│   │   ├── settings/         # User settings
+│   │   ├── settings/         # User settings (includes location)
 │   │   └── wishlist/         # Wishlist
 │   ├── hooks/
 │   │   ├── useAuth.tsx       # Authentication hook
 │   │   ├── useCart.ts        # Cart state (Zustand)
 │   │   ├── useProducts.ts    # Products (TanStack Query)
 │   │   ├── useTheme.tsx      # Theme toggle
+│   │   ├── useGeolocation.ts # Browser geolocation (NEW)
 │   │   └── ...
 │   ├── lib/
 │   │   ├── supabase.ts       # Supabase client configuration
-│   │   ├── utils.ts          # Utilities (cn function)
-│   │   └── constants.ts      # App constants & routes
+│   │   ├── supabase-realtime.ts # Realtime subscriptions
+│   │   └── utils.ts          # Utilities (cn function)
 │   ├── pages/
 │   │   ├── auth/             # Login, Signup, ForgotPassword, ResetPassword
 │   │   ├── errors/           # NotFound, ServerError
+│   │   ├── messaging/        # Inbox, Chat (NEW)
 │   │   └── public/           # Home, ProductList, ProductDetail, About, Contact, Help
 │   ├── types/
 │   │   ├── database.ts       # TypeScript types from Supabase schema
 │   │   ├── env.d.ts          # Environment variable types
-│   │   └── profile.ts        # Profile types
+│   │   └── profile.ts        # Profile types (includes location)
 │   ├── utils/
 │   │   └── avatarUtils.ts    # Avatar helper functions
 │   ├── App.tsx               # Main app with routing
@@ -261,7 +278,7 @@ vite-react/
 
 | Table | Description |
 |-------|-------------|
-| `users` | User profiles (email, full_name, avatar, phone) |
+| `users` | User profiles (email, full_name, avatar, phone, **latitude**, **longitude**) |
 | `products` | Product catalog with tsvector search, pricing, inventory |
 | `cart` | Shopping cart items linked to users and products |
 | `orders` | Order records with status tracking and payment status |
@@ -282,6 +299,7 @@ vite-react/
 - **Real-time updates** via Supabase Realtime
 - **Row Level Security (RLS)** on all tables
 - **Automatic `updated_at`** triggers
+- **Geospatial queries** for nearby sellers (latitude/longitude)
 
 ---
 
@@ -300,6 +318,13 @@ vite-react/
 - **Strict TypeScript typing**
 - **No exposed secrets** (environment variables only)
 - **Secure headers** on API requests
+
+### Geolocation Privacy
+
+- Browser permission required for location access
+- User can deny/revoke permission anytime
+- Location data only visible to user (RLS protected)
+- Location used only for nearby seller features
 
 ---
 
@@ -322,7 +347,8 @@ vite-react/
 | **Phase 1** | ✅ Complete | Project Setup (Vite, TS, Tailwind, Supabase, base components) |
 | **Phase 2** | ✅ Complete | Authentication System (login, signup, reset, protected routes) |
 | **Phase 3** | ✅ Complete | Product Listing & Cart (products, categories, cart, checkout, orders) |
-| **Phase 4** | 🔄 Pending | Messaging (real-time chat, conversations) |
+| **Phase 4** | ✅ Complete | Messaging (real-time chat, conversations, typing indicators) |
+| **Geolocation** | ✅ Complete | Browser geolocation for nearby sellers |
 | **Phase 5** | 🔄 Pending | Reviews Management (review CRUD, seller responses) |
 | **Future** | 🔮 Planned | Brands, Analytics Dashboard, Admin Panel |
 
@@ -338,8 +364,11 @@ vite-react/
 
 ## 📚 Additional Documentation
 
-- [DEPLOYMENT.md](./DEPLOYMENT.md) - Detailed deployment guide
+- [DEPLOYMENT.md](./DEPLOYMENT.md) - Detailed deployment guide with optimizations
 - [PHASE_1_COMPLETE.md](./PHASE_1_COMPLETE.md) - Phase 1 completion report
+- [PHASE_4_COMPLETE.md](./PHASE_4_COMPLETE.md) - Phase 4 (Messaging) completion report
+- [GEOLOCATION_COMPLETE.md](./GEOLOCATION_COMPLETE.md) - Geolocation feature guide
+- [LOCATION_FEATURE_COMPLETE.md](./LOCATION_FEATURE_COMPLETE.md) - Location settings documentation
 - [PROJECT_ANALYSIS.md](./PROJECT_ANALYSIS.md) - Comprehensive project analysis
 
 ---
