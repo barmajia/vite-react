@@ -14,6 +14,18 @@ const getImageUrl = (imageUrl: unknown): string => {
   // Handle null/undefined
   if (!imageUrl) return "/placeholder-product.png";
 
+  // If it's an object, try to extract the URL from common properties
+  if (typeof imageUrl === "object") {
+    const obj = imageUrl as Record<string, unknown>;
+    // Try common property names for URLs
+    const url = obj.url || obj.imageUrl || obj.src || obj.path || obj.file_url;
+    if (url) {
+      return String(url);
+    }
+    // If no known property, return placeholder
+    return "/placeholder-product.png";
+  }
+
   // Convert to string if it's not already
   const urlString = String(imageUrl);
 
@@ -32,6 +44,7 @@ const getImageUrl = (imageUrl: unknown): string => {
 export function ProductGallery({ images, title }: ProductGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const imageList = Array.isArray(images) ? (images as string[]) : [];
@@ -39,6 +52,11 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
     imageList.length > 0
       ? imageList.map(getImageUrl)
       : ["/placeholder-product.png"];
+
+  // Debug: Log the images
+  console.log("ProductGallery - Raw images:", images);
+  console.log("ProductGallery - First image object:", imageList[0]);
+  console.log("ProductGallery - Constructed URLs:", allImages);
 
   const openFullscreen = (index: number) => {
     setSelectedIndex(index);
@@ -75,7 +93,16 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
           alt={`${title} - Image ${selectedIndex + 1}`}
           className="h-full w-full object-cover cursor-pointer"
           onClick={() => openFullscreen(selectedIndex)}
+          onError={() => {
+            console.error("Image failed to load:", allImages[selectedIndex]);
+            setImageLoadError(true);
+          }}
         />
+        {imageLoadError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-muted">
+            <p className="text-muted-foreground text-sm">Image not available</p>
+          </div>
+        )}
 
         {allImages.length > 1 && (
           <>
