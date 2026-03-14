@@ -29,6 +29,7 @@ import { NotificationsPage } from "@/features/notifications/pages/NotificationsP
 import { SettingsPage } from "@/features/settings/pages/SettingsPage";
 import { Inbox } from "@/pages/messaging/Inbox";
 import { Chat } from "@/pages/messaging/Chat";
+import ProductDetailsPage from "@/pages/public/ProductDetailsPage";
 
 // Factory pages
 import { FactoryDashboardPage } from "@/pages/factory/FactoryDashboardPage";
@@ -74,6 +75,10 @@ function App() {
             <Route index element={<Home />} />
             <Route path="products" element={<ProductList />} />
             <Route path="product/:asin" element={<ProductDetail />} />
+            <Route
+              path="product-details/:asin"
+              element={<ProductDetailsPage />}
+            />
             <Route path="categories" element={<CategoriesPage />} />
             <Route path="categories/:slug" element={<CategoryProductsPage />} />
             <Route path="brands" element={<Brands />} />
@@ -105,9 +110,15 @@ function App() {
 
             {/* Factory Routes (Protected) */}
             <Route path="factory" element={<FactoryDashboardPage />} />
-            <Route path="factory/production" element={<FactoryProductionPage />} />
+            <Route
+              path="factory/production"
+              element={<FactoryProductionPage />}
+            />
             <Route path="factory/quotes" element={<FactoryQuotesPage />} />
-            <Route path="factory/connections" element={<FactoryConnectionsPage />} />
+            <Route
+              path="factory/connections"
+              element={<FactoryConnectionsPage />}
+            />
 
             {/* Error Routes */}
             <Route path="error" element={<ServerError />} />

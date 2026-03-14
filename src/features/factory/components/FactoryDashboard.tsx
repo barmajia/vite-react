@@ -28,7 +28,7 @@ const generateChartData = (totalRevenue: number, totalOrders: number) => {
 };
 
 export const FactoryDashboard = () => {
-  const period = 30;
+  const period = '30d';
   const { analytics, isLoading } = useFactoryAnalytics(period);
 
   if (isLoading) {

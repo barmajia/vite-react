@@ -37,7 +37,7 @@ export const MessageBubble = ({ message, isOwn, otherUser }: MessageBubbleProps)
         </div>
         <div className={cn('flex items-center gap-2 mt-1 text-xs text-muted-foreground', isOwn ? 'justify-end' : 'justify-start')}>
           <span>{formatMessageTime(message.created_at)}</span>
-          {isOwn && message.is_read && (
+          {isOwn && message.read_at && (
             <span className="text-primary">✓✓</span>
           )}
         </div>

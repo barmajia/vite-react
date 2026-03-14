@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'sonner';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 export function useSettings() {
   const { user } = useAuth();
@@ -9,15 +9,15 @@ export function useSettings() {
 
   // Fetch user profile
   const { data: profile, isLoading } = useQuery({
-    queryKey: ['settings', 'profile', user?.id],
+    queryKey: ["settings", "profile", user?.id],
     queryFn: async () => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error("Not authenticated");
 
       const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+        .from("users")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
       if (error) throw error;
       return data;
@@ -27,33 +27,33 @@ export function useSettings() {
 
   // Fetch role-specific data
   const { data: roleData } = useQuery({
-    queryKey: ['settings', 'role', profile?.account_type],
+    queryKey: ["settings", "role", profile?.account_type],
     queryFn: async () => {
       if (!profile) return null;
 
       switch (profile.account_type) {
-        case 'seller':
-        case 'factory':
+        case "seller":
+        case "factory":
           const { data: seller } = await supabase
-            .from('sellers')
-            .select('*')
-            .eq('user_id', profile.user_id)
+            .from("sellers")
+            .select("*")
+            .eq("user_id", profile.user_id)
             .maybeSingle();
           return seller;
 
-        case 'middleman':
+        case "middleman":
           const { data: middleman } = await supabase
-            .from('middleman_profiles')
-            .select('*')
-            .eq('user_id', profile.user_id)
+            .from("middleman_profiles")
+            .select("*")
+            .eq("user_id", profile.user_id)
             .maybeSingle();
           return middleman;
 
-        case 'delivery':
+        case "delivery":
           const { data: delivery } = await supabase
-            .from('delivery_profiles')
-            .select('*')
-            .eq('user_id', profile.user_id)
+            .from("delivery_profiles")
+            .select("*")
+            .eq("user_id", profile.user_id)
             .maybeSingle();
           return delivery;
 
@@ -66,15 +66,15 @@ export function useSettings() {
 
   // Fetch addresses
   const { data: addresses } = useQuery({
-    queryKey: ['settings', 'addresses', user?.id],
+    queryKey: ["settings", "addresses", user?.id],
     queryFn: async () => {
       if (!user) return [];
 
       const { data, error } = await supabase
-        .from('shipping_addresses')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('is_default', { ascending: false });
+        .from("shipping_addresses")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("is_default", { ascending: false });
 
       if (error) throw error;
       return data || [];
@@ -84,24 +84,28 @@ export function useSettings() {
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: { full_name: string; phone: string; avatar_url: string }) => {
-      if (!user) throw new Error('Not authenticated');
+    mutationFn: async (data: {
+      full_name: string;
+      phone: string;
+      avatar_url: string;
+    }) => {
+      if (!user) throw new Error("Not authenticated");
 
       const { error } = await supabase
-        .from('users')
+        .from("users")
         .update({
           full_name: data.full_name,
           phone: data.phone,
           avatar_url: data.avatar_url,
           updated_at: new Date().toISOString(),
         })
-        .eq('user_id', user.id);
+        .eq("user_id", user.id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['settings', 'profile'] });
-      toast.success('Profile updated successfully');
+      queryClient.invalidateQueries({ queryKey: ["settings", "profile"] });
+      toast.success("Profile updated successfully");
     },
     onError: (error: any) => {
       toast.error(`Failed to update profile: ${error.message}`);
@@ -111,21 +115,21 @@ export function useSettings() {
   // Update seller settings mutation
   const updateSellerMutation = useMutation({
     mutationFn: async (data: any) => {
-      if (!user) throw new Error('Not authenticated');
+      if (!user) throw new Error("Not authenticated");
 
       const { error } = await supabase
-        .from('sellers')
+        .from("sellers")
         .update({
           ...data,
           updated_at: new Date().toISOString(),
         })
-        .eq('user_id', user.id);
+        .eq("user_id", user.id);
 
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['settings', 'role'] });
-      toast.success('Business settings updated');
+      queryClient.invalidateQueries({ queryKey: ["settings", "role"] });
+      toast.success("Business settings updated");
     },
     onError: (error: any) => {
       toast.error(`Failed to update settings: ${error.message}`);
@@ -142,7 +146,7 @@ export function useSettings() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Password updated successfully');
+      toast.success("Password updated successfully");
     },
     onError: (error: any) => {
       toast.error(`Failed to update password: ${error.message}`);
@@ -159,7 +163,7 @@ export function useSettings() {
       if (error) throw error;
     },
     onSuccess: () => {
-      toast.success('Confirmation email sent. Please check your inbox.');
+      toast.success("Confirmation email sent. Please check your inbox.");
     },
     onError: (error: any) => {
       toast.error(`Failed to update email: ${error.message}`);
@@ -171,15 +175,15 @@ export function useSettings() {
     mutationFn: async () => {
       // Note: Supabase doesn't allow direct user deletion from client
       // Create a support ticket or use Edge Function
-      toast.error('Please contact support to delete your account');
-      throw new Error('Account deletion requires support assistance');
+      toast.error("Please contact support to delete your account");
+      throw new Error("Account deletion requires support assistance");
     },
   });
 
   // Sign out
   const signOut = async () => {
     await supabase.auth.signOut();
-    toast.success('Signed out successfully');
+    toast.success("Signed out successfully");
     window.location.reload();
   };
 

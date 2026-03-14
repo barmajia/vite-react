@@ -13,8 +13,10 @@ import { DealProposalDialog } from './DealProposalDialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
+import type { ConversationType } from '@/types/database';
 
 export const ChatWindow = () => {
   const { conversationId } = useParams<{ conversationId: string }>();
@@ -28,6 +30,7 @@ export const ChatWindow = () => {
     avatar_url: string | null;
     account_type?: string;
   } | null>(null);
+  const [conversationType, setConversationType] = useState<ConversationType>('general');
   const [showDealDialog, setShowDealDialog] = useState(false);
   const [userAccountType, setUserAccountType] = useState<string>('');
 
@@ -56,18 +59,20 @@ export const ChatWindow = () => {
     fetchAccountType();
   }, [user]);
 
-  // Fetch other user info
+  // Fetch other user info and conversation type
   useEffect(() => {
     if (!conversationId || !user) return;
 
     const fetchParticipants = async () => {
       const { data: conversation } = await supabase
         .from('conversations')
-        .select('user_id, seller_id')
+        .select('user_id, seller_id, conversation_type')
         .eq('id', conversationId)
         .single();
 
       if (!conversation) return;
+
+      setConversationType(conversation.conversation_type || 'general');
 
       const otherUserId = conversation.user_id === user.id
         ? conversation.seller_id
@@ -76,7 +81,7 @@ export const ChatWindow = () => {
       const { data } = await supabase
         .from('users')
         .select('id, full_name, avatar_url, account_type')
-        .eq('id', otherUserId)
+        .eq('user_id', otherUserId)
         .single();
 
       if (data) {
@@ -115,7 +120,17 @@ export const ChatWindow = () => {
     });
   };
 
-  const canProposeDeal = userAccountType === 'factory' || userAccountType === 'seller';
+  const canProposeDeal = (userAccountType === 'factory' || userAccountType === 'seller') && 
+                         conversationType !== 'deal_negotiation';
+
+  const getConversationTypeLabel = (type: ConversationType) => {
+    const labels: Record<ConversationType, string> = {
+      general: 'General Chat',
+      deal_negotiation: 'Deal Negotiation',
+      order_support: 'Order Support',
+    };
+    return labels[type];
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -133,9 +148,14 @@ export const ChatWindow = () => {
           </Avatar>
           <div>
             <h2 className="font-semibold">{otherUser?.full_name || 'User'}</h2>
-            {otherUser?.account_type && (
-              <p className="text-xs text-muted-foreground capitalize">{otherUser.account_type}</p>
-            )}
+            <div className="flex items-center gap-2">
+              {otherUser?.account_type && (
+                <span className="text-xs text-muted-foreground capitalize">{otherUser.account_type}</span>
+              )}
+              <Badge variant="outline" className="text-xs">
+                {getConversationTypeLabel(conversationType)}
+              </Badge>
+            </div>
           </div>
         </div>
 

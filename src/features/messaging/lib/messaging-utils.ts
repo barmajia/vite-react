@@ -1,15 +1,18 @@
 import { supabase } from '@/lib/supabase';
+import type { ConversationType } from '@/types/database';
 
 export const canStartConversation = async (
   fromUserId: string,
   toUserId: string,
-  productId?: string
+  productId?: string,
+  conversationType: ConversationType = 'general'
 ): Promise<boolean> => {
   try {
     const { data, error } = await supabase.rpc('can_start_conversation', {
       from_user_id: fromUserId,
       to_user_id: toUserId,
       product_id: productId || null,
+      conversation_type: conversationType,
     });
 
     if (error) throw error;
@@ -22,7 +25,8 @@ export const canStartConversation = async (
 
 export const getOrCreateConversation = async (
   toUserId: string,
-  productId?: string
+  productId?: string,
+  conversationType: ConversationType = 'general'
 ): Promise<string | null> => {
   try {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -31,8 +35,9 @@ export const getOrCreateConversation = async (
     // Check if conversation already exists with this user
     const { data: existingConversations } = await supabase
       .from('conversations')
-      .select('id, user_id, seller_id')
-      .or(`user_id.eq.${toUserId},seller_id.eq.${toUserId}`);
+      .select('id, user_id, seller_id, conversation_type')
+      .or(`user_id.eq.${toUserId},seller_id.eq.${toUserId}`)
+      .eq('conversation_type', conversationType);
 
     if (existingConversations && existingConversations.length > 0) {
       // Find mutual conversation
@@ -44,7 +49,7 @@ export const getOrCreateConversation = async (
     }
 
     // Check permission
-    const allowed = await canStartConversation(user.id, toUserId, productId);
+    const allowed = await canStartConversation(user.id, toUserId, productId, conversationType);
     if (!allowed) {
       throw new Error('Cannot start conversation with this user');
     }
@@ -52,9 +57,11 @@ export const getOrCreateConversation = async (
     // Create new conversation
     const { data: conversation, error: convError } = await supabase
       .from('conversations')
-      .insert({ 
+      .insert({
         user_id: user.id,
         seller_id: toUserId,
+        conversation_type: conversationType,
+        deal_id: null,
       })
       .select()
       .single();
@@ -77,7 +84,7 @@ export const markMessagesAsRead = async (
       .from('messages')
       .select('id')
       .eq('conversation_id', conversationId)
-      .eq('is_read', false)
+      .is('read_at', null)
       .neq('sender_id', userId);
 
     if (unreadMessages && unreadMessages.length > 0) {
@@ -85,7 +92,7 @@ export const markMessagesAsRead = async (
 
       await supabase
         .from('messages')
-        .update({ is_read: true })
+        .update({ read_at: new Date().toISOString() })
         .in('id', messageIds);
     }
   } catch (error) {

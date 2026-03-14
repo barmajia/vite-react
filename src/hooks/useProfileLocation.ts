@@ -1,7 +1,7 @@
-import { useState, useCallback, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
-import { useGeolocation } from './useGeolocation';
+import { useState, useCallback, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
+import { useGeolocation } from "./useGeolocation";
 
 interface UseProfileLocationReturn {
   latitude: number | null;
@@ -36,14 +36,16 @@ export const useProfileLocation = (): UseProfileLocationReturn => {
   // Load user's current location from profile on mount
   const loadUserLocation = useCallback(async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       const { data, error } = await supabase
-        .from('users')
-        .select('latitude, longitude')
-        .eq('id', user.id)
-        .single();
+        .from("users")
+        .select("latitude, longitude")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
       if (error) throw error;
 
@@ -52,32 +54,35 @@ export const useProfileLocation = (): UseProfileLocationReturn => {
         setLongitude(data.longitude);
       }
     } catch (err) {
-      console.error('Error loading location:', err);
+      console.error("Error loading location:", err);
     }
   }, []);
 
   // Update location in database
   const updateLocationInDb = useCallback(async (lat: number, lng: number) => {
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
       if (authError || !user) throw authError;
 
       const { error } = await supabase
-        .from('users')
+        .from("users")
         .update({
           latitude: lat,
           longitude: lng,
         })
-        .eq('id', user.id);
+        .eq("user_id", user.id);
 
       if (error) throw error;
 
       setLatitude(lat);
       setLongitude(lng);
-      toast.success('Location updated successfully');
+      toast.success("Location updated successfully");
     } catch (err: any) {
-      console.error('Error updating location:', err);
-      toast.error(err.message || 'Failed to update location');
+      console.error("Error updating location:", err);
+      toast.error(err.message || "Failed to update location");
       throw err;
     }
   }, []);
@@ -97,38 +102,44 @@ export const useProfileLocation = (): UseProfileLocationReturn => {
   }, [clearGeoError, getLocation, loadUserLocation, latitude, longitude]);
 
   // Update location manually
-  const updateLocation = useCallback(async (lat: number, lng: number) => {
-    setUpdating(true);
-    try {
-      await updateLocationInDb(lat, lng);
-    } finally {
-      setUpdating(false);
-    }
-  }, [updateLocationInDb]);
+  const updateLocation = useCallback(
+    async (lat: number, lng: number) => {
+      setUpdating(true);
+      try {
+        await updateLocationInDb(lat, lng);
+      } finally {
+        setUpdating(false);
+      }
+    },
+    [updateLocationInDb],
+  );
 
   // Clear location from profile
   const clearLocation = useCallback(async () => {
     setUpdating(true);
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: authError,
+      } = await supabase.auth.getUser();
       if (authError || !user) throw authError;
 
       const { error } = await supabase
-        .from('users')
+        .from("users")
         .update({
           latitude: null,
           longitude: null,
         })
-        .eq('id', user.id);
+        .eq("user_id", user.id);
 
       if (error) throw error;
 
       setLatitude(null);
       setLongitude(null);
-      toast.success('Location cleared');
+      toast.success("Location cleared");
     } catch (err: any) {
-      console.error('Error clearing location:', err);
-      toast.error(err.message || 'Failed to clear location');
+      console.error("Error clearing location:", err);
+      toast.error(err.message || "Failed to clear location");
     } finally {
       setUpdating(false);
     }

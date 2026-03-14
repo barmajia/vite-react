@@ -1,13 +1,33 @@
-import { useState, useRef, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import type { Json } from '@/types/database';
+import { useState, useRef, useEffect } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import type { Json } from "@/types/database";
 
 interface ProductGalleryProps {
   images: Json;
   title: string;
 }
+
+// Helper function to construct full Supabase storage URL
+const getImageUrl = (imageUrl: unknown): string => {
+  // Handle null/undefined
+  if (!imageUrl) return "/placeholder-product.png";
+
+  // Convert to string if it's not already
+  const urlString = String(imageUrl);
+
+  // If already a full URL, return as is
+  if (urlString.startsWith("http://") || urlString.startsWith("https://")) {
+    return urlString;
+  }
+
+  // Construct Supabase storage URL
+  const supabaseUrl =
+    import.meta.env.VITE_SUPABASE_URL ||
+    "https://ofovfxsfazlwvcakpuer.supabase.co";
+  return `${supabaseUrl}/storage/v1/object/public/product-images/${urlString}`;
+};
 
 export function ProductGallery({ images, title }: ProductGalleryProps) {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -15,16 +35,19 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   const imageList = Array.isArray(images) ? (images as string[]) : [];
-  const allImages = imageList.length > 0 ? imageList : ['/placeholder-product.png'];
+  const allImages =
+    imageList.length > 0
+      ? imageList.map(getImageUrl)
+      : ["/placeholder-product.png"];
 
   const openFullscreen = (index: number) => {
     setSelectedIndex(index);
     setIsFullscreen(true);
   };
 
-  const navigate = (direction: 'prev' | 'next') => {
+  const navigate = (direction: "prev" | "next") => {
     setSelectedIndex((prev) => {
-      if (direction === 'prev') {
+      if (direction === "prev") {
         return prev === 0 ? allImages.length - 1 : prev - 1;
       }
       return prev === allImages.length - 1 ? 0 : prev + 1;
@@ -34,13 +57,13 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (!isFullscreen) return;
-      if (e.key === 'Escape') setIsFullscreen(false);
-      if (e.key === 'ArrowLeft') navigate('prev');
-      if (e.key === 'ArrowRight') navigate('next');
+      if (e.key === "Escape") setIsFullscreen(false);
+      if (e.key === "ArrowLeft") navigate("prev");
+      if (e.key === "ArrowRight") navigate("next");
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isFullscreen, navigate]);
 
   return (
@@ -53,14 +76,14 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
           className="h-full w-full object-cover cursor-pointer"
           onClick={() => openFullscreen(selectedIndex)}
         />
-        
+
         {allImages.length > 1 && (
           <>
             <Button
               variant="ghost"
               size="icon"
               className="absolute left-2 top-1/2 -translate-y-1/2 h-8 w-8 bg-background/80 backdrop-blur"
-              onClick={() => navigate('prev')}
+              onClick={() => navigate("prev")}
             >
               <ChevronLeft className="h-4 w-4" />
             </Button>
@@ -68,7 +91,7 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
               variant="ghost"
               size="icon"
               className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 bg-background/80 backdrop-blur"
-              onClick={() => navigate('next')}
+              onClick={() => navigate("next")}
             >
               <ChevronRight className="h-4 w-4" />
             </Button>
@@ -94,10 +117,10 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
               key={index}
               onClick={() => setSelectedIndex(index)}
               className={cn(
-                'relative aspect-square h-20 w-20 shrink-0 overflow-hidden rounded-md border-2 transition-colors',
+                "relative aspect-square h-20 w-20 shrink-0 overflow-hidden rounded-md border-2 transition-colors",
                 index === selectedIndex
-                  ? 'border-primary'
-                  : 'border-transparent hover:border-muted-foreground'
+                  ? "border-primary"
+                  : "border-transparent hover:border-muted-foreground",
               )}
             >
               <img
@@ -131,7 +154,7 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
             className="absolute left-4 top-1/2 -translate-y-1/2 h-12 w-12 text-white"
             onClick={(e) => {
               e.stopPropagation();
-              navigate('prev');
+              navigate("prev");
             }}
           >
             <ChevronLeft className="h-6 w-6" />
@@ -143,7 +166,7 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
             className="absolute right-4 top-1/2 -translate-y-1/2 h-12 w-12 text-white"
             onClick={(e) => {
               e.stopPropagation();
-              navigate('next');
+              navigate("next");
             }}
           >
             <ChevronRight className="h-6 w-6" />

@@ -1,23 +1,43 @@
-import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ShoppingCart, Share2, Heart, Truck, Shield, RotateCcw, MessageSquare } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { ProductGallery } from '@/components/products/ProductGallery';
-import { StarRating } from '@/components/products/StarRating';
-import { ProductGrid } from '@/components/products/ProductGrid';
-import { useProduct, useRelatedProducts, useAddReview, useSeller } from '@/hooks/useProducts';
-import { useCart } from '@/hooks/useCart';
-import { useAuth } from '@/hooks/useAuth';
-import { formatPrice, formatDate } from '@/lib/utils';
-import { ROUTES } from '@/lib/constants';
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { EmptyState } from '@/components/shared/EmptyState';
-import { toast } from 'sonner';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+import { useState } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
+import {
+  ShoppingCart,
+  Share2,
+  Heart,
+  Truck,
+  Shield,
+  RotateCcw,
+  MessageSquare,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { ProductGallery } from "@/components/products/ProductGallery";
+import { StarRating } from "@/components/products/StarRating";
+import { ProductGrid } from "@/components/products/ProductGrid";
+import {
+  useProduct,
+  useRelatedProducts,
+  useAddReview,
+  useSeller,
+} from "@/hooks/useProducts";
+import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
+import { useConversationCreate } from "@/features/messaging";
+import { formatPrice, formatDate } from "@/lib/utils";
+import { ROUTES } from "@/lib/constants";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { EmptyState } from "@/components/shared/EmptyState";
+import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 
 export function ProductDetail() {
   const { asin } = useParams<{ asin: string }>();
@@ -25,24 +45,27 @@ export function ProductDetail() {
   const { user } = useAuth();
   const { addItem } = useCart();
   const addReview = useAddReview();
-  
+  const { createConversation, isCreating } = useConversationCreate();
+
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
-  const [reviewData, setReviewData] = useState({ rating: 5, comment: '' });
+  const [reviewData, setReviewData] = useState({ rating: 5, comment: "" });
 
-  const { data: product, isLoading, error } = useProduct(asin || '');
+  const { data: product, isLoading, error } = useProduct(asin || "");
   const { data: seller } = useSeller(product?.seller_id);
   const { data: relatedProducts } = useRelatedProducts(
     product?.category || null,
-    asin || '',
-    4
+    asin || "",
+    4,
   );
 
   const handleAddToCart = async () => {
     if (!user) {
-      toast.error('Please sign in to add items to cart');
-      navigate(ROUTES.LOGIN, { state: { from: { pathname: window.location.pathname } } });
+      toast.error("Please sign in to add items to cart");
+      navigate(ROUTES.LOGIN, {
+        state: { from: { pathname: window.location.pathname } },
+      });
       return;
     }
 
@@ -54,12 +77,42 @@ export function ProductDetail() {
         name: product.title,
         price: product.price,
         salePrice: null,
-        image_url: Array.isArray(product.images) ? (product.images[0] as string) : null,
+        image_url: Array.isArray(product.images)
+          ? (product.images[0] as string)
+          : null,
         stock_quantity: product.quantity,
       });
-      toast.success('Added to cart!');
+      toast.success("Added to cart!");
     } catch (_err) {
-      toast.error('Failed to add to cart');
+      toast.error("Failed to add to cart");
+    }
+  };
+
+  const handleChatWithSeller = async () => {
+    if (!user) {
+      toast.error("Please sign in to chat with seller");
+      navigate(ROUTES.LOGIN, {
+        state: { from: { pathname: window.location.pathname } },
+      });
+      return;
+    }
+
+    if (!product?.seller_id) {
+      toast.error("Seller information not available");
+      return;
+    }
+
+    if (user.id === product.seller_id) {
+      toast.error("You can't chat with yourself");
+      return;
+    }
+
+    const conversationId = await createConversation(
+      product.seller_id,
+      product.id,
+    );
+    if (conversationId) {
+      navigate(`/messages/${conversationId}`);
     }
   };
 
@@ -76,14 +129,16 @@ export function ProductDetail() {
       }
     } else {
       navigator.clipboard.writeText(window.location.href);
-      toast.success('Link copied to clipboard!');
+      toast.success("Link copied to clipboard!");
     }
   };
 
   const handleSubmitReview = async () => {
     if (!user) {
-      toast.error('Please sign in to write a review');
-      navigate(ROUTES.LOGIN, { state: { from: { pathname: window.location.pathname } } });
+      toast.error("Please sign in to write a review");
+      navigate(ROUTES.LOGIN, {
+        state: { from: { pathname: window.location.pathname } },
+      });
       return;
     }
 
@@ -95,11 +150,11 @@ export function ProductDetail() {
         rating: reviewData.rating,
         comment: reviewData.comment || undefined,
       });
-      toast.success('Review submitted!');
+      toast.success("Review submitted!");
       setReviewDialogOpen(false);
-      setReviewData({ rating: 5, comment: '' });
+      setReviewData({ rating: 5, comment: "" });
     } catch (_err) {
-      toast.error('Failed to submit review');
+      toast.error("Failed to submit review");
     }
   };
 
@@ -126,7 +181,8 @@ export function ProductDetail() {
   }
 
   const averageRating = product.reviews?.length
-    ? product.reviews.reduce((sum, r) => sum + r.rating, 0) / product.reviews.length
+    ? product.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) /
+      product.reviews.length
     : 0;
 
   return (
@@ -148,9 +204,9 @@ export function ProductDetail() {
                 </h1>
                 {seller && (
                   <p className="text-sm text-muted-foreground">
-                    Sold by{' '}
+                    Sold by{" "}
                     <span className="text-primary">
-                      {seller.full_name || 'Seller'}
+                      {seller.full_name || "Seller"}
                     </span>
                   </p>
                 )}
@@ -170,7 +226,9 @@ export function ProductDetail() {
                   onClick={() => setIsWishlisted(!isWishlisted)}
                   className="shrink-0"
                 >
-                  <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
+                  <Heart
+                    className={`h-4 w-4 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`}
+                  />
                 </Button>
               </div>
             </div>
@@ -194,7 +252,9 @@ export function ProductDetail() {
           {/* Price */}
           <div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold">{formatPrice(product.price)}</span>
+              <span className="text-3xl font-bold">
+                {formatPrice(product.price)}
+              </span>
               {product.quantity > 10 && (
                 <Badge variant="success">In Stock</Badge>
               )}
@@ -232,7 +292,9 @@ export function ProductDetail() {
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => setQuantity(Math.min(product.quantity, quantity + 1))}
+                  onClick={() =>
+                    setQuantity(Math.min(product.quantity, quantity + 1))
+                  }
                   className="h-9 w-9 rounded-none"
                   disabled={quantity >= product.quantity}
                 >
@@ -249,7 +311,7 @@ export function ProductDetail() {
                 disabled={product.quantity === 0}
               >
                 <ShoppingCart className="mr-2 h-4 w-4" />
-                {product.quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+                {product.quantity === 0 ? "Out of Stock" : "Add to Cart"}
               </Button>
               <Button
                 size="lg"
@@ -263,6 +325,16 @@ export function ProductDetail() {
                 Buy Now
               </Button>
             </div>
+            <Button
+              size="lg"
+              variant="secondary"
+              onClick={handleChatWithSeller}
+              disabled={isCreating || user?.id === product.seller_id}
+              className="w-full"
+            >
+              <MessageSquare className="mr-2 h-4 w-4" />
+              {isCreating ? "Starting chat..." : "Ask Seller a Question"}
+            </Button>
           </div>
 
           {/* Features */}
@@ -328,10 +400,18 @@ export function ProductDetail() {
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
                         key={star}
-                        onClick={() => setReviewData({ ...reviewData, rating: star })}
+                        onClick={() =>
+                          setReviewData({ ...reviewData, rating: star })
+                        }
                         className="text-2xl"
                       >
-                        <span className={star <= reviewData.rating ? 'text-primary' : 'text-muted-foreground'}>
+                        <span
+                          className={
+                            star <= reviewData.rating
+                              ? "text-primary"
+                              : "text-muted-foreground"
+                          }
+                        >
                           ★
                         </span>
                       </button>
@@ -342,7 +422,9 @@ export function ProductDetail() {
                   <Label>Comment (optional)</Label>
                   <Textarea
                     value={reviewData.comment}
-                    onChange={(e) => setReviewData({ ...reviewData, comment: e.target.value })}
+                    onChange={(e) =>
+                      setReviewData({ ...reviewData, comment: e.target.value })
+                    }
                     placeholder="Share your experience with this product..."
                     rows={4}
                   />
@@ -357,13 +439,17 @@ export function ProductDetail() {
 
         {product.reviews && product.reviews.length > 0 ? (
           <div className="space-y-4">
-            {product.reviews.map((review) => {
-              const userName = typeof review === 'object' && review !== null && 'user' in review && review.user 
-                ? (review.user as { full_name?: string | null })?.full_name 
-                : null;
-              const displayName = userName || 'Anonymous';
-              const initial = displayName[0]?.toUpperCase() || 'U';
-              
+            {product.reviews.map((review: any) => {
+              const userName =
+                typeof review === "object" &&
+                review !== null &&
+                "user" in review &&
+                review.user
+                  ? (review.user as { full_name?: string | null })?.full_name
+                  : null;
+              const displayName = userName || "Anonymous";
+              const initial = displayName[0]?.toUpperCase() || "U";
+
               return (
                 <div key={review.id} className="p-4 border rounded-lg">
                   <div className="flex items-start justify-between">
@@ -381,7 +467,9 @@ export function ProductDetail() {
                     <StarRating rating={review.rating} size="sm" />
                   </div>
                   {review.comment && (
-                    <p className="mt-3 text-muted-foreground">{review.comment}</p>
+                    <p className="mt-3 text-muted-foreground">
+                      {review.comment}
+                    </p>
                   )}
                 </div>
               );

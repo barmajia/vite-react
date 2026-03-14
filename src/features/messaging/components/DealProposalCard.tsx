@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import type { ConversationDeal } from '../hooks/useConversationDeals';
+import type { ConversationDeal } from '@/types/database';
 
 interface DealProposalCardProps {
   proposal: ConversationDeal;
@@ -10,7 +10,14 @@ interface DealProposalCardProps {
   onReject?: () => void;
 }
 
-const statusColors = {
+interface DealProposalData {
+  commission_rate?: number;
+  min_order_quantity?: number;
+  products?: string[];
+  terms?: string;
+}
+
+const statusColors: Record<string, string> = {
   pending: 'bg-yellow-500 hover:bg-yellow-600',
   accepted: 'bg-green-500 hover:bg-green-600',
   rejected: 'bg-red-500 hover:bg-red-600',
@@ -18,7 +25,7 @@ const statusColors = {
   cancelled: 'bg-gray-500 hover:bg-gray-600',
 };
 
-const statusLabels = {
+const statusLabels: Record<string, string> = {
   pending: 'Pending',
   accepted: 'Accepted',
   rejected: 'Rejected',
@@ -34,6 +41,7 @@ export const DealProposalCard = ({
 }: DealProposalCardProps) => {
   const status = proposal.status;
   const canRespond = !isProposer && status === 'pending';
+  const proposalData = proposal.proposal_data as unknown as DealProposalData;
 
   return (
     <Card className="my-4 border-primary/20 bg-muted/50">
@@ -52,24 +60,24 @@ export const DealProposalCard = ({
           <div className="flex justify-between items-center">
             <span className="text-muted-foreground">Commission Rate:</span>
             <span className="font-semibold text-lg">
-              {proposal.proposal_data?.commission_rate || 0}%
+              {proposalData?.commission_rate || 0}%
             </span>
           </div>
 
-          {proposal.proposal_data?.min_order_quantity && (
+          {proposalData?.min_order_quantity && (
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Min Order:</span>
               <span className="font-medium">
-                {proposal.proposal_data.min_order_quantity} units
+                {proposalData.min_order_quantity} units
               </span>
             </div>
           )}
 
-          {proposal.proposal_data?.products && proposal.proposal_data.products.length > 0 && (
+          {proposalData?.products && proposalData.products.length > 0 && (
             <div className="pt-2">
               <span className="text-muted-foreground">Products:</span>
               <div className="flex flex-wrap gap-1 mt-1">
-                {proposal.proposal_data.products.map((productId, index) => (
+                {proposalData.products.map((productId: string, index: number) => (
                   <Badge key={index} variant="outline" className="text-xs">
                     Product {productId.slice(0, 8)}
                   </Badge>
@@ -78,11 +86,11 @@ export const DealProposalCard = ({
             </div>
           )}
 
-          {proposal.proposal_data?.terms && (
+          {proposalData?.terms && (
             <div className="pt-2">
               <span className="text-muted-foreground">Terms:</span>
               <p className="mt-1 text-foreground bg-background p-2 rounded-md text-sm">
-                {proposal.proposal_data.terms}
+                {proposalData.terms}
               </p>
             </div>
           )}

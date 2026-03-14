@@ -1,4 +1,4 @@
-export type ProductionStatus = 
+export type ProductionStatus =
   | 'pending'
   | 'in_production'
   | 'quality_check'
@@ -7,7 +7,7 @@ export type ProductionStatus =
   | 'delivered'
   | 'cancelled';
 
-export type QuoteStatus = 
+export type QuoteStatus =
   | 'pending'
   | 'quoted'
   | 'accepted'
@@ -88,22 +88,11 @@ export interface FactoryCertification {
   created_at: string;
 }
 
-export interface FactoryConnection {
-  id: string;
-  factory_id: string;
-  seller_id: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'blocked';
-  created_at: string;
-  seller?: {
-    id: string;
-    full_name: string | null;
-    avatar_url: string | null;
-    company_name?: string;
-  };
-}
-
 // Database table types
 export type ProductionLogInsert = Omit<ProductionLog, 'id' | 'created_at'>;
 export type QuoteRequestInsert = Omit<QuoteRequest, 'id' | 'created_at' | 'updated_at'>;
 export type QuoteRequestUpdate = Partial<Omit<QuoteRequest, 'id' | 'created_at' | 'updated_at'>>;
 export type FactoryCertificationInsert = Omit<FactoryCertification, 'id' | 'created_at' | 'is_verified' | 'verified_at' | 'verified_by'>;
+
+// Re-export from database types for convenience
+export type { FactoryConnection } from '@/types/database';

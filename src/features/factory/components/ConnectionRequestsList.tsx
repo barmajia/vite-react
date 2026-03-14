@@ -4,7 +4,15 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar } from '@/components/ui/avatar';
-import type { FactoryConnection } from '../types/factory';
+import type { FactoryConnection } from '@/types/database';
+
+interface FactoryConnectionWithSeller extends FactoryConnection {
+  seller?: {
+    id: string;
+    full_name: string | null;
+    avatar_url: string | null;
+  };
+}
 
 const statusColors: Record<FactoryConnection['status'], string> = {
   pending: 'bg-yellow-500',
@@ -50,7 +58,7 @@ export const ConnectionRequestsList = () => {
 
   return (
     <div className="space-y-4">
-      {connections.map((connection) => (
+      {connections.map((connection: FactoryConnectionWithSeller) => (
         <Card key={connection.id}>
           <CardHeader>
             <div className="flex items-center justify-between">

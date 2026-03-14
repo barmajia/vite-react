@@ -118,7 +118,8 @@ export function useProduct(asin: string) {
   return useQuery({
     queryKey: ["product", asin],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // First fetch the product
+      const { data: product, error: productError } = await supabase
         .from("products")
         .select(
           `
@@ -132,30 +133,54 @@ export function useProduct(asin: string) {
           seller_id,
           created_at,
           average_rating,
-          review_count,
-          reviews (
-            id,
-            rating,
-            comment,
-            created_at,
-            user_id
-          )
+          review_count
         `,
         )
         .eq("id", asin)
         .single();
 
-      if (error) throw error;
-      return data as ProductWithDetails & {
-        reviews: Array<{
-          id: string;
-          rating: number;
-          comment: string | null;
-          created_at: string;
-          user_id: string;
-          user: { full_name: string | null } | null;
-        }>;
-      };
+      if (productError) throw productError;
+      if (!product) return null;
+
+      // Then fetch reviews separately
+      const { data: reviews, error: reviewsError } = await supabase
+        .from("reviews")
+        .select(
+          `
+          id,
+          rating,
+          comment,
+          created_at,
+          user_id
+        `,
+        )
+        .eq("asin", asin)
+        .order("created_at", { ascending: false });
+
+      if (reviewsError) throw reviewsError;
+
+      // Fetch user profiles for reviews
+      let reviewsWithProfiles = reviews || [];
+      if (reviewsWithProfiles.length > 0) {
+        const userIds = reviewsWithProfiles.map((r) => r.user_id);
+        const { data: users, error: usersError } = await supabase
+          .from("users")
+          .select("user_id, full_name, avatar_url")
+          .in("user_id", userIds);
+
+        if (usersError) throw usersError;
+
+        const userMap = new Map((users || []).map((u) => [u.user_id, u]));
+        reviewsWithProfiles = reviewsWithProfiles.map((review) => ({
+          ...review,
+          user_profile: userMap.get(review.user_id) || null,
+        }));
+      }
+
+      return {
+        ...product,
+        reviews: reviewsWithProfiles,
+      } as any;
     },
     enabled: !!asin,
   });
@@ -248,7 +273,7 @@ export function useSeller(sellerId: string | undefined) {
         .from("users")
         .select("user_id, full_name, avatar_url")
         .eq("user_id", sellerId)
-        .single();
+        .maybeSingle();
 
       if (error) throw error;
       return data;

@@ -10,33 +10,13 @@ export interface DealProposal {
   expires_at?: string;
 }
 
-export interface ConversationDeal {
-  id: string;
-  conversation_id: string;
-  deal_id: string | null;
-  proposer_id: string;
-  recipient_id: string;
-  proposal_data: DealProposal;
-  status: 'pending' | 'accepted' | 'rejected' | 'expired' | 'cancelled';
-  expires_at: string | null;
-  created_at: string;
-  updated_at: string;
-  deals?: {
-    id: string;
-    commission_rate: number;
-    party_a_id: string;
-    party_b_id: string;
-    middleman_id: string | null;
-  };
-}
-
 export const useConversationDeals = (conversationId: string | null) => {
   const queryClient = useQueryClient();
 
   // Fetch deals for this conversation
   const { data: deals, isLoading } = useQuery({
     queryKey: ['conversation_deals', conversationId],
-    queryFn: async (): Promise<ConversationDeal[]> => {
+    queryFn: async () => {
       if (!conversationId) return [];
 
       const { data, error } = await supabase
@@ -64,12 +44,7 @@ export const useConversationDeals = (conversationId: string | null) => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
-      // Transform data to match type
-      return (data || []).map((deal: any) => ({
-        ...deal,
-        deals: deal.deals?.[0] || null,
-      }));
+      return data || [];
     },
     enabled: !!conversationId,
     staleTime: 30000,

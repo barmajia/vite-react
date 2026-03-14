@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
 import type { FactoryAnalytics } from '../types/factory';
 
-export const useFactoryAnalytics = (periodDays: number = 30) => {
+export const useFactoryAnalytics = (period: string = '30d') => {
   const { user } = useAuth();
 
   const fetchAnalytics = async (): Promise<FactoryAnalytics> => {
@@ -11,12 +11,12 @@ export const useFactoryAnalytics = (periodDays: number = 30) => {
 
     const { data, error } = await supabase.rpc('get_seller_kpis', {
       p_seller_id: user.id,
-      p_period_days: periodDays,
+      p_period: period,
     });
 
     if (error) throw error;
 
-    const kpi = data[0];
+    const kpi = data?.[0] || {};
     return {
       totalRevenue: parseFloat(kpi.total_revenue) || 0,
       totalOrders: parseInt(kpi.total_orders) || 0,
@@ -32,7 +32,7 @@ export const useFactoryAnalytics = (periodDays: number = 30) => {
   };
 
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['factoryAnalytics', periodDays],
+    queryKey: ['factoryAnalytics', period],
     queryFn: fetchAnalytics,
     staleTime: 5 * 60 * 1000, // 5 minutes
     enabled: !!user,

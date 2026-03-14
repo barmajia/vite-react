@@ -28,9 +28,10 @@ export const useConversations = () => {
         (p: any) => p.user_id !== user.id
       );
 
-      const unreadCount = conv.messages?.filter(
-        (m: any) => m.sender_id !== user.id && !m.is_read
-      ).length || 0;
+      const unreadCount =
+        conv.messages?.filter(
+          (m: any) => m.sender_id !== user.id && !m.read_at
+        ).length || 0;
 
       return {
         ...conv,

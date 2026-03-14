@@ -9,8 +9,11 @@ export const useSendMessage = () => {
   const sendMessage = async ({
     conversationId,
     content,
+    messageType = 'text',
+    messageSubtype = 'text',
+    attachmentUrl,
   }: SendMessageInput): Promise<boolean> => {
-    if (!content.trim()) {
+    if (!content.trim() && !attachmentUrl) {
       toast.error('Message cannot be empty');
       return false;
     }
@@ -25,7 +28,10 @@ export const useSendMessage = () => {
         conversation_id: conversationId,
         sender_id: user.id,
         content: content.trim() || null,
-        is_read: false,
+        message_type: messageType,
+        message_subtype: messageSubtype,
+        attachment_url: attachmentUrl || null,
+        read_at: null,
       });
 
       if (error) throw error;
@@ -34,7 +40,7 @@ export const useSendMessage = () => {
       await supabase
         .from('conversations')
         .update({
-          last_message: content.trim(),
+          last_message: content.trim() || 'Attachment sent',
           last_message_at: new Date().toISOString(),
         })
         .eq('id', conversationId);

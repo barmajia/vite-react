@@ -1,13 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/hooks/useAuth';
-import type { FactoryConnection } from '../types/factory';
+import type { FactoryConnection as FactoryConnectionType } from '@/types/database';
 import { toast } from 'sonner';
 
 export const useFactoryConnections = (status?: 'pending' | 'accepted' | 'rejected') => {
   const { user } = useAuth();
 
-  const fetchConnections = async (): Promise<FactoryConnection[]> => {
+  const fetchConnections = async (): Promise<FactoryConnectionType[]> => {
     if (!user) throw new Error('User not authenticated');
 
     let query = supabase
@@ -17,7 +17,8 @@ export const useFactoryConnections = (status?: 'pending' | 'accepted' | 'rejecte
         seller:users!factory_connections_seller_id_fkey (
           id,
           full_name,
-          avatar_url
+          avatar_url,
+          account_type
         )
       `)
       .eq('factory_id', user.id);
@@ -26,7 +27,7 @@ export const useFactoryConnections = (status?: 'pending' | 'accepted' | 'rejecte
       query = query.eq('status', status);
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false });
+    const { data, error } = await query.order('requested_at', { ascending: false });
 
     if (error) throw error;
     return data || [];
@@ -60,7 +61,12 @@ export const useUpdateConnectionStatus = () => {
     }) => {
       const { data, error } = await supabase
         .from('factory_connections')
-        .update({ status })
+        .update({ 
+          status,
+          accepted_at: status === 'accepted' ? new Date().toISOString() : null,
+          rejected_at: status === 'rejected' ? new Date().toISOString() : null,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', connectionId)
         .select()
         .single();
@@ -117,6 +123,7 @@ export const useCreateFactoryConnection = () => {
           factory_id,
           seller_id: user.id,
           status: 'pending',
+          requested_at: new Date().toISOString(),
         })
         .select()
         .single();

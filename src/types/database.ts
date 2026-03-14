@@ -71,7 +71,7 @@ export interface CartItemWithProduct extends CartItem {
 }
 
 // ==================== Order Types ====================
-export type OrderStatus = 
+export type OrderStatus =
   | 'pending'
   | 'confirmed'
   | 'processing'
@@ -80,7 +80,16 @@ export type OrderStatus =
   | 'cancelled'
   | 'refunded';
 
-export type PaymentStatus = 
+export type ProductionStatus =
+  | 'pending'
+  | 'in_production'
+  | 'quality_check'
+  | 'ready_to_ship'
+  | 'shipped'
+  | 'delivered'
+  | 'cancelled';
+
+export type PaymentStatus =
   | 'pending'
   | 'paid'
   | 'failed'
@@ -89,11 +98,18 @@ export type PaymentStatus =
 export interface Order {
   id: string;
   user_id: string;
-  seller_id: string;
+  seller_id: string | null;
   status: OrderStatus;
+  production_status: ProductionStatus | null;
+  production_started_at: string | null;
+  production_completed_at: string | null;
+  quality_check_passed: boolean | null;
   total: number;
   payment_status: PaymentStatus;
   shipping_address_snapshot: Json;
+  deal_id: string | null;
+  commission_rate: number | null;
+  commission_amount: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -143,25 +159,88 @@ export interface Review {
 }
 
 // ==================== Conversation & Message Types ====================
+export type ConversationType = 'general' | 'deal_negotiation' | 'order_support';
+
 export interface Conversation {
   id: string;
-  user_id: string;
-  seller_id: string;
-  last_message_at: string;
+  product_id: string | null;
+  deal_id: string | null;
+  conversation_type: ConversationType;
+  user_id: string | null;
+  seller_id: string | null;
+  last_message: string | null;
+  last_message_at: string | null;
+  is_archived: boolean;
   created_at: string;
   updated_at: string;
   seller?: UserProfile;
-  last_message?: Message;
 }
+
+export type MessageType = 'text' | 'image' | 'file';
+export type MessageSubtype = 'text' | 'deal_proposal' | 'deal_counter' | 'deal_accepted' | 'deal_rejected' | 'file' | 'image';
 
 export interface Message {
   id: string;
   conversation_id: string;
   sender_id: string;
-  content: string;
-  is_read: boolean;
+  content: string | null;
+  message_type: MessageType;
+  message_subtype: MessageSubtype;
+  attachment_url: string | null;
+  read_at: string | null;
   created_at: string;
+  updated_at: string;
   sender?: UserProfile;
+}
+
+export interface ConversationDeal {
+  id: string;
+  conversation_id: string;
+  deal_id: string | null;
+  proposer_id: string;
+  recipient_id: string;
+  proposal_data: Json;
+  status: 'pending' | 'accepted' | 'rejected' | 'expired' | 'cancelled';
+  expires_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FactoryConnection {
+  id: string;
+  factory_id: string | null;
+  seller_id: string | null;
+  status: 'pending' | 'accepted' | 'rejected' | 'blocked';
+  requested_at: string;
+  accepted_at: string | null;
+  rejected_at: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FactoryRating {
+  id: string;
+  factory_id: string | null;
+  seller_id: string | null;
+  rating: number | null;
+  review: string | null;
+  delivery_rating: number | null;
+  quality_rating: number | null;
+  communication_rating: number | null;
+  created_at: string;
+}
+
+export interface Deal {
+  id: string;
+  middleman_id: string;
+  party_a_id: string;
+  party_b_id: string;
+  product_id: string | null;
+  commission_rate: number | null;
+  status: 'active' | 'pending' | 'cancelled';
+  created_at: string;
+  updated_at: string;
 }
 
 // ==================== Category Types ====================
@@ -253,8 +332,28 @@ export interface Database {
       };
       messages: {
         Row: Message;
-        Insert: Omit<Message, 'id' | 'created_at'>;
-        Update: Partial<Omit<Message, 'id' | 'created_at'>>;
+        Insert: Omit<Message, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Message, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      conversation_deals: {
+        Row: ConversationDeal;
+        Insert: Omit<ConversationDeal, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<ConversationDeal, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      factory_connections: {
+        Row: FactoryConnection;
+        Insert: Omit<FactoryConnection, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<FactoryConnection, 'id' | 'created_at' | 'updated_at'>>;
+      };
+      factory_ratings: {
+        Row: FactoryRating;
+        Insert: Omit<FactoryRating, 'id' | 'created_at'>;
+        Update: Partial<Omit<FactoryRating, 'id' | 'created_at'>>;
+      };
+      deals: {
+        Row: Deal;
+        Insert: Omit<Deal, 'id' | 'created_at' | 'updated_at'>;
+        Update: Partial<Omit<Deal, 'id' | 'created_at' | 'updated_at'>>;
       };
       notifications: {
         Row: Notification;
