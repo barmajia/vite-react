@@ -4,7 +4,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "sonner";
 import { Layout } from "@/components/layout/Layout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import { Home } from "@/pages/public/Home";
+import { ServicesGateway } from "@/pages/public/ServicesGateway";
 import { ProductList } from "@/pages/public/ProductList";
 import { ProductDetail } from "@/pages/public/ProductDetail";
 import ProductDetailsPage from "@/pages/public/ProductDetailsPage";
@@ -12,11 +12,12 @@ import { About } from "@/pages/public/About";
 import { Contact } from "@/pages/public/Contact";
 import { Help } from "@/pages/public/Help";
 import { Login } from "@/pages/auth/Login";
-import { Signup } from "@/pages/auth/Signup";
 import { ForgotPassword } from "@/pages/auth/ForgotPassword";
 import { ResetPassword } from "@/pages/auth/ResetPassword";
 import { NotFound } from "@/pages/errors/NotFound";
 import { ServerError } from "@/pages/errors/ServerError";
+import { ServicesSignup } from "@/pages/auth/ServicesSignup";
+import { OnboardingWizard } from "@/pages/auth/OnboardingWizard";
 import { CategoriesPage } from "@/features/categories/pages/CategoriesPage";
 import { CategoryProductsPage } from "@/features/categories/pages/CategoryProductsPage";
 import { CartPage } from "@/features/cart/pages/CartPage";
@@ -31,6 +32,15 @@ import { NotificationsPage } from "@/features/notifications/pages/NotificationsP
 import { SettingsPage } from "@/features/settings/pages/SettingsPage";
 import { Inbox } from "@/pages/messaging/Inbox";
 import { Chat } from "@/pages/messaging/Chat";
+
+// Services Module
+import { ServicesHome } from "@/features/services/pages/ServicesHome";
+import { ServiceCategoryPage } from "@/features/services/pages/ServiceCategoryPage";
+import { ServiceDetailPage } from "@/features/services/pages/ServiceDetailPage";
+import { ProviderProfilePage } from "@/features/services/pages/ProviderProfilePage";
+import { ProviderDashboardPage } from "@/features/services/pages/ProviderDashboardPage";
+import { CreateProviderProfile } from "@/features/services/pages/CreateProviderProfile";
+import { CreateServiceListing } from "@/features/services/pages/CreateServiceListing";
 
 // Factory pages
 import { FactoryDashboardPage } from "@/pages/factory/FactoryDashboardPage";
@@ -89,9 +99,18 @@ function App() {
           }
         >
           <Routes>
+            {/* Auth Routes (Full Page - No Layout) */}
+            <Route path="/signup" element={<ServicesSignup />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/services/onboarding" element={<OnboardingWizard />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+
             <Route path="/" element={<Layout />}>
+              {/* Default - Services Gateway */}
+              <Route index element={<ServicesGateway />} />
+
               {/* Public Routes */}
-              <Route index element={<Home />} />
               <Route path="products" element={<ProductList />} />
               <Route path="product/:asin" element={<ProductDetail />} />
               <Route
@@ -109,11 +128,32 @@ function App() {
               <Route path="contact" element={<Contact />} />
               <Route path="help" element={<Help />} />
 
-              {/* Auth Routes */}
-              <Route path="login" element={<Login />} />
-              <Route path="signup" element={<Signup />} />
-              <Route path="forgot-password" element={<ForgotPassword />} />
-              <Route path="reset-password" element={<ResetPassword />} />
+              {/* Services Routes - Main Focus */}
+              <Route path="services" element={<ServicesHome />} />
+              <Route
+                path="services/:categorySlug"
+                element={<ServiceCategoryPage />}
+              />
+              <Route
+                path="services/listing/:listingSlug"
+                element={<ServiceDetailPage />}
+              />
+              <Route
+                path="services/provider/:providerId"
+                element={<ProviderProfilePage />}
+              />
+              <Route
+                path="services/dashboard"
+                element={<ProviderDashboardPage />}
+              />
+              <Route
+                path="services/dashboard/create-profile"
+                element={<CreateProviderProfile />}
+              />
+              <Route
+                path="services/dashboard/create-listing"
+                element={<CreateServiceListing />}
+              />
 
               {/* Customer Routes (Protected) */}
               <Route path="cart" element={<CartPage />} />

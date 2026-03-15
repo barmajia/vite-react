@@ -76,6 +76,12 @@ export function Header() {
                 Products
               </Link>
               <Link
+                to="/services"
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+              >
+                Services
+              </Link>
+              <Link
                 to={ROUTES.CATEGORIES}
                 className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
