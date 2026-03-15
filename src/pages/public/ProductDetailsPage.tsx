@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "sonner";
 import { ROUTES } from "@/lib/constants";
+import { buildImageUrl } from "@/lib/utils";
 
 const ProductDetailsPage = () => {
   const { asin } = useParams();
@@ -28,11 +29,8 @@ const ProductDetailsPage = () => {
   const [imageError, setImageError] = useState(false);
   const [thumbnailErrors, setThumbnailErrors] = useState<boolean[]>([]);
 
-  // Helper function to get image URL - uses value directly from database
-  const getImageUrl = (imageUrl: string | null): string => {
-    if (!imageUrl) return "/placeholder.png";
-    return imageUrl;
-  };
+  // Use the shared utility for image URLs
+  const getImageUrl = buildImageUrl;
 
   // Fetch Product Data
   useEffect(() => {

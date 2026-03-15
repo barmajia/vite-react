@@ -125,3 +125,23 @@ export function getProductImage(images: unknown, index: number = 0): string {
     "https://ofovfxsfazlwvcakpuer.supabase.co";
   return `${supabaseUrl}/storage/v1/object/public/product-images/${urlString}`;
 }
+
+/**
+ * Build full image URL from relative path or return existing URL
+ * @param imagePath - Image path or full URL
+ * @returns Full image URL
+ */
+export function buildImageUrl(imagePath: string | null | undefined): string {
+  if (!imagePath) return "/placeholder-product.png";
+
+  // If already a full URL, return as is
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+    return imagePath;
+  }
+
+  // Construct Supabase storage URL
+  const supabaseUrl =
+    import.meta.env.VITE_SUPABASE_URL ||
+    "https://ofovfxsfazlwvcakpuer.supabase.co";
+  return `${supabaseUrl}/storage/v1/object/public/product-images/${imagePath}`;
+}

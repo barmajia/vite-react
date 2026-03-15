@@ -3,9 +3,11 @@ import { ThemeProvider } from "@/hooks/useTheme";
 import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "sonner";
 import { Layout } from "@/components/layout/Layout";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { Home } from "@/pages/public/Home";
 import { ProductList } from "@/pages/public/ProductList";
 import { ProductDetail } from "@/pages/public/ProductDetail";
+import ProductDetailsPage from "@/pages/public/ProductDetailsPage";
 import { About } from "@/pages/public/About";
 import { Contact } from "@/pages/public/Contact";
 import { Help } from "@/pages/public/Help";
@@ -29,7 +31,6 @@ import { NotificationsPage } from "@/features/notifications/pages/NotificationsP
 import { SettingsPage } from "@/features/settings/pages/SettingsPage";
 import { Inbox } from "@/pages/messaging/Inbox";
 import { Chat } from "@/pages/messaging/Chat";
-import ProductDetailsPage from "@/pages/public/ProductDetailsPage";
 
 // Factory pages
 import { FactoryDashboardPage } from "@/pages/factory/FactoryDashboardPage";
@@ -55,6 +56,7 @@ function Brands() {
     </div>
   );
 }
+
 function BrandProducts() {
   return (
     <div className="text-center py-12">
@@ -69,62 +71,83 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <Toaster position="top-right" richColors />
-        <Routes>
-          <Route path="/" element={<Layout />}>
-            {/* Public Routes */}
-            <Route index element={<Home />} />
-            <Route path="products" element={<ProductList />} />
-            <Route path="product/:asin" element={<ProductDetail />} />
-            <Route
-              path="product-details/:asin"
-              element={<ProductDetailsPage />}
-            />
-            <Route path="categories" element={<CategoriesPage />} />
-            <Route path="categories/:slug" element={<CategoryProductsPage />} />
-            <Route path="brands" element={<Brands />} />
-            <Route path="brand/:id" element={<BrandProducts />} />
-            <Route path="about" element={<About />} />
-            <Route path="contact" element={<Contact />} />
-            <Route path="help" element={<Help />} />
+        <ErrorBoundary
+          fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="text-center">
+                <h1 className="text-2xl font-bold mb-4">
+                  Something went wrong
+                </h1>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="px-4 py-2 bg-primary text-primary-foreground rounded"
+                >
+                  Refresh Page
+                </button>
+              </div>
+            </div>
+          }
+        >
+          <Routes>
+            <Route path="/" element={<Layout />}>
+              {/* Public Routes */}
+              <Route index element={<Home />} />
+              <Route path="products" element={<ProductList />} />
+              <Route path="product/:asin" element={<ProductDetail />} />
+              <Route
+                path="product-details/:asin"
+                element={<ProductDetailsPage />}
+              />
+              <Route path="categories" element={<CategoriesPage />} />
+              <Route
+                path="categories/:slug"
+                element={<CategoryProductsPage />}
+              />
+              <Route path="brands" element={<Brands />} />
+              <Route path="brand/:id" element={<BrandProducts />} />
+              <Route path="about" element={<About />} />
+              <Route path="contact" element={<Contact />} />
+              <Route path="help" element={<Help />} />
 
-            {/* Auth Routes */}
-            <Route path="login" element={<Login />} />
-            <Route path="signup" element={<Signup />} />
-            <Route path="forgot-password" element={<ForgotPassword />} />
-            <Route path="reset-password" element={<ResetPassword />} />
+              {/* Auth Routes */}
+              <Route path="login" element={<Login />} />
+              <Route path="signup" element={<Signup />} />
+              <Route path="forgot-password" element={<ForgotPassword />} />
+              <Route path="reset-password" element={<ResetPassword />} />
 
-            {/* Customer Routes (Protected) */}
-            <Route path="cart" element={<CartPage />} />
-            <Route path="checkout" element={<CheckoutPage />} />
-            <Route path="order-success/:id" element={<OrderSuccessPage />} />
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="orders" element={<OrdersListPage />} />
-            <Route path="orders/:id" element={<OrderDetailPage />} />
-            <Route path="wishlist" element={<WishlistPage />} />
-            <Route path="addresses" element={<AddressesPage />} />
-            <Route path="reviews" element={<Reviews />} />
-            <Route path="messages" element={<Inbox />} />
-            <Route path="messages/:conversationId" element={<Chat />} />
-            <Route path="notifications" element={<NotificationsPage />} />
-            <Route path="settings" element={<SettingsPage />} />
+              {/* Customer Routes (Protected) */}
+              <Route path="cart" element={<CartPage />} />
+              <Route path="checkout" element={<CheckoutPage />} />
+              <Route path="order-success/:id" element={<OrderSuccessPage />} />
+              <Route path="profile" element={<ProfilePage />} />
+              <Route path="orders" element={<OrdersListPage />} />
+              <Route path="orders/:id" element={<OrderDetailPage />} />
+              <Route path="wishlist" element={<WishlistPage />} />
+              <Route path="addresses" element={<AddressesPage />} />
+              <Route path="reviews" element={<Reviews />} />
+              <Route path="messages" element={<Inbox />} />
+              <Route path="messages/:conversationId" element={<Chat />} />
+              <Route path="notifications" element={<NotificationsPage />} />
+              <Route path="settings" element={<SettingsPage />} />
 
-            {/* Factory Routes (Protected) */}
-            <Route path="factory" element={<FactoryDashboardPage />} />
-            <Route
-              path="factory/production"
-              element={<FactoryProductionPage />}
-            />
-            <Route path="factory/quotes" element={<FactoryQuotesPage />} />
-            <Route
-              path="factory/connections"
-              element={<FactoryConnectionsPage />}
-            />
+              {/* Factory Routes (Protected) */}
+              <Route path="factory" element={<FactoryDashboardPage />} />
+              <Route
+                path="factory/production"
+                element={<FactoryProductionPage />}
+              />
+              <Route path="factory/quotes" element={<FactoryQuotesPage />} />
+              <Route
+                path="factory/connections"
+                element={<FactoryConnectionsPage />}
+              />
 
-            {/* Error Routes */}
-            <Route path="error" element={<ServerError />} />
-            <Route path="*" element={<NotFound />} />
-          </Route>
-        </Routes>
+              {/* Error Routes */}
+              <Route path="error" element={<ServerError />} />
+              <Route path="*" element={<NotFound />} />
+            </Route>
+          </Routes>
+        </ErrorBoundary>
       </AuthProvider>
     </ThemeProvider>
   );

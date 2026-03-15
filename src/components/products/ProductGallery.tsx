@@ -53,11 +53,6 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
       ? imageList.map(getImageUrl)
       : ["/placeholder-product.png"];
 
-  // Debug: Log the images
-  console.log("ProductGallery - Raw images:", images);
-  console.log("ProductGallery - First image object:", imageList[0]);
-  console.log("ProductGallery - Constructed URLs:", allImages);
-
   const openFullscreen = (index: number) => {
     setSelectedIndex(index);
     setIsFullscreen(true);
@@ -93,10 +88,7 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
           alt={`${title} - Image ${selectedIndex + 1}`}
           className="h-full w-full object-cover cursor-pointer"
           onClick={() => openFullscreen(selectedIndex)}
-          onError={() => {
-            console.error("Image failed to load:", allImages[selectedIndex]);
-            setImageLoadError(true);
-          }}
+          onError={() => setImageLoadError(true)}
         />
         {imageLoadError && (
           <div className="absolute inset-0 flex items-center justify-center bg-muted">
