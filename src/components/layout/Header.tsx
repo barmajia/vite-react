@@ -52,15 +52,17 @@ export function Header() {
 
   return (
     <>
-      <header className="border-b border-border sticky top-0 z-50 bg-foreground text-background dark:bg-background dark:text-foreground">
+      <header className="border-b border-border sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4">
           <div className="flex h-16 items-center gap-4">
             {/* Logo */}
             <Link to={ROUTES.HOME} className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-foreground text-background dark:bg-background dark:text-foreground flex items-center justify-center">
-                <span className="font-bold text-lg">A</span>
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <span className="text-primary-foreground font-bold text-lg">
+                  A
+                </span>
               </div>
-              <span className="text-xl font-bold hidden sm:inline-block text-foreground dark:text-background">
+              <span className="text-xl font-bold hidden sm:inline-block">
                 AURORA
               </span>
             </Link>
@@ -69,31 +71,31 @@ export function Header() {
             <nav className="hidden md:flex items-center gap-6 ml-8">
               <Link
                 to={ROUTES.PRODUCTS}
-                className="text-sm font-medium text-muted-foreground/80 hover:text-foreground dark:hover:text-background transition-colors"
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
                 Products
               </Link>
               <Link
                 to="/services"
-                className="text-sm font-medium text-muted-foreground/80 hover:text-foreground dark:hover:text-background transition-colors"
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
                 Services
               </Link>
               <Link
                 to={ROUTES.CATEGORIES}
-                className="text-sm font-medium text-muted-foreground/80 hover:text-foreground dark:hover:text-background transition-colors"
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
                 Categories
               </Link>
               <Link
                 to={ROUTES.ABOUT}
-                className="text-sm font-medium text-muted-foreground/80 hover:text-foreground dark:hover:text-background transition-colors"
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
                 About
               </Link>
               <Link
                 to={ROUTES.CONTACT}
-                className="text-sm font-medium text-muted-foreground/80 hover:text-foreground dark:hover:text-background transition-colors"
+                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
                 Contact
               </Link>
@@ -120,9 +122,9 @@ export function Header() {
                   placeholder="Search products..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 bg-background/10 dark:bg-muted border-foreground/20 dark:border-border text-foreground dark:text-foreground placeholder:text-muted-foreground/70"
+                  className="w-full pl-10 pr-4"
                 />
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               </div>
             </form>
 
@@ -132,7 +134,7 @@ export function Header() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="md:hidden hover:bg-background/20"
+                className="md:hidden"
                 onClick={() => navigate(ROUTES.PRODUCTS)}
               >
                 <Search className="h-5 w-5" />
@@ -144,7 +146,6 @@ export function Header() {
                 size="icon"
                 onClick={toggleTheme}
                 aria-label="Toggle theme"
-                className="hover:bg-background/20"
               >
                 {theme === "dark" ? (
                   <Sun className="h-5 w-5" />
@@ -159,7 +160,7 @@ export function Header() {
                   variant="ghost"
                   size="icon"
                   onClick={() => navigate(ROUTES.NOTIFICATIONS)}
-                  className="relative hover:bg-background/20"
+                  className="relative"
                 >
                   <Bell className="h-5 w-5" />
                   <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0">
@@ -173,7 +174,7 @@ export function Header() {
                 variant="ghost"
                 size="icon"
                 onClick={() => navigate(ROUTES.CART)}
-                className="relative hover:bg-background/20"
+                className="relative"
               >
                 <ShoppingCart className="h-5 w-5" />
                 {itemCount > 0 && (
@@ -190,7 +191,7 @@ export function Header() {
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="rounded-full hover:bg-background/20"
+                      className="rounded-full"
                     >
                       <Avatar
                         name={user.user_metadata.full_name || user.email}
@@ -242,7 +243,7 @@ export function Header() {
                     variant="ghost"
                     size="sm"
                     onClick={() => navigate(ROUTES.LOGIN)}
-                    className="hidden sm:inline-flex hover:bg-background/20"
+                    className="hidden sm:inline-flex"
                   >
                     Sign In
                   </Button>
@@ -262,9 +263,9 @@ export function Header() {
                 placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 bg-background/10 dark:bg-muted border-foreground/20 dark:border-border text-foreground dark:text-foreground placeholder:text-muted-foreground/70"
+                className="w-full pl-10 pr-4"
               />
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/70" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             </form>
           </div>
         </div>
