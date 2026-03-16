@@ -2,16 +2,11 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  useServices,
-  type ServiceCategory,
-  type ServiceListing,
-} from "../hooks/useServices";
+import { useServices, type ServiceListing } from "../hooks/useServices";
 
 export function ServiceCategoryPage() {
   const { categorySlug } = useParams<{ categorySlug: string }>();
   const { getCategories, getListingsByCategory } = useServices();
-  const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [listings, setListings] = useState<ServiceListing[]>([]);
   const [category, setCategory] = useState<ServiceCategory | null>(null);
   const [loading, setLoading] = useState(true);
@@ -26,7 +21,6 @@ export function ServiceCategoryPage() {
         getListingsByCategory(categorySlug),
       ]);
 
-      setCategories(cats);
       const currentCategory = cats.find((c) => c.slug === categorySlug) || null;
       setCategory(currentCategory);
       setListings(listingsData);

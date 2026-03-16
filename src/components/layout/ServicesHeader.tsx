@@ -12,9 +12,7 @@ import {
   Bell,
   UserCircle,
   CheckCircle2,
-  Sparkles,
   ArrowRight,
-  Star,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";

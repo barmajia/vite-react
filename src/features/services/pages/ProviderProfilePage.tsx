@@ -3,26 +3,13 @@ import { useParams, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { useServices, type ServiceListing } from "../hooks/useServices";
 
 export function ProviderProfilePage() {
   const { providerId } = useParams<{ providerId: string }>();
-  const { getListingsByCategory } = useServices();
-  const [listings, setListings] = useState<ServiceListing[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      // For now, just show all listings since we don't have provider profiles
-      // This can be enhanced later with a proper provider profile system
-      setLoading(true);
-
-      // In the simple schema, provider_id is the user's UUID
-      // We'll show a simple message for now
-      setLoading(false);
-    };
-
-    fetchData();
+    setLoading(false);
   }, [providerId]);
 
   if (loading) {
