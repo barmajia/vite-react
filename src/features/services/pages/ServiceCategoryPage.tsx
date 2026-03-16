@@ -2,7 +2,11 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useServices, type ServiceListing } from "../hooks/useServices";
+import {
+  useServices,
+  type ServiceCategory,
+  type ServiceListing,
+} from "../hooks/useServices";
 
 export function ServiceCategoryPage() {
   const { categorySlug } = useParams<{ categorySlug: string }>();
