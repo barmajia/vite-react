@@ -1,10 +1,23 @@
-import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Code, PenTool, Heart, Briefcase, Home, GraduationCap, FileText, TrendingUp, Search } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { ServiceProviderCard } from '../components/ServiceProviderCard';
-import { useServices, type ServiceCategory, type ServiceProvider } from '../hooks/useServices';
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import {
+  Code,
+  PenTool,
+  Heart,
+  Briefcase,
+  Home,
+  GraduationCap,
+  FileText,
+  TrendingUp,
+  Search,
+} from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  useServices,
+  type ServiceCategory,
+  type ServiceListing,
+} from "../hooks/useServices";
 
 const categoryIcons: Record<string, JSX.Element> = {
   programming: <Code size={24} />,
@@ -18,41 +31,25 @@ const categoryIcons: Record<string, JSX.Element> = {
 };
 
 export function ServicesHome() {
-  const { getCategories, getFeaturedProviders, searchProviders } = useServices();
+  const { getCategories, getListings } = useServices();
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
-  const [featuredProviders, setFeaturedProviders] = useState<ServiceProvider[]>([]);
+  const [listings, setListings] = useState<ServiceListing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<ServiceProvider[]>([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     const fetchData = async () => {
-      const [cats, providers] = await Promise.all([
+      const [cats, allListings] = await Promise.all([
         getCategories(),
-        getFeaturedProviders(6),
+        getListings(),
       ]);
       setCategories(cats);
-      setFeaturedProviders(providers);
+      setListings(allListings.slice(0, 6)); // Show first 6 listings
       setLoading(false);
     };
 
     fetchData();
-  }, [getCategories, getFeaturedProviders]);
-
-  const handleSearch = async (query: string) => {
-    setSearchQuery(query);
-    if (query.trim().length === 0) {
-      setSearchResults([]);
-      setIsSearching(false);
-      return;
-    }
-
-    setIsSearching(true);
-    const results = await searchProviders(query);
-    setSearchResults(results);
-    setIsSearching(false);
-  };
+  }, [getCategories, getListings]);
 
   if (loading) {
     return (
@@ -73,105 +70,109 @@ export function ServicesHome() {
           Find Expert Services & Freelancers
         </h1>
         <p className="text-indigo-100 text-lg md:text-xl mb-8 max-w-2xl mx-auto">
-          From software development to medical consultations, find the right professional for your needs.
+          From software development to consulting, find the right professional
+          for your needs.
         </p>
 
         {/* Search Bar */}
         <div className="max-w-xl mx-auto relative">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" size={20} />
+            <Search
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+              size={20}
+            />
             <Input
               type="text"
-              placeholder="Search for services, skills, or providers..."
+              placeholder="Search for services..."
               className="w-full pl-12 pr-4 py-6 rounded-full text-gray-900 text-lg focus:outline-none focus:ring-4 focus:ring-white/30 border-0"
               value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
         </div>
       </div>
 
-      {/* Search Results */}
-      {searchQuery.trim().length > 0 && (
-        <section className="mb-16">
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold">
-              {isSearching ? 'Searching...' : `Search Results for "${searchQuery}"`}
-            </h2>
-            {searchResults.length > 0 && (
-              <span className="text-muted-foreground">{searchResults.length} providers found</span>
-            )}
-          </div>
-          {isSearching ? (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
-            </div>
-          ) : searchResults.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {searchResults.map((provider) => (
-                <ServiceProviderCard key={provider.id} provider={provider} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">No providers found matching your search</p>
-            </div>
-          )}
-        </section>
-      )}
-
       {/* Categories Grid */}
-      {!searchQuery && (
-        <>
-          <section className="mb-16">
-            <h2 className="text-2xl font-bold mb-6">Browse by Category</h2>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              {categories.map((cat) => (
-                <Link
-                  key={cat.id}
-                  to={`/services/${cat.slug}`}
-                  className="flex flex-col items-center p-6 bg-card border rounded-xl hover:shadow-lg hover:border-primary transition-all cursor-pointer group"
-                >
-                  <div className="text-primary mb-3 group-hover:scale-110 transition-transform">
-                    {categoryIcons[cat.slug] || <Briefcase />}
-                  </div>
-                  <span className="font-medium text-center">{cat.name}</span>
-                </Link>
-              ))}
-            </div>
-          </section>
+      <section className="mb-16">
+        <h2 className="text-2xl font-bold mb-6">Browse by Category</h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {categories.map((cat) => (
+            <Link
+              key={cat.id}
+              to={`/services/${cat.slug}`}
+              className="flex flex-col items-center p-6 bg-card border rounded-xl hover:shadow-lg hover:border-primary transition-all cursor-pointer group"
+            >
+              <div className="text-primary mb-3 group-hover:scale-110 transition-transform">
+                {categoryIcons[cat.slug] || <Briefcase />}
+              </div>
+              <span className="font-medium text-center">{cat.name}</span>
+            </Link>
+          ))}
+        </div>
+      </section>
 
-          {/* Featured Providers */}
-          <section className="mb-16">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Top Rated Providers</h2>
-              <Link to="/services" className="text-primary hover:underline text-sm font-medium">
-                View All →
+      {/* Recent Listings */}
+      <section className="mb-16">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold">Recent Service Listings</h2>
+          <Link
+            to="/services"
+            className="text-primary hover:underline text-sm font-medium"
+          >
+            View All →
+          </Link>
+        </div>
+        {listings.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {listings.map((listing) => (
+              <Link
+                key={listing.id}
+                to={`/services/listing/${listing.slug}`}
+                className="p-6 bg-card border rounded-xl hover:shadow-lg hover:border-primary transition-all"
+              >
+                <h3 className="font-semibold text-lg mb-2">{listing.title}</h3>
+                {listing.price_numeric && (
+                  <p className="text-primary font-bold mb-2">
+                    ${listing.price_numeric.toFixed(2)}
+                  </p>
+                )}
+                {listing.description && (
+                  <p className="text-muted-foreground text-sm line-clamp-2 mb-4">
+                    {listing.description}
+                  </p>
+                )}
+                <div className="flex items-center justify-between text-sm text-muted-foreground">
+                  <span>Provider: {listing.provider_id.slice(0, 8)}...</span>
+                  <span className="text-primary">View Details →</span>
+                </div>
               </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {featuredProviders.map((provider) => (
-                <ServiceProviderCard key={provider.id} provider={provider} />
-              ))}
-            </div>
-          </section>
-        </>
-      )}
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 bg-muted rounded-xl">
+            <p className="text-muted-foreground">No service listings yet</p>
+            <Button asChild className="mt-4">
+              <Link to="/services/dashboard/create-listing">
+                Create First Listing
+              </Link>
+            </Button>
+          </div>
+        )}
+      </section>
 
       {/* CTA Section */}
-      {!searchQuery && (
-        <section className="bg-muted rounded-2xl p-8 md:p-12 text-center">
-          <h2 className="text-2xl md:text-3xl font-bold mb-4">
-            Are you a Service Provider?
-          </h2>
-          <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-            Join thousands of professionals offering their services on Aurora. Create your profile, showcase your work, and connect with clients.
-          </p>
-          <Button size="lg" asChild>
-            <Link to="/services/dashboard">Start Offering Services</Link>
-          </Button>
-        </section>
-      )}
+      <section className="bg-muted rounded-2xl p-8 md:p-12 text-center">
+        <h2 className="text-2xl md:text-3xl font-bold mb-4">
+          Are you a Service Provider?
+        </h2>
+        <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
+          Join Aurora and start offering your services. Create your profile and
+          connect with clients.
+        </p>
+        <Button size="lg" asChild>
+          <Link to="/services/dashboard">Start Offering Services</Link>
+        </Button>
+      </section>
     </div>
   );
 }

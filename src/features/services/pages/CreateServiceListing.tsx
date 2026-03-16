@@ -14,70 +14,37 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
 
 export function CreateServiceListing() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [provider, setProvider] = useState<any>(null);
   const [categories, setCategories] = useState<any[]>([]);
-  const [subcategories, setSubcategories] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    category_id: "",
-    subcategory_id: "",
-    price_type: "fixed",
-    price: "",
-    currency: "USD",
-    delivery_days: "7",
-    is_featured: false,
+    category_slug: "",
+    price_numeric: "",
   });
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!user) return;
-
-      // Get user's provider profile
-      const { data: providerData } = await supabase
-        .from("svc_providers")
+    const fetchCategories = async () => {
+      const { data } = await supabase
+        .from("service_categories")
         .select("*")
-        .eq("user_id", user.id)
-        .single();
+        .order("name");
 
-      if (!providerData) {
-        toast.error("Please create a provider profile first");
-        navigate("/services/dashboard/create-profile");
-        return;
-      }
-
-      setProvider(providerData);
-
-      // Get categories and subcategories
-      const { data: cats } = await supabase
-        .from("svc_categories")
-        .select("*")
-        .eq("is_active", true)
-        .order("sort_order");
-
-      const { data: subcats } = await supabase
-        .from("svc_subcategories")
-        .select("*")
-        .eq("is_active", true)
-        .order("sort_order");
-
-      setCategories(cats || []);
-      setSubcategories(subcats || []);
+      setCategories(data || []);
     };
 
-    fetchData();
-  }, [user, navigate]);
+    fetchCategories();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!provider) {
-      toast.error("No provider profile found");
+
+    if (!user) {
+      toast.error("You must be logged in to create a listing");
       return;
     }
 
@@ -90,19 +57,16 @@ export function CreateServiceListing() {
         .replace(/(^-|-$)/g, "");
 
       const { data, error } = await supabase
-        .from("svc_listings")
+        .from("service_listings")
         .insert({
-          provider_id: provider.id,
-          subcategory_id: formData.subcategory_id || null,
+          provider_id: user.id,
           title: formData.title,
           slug,
+          category_slug: formData.category_slug || null,
+          price_numeric: formData.price_numeric
+            ? parseFloat(formData.price_numeric)
+            : null,
           description: formData.description,
-          price_type: formData.price_type,
-          price: formData.price ? parseFloat(formData.price) : null,
-          currency: formData.currency,
-          delivery_days: parseInt(formData.delivery_days),
-          is_featured: formData.is_featured,
-          is_active: true,
         })
         .select()
         .single();
@@ -156,126 +120,37 @@ export function CreateServiceListing() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
-                <select
-                  id="category"
-                  value={formData.category_id}
-                  onChange={(e) => {
-                    setFormData({
-                      ...formData,
-                      category_id: e.target.value,
-                      subcategory_id: "",
-                    });
-                  }}
-                  className="flex h-10 w-full appearance-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <option value="">Select a category</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="subcategory">Subcategory</Label>
-                <select
-                  id="subcategory"
-                  value={formData.subcategory_id}
-                  onChange={(e) =>
-                    setFormData({ ...formData, subcategory_id: e.target.value })
-                  }
-                  disabled={!formData.category_id}
-                  className="flex h-10 w-full appearance-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-                >
-                  <option value="">Select a subcategory</option>
-                  {subcategories
-                    .filter((sub) => sub.category_id === formData.category_id)
-                    .map((sub) => (
-                      <option key={sub.id} value={sub.id}>
-                        {sub.name}
-                      </option>
-                    ))}
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="price_type">Pricing Type *</Label>
-                <select
-                  id="price_type"
-                  value={formData.price_type}
-                  onChange={(e) =>
-                    setFormData({ ...formData, price_type: e.target.value })
-                  }
-                  className="flex h-10 w-full appearance-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <option value="fixed">Fixed Price</option>
-                  <option value="hourly">Hourly Rate</option>
-                  <option value="monthly">Monthly</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="price">Price *</Label>
-                <Input
-                  id="price"
-                  type="number"
-                  step="0.01"
-                  value={formData.price}
-                  onChange={(e) =>
-                    setFormData({ ...formData, price: e.target.value })
-                  }
-                  placeholder="0.00"
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="currency">Currency</Label>
-                <select
-                  id="currency"
-                  value={formData.currency}
-                  onChange={(e) =>
-                    setFormData({ ...formData, currency: e.target.value })
-                  }
-                  className="flex h-10 w-full appearance-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <option value="USD">USD $</option>
-                  <option value="EUR">EUR €</option>
-                  <option value="EGP">EGP ج.م</option>
-                  <option value="GBP">GBP £</option>
-                </select>
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="category">Category (Optional)</Label>
+              <select
+                id="category"
+                value={formData.category_slug}
+                onChange={(e) =>
+                  setFormData({ ...formData, category_slug: e.target.value })
+                }
+                className="flex h-10 w-full appearance-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="">Select a category</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.slug}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="delivery_days">Delivery Time (Days) *</Label>
+              <Label htmlFor="price">Price (Optional)</Label>
               <Input
-                id="delivery_days"
+                id="price"
                 type="number"
-                value={formData.delivery_days}
+                step="0.01"
+                value={formData.price_numeric}
                 onChange={(e) =>
-                  setFormData({ ...formData, delivery_days: e.target.value })
+                  setFormData({ ...formData, price_numeric: e.target.value })
                 }
-                min="1"
-                required
+                placeholder="0.00"
               />
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="is_featured"
-                checked={formData.is_featured}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, is_featured: checked })
-                }
-              />
-              <Label htmlFor="is_featured">Mark as Featured</Label>
             </div>
 
             <div className="flex gap-4">
