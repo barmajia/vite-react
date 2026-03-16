@@ -34,12 +34,7 @@ export function ServiceCategoryPage() {
     };
 
     fetchData();
-  }, [
-    categorySlug,
-    getProvidersByCategory,
-    getCategories,
-    getListingsByCategory,
-  ]);
+  }, [categorySlug, getCategories, getListingsByCategory]);
 
   if (loading) {
     return (
