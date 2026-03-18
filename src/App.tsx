@@ -17,7 +17,6 @@ import { ResetPassword } from "@/pages/auth/ResetPassword";
 import { NotFound } from "@/pages/errors/NotFound";
 import { ServerError } from "@/pages/errors/ServerError";
 import { ServicesSignup } from "@/pages/auth/ServicesSignup";
-import { OnboardingWizard } from "@/pages/auth/OnboardingWizard";
 import { CategoriesPage } from "@/features/categories/pages/CategoriesPage";
 import { CategoryProductsPage } from "@/features/categories/pages/CategoryProductsPage";
 import { CartPage } from "@/features/cart/pages/CartPage";
@@ -32,17 +31,20 @@ import { NotificationsPage } from "@/features/notifications/pages/NotificationsP
 import { SettingsPage } from "@/features/settings/pages/SettingsPage";
 import { Inbox } from "@/pages/messaging/Inbox";
 import { Chat } from "@/pages/messaging/Chat";
-import { ServicesInbox } from "@/pages/messaging/ServicesInbox";
-import { ServicesChat } from "@/pages/messaging/ServicesChat";
+import { ServicesInbox } from "@/features/services/components/ServicesInbox";
+import { ServicesChat } from "@/features/services/components/ServicesChat";
 
 // Services Module
 import { ServicesHome } from "@/features/services/pages/ServicesHome";
 import { ServiceCategoryPage } from "@/features/services/pages/ServiceCategoryPage";
 import { ServiceDetailPage } from "@/features/services/pages/ServiceDetailPage";
 import { ProviderProfilePage } from "@/features/services/pages/ProviderProfilePage";
-import { ProviderDashboardPage } from "@/features/services/pages/ProviderDashboardPage";
 import { CreateProviderProfile } from "@/features/services/pages/CreateProviderProfile";
 import { CreateServiceListing } from "@/features/services/pages/CreateServiceListing";
+import { OnboardingWizard } from "@/features/services/pages/OnboardingWizard";
+import { ServiceOnboardingWizard } from "@/features/services/components/ServiceOnboardingWizard";
+import { DashboardLayout } from "@/features/services/dashboard/components/layout/DashboardLayout";
+import { DashboardHome } from "@/features/services/dashboard/pages/DashboardHome";
 
 // Factory pages
 import { FactoryDashboardPage } from "@/pages/factory/FactoryDashboardPage";
@@ -130,24 +132,65 @@ function App() {
               <Route path="contact" element={<Contact />} />
               <Route path="help" element={<Help />} />
 
-              {/* Services Routes - Main Focus */}
-              <Route path="services" element={<ServicesHome />} />
-              <Route
-                path="services/:categorySlug"
-                element={<ServiceCategoryPage />}
-              />
-              <Route
-                path="services/listing/:listingSlug"
-                element={<ServiceDetailPage />}
-              />
-              <Route
-                path="services/provider/:providerId"
-                element={<ProviderProfilePage />}
-              />
-              <Route
-                path="services/dashboard"
-                element={<ProviderDashboardPage />}
-              />
+              {/* Services Routes - Main Focus (Wrapped in ServicesLayout) */}
+              <Route path="services" element={<ServicesHome />}>
+                <Route index element={<ServicesHome />} />
+                <Route path=":categorySlug" element={<ServiceCategoryPage />} />
+                <Route
+                  path="listing/:listingSlug"
+                  element={<ServiceDetailPage />}
+                />
+                <Route
+                  path="provider/:providerId"
+                  element={<ProviderProfilePage />}
+                />
+                <Route path="messages" element={<ServicesInbox />} />
+                <Route
+                  path="messages/:conversationId"
+                  element={<ServicesChat />}
+                />
+              </Route>
+
+              {/* Services Dashboard Routes (Separate Layout) */}
+              <Route path="services/dashboard" element={<DashboardLayout />}>
+                <Route index element={<DashboardHome />} />
+                <Route
+                  path="bookings"
+                  element={
+                    <div className="p-4">Bookings Page (Coming Soon)</div>
+                  }
+                />
+                <Route
+                  path="projects"
+                  element={
+                    <div className="p-4">Projects Page (Coming Soon)</div>
+                  }
+                />
+                <Route
+                  path="listings"
+                  element={
+                    <div className="p-4">Listings Page (Coming Soon)</div>
+                  }
+                />
+                <Route
+                  path="finance"
+                  element={
+                    <div className="p-4">Finance Page (Coming Soon)</div>
+                  }
+                />
+                <Route
+                  path="clients"
+                  element={
+                    <div className="p-4">Clients Page (Coming Soon)</div>
+                  }
+                />
+                <Route
+                  path="settings"
+                  element={
+                    <div className="p-4">Settings Page (Coming Soon)</div>
+                  }
+                />
+              </Route>
               <Route
                 path="services/dashboard/create-profile"
                 element={<CreateProviderProfile />}
@@ -155,6 +198,14 @@ function App() {
               <Route
                 path="services/dashboard/create-listing"
                 element={<CreateServiceListing />}
+              />
+              <Route
+                path="services/dashboard/onboard"
+                element={<ServiceOnboardingWizard />}
+              />
+              <Route
+                path="services/onboarding"
+                element={<ServiceOnboardingWizard />}
               />
 
               {/* Customer Routes (Protected) */}

@@ -130,14 +130,18 @@ The application will run at `http://localhost:5173`
 - Conversation inbox with filtering
 - Route: `/messages`
 
-#### Services Messaging (New!)
+#### Services Messaging (Isolated System)
 
-- Dedicated messaging for service providers and customers
-- Service listing context in conversations
-- Provider-customer communication for bookings
+- **Completely separate** from product messaging
+- Dedicated tables: `services_conversations` & `services_messages`
+- Tied to specific service listings
+- Provider ↔ Client communication only
 - Real-time message delivery with read receipts
+- Automatic get-or-create conversation logic via RPC
+- Full-text search on message content
+- Secure RLS policies ensuring participant-only access
 - Routes: `/services/messages`, `/services/messages/:conversationId`
-- See [SERVICES-MESSAGING.md](./SERVICES-MESSAGING.md) for details
+- Schema: `services-messaging-isolated.sql`
 
 ### 🏭 Factory Features (B2B)
 
@@ -171,18 +175,44 @@ The application will run at `http://localhost:5173`
 - Connected sellers management
 - B2B relationship building
 
-### 🧰 Services Marketplace
+### 🧰 Services Marketplace (New!)
 
-- Services gateway homepage
-- Service category browsing
-- Service provider profiles with verification badges
-- Service listings with booking capabilities
-- Provider dashboard for managing services and listings
-- Create provider profile wizard (individual, company, hospital)
-- Create service listing wizard
-- Service bookings and appointments management
-- **Services messaging system** - Dedicated inbox for provider-customer communication
-- Routes: `/services`, `/services/dashboard`, `/services/messages`
+A comprehensive **Professional Services Ecosystem** supporting multiple verticals:
+
+#### Health & Wellness Sector
+
+- **Providers:** Doctors, Clinics, Hospitals
+- **Features:**
+  - Verified license badges
+  - Geolocation-based search ("Find nearest Cardiologist")
+  - Hybrid booking: In-clinic visits or online telemedicine
+  - Secure patient records (metadata)
+
+#### Freelance & Professional Gigs
+
+- **Providers:** Developers, Designers, Translators, Consultants
+- **Engagement Models:**
+  - **Hourly Contracts:** Time-tracking ready
+  - **Fixed-Price Projects:** Milestone-based payments
+  - **B2B Hiring:** Companies (e.g., Hospitals) can hire specialists (e.g., Medical Translators)
+- **Features:**
+  - Portfolio showcase
+  - Skill-based filtering
+  - Proposal system for custom jobs
+
+#### 🔑 Unified Identity System
+
+- **One Account, Multiple Roles:** A single user account can be a **Shopper**, **Product Seller**, AND **Service Provider** simultaneously
+- **Dynamic Onboarding:** System adapts data collection based on whether user registers as "Doctor" or "Freelancer"
+- **Isolated Flow:** Services browsing and booking happen in `/services`, completely separate from product shopping
+
+#### Service Categories
+
+- **Health:** Doctors, Hospitals, Clinics (License verification required)
+- **Freelance:** Developers, Designers, Translators, Writers
+- **Home Services:** Plumbers, Electricians, Cleaners
+- **Professional:** Lawyers, Consultants, Accountants
+- **Education:** Tutors, Trainers, Courses
 
 ### 🌍 Geolocation
 

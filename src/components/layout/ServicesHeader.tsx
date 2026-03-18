@@ -47,12 +47,14 @@ export function ServicesHeader() {
   useEffect(() => {
     const getProviderProfile = async () => {
       if (!user) return;
-      const { data: profile } = await supabase
+      const { data, error } = await supabase
         .from("svc_providers")
         .select("id, provider_name, logo_url, is_verified")
-        .eq("user_id", user.id)
-        .single();
-      setProviderProfile(profile);
+        .eq("user_id", user.id);
+
+      if (!error && data && data.length > 0) {
+        setProviderProfile(data[0]);
+      }
     };
     getProviderProfile();
   }, [user]);
@@ -77,8 +79,8 @@ export function ServicesHeader() {
         className={cn(
           "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
           isScrolled
-            ? "bg-white/95 backdrop-blur-md shadow-lg shadow-gray-200/50 border-b border-gray-100"
-            : "bg-transparent",
+            ? "bg-white shadow-2xl shadow-gray-300/60 border-b border-gray-200 pb-2"
+            : "bg-white/90 backdrop-blur-md",
         )}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -107,12 +109,12 @@ export function ServicesHeader() {
                 {
                   label: "Find Talent",
                   href: "/services/programming",
-                  icon: "💻",
+                  icon: "",
                 },
                 {
                   label: "Healthcare",
                   href: "/services/healthcare",
-                  icon: "🏥",
+                  icon: "",
                 },
                 { label: "All Services", href: "/services", icon: "✨" },
               ].map((item) => (
@@ -305,136 +307,131 @@ export function ServicesHeader() {
           />
           <div className="fixed top-0 right-0 z-50 h-full w-[300px] bg-white shadow-2xl lg:hidden">
             <div className="flex items-center justify-between p-4 border-b border-gray-100">
-              <div className="flex items-center gap-2">
-                <div className="bg-gradient-to-br from-violet-600 to-indigo-600 text-white p-2 rounded-lg">
-                  <Briefcase size={20} />
-                </div>
-                <span className="font-bold text-lg">Aurora Services</span>
-              </div>
-              <button
-                className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <X size={22} />
-              </button>
+              <span className="font-bold text-lg">Aurora Services</span>
             </div>
+            <button
+              className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              <X size={22} />
+            </button>
+          </div>
 
-            <div className="p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-80px)]">
-              {/* Search */}
-              <form onSubmit={handleSearch} className="relative">
-                <input
-                  type="text"
-                  placeholder="Search services..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-100 border-0 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-violet-500/20 focus:outline-none"
-                />
-                <Search
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-                  size={18}
-                />
-              </form>
+          <div className="p-4 space-y-3 overflow-y-auto max-h-[calc(100vh-80px)]">
+            {/* Search */}
+            <form onSubmit={handleSearch} className="relative">
+              <input
+                type="text"
+                placeholder="Search services..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-gray-100 border-0 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-violet-500/20 focus:outline-none"
+              />
+              <Search
+                className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
+                size={18}
+              />
+            </form>
 
-              {/* Navigation */}
-              <div className="space-y-1">
-                <Link
-                  to="/services/programming"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-violet-50 hover:text-violet-700 rounded-xl transition-colors"
-                >
-                  <span>💻</span>
-                  Find Talent
-                </Link>
-                <Link
-                  to="/services/healthcare"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-violet-50 hover:text-violet-700 rounded-xl transition-colors"
-                >
-                  <span>🏥</span>
-                  Healthcare
-                </Link>
-                <Link
-                  to="/services"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-violet-50 hover:text-violet-700 rounded-xl transition-colors"
-                >
-                  <span>✨</span>
-                  All Services
-                </Link>
-              </div>
-
-              {/* Products Cross-Link */}
+            {/* Navigation */}
+            <div className="space-y-1">
               <Link
-                to="/products"
+                to="/services/programming"
                 onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 w-full px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 rounded-xl shadow-md transition-all"
+                className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-violet-50 hover:text-violet-700 rounded-xl transition-colors"
               >
-                <ShoppingBag size={18} />
-                Switch to Shop Products
+                <span>💻</span>
+                Find Talent
               </Link>
-
-              <div className="border-t border-gray-100 my-4" />
-
-              {user ? (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl">
-                    <Avatar
-                      name={user.user_metadata.full_name}
-                      src={user.user_metadata.avatar_url}
-                      size="sm"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
-                        {user.user_metadata.full_name}
-                      </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {user.email}
-                      </p>
-                    </div>
-                  </div>
-                  <Link
-                    to="/services/dashboard"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
-                  >
-                    <UserCircle size={20} />
-                    Dashboard
-                  </Link>
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-base font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors"
-                  >
-                    <LogOut size={20} />
-                    Sign Out
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      navigate("/login");
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full"
-                  >
-                    Log In
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      navigate("/signup");
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white"
-                  >
-                    Join Now
-                  </Button>
-                </div>
-              )}
+              <Link
+                to="/services/healthcare"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-violet-50 hover:text-violet-700 rounded-xl transition-colors"
+              >
+                <span>🏥</span>
+                Healthcare
+              </Link>
+              <Link
+                to="/services"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-violet-50 hover:text-violet-700 rounded-xl transition-colors"
+              >
+                <span>✨</span>
+                All Services
+              </Link>
             </div>
+
+            {/* Products Cross-Link */}
+            <Link
+              to="/products"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex items-center justify-center gap-2 w-full px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 rounded-xl shadow-md transition-all"
+            >
+              <ShoppingBag size={18} />
+              Switch to Shop Products
+            </Link>
+
+            <div className="border-t border-gray-100 my-4" />
+
+            {user ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 rounded-xl">
+                  <Avatar
+                    name={user.user_metadata.full_name}
+                    src={user.user_metadata.avatar_url}
+                    size="sm"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {user.user_metadata.full_name}
+                    </p>
+                    <p className="text-xs text-gray-500 truncate">
+                      {user.email}
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  to="/services/dashboard"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
+                >
+                  <UserCircle size={20} />
+                  Dashboard
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-base font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                >
+                  <LogOut size={20} />
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    navigate("/login");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full"
+                >
+                  Log In
+                </Button>
+                <Button
+                  onClick={() => {
+                    navigate("/signup");
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white"
+                >
+                  Join Now
+                </Button>
+              </div>
+            )}
           </div>
         </>
       )}

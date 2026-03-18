@@ -40,24 +40,24 @@ export const ServicesInbox = () => {
     try {
       setLoading(true);
 
-      // Get conversations where user is either provider or customer
-      // Filtered for service-related conversations (has listing_id or involves providers)
+      // Get conversations where user is either seller or user (for services)
+      // Filtered for service-related conversations (has listing_id)
       const { data: convos, error } = await supabase
         .from("conversations")
         .select(
           `
           id,
-          provider_id,
-          customer_id,
+          user_id,
+          seller_id,
           listing_id,
           last_message,
           updated_at,
-          provider:users!provider_id(id, full_name, avatar_url),
-          customer:users!customer_id(id, full_name, avatar_url),
+          provider:users!seller_id(id, full_name, avatar_url),
+          customer:users!user_id(id, full_name, avatar_url),
           listing:svc_listings(id, title)
         `,
         )
-        .or(`provider_id.eq.${user.id},customer_id.eq.${user.id}`)
+        .or(`seller_id.eq.${user.id},user_id.eq.${user.id}`)
         .order("updated_at", { ascending: false });
 
       if (error) throw error;
@@ -67,8 +67,8 @@ export const ServicesInbox = () => {
         .filter((c: any) => c.listing_id !== null) // Has service listing
         .map((c: any) => ({
           id: c.id,
-          provider_id: c.provider_id,
-          customer_id: c.customer_id,
+          provider_id: c.seller_id,
+          customer_id: c.user_id,
           listing_id: c.listing_id,
           last_message: c.last_message,
           updated_at: c.updated_at,

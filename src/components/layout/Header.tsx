@@ -27,6 +27,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { ROUTES } from "@/lib/constants";
 import { MobileNav } from "./MobileNav";
+import { NotificationBell } from "./NotificationBell";
 
 export function Header() {
   const { theme, toggleTheme } = useTheme();
@@ -155,19 +156,7 @@ export function Header() {
               </Button>
 
               {/* Notifications (Auth Required) */}
-              {user && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => navigate(ROUTES.NOTIFICATIONS)}
-                  className="relative"
-                >
-                  <Bell className="h-5 w-5" />
-                  <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0">
-                    3
-                  </Badge>
-                </Button>
-              )}
+              {user && <NotificationBell />}
 
               {/* Cart */}
               <Button
