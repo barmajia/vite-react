@@ -19,7 +19,7 @@ export function ProviderDashboardPage() {
 
       // Get user's listings
       const { data } = await supabase
-        .from("service_listings")
+        .from("svc_listings")
         .select("*")
         .eq("provider_id", user.id)
         .order("created_at", { ascending: false });

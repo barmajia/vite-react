@@ -32,6 +32,8 @@ import { NotificationsPage } from "@/features/notifications/pages/NotificationsP
 import { SettingsPage } from "@/features/settings/pages/SettingsPage";
 import { Inbox } from "@/pages/messaging/Inbox";
 import { Chat } from "@/pages/messaging/Chat";
+import { ServicesInbox } from "@/pages/messaging/ServicesInbox";
+import { ServicesChat } from "@/pages/messaging/ServicesChat";
 
 // Services Module
 import { ServicesHome } from "@/features/services/pages/ServicesHome";
@@ -167,6 +169,11 @@ function App() {
               <Route path="reviews" element={<Reviews />} />
               <Route path="messages" element={<Inbox />} />
               <Route path="messages/:conversationId" element={<Chat />} />
+              <Route path="services/messages" element={<ServicesInbox />} />
+              <Route
+                path="services/messages/:conversationId"
+                element={<ServicesChat />}
+              />
               <Route path="notifications" element={<NotificationsPage />} />
               <Route path="settings" element={<SettingsPage />} />
 

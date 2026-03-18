@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS public.svc_providers (
     review_count INTEGER DEFAULT 0,
     total_jobs_completed INTEGER DEFAULT 0,
     is_verified BOOLEAN DEFAULT false,
-    status VARCHAR(50) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended')),
+    status VARCHAR(50) DEFAULT 'active' CHECK (status IN ('active', 'inactive', 'suspended', 'pending_review')),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

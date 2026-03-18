@@ -26,7 +26,7 @@ export const useServices = () => {
   const getCategories = useCallback(async (): Promise<ServiceCategory[]> => {
     try {
       const { data, error } = await supabase
-        .from("service_categories")
+        .from("svc_categories")
         .select("*")
         .order("name", { ascending: true });
 
@@ -43,7 +43,7 @@ export const useServices = () => {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from("service_listings")
+        .from("svc_listings")
         .select("*")
         .order("created_at", { ascending: false });
 
@@ -63,7 +63,7 @@ export const useServices = () => {
       setLoading(true);
       try {
         const { data, error } = await supabase
-          .from("service_listings")
+          .from("svc_listings")
           .select("*")
           .eq("category_slug", categorySlug)
           .order("created_at", { ascending: false });
@@ -85,7 +85,7 @@ export const useServices = () => {
     async (slug: string): Promise<ServiceListing | null> => {
       try {
         const { data, error } = await supabase
-          .from("service_listings")
+          .from("svc_listings")
           .select("*")
           .eq("slug", slug)
           .single();
@@ -116,7 +116,7 @@ export const useServices = () => {
         if (!user) throw new Error("You must be logged in");
 
         const { data, error } = await supabase
-          .from("service_listings")
+          .from("svc_listings")
           .insert({
             provider_id: user.id,
             title,
@@ -150,7 +150,7 @@ export const useServices = () => {
     ) => {
       try {
         const { data, error } = await supabase
-          .from("service_listings")
+          .from("svc_listings")
           .update(updates)
           .eq("id", listingId)
           .select()
@@ -170,7 +170,7 @@ export const useServices = () => {
   const deleteListing = useCallback(async (listingId: string) => {
     try {
       const { error } = await supabase
-        .from("service_listings")
+        .from("svc_listings")
         .delete()
         .eq("id", listingId);
 

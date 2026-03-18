@@ -30,7 +30,7 @@ export function CreateServiceListing() {
   useEffect(() => {
     const fetchCategories = async () => {
       const { data } = await supabase
-        .from("service_categories")
+        .from("svc_categories")
         .select("*")
         .order("name");
 
@@ -57,7 +57,7 @@ export function CreateServiceListing() {
         .replace(/(^-|-$)/g, "");
 
       const { data, error } = await supabase
-        .from("service_listings")
+        .from("svc_listings")
         .insert({
           provider_id: user.id,
           title: formData.title,

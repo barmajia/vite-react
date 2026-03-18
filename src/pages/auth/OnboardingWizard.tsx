@@ -56,6 +56,14 @@ export function OnboardingWizard() {
       const status = role === "hospital" ? "pending_review" : "active";
       const isVerified = role !== "hospital";
 
+      console.log("Inserting provider profile:", {
+        user_id: user.id,
+        provider_name: formData.provider_name || user.user_metadata.full_name,
+        provider_type: role,
+        status,
+        is_verified: isVerified,
+      });
+
       const { data, error } = await supabase
         .from("svc_providers")
         .insert({
@@ -67,7 +75,6 @@ export function OnboardingWizard() {
           location_city: formData.location_city,
           location_country: formData.location_country,
           specialties: specialtiesArray,
-          registration_number: formData.registration_number || null,
           website: formData.website,
           phone: formData.phone || user.user_metadata.phone,
           status,
@@ -76,7 +83,10 @@ export function OnboardingWizard() {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Supabase error details:", error);
+        throw error;
+      }
 
       toast.success("Profile created successfully!");
 

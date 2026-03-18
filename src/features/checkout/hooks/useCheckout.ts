@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { useCart } from '@/hooks/useCart';
-import { useAuth } from '@/hooks/useAuth';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useMutation } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import { useCart } from "@/hooks/useCart";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 
 interface CheckoutFormData {
   fullName: string;
@@ -23,21 +24,22 @@ export function useCheckout() {
   const { items, clearCart } = useCart();
 
   const [formData, setFormData] = useState<CheckoutFormData>({
-    fullName: user?.user_metadata?.full_name || '',
-    addressLine1: '',
-    addressLine2: '',
-    city: '',
-    state: '',
-    postalCode: '',
-    country: 'United States',
-    phone: '',
+    fullName: user?.user_metadata?.full_name || "",
+    addressLine1: "",
+    addressLine2: "",
+    city: "",
+    state: "",
+    postalCode: "",
+    country: "United States",
+    phone: "",
     saveAddress: true,
   });
 
   const calculateOrderTotal = () => {
     const subtotal = items.reduce(
-      (sum, item) => sum + ((item.salePrice ?? item.price) || 0) * item.quantity,
-      0
+      (sum, item) =>
+        sum + ((item.salePrice ?? item.price) || 0) * item.quantity,
+      0,
     );
     const shipping = subtotal > 50 ? 0 : 5.99;
     const tax = subtotal * 0.08;
@@ -51,12 +53,12 @@ export function useCheckout() {
 
   const placeOrderMutation = useMutation({
     mutationFn: async (addressData: CheckoutFormData) => {
-      if (!user) throw new Error('User not authenticated');
+      if (!user) throw new Error("User not authenticated");
 
       const { shipping, tax } = calculateOrderTotal();
 
       if (items.length === 0) {
-        throw new Error('Cart is empty');
+        throw new Error("Cart is empty");
       }
 
       // Group items by product (simplified - single order for all items)
@@ -71,18 +73,18 @@ export function useCheckout() {
       // Calculate total for this order
       const orderTotal = orderItems.reduce(
         (sum, item) => sum + item.price * item.quantity,
-        0
+        0,
       );
 
       // Create single order (simplified - no seller splitting)
       const { data: orderData, error: orderError } = await supabase
-        .from('orders')
+        .from("orders")
         .insert({
           user_id: user.id,
-          seller_id: 'system', // Simplified - you can get from product if needed
-          status: 'pending',
+          seller_id: "system", // Simplified - you can get from product if needed
+          status: "pending",
           total: orderTotal + shipping + tax,
-          payment_status: 'pending',
+          payment_status: "pending",
           shipping_address_snapshot: {
             full_name: addressData.fullName,
             address_line1: addressData.addressLine1,
@@ -110,7 +112,7 @@ export function useCheckout() {
       }));
 
       const { error: itemsError } = await supabase
-        .from('order_items')
+        .from("order_items")
         .insert(dbOrderItems);
 
       if (itemsError) throw itemsError;
@@ -119,10 +121,10 @@ export function useCheckout() {
     },
     onSuccess: async (data) => {
       await clearCart();
-      
+
       // Save address if requested
       if (formData.saveAddress) {
-        await supabase.from('shipping_addresses').insert({
+        await supabase.from("shipping_addresses").insert({
           user_id: user!.id,
           full_name: formData.fullName,
           address_line1: formData.addressLine1,
@@ -145,7 +147,7 @@ export function useCheckout() {
     setFormData((prev) => ({ ...prev, ...updates }));
   };
 
-  const placeOrder = async () => {
+  const placeOrder = async (paymentMethod: "fawry" | "card" = "card") => {
     // Validate form
     if (
       !formData.fullName ||
@@ -156,10 +158,57 @@ export function useCheckout() {
       !formData.country ||
       !formData.phone
     ) {
-      throw new Error('Please fill in all required fields');
+      throw new Error("Please fill in all required fields");
     }
 
-    await placeOrderMutation.mutateAsync(formData);
+    const orderData = await placeOrderMutation.mutateAsync(formData);
+
+    // If Fawry payment, initialize Fawry payment
+    if (paymentMethod === "fawry") {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session) {
+          throw new Error("User not authenticated");
+        }
+
+        toast.loading("Connecting to Fawry...", { duration: 2000 });
+
+        // Call Fawry payment Edge Function
+        const { data: fawryData, error: fawryError } =
+          await supabase.functions.invoke("create-fawry-payment", {
+            body: { order_id: orderData.orderId },
+            headers: {
+              Authorization: `Bearer ${session.access_token}`,
+            },
+          });
+
+        if (fawryError) throw fawryError;
+        if (!fawryData.success) throw new Error(fawryData.error);
+
+        toast.success("Payment initialized");
+
+        // Redirect to Fawry PayPage or show reference number
+        if (fawryData.checkoutUrl) {
+          window.location.href = fawryData.checkoutUrl;
+        } else if (fawryData.referenceNumber) {
+          // Show reference number dialog (you can implement a custom dialog)
+          alert(
+            `Please pay at any Fawry kiosk using Reference: ${fawryData.referenceNumber}`,
+          );
+        }
+      } catch (error: any) {
+        console.error("Fawry payment error:", error);
+        toast.error(error.message || "Failed to initialize Fawry payment");
+        // Still navigate to success page as order is created
+        navigate(`/order-success/${orderData.orderId}`);
+      }
+    } else {
+      // Card payment - navigate to success page (you can integrate Stripe/etc later)
+      navigate(`/order-success/${orderData.orderId}`);
+    }
   };
 
   return {

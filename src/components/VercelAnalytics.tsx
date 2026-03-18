@@ -1,4 +1,5 @@
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 
 interface VercelAnalyticsProps {
   disabled?: boolean;
@@ -10,5 +11,10 @@ export function VercelAnalytics({ disabled = false }: VercelAnalyticsProps) {
     return null;
   }
 
-  return <Analytics />;
+  return (
+    <>
+      <Analytics />
+      <SpeedInsights />
+    </>
+  );
 }

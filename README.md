@@ -2,9 +2,9 @@
 
 > A modern, production-ready full-stack B2B2C e-commerce platform built with React, Vite, TypeScript, Tailwind CSS, and Supabase. Features a minimalist, high-contrast luxury tech aesthetic with real-time messaging, factory management, services marketplace, and geolocation capabilities.
 
-**Version:** 2.0.0  
-**Status:** ✅ Production Ready (Phases 1-4 Complete + Factory Features)  
-**Last Updated:** March 16, 2026  
+**Version:** 2.2.0
+**Status:** ✅ Production Ready (Phases 1-4 Complete + Factory Features + Services Marketplace + Services Messaging)
+**Last Updated:** March 18, 2026
 **Developer:** Youssef
 
 ---
@@ -106,6 +106,9 @@ The application will run at `http://localhost:5173`
 - Complete checkout flow with address selection
 - Multiple shipping address support
 - Order creation with status tracking
+- **Payment Methods:**
+  - Credit/Debit Card (placeholder for Stripe integration)
+  - **Fawry (Egypt)** - Online PayPage or kiosk payment (EGP) - New!
 
 ### 📦 Order Management
 
@@ -117,12 +120,24 @@ The application will run at `http://localhost:5173`
 
 ### 💬 Real-Time Messaging
 
+#### Product Messaging (B2C/B2B)
+
 - Buyer-seller conversation threads
 - Live message delivery via Supabase Realtime
 - Typing indicators and read receipts (✓✓)
 - Unread message count badges
 - Last message preview with timestamps
 - Conversation inbox with filtering
+- Route: `/messages`
+
+#### Services Messaging (New!)
+
+- Dedicated messaging for service providers and customers
+- Service listing context in conversations
+- Provider-customer communication for bookings
+- Real-time message delivery with read receipts
+- Routes: `/services/messages`, `/services/messages/:conversationId`
+- See [SERVICES-MESSAGING.md](./SERVICES-MESSAGING.md) for details
 
 ### 🏭 Factory Features (B2B)
 
@@ -160,12 +175,14 @@ The application will run at `http://localhost:5173`
 
 - Services gateway homepage
 - Service category browsing
-- Service provider profiles
-- Service listings with booking
-- Provider dashboard for managing services
-- Create provider profile wizard
+- Service provider profiles with verification badges
+- Service listings with booking capabilities
+- Provider dashboard for managing services and listings
+- Create provider profile wizard (individual, company, hospital)
 - Create service listing wizard
-- Service bookings and appointments
+- Service bookings and appointments management
+- **Services messaging system** - Dedicated inbox for provider-customer communication
+- Routes: `/services`, `/services/dashboard`, `/services/messages`
 
 ### 🌍 Geolocation
 
@@ -384,8 +401,10 @@ vite-react/
 │   │   │   ├── FactoryQuotesPage.tsx
 │   │   │   └── FactoryConnectionsPage.tsx
 │   │   ├── messaging/
-│   │   │   ├── Inbox.tsx
-│   │   │   └── Chat.tsx
+│   │   │   ├── Inbox.tsx               # Product messages inbox
+│   │   │   ├── Chat.tsx                # Product messages chat
+│   │   │   ├── ServicesInbox.tsx       # Services messages inbox (New!)
+│   │   │   └── ServicesChat.tsx        # Services messages chat (New!)
 │   │   └── public/
 │   │       ├── Home.tsx
 │   │       ├── ProductList.tsx
@@ -456,15 +475,17 @@ vite-react/
 
 ### Services Routes
 
-| Path                                 | Component               | Description               |
-| ------------------------------------ | ----------------------- | ------------------------- |
-| `/services`                          | `ServicesHome`          | Services marketplace home |
-| `/services/:categorySlug`            | `ServiceCategoryPage`   | Services by category      |
-| `/services/listing/:listingSlug`     | `ServiceDetailPage`     | Service details           |
-| `/services/provider/:providerId`     | `ProviderProfilePage`   | Provider profile          |
-| `/services/dashboard`                | `ProviderDashboardPage` | Provider dashboard        |
-| `/services/dashboard/create-profile` | `CreateProviderProfile` | Create provider profile   |
-| `/services/dashboard/create-listing` | `CreateServiceListing`  | Create service listing    |
+| Path                                 | Component               | Description                    |
+| ------------------------------------ | ----------------------- | ------------------------------ |
+| `/services`                          | `ServicesHome`          | Services marketplace home      |
+| `/services/:categorySlug`            | `ServiceCategoryPage`   | Services by category           |
+| `/services/listing/:listingSlug`     | `ServiceDetailPage`     | Service details                |
+| `/services/provider/:providerId`     | `ProviderProfilePage`   | Provider profile               |
+| `/services/dashboard`                | `ProviderDashboardPage` | Provider dashboard             |
+| `/services/dashboard/create-profile` | `CreateProviderProfile` | Create provider profile        |
+| `/services/dashboard/create-listing` | `CreateServiceListing`  | Create service listing         |
+| `/services/messages`                 | `ServicesInbox`         | Services messages inbox (New!) |
+| `/services/messages/:conversationId` | `ServicesChat`          | Services chat (New!)           |
 
 ### Factory Routes (Protected)
 
@@ -875,31 +896,90 @@ const { location, isLoading, error, requestLocation } = useGeolocation();
 
 | Document                                                       | Description                                  |
 | -------------------------------------------------------------- | -------------------------------------------- |
+| [README.md](./README.md)                                       | **Complete project documentation**           |
+| [ROUTES.md](./ROUTES.md)                                       | **All routes and parameters reference**      |
 | [DEPLOYMENT.md](./DEPLOYMENT.md)                               | Detailed deployment guide with optimizations |
 | [FACTORY_IMPLEMENTATION.md](./FACTORY_IMPLEMENTATION.md)       | Factory features complete guide              |
+| [SIMPLE_SERVICES_SCHEMA.md](./SIMPLE_SERVICES_SCHEMA.md)       | Services marketplace schema guide            |
+| [SERVICES-MESSAGING.md](./SERVICES-MESSAGING.md)               | **Services messaging system guide (New!)**   |
+| [FAWRY_INTEGRATION.md](./FAWRY_INTEGRATION.md)                 | **Fawry payment integration guide (New!)**   |
 | [GEOLOCATION_COMPLETE.md](./GEOLOCATION_COMPLETE.md)           | Geolocation feature documentation            |
 | [LOCATION_FEATURE_COMPLETE.md](./LOCATION_FEATURE_COMPLETE.md) | Location settings guide                      |
 | [PHASE_1_COMPLETE.md](./PHASE_1_COMPLETE.md)                   | Phase 1 completion report                    |
 | [PHASE_4_COMPLETE.md](./PHASE_4_COMPLETE.md)                   | Phase 4 (Messaging) completion               |
 | [PROJECT_ANALYSIS.md](./PROJECT_ANALYSIS.md)                   | Comprehensive project analysis               |
-| [ROUTES_REFERENCE.md](./ROUTES_REFERENCE.md)                   | Complete routes reference                    |
 | [MESSAGING_FIX.md](./MESSAGING_FIX.md)                         | Messaging bug fix documentation              |
+| [FIX-SVC-PROVIDERS.md](./FIX-SVC-PROVIDERS.md)                 | Service providers table fix (New!)           |
 
 ---
 
 ## 📈 Development Phases
 
-| Phase                    | Status      | Description                                                           |
-| ------------------------ | ----------- | --------------------------------------------------------------------- |
-| **Phase 1**              | ✅ Complete | Project Setup (Vite, TS, Tailwind, Supabase, base components)         |
-| **Phase 2**              | ✅ Complete | Authentication System (login, signup, reset, protected routes)        |
-| **Phase 3**              | ✅ Complete | Product Listing & Cart (products, categories, cart, checkout, orders) |
-| **Phase 4**              | ✅ Complete | Messaging (real-time chat, conversations, typing indicators)          |
-| **Geolocation**          | ✅ Complete | Browser geolocation for nearby sellers                                |
-| **Factory Features**     | ✅ Complete | Dashboard, production tracking, quotes, connections                   |
-| **Services Marketplace** | ✅ Complete | Services gateway, provider profiles, listings                         |
-| **Phase 5**              | 🔮 Planned  | Reviews Management (review CRUD, seller responses)                    |
-| **Future**               | 🔮 Planned  | Analytics Dashboard, Admin Panel, Mobile App                          |
+| Phase                     | Status      | Description                                                           |
+| ------------------------- | ----------- | --------------------------------------------------------------------- |
+| **Phase 1**               | ✅ Complete | Project Setup (Vite, TS, Tailwind, Supabase, base components)         |
+| **Phase 2**               | ✅ Complete | Authentication System (login, signup, reset, protected routes)        |
+| **Phase 3**               | ✅ Complete | Product Listing & Cart (products, categories, cart, checkout, orders) |
+| **Phase 4**               | ✅ Complete | Messaging (real-time chat, conversations, typing indicators)          |
+| **Geolocation**           | ✅ Complete | Browser geolocation for nearby sellers                                |
+| **Factory Features**      | ✅ Complete | Dashboard, production tracking, quotes, connections                   |
+| **Services Marketplace**  | ✅ Complete | Services gateway, provider profiles, listings                         |
+| **Services Messaging**    | ✅ Complete | Dedicated messaging for service providers & customers (New!)          |
+| **Analytics Integration** | ✅ Complete | Vercel Analytics & Speed Insights                                     |
+| **Phase 5**               | 🔮 Planned  | Reviews Management (review CRUD, seller responses)                    |
+| **Future**                | 🔮 Planned  | Analytics Dashboard, Admin Panel, Mobile App                          |
+
+---
+
+## 📊 Analytics & Performance
+
+### Vercel Integration
+
+The app is integrated with Vercel's analytics and performance monitoring tools:
+
+#### Vercel Analytics
+
+- **Package:** `@vercel/analytics`
+- **Implementation:** `src/components/VercelAnalytics.tsx`
+- **Features:**
+  - Page views tracking
+  - User engagement metrics
+  - Traffic sources
+  - Geographic data
+
+#### Vercel Speed Insights
+
+- **Package:** `@vercel/speed-insights`
+- **Implementation:** `src/components/VercelAnalytics.tsx`
+- **Features:**
+  - Core Web Vitals monitoring
+  - Page load performance
+  - First Contentful Paint (FCP)
+  - Largest Contentful Paint (LCP)
+  - Cumulative Layout Shift (CLS)
+  - First Input Delay (FID)
+
+### Viewing Analytics
+
+1. Deploy to Vercel
+2. Visit your Vercel dashboard
+3. Navigate to **Analytics** tab
+4. View **Speed Insights** for performance metrics
+
+### Disabling Analytics
+
+To disable analytics in development or production:
+
+```tsx
+// In main.tsx
+<VercelAnalytics disabled={true} />
+```
+
+Or set environment variable:
+
+```
+VITE_VERCEL_ANALYTICS_ID=
+```
 
 ---
 
@@ -950,7 +1030,7 @@ const { location, isLoading, error, requestLocation } = useGeolocation();
 
 - **Developer:** Youssef
 - **Project:** Aurora E-commerce Platform
-- **Version:** 2.0.0
+- **Version:** 2.2.0
 - **License:** © 2026 Aurora E-commerce. All rights reserved.
 - **Contact:** support@aurora.com
 
@@ -999,6 +1079,35 @@ SELECT * FROM pg_policies WHERE tablename = 'your_table';
 - Test on HTTPS (required for geolocation API)
 - Check browser console for permission errors
 
+**Issue: Service Provider 400 Bad Request (svc_providers)**
+
+If you get a 400 error when creating a service provider profile:
+
+```sql
+-- Solution: Run the fix migration in Supabase SQL Editor
+-- File: fix-svc-providers-all-columns.sql
+
+-- Add missing columns to svc_providers table
+ALTER TABLE public.svc_providers
+ADD COLUMN IF NOT EXISTS phone VARCHAR(20);
+
+ALTER TABLE public.svc_providers
+ADD COLUMN IF NOT EXISTS website VARCHAR(200);
+
+-- Add other missing columns (email, logo_url, etc.)
+-- See fix-svc-providers-all-columns.sql for complete list
+
+-- Update status constraint to include 'pending_review'
+ALTER TABLE public.svc_providers
+DROP CONSTRAINT IF EXISTS svc_providers_status_check;
+
+ALTER TABLE public.svc_providers
+ADD CONSTRAINT svc_providers_status_check
+CHECK (status IN ('active', 'inactive', 'suspended', 'pending_review'));
+```
+
+See [FIX-SVC-PROVIDERS.md](./FIX-SVC-PROVIDERS.md) for complete details.
+
 ---
 
 ## 🙏 Acknowledgments
@@ -1020,4 +1129,4 @@ SELECT * FROM pg_policies WHERE tablename = 'your_table';
 
 ---
 
-_Last Updated: March 16, 2026_
+_Last Updated: March 18, 2026_

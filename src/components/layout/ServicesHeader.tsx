@@ -179,7 +179,7 @@ export function ServicesHeader() {
 
                   {/* Messages */}
                   <Link
-                    to="/messages"
+                    to="/services/messages"
                     className="relative p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-full transition-colors"
                   >
                     <MessageSquare size={20} />
