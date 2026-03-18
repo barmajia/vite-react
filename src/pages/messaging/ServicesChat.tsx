@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 
 interface Message {
   id: string;
@@ -81,9 +82,9 @@ export const ServicesChat = () => {
         provider_id: data.provider_id,
         customer_id: data.customer_id,
         listing_id: data.listing_id,
-        provider_name: data.provider?.full_name || "Provider",
-        provider_avatar: data.provider?.avatar_url,
-        listing_title: data.listing?.title || null,
+        provider_name: (data.provider as any)?.[0]?.full_name || "Provider",
+        provider_avatar: (data.provider as any)?.[0]?.avatar_url,
+        listing_title: (data.listing as any)?.[0]?.title || null,
       });
     } catch (error: any) {
       console.error("Error fetching conversation:", error);
@@ -261,10 +262,12 @@ export const ServicesChat = () => {
         <div className="flex gap-2">
           <Input
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setNewMessage(e.target.value)
+            }
             placeholder="Type a message..."
             disabled={sending}
-            onKeyDown={(e) => {
+            onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 handleSendMessage(e);

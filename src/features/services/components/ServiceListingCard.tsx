@@ -10,8 +10,9 @@ interface ServiceListingCardProps {
 
 export function ServiceListingCard({ listing }: ServiceListingCardProps) {
   const formatPrice = () => {
-    if (!listing.price_numeric) return "Contact for pricing";
-    return `$${listing.price_numeric.toFixed(2)}`;
+    if (!listing.price) return "Contact for pricing";
+    const currency = listing.currency === "EGP" ? "EGP " : "$";
+    return `${currency}${listing.price.toFixed(2)}`;
   };
 
   return (
@@ -30,10 +31,10 @@ export function ServiceListingCard({ listing }: ServiceListingCardProps) {
             </p>
           )}
 
-          {/* Category */}
-          {listing.category_slug && (
-            <Badge variant="outline" className="mb-3">
-              {listing.category_slug}
+          {/* Price Type Badge */}
+          {listing.price_type && (
+            <Badge variant="outline" className="mb-3 capitalize">
+              {listing.price_type}
             </Badge>
           )}
 
@@ -42,9 +43,14 @@ export function ServiceListingCard({ listing }: ServiceListingCardProps) {
             <div className="flex items-center gap-1 text-sm font-semibold text-primary">
               <DollarSign size={14} />
               {formatPrice()}
+              {listing.price_type && (
+                <span className="text-xs text-muted-foreground">
+                  /{listing.price_type}
+                </span>
+              )}
             </div>
             <span className="text-xs text-muted-foreground">
-              Provider: {listing.provider_id.slice(0, 6)}...
+              Active: {listing.is_active ? "Yes" : "No"}
             </span>
           </div>
         </CardContent>

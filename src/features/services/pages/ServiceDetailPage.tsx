@@ -45,8 +45,9 @@ export function ServiceDetailPage() {
   };
 
   const formatPrice = () => {
-    if (!listing?.price_numeric) return "Contact for pricing";
-    return `$${listing.price_numeric.toFixed(2)}`;
+    if (!listing?.price) return "Contact for pricing";
+    const currency = listing.currency === "EGP" ? "EGP" : "$";
+    return `${currency}${listing.price.toFixed(2)}`;
   };
 
   if (loading) {
@@ -76,13 +77,7 @@ export function ServiceDetailPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
       <Button variant="ghost" asChild className="mb-6">
-        <Link
-          to={
-            listing.category_slug
-              ? `/services/${listing.category_slug}`
-              : "/services"
-          }
-        >
+        <Link to="/services">
           <ArrowLeft size={16} className="mr-2" />
           Back to Services
         </Link>

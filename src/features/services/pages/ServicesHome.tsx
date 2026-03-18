@@ -131,9 +131,15 @@ export function ServicesHome() {
                 className="p-6 bg-card border rounded-xl hover:shadow-lg hover:border-primary transition-all"
               >
                 <h3 className="font-semibold text-lg mb-2">{listing.title}</h3>
-                {listing.price_numeric && (
+                {listing.price && (
                   <p className="text-primary font-bold mb-2">
-                    ${listing.price_numeric.toFixed(2)}
+                    {listing.currency === "EGP" ? "EGP" : "$"}
+                    {listing.price.toFixed(2)}
+                    {listing.price_type && (
+                      <span className="text-sm text-muted-foreground">
+                        /{listing.price_type}
+                      </span>
+                    )}
                   </p>
                 )}
                 {listing.description && (
@@ -142,7 +148,7 @@ export function ServicesHome() {
                   </p>
                 )}
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>Provider: {listing.provider_id.slice(0, 8)}...</span>
+                  <span>Active: {listing.is_active ? "Yes" : "No"}</span>
                   <span className="text-primary">View Details →</span>
                 </div>
               </Link>
