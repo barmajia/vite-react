@@ -12,9 +12,12 @@ export interface ServiceListing {
   provider_id: string;
   title: string;
   slug: string;
-  category_slug: string | null;
-  price_numeric: number | null;
+  subcategory_id: string | null;
+  price: number | null;
+  price_type: string | null;
+  currency: string | null;
   description: string | null;
+  is_active: boolean;
   created_at: string;
 }
 
@@ -57,15 +60,16 @@ export const useServices = () => {
     }
   }, []);
 
-  // Fetch listings by category
-  const getListingsByCategory = useCallback(
-    async (categorySlug: string): Promise<ServiceListing[]> => {
+  // Fetch listings by subcategory
+  const getListingsBySubcategory = useCallback(
+    async (subcategoryId: string): Promise<ServiceListing[]> => {
       setLoading(true);
       try {
         const { data, error } = await supabase
           .from("svc_listings")
           .select("*")
-          .eq("category_slug", categorySlug)
+          .eq("subcategory_id", subcategoryId)
+          .eq("is_active", true)
           .order("created_at", { ascending: false });
 
         if (error) throw error;
@@ -105,8 +109,9 @@ export const useServices = () => {
     async (
       title: string,
       slug: string,
-      categorySlug: string,
+      subcategoryId: string,
       price: number | null,
+      price_type: string,
       description: string | null,
     ) => {
       try {
@@ -115,15 +120,29 @@ export const useServices = () => {
         } = await supabase.auth.getUser();
         if (!user) throw new Error("You must be logged in");
 
+        // Get provider_id for this user
+        const { data: provider } = await supabase
+          .from("svc_providers")
+          .select("id")
+          .eq("user_id", user.id)
+          .single();
+
+        if (!provider)
+          throw new Error(
+            "You must have a provider profile to create listings",
+          );
+
         const { data, error } = await supabase
           .from("svc_listings")
           .insert({
-            provider_id: user.id,
+            provider_id: provider.id,
             title,
             slug,
-            category_slug: categorySlug,
-            price_numeric: price,
+            subcategory_id: subcategoryId,
+            price,
+            price_type,
             description,
+            is_active: true,
           })
           .select()
           .single();
@@ -186,7 +205,7 @@ export const useServices = () => {
     // Data fetching
     getCategories,
     getListings,
-    getListingsByCategory,
+    getListingsBySubcategory,
     getListingBySlug,
     // Actions
     createListing,

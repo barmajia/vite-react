@@ -2,17 +2,39 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import {
-  useServices,
-  type ServiceCategory,
-  type ServiceListing,
-} from "../hooks/useServices";
+import { supabase } from "@/lib/supabase";
+import { Badge } from "@/components/ui/badge";
+
+interface ServiceCategoryWithSubcategories {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  subcategories: {
+    id: string;
+    name: string;
+    slug: string;
+  }[];
+}
+
+interface ServiceListing {
+  id: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  price: number | null;
+  price_type: string | null;
+  currency: string | null;
+  provider: {
+    provider_name: string;
+  } | null;
+}
 
 export function ServiceCategoryPage() {
   const { categorySlug } = useParams<{ categorySlug: string }>();
-  const { getCategories, getListingsByCategory } = useServices();
+  const [category, setCategory] =
+    useState<ServiceCategoryWithSubcategories | null>(null);
   const [listings, setListings] = useState<ServiceListing[]>([]);
-  const [category, setCategory] = useState<ServiceCategory | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -20,19 +42,58 @@ export function ServiceCategoryPage() {
       if (!categorySlug) return;
 
       setLoading(true);
-      const [cats, listingsData] = await Promise.all([
-        getCategories(),
-        getListingsByCategory(categorySlug),
-      ]);
+      try {
+        // Fetch category with subcategories
+        const { data: categoryData } = await supabase
+          .from("svc_categories")
+          .select(
+            `
+            *,
+            subcategories:svc_subcategories (
+              id,
+              name,
+              slug
+            )
+          `,
+          )
+          .eq("slug", categorySlug)
+          .single();
 
-      const currentCategory = cats.find((c) => c.slug === categorySlug) || null;
-      setCategory(currentCategory);
-      setListings(listingsData);
-      setLoading(false);
+        if (categoryData) {
+          setCategory(categoryData);
+
+          // Fetch listings from all subcategories in this category
+          const subcategoryIds = categoryData.subcategories.map(
+            (s: any) => s.id,
+          );
+
+          if (subcategoryIds.length > 0) {
+            const { data: listingsData } = await supabase
+              .from("svc_listings")
+              .select(
+                `
+                *,
+                provider:svc_providers (
+                  provider_name
+                )
+              `,
+              )
+              .in("subcategory_id", subcategoryIds)
+              .eq("is_active", true)
+              .order("created_at", { ascending: false });
+
+            setListings(listingsData || []);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching category:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     fetchData();
-  }, [categorySlug, getCategories, getListingsByCategory]);
+  }, [categorySlug]);
 
   if (loading) {
     return (
@@ -69,7 +130,24 @@ export function ServiceCategoryPage() {
           </Link>
         </Button>
         <h1 className="text-4xl font-bold mb-2">{category.name}</h1>
+        {category.description && (
+          <p className="text-muted-foreground">{category.description}</p>
+        )}
       </div>
+
+      {/* Subcategories */}
+      {category.subcategories.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-3">Subcategories</h3>
+          <div className="flex flex-wrap gap-2">
+            {category.subcategories.map((sub) => (
+              <Badge key={sub.id} variant="secondary" className="text-sm">
+                {sub.name}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Listings Grid */}
       {listings.length > 0 ? (
@@ -88,9 +166,15 @@ export function ServiceCategoryPage() {
                 className="p-6 bg-card border rounded-xl hover:shadow-lg hover:border-primary transition-all"
               >
                 <h3 className="font-semibold text-lg mb-2">{listing.title}</h3>
-                {listing.price_numeric && (
+                {listing.price && (
                   <p className="text-primary font-bold mb-2">
-                    ${listing.price_numeric.toFixed(2)}
+                    {listing.currency === "EGP" ? "EGP" : "$"}
+                    {listing.price.toFixed(2)}
+                    {listing.price_type && (
+                      <span className="text-sm text-muted-foreground">
+                        /{listing.price_type}
+                      </span>
+                    )}
                   </p>
                 )}
                 {listing.description && (
@@ -99,7 +183,10 @@ export function ServiceCategoryPage() {
                   </p>
                 )}
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>Provider: {listing.provider_id.slice(0, 8)}...</span>
+                  <span>
+                    Provider:{" "}
+                    {listing.provider?.provider_name?.slice(0, 20) || "Unknown"}
+                  </span>
                   <span className="text-primary">View Details →</span>
                 </div>
               </Link>
