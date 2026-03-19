@@ -1,39 +1,55 @@
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/useAuth";
 
 export const useRecentBookings = () => {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['provider-recent-bookings', user?.id],
+    queryKey: ["provider-recent-bookings", user?.id],
     queryFn: async () => {
       if (!user) return [];
 
-      // Join with service_listings to get provider_id
+      // Fetch recent bookings with customer info
       const { data, error } = await supabase
-        .from('service_bookings')
-        .select(`
+        .from("service_bookings")
+        .select(
+          `
           id,
           booking_date,
           booking_time,
           status,
           total_price,
           created_at,
-          customer:users!service_bookings_customer_id (
-            full_name,
-            avatar_url
-          ),
-          listing:service_listings (
-            id,
-            title
-          )
-        `)
-        .eq('provider_id', user.id)
-        .order('created_at', { ascending: false })
+          customer_name,
+          customer_email,
+          customer_phone,
+          listing_id
+        `,
+        )
+        .eq("provider_id", user.id)
+        .order("created_at", { ascending: false })
         .limit(5);
 
       if (error) throw error;
+
+      // Fetch listing details separately if we have bookings
+      if (data && data.length > 0) {
+        const listingIds = data.map((b) => b.listing_id).filter(Boolean);
+        if (listingIds.length > 0) {
+          const { data: listings } = await supabase
+            .from("service_listings")
+            .select("id, title")
+            .in("id", listingIds);
+
+          // Merge listings with bookings
+          return data.map((booking) => ({
+            ...booking,
+            listing: listings?.find((l) => l.id === booking.listing_id),
+          }));
+        }
+      }
+
       return data;
     },
     enabled: !!user,

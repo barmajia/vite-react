@@ -120,9 +120,19 @@ export const DashboardHome = () => {
       <div className="grid gap-4 md:grid-cols-7">
         <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>
-              Recent {isFreelance ? "Projects" : "Bookings"}
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle>
+                Recent {isFreelance ? "Projects" : "Bookings"}
+              </CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/services/dashboard/bookings")}
+                className="text-sm text-violet-600 hover:text-violet-700"
+              >
+                View All
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -137,7 +147,7 @@ export const DashboardHome = () => {
                         {booking.listing?.title || "Service Request"}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {booking.customer?.full_name || "Unknown Customer"} •{" "}
+                        {booking.customer_name || "Unknown Customer"} •{" "}
                         {format(new Date(booking.booking_date), "MMM dd, yyyy")}
                       </p>
                     </div>
@@ -151,9 +161,18 @@ export const DashboardHome = () => {
                   </div>
                 ))
               ) : (
-                <p className="text-sm text-muted-foreground text-center py-4">
-                  No recent activity.
-                </p>
+                <div className="text-center py-4">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    No recent activity.
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => navigate("/services/dashboard/bookings")}
+                  >
+                    View All Bookings
+                  </Button>
+                </div>
               )}
             </div>
           </CardContent>

@@ -45,6 +45,8 @@ import { OnboardingWizard } from "@/features/services/pages/OnboardingWizard";
 import { ServiceOnboardingWizard } from "@/features/services/components/ServiceOnboardingWizard";
 import { DashboardLayout } from "@/features/services/dashboard/components/layout/DashboardLayout";
 import { DashboardHome } from "@/features/services/dashboard/pages/DashboardHome";
+import { BookingsPage } from "@/features/services/dashboard/pages/BookingsPage";
+import { ServiceBookingPage } from "@/features/services/bookings/pages/ServiceBookingPage";
 
 // Factory pages
 import { FactoryDashboardPage } from "@/pages/factory/FactoryDashboardPage";
@@ -137,8 +139,12 @@ function App() {
                 <Route index element={<ServicesHome />} />
                 <Route path=":categorySlug" element={<ServiceCategoryPage />} />
                 <Route
-                  path="listing/:listingSlug"
+                  path="listing/:listingId"
                   element={<ServiceDetailPage />}
+                />
+                <Route
+                  path="listing/:listingId/book"
+                  element={<ServiceBookingPage />}
                 />
                 <Route
                   path="provider/:providerId"
@@ -154,12 +160,7 @@ function App() {
               {/* Services Dashboard Routes (Separate Layout) */}
               <Route path="services/dashboard" element={<DashboardLayout />}>
                 <Route index element={<DashboardHome />} />
-                <Route
-                  path="bookings"
-                  element={
-                    <div className="p-4">Bookings Page (Coming Soon)</div>
-                  }
-                />
+                <Route path="bookings" element={<BookingsPage />} />
                 <Route
                   path="projects"
                   element={
