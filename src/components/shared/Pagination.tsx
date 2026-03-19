@@ -1,7 +1,7 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Select } from '@/components/ui/select';
-import { useState } from 'react';
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Select } from "@/components/ui/select";
+import { useState } from "react";
 
 interface PaginationProps {
   currentPage: number;
@@ -22,8 +22,8 @@ export function Pagination({
 }: PaginationProps) {
   const [localPageSize, setLocalPageSize] = useState(pageSize);
 
-  const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newSize = Number(e.target.value);
+  const handlePageSizeChange = (value: string) => {
+    const newSize = Number(value);
     setLocalPageSize(newSize);
     onPageSizeChange?.(newSize);
   };
@@ -39,17 +39,17 @@ export function Pagination({
     } else {
       if (currentPage <= 3) {
         for (let i = 1; i <= 4; i++) pages.push(i);
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       } else if (currentPage >= totalPages - 2) {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = totalPages - 3; i <= totalPages; i++) pages.push(i);
       } else {
         pages.push(1);
-        pages.push('...');
+        pages.push("...");
         for (let i = currentPage - 1; i <= currentPage + 1; i++) pages.push(i);
-        pages.push('...');
+        pages.push("...");
         pages.push(totalPages);
       }
     }
@@ -65,13 +65,16 @@ export function Pagination({
       {onPageSizeChange && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>Show</span>
-          <Select value={String(localPageSize)} onChange={handlePageSizeChange}>
+          <Select
+            value={String(localPageSize)}
+            onValueChange={handlePageSizeChange}
+          >
             <option value="10">10</option>
             <option value="20">20</option>
             <option value="50">50</option>
             <option value="100">100</option>
           </Select>
-          <span>of {totalItems || 'items'}</span>
+          <span>of {totalItems || "items"}</span>
         </div>
       )}
 
@@ -87,20 +90,20 @@ export function Pagination({
         </Button>
 
         {getPageNumbers().map((page, index) =>
-          page === '...' ? (
+          page === "..." ? (
             <span key={`ellipsis-${index}`} className="px-2">
               ...
             </span>
           ) : (
             <Button
               key={page}
-              variant={page === currentPage ? 'default' : 'outline'}
+              variant={page === currentPage ? "default" : "outline"}
               size="sm"
               onClick={() => onPageChange(Number(page))}
             >
               {page}
             </Button>
-          )
+          ),
         )}
 
         <Button

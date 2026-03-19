@@ -1,29 +1,32 @@
-import { useState } from 'react';
-import { Filter, SlidersHorizontal, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { ROUTES } from '@/lib/constants';
+import { useState } from "react";
+import { Filter, SlidersHorizontal, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ROUTES } from "@/lib/constants";
 
 interface FilterSidebarProps {
   categories?: { id: string; name: string }[];
   brands?: { id: string; name: string }[];
 }
 
-export function FilterSidebar({ categories = [], brands = [] }: FilterSidebarProps) {
+export function FilterSidebar({
+  categories = [],
+  brands = [],
+}: FilterSidebarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const params = new URLSearchParams(location.search);
 
   const [filters, setFilters] = useState({
-    category: params.get('category') || '',
-    brand: params.get('brand') || '',
-    minPrice: params.get('min_price') || '',
-    maxPrice: params.get('max_price') || '',
-    rating: params.get('rating') || '',
+    category: params.get("category") || "",
+    brand: params.get("brand") || "",
+    minPrice: params.get("min_price") || "",
+    maxPrice: params.get("max_price") || "",
+    rating: params.get("rating") || "",
   });
 
   const [isOpen, setIsOpen] = useState(false);
@@ -35,25 +38,27 @@ export function FilterSidebar({ categories = [], brands = [] }: FilterSidebarPro
     const params = new URLSearchParams();
     Object.entries(updated).forEach(([key, value]) => {
       if (value) {
-        params.set(key.replace(/([A-Z])/g, '_$1').toLowerCase(), value);
+        params.set(key.replace(/([A-Z])/g, "_$1").toLowerCase(), value);
       }
     });
 
-    navigate(`${ROUTES.PRODUCTS}${params.toString() ? `?${params.toString()}` : ''}`);
+    navigate(
+      `${ROUTES.PRODUCTS}${params.toString() ? `?${params.toString()}` : ""}`,
+    );
   };
 
   const clearFilters = () => {
     setFilters({
-      category: '',
-      brand: '',
-      minPrice: '',
-      maxPrice: '',
-      rating: '',
+      category: "",
+      brand: "",
+      minPrice: "",
+      maxPrice: "",
+      rating: "",
     });
     navigate(ROUTES.PRODUCTS);
   };
 
-  const hasActiveFilters = Object.values(filters).some((v) => v !== '');
+  const hasActiveFilters = Object.values(filters).some((v) => v !== "");
 
   return (
     <>
@@ -67,14 +72,14 @@ export function FilterSidebar({ categories = [], brands = [] }: FilterSidebarPro
         Filters
         {hasActiveFilters && (
           <Badge className="ml-2 h-5 w-5 flex items-center justify-center p-0">
-            {Object.values(filters).filter((v) => v !== '').length}
+            {Object.values(filters).filter((v) => v !== "").length}
           </Badge>
         )}
       </Button>
 
       {/* Mobile Drawer */}
       <div
-        className={`fixed inset-0 z-50 lg:hidden ${isOpen ? 'block' : 'hidden'}`}
+        className={`fixed inset-0 z-50 lg:hidden ${isOpen ? "block" : "hidden"}`}
       >
         <div
           className="absolute inset-0 bg-black/80"
@@ -83,7 +88,11 @@ export function FilterSidebar({ categories = [], brands = [] }: FilterSidebarPro
         <div className="absolute right-0 top-0 h-full w-[280px] bg-background p-4 overflow-y-auto">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Filters</h2>
-            <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsOpen(false)}
+            >
               <X className="h-5 w-5" />
             </Button>
           </div>
@@ -131,7 +140,7 @@ function FilterContent({
         <Label>Category</Label>
         <Select
           value={filters.category}
-          onChange={(e) => updateFilters({ category: e.target.value })}
+          onValueChange={(value) => updateFilters({ category: value })}
         >
           <option value="">All Categories</option>
           {categories.map((cat) => (
@@ -147,7 +156,7 @@ function FilterContent({
         <Label>Brand</Label>
         <Select
           value={filters.brand}
-          onChange={(e) => updateFilters({ brand: e.target.value })}
+          onValueChange={(value) => updateFilters({ brand: value })}
         >
           <option value="">All Brands</option>
           {brands.map((brand) => (
@@ -184,7 +193,7 @@ function FilterContent({
         <Label>Minimum Rating</Label>
         <Select
           value={filters.rating}
-          onChange={(e) => updateFilters({ rating: e.target.value })}
+          onValueChange={(value) => updateFilters({ rating: value })}
         >
           <option value="">Any Rating</option>
           <option value="4">4+ Stars</option>
@@ -195,7 +204,7 @@ function FilterContent({
       </div>
 
       {/* Clear Filters */}
-      {Object.values(filters).some((v) => v !== '') && (
+      {Object.values(filters).some((v) => v !== "") && (
         <Button variant="outline" onClick={clearFilters} className="w-full">
           <SlidersHorizontal className="h-4 w-4 mr-2" />
           Clear All
