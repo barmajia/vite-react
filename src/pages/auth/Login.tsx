@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, Loader2, Briefcase } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,7 +11,25 @@ import { supabase } from "@/lib/supabase";
 import { isValidEmail } from "@/lib/utils";
 import { toast } from "sonner";
 
+// Map Supabase error codes/messages to safe, user-friendly messages
+function getAuthErrorMessage(t: (key: string) => string, rawMessage: string): string {
+  if (!rawMessage) return t("auth.unexpectedError");
+  const msg = rawMessage.toLowerCase();
+  if (msg.includes("invalid login credentials") || msg.includes("invalid email or password")) {
+    return t("auth.invalidCredentials") ?? "Invalid email or password.";
+  }
+  if (msg.includes("email not confirmed")) {
+    return t("auth.emailNotConfirmed") ?? "Please confirm your email before signing in.";
+  }
+  if (msg.includes("too many requests")) {
+    return t("auth.tooManyRequests") ?? "Too many attempts. Please wait a moment and try again.";
+  }
+  // Generic fallback — do NOT expose the raw server message
+  return t("auth.unexpectedError");
+}
+
 export function Login() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { signIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -23,19 +42,19 @@ export function Login() {
 
   const validateForm = () => {
     if (!formData.email) {
-      setError("Email is required");
+      setError(t("auth.emailRequired"));
       return false;
     }
     if (!isValidEmail(formData.email)) {
-      setError("Please enter a valid email");
+      setError(t("auth.validEmail"));
       return false;
     }
     if (!formData.password) {
-      setError("Password is required");
+      setError(t("auth.passwordRequired"));
       return false;
     }
     if (formData.password.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError(t("auth.passwordMinLength"));
       return false;
     }
     return true;
@@ -54,9 +73,10 @@ export function Login() {
       const data = (result as any).data;
 
       if (error) {
-        toast.error(error.message);
+        // Security: sanitize error message before display
+        toast.error(getAuthErrorMessage(t, error.message ?? ""));
       } else {
-        toast.success("Welcome back!");
+        toast.success(t("auth.welcomeBack"));
 
         // Check for Service Provider Profile
         if (data?.user) {
@@ -68,21 +88,19 @@ export function Login() {
 
           if (provider) {
             if (provider.status === "pending_review") {
-              toast.info("Your provider account is pending admin approval");
+              toast.info(t("auth.pendingReview"));
               navigate("/services/dashboard/pending");
               return;
             }
-            // Provider exists and is active - go to dashboard
             navigate("/services/dashboard");
             return;
           }
         }
 
-        // No provider profile or client - go to services home
         navigate("/services");
       }
     } catch (_err) {
-      toast.error("An unexpected error occurred");
+      toast.error(t("auth.unexpectedError"));
     } finally {
       setIsLoading(false);
     }
@@ -97,15 +115,15 @@ export function Login() {
           </div>
         </div>
         <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
-          Sign in to Aurora Services
+          {t("auth.signInToAurora")}
         </h2>
         <p className="mt-2 text-sm text-gray-600">
-          Or{" "}
+          {t("auth.orText")}{" "}
           <Link
             to="/signup"
             className="font-medium text-primary-600 hover:text-primary-500"
           >
-            create a new account
+            {t("auth.createAccount")}
           </Link>
         </p>
       </div>
@@ -125,7 +143,7 @@ export function Login() {
                   htmlFor="email"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Email address
+                  {t("auth.email")}
                 </Label>
                 <div className="mt-1 relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -140,7 +158,7 @@ export function Login() {
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
                     }
-                    placeholder="john@example.com"
+                    placeholder={t("auth.emailPlaceholder")}
                   />
                 </div>
               </div>
@@ -150,7 +168,7 @@ export function Login() {
                   htmlFor="password"
                   className="block text-sm font-medium text-gray-700"
                 >
-                  Password
+                  {t("auth.password")}
                 </Label>
                 <div className="mt-1 relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -165,7 +183,7 @@ export function Login() {
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
                     }
-                    placeholder="••••••••"
+                    placeholder={t("auth.passwordPlaceholder")}
                   />
                   <button
                     type="button"
@@ -185,10 +203,10 @@ export function Login() {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
+                    {t("auth.signingIn")}
                   </>
                 ) : (
-                  "Sign in"
+                  t("auth.signIn")
                 )}
               </Button>
             </form>
@@ -200,7 +218,7 @@ export function Login() {
                 </div>
                 <div className="relative flex justify-center text-sm">
                   <span className="px-2 bg-white text-gray-500">
-                    Looking for products?
+                    {t("auth.lookingForProducts")}
                   </span>
                 </div>
               </div>
@@ -210,7 +228,7 @@ export function Login() {
                   className="w-full"
                   onClick={() => navigate("/products")}
                 >
-                  Go to Aurora Products
+                  {t("auth.goToProducts")}
                 </Button>
               </div>
             </div>

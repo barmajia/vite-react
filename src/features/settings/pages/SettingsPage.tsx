@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useSettings } from '@/hooks/useSettings';
 import { ProfileSettings } from '../components/ProfileSettings';
 import { AccountSettings } from '../components/AccountSettings';
@@ -23,6 +24,7 @@ import {
 } from 'lucide-react';
 
 export function SettingsPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { profile, isLoading } = useSettings();
   const [activeTab, setActiveTab] = useState('profile');
@@ -39,40 +41,40 @@ export function SettingsPage() {
   if (!profile) {
     return (
       <div className="container mx-auto px-4 py-8 max-w-2xl text-center">
-        <h2 className="text-2xl font-bold mb-4">Sign in required</h2>
+        <h2 className="text-2xl font-bold mb-4">{t('common.signInRequired')}</h2>
         <p className="text-muted-foreground mb-6">
-          Please sign in to access your settings.
+          {t('common.signInToAccess')}
         </p>
         <button
           onClick={() => navigate('/login')}
           className="px-6 py-2 bg-accent text-white rounded-md hover:opacity-90"
         >
-          Sign In
+          {t('auth.signIn')}
         </button>
       </div>
     );
   }
 
   const tabs = [
-    { id: 'profile', label: 'Profile', icon: User },
-    { id: 'account', label: 'Account', icon: Shield },
+    { id: 'profile', label: t('settings.profile'), icon: User },
+    { id: 'account', label: t('settings.account'), icon: Shield },
     ...(profile.account_type !== 'customer'
-      ? [{ id: 'business', label: 'Business', icon: Building2 }]
+      ? [{ id: 'business', label: t('settings.business'), icon: Building2 }]
       : []),
-    { id: 'location', label: 'Location', icon: Locate },
-    { id: 'addresses', label: 'Addresses', icon: MapPin },
-    { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'privacy', label: 'Privacy', icon: Eye },
-    { id: 'security', label: 'Security', icon: Lock },
+    { id: 'location', label: t('settings.location'), icon: Locate },
+    { id: 'addresses', label: t('settings.addresses'), icon: MapPin },
+    { id: 'notifications', label: t('settings.notifications'), icon: Bell },
+    { id: 'privacy', label: t('settings.privacy'), icon: Eye },
+    { id: 'security', label: t('settings.security'), icon: Lock },
   ];
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-5xl">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Settings</h1>
+        <h1 className="text-3xl font-bold mb-2">{t('settings.title')}</h1>
         <p className="text-muted-foreground">
-          Manage your account settings and preferences
+          {t('settings.subtitle')}
         </p>
       </div>
 

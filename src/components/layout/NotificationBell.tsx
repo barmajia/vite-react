@@ -1,4 +1,5 @@
 import { Bell } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import {
   Popover,
@@ -26,22 +27,25 @@ const getNotificationIcon = (type: string) => {
   }
 };
 
-// Format time distance
-const formatTimeAgo = (dateString: string) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-  if (diffInSeconds < 60) return 'Just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-  
-  return date.toLocaleDateString([], { month: 'short', day: 'numeric' });
-};
 
 export const NotificationBell = () => {
+  const { t, i18n } = useTranslation();
   const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } = useNotifications();
+
+  // Format time distance
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diffInSeconds < 60) return t('common.justNow');
+    if (diffInSeconds < 3600) return t('common.minutesAgo', { count: Math.floor(diffInSeconds / 60) });
+    if (diffInSeconds < 86400) return t('common.hoursAgo', { count: Math.floor(diffInSeconds / 3600) });
+    if (diffInSeconds < 604800) return t('common.daysAgo', { count: Math.floor(diffInSeconds / 86400) });
+    
+    return date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' });
+  };
 
   const handleNotificationClick = (notification: typeof notifications[0]) => {
     markAsRead(notification.id);
@@ -72,22 +76,22 @@ export const NotificationBell = () => {
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
         <div className="flex items-center justify-between p-4 border-b">
-          <h4 className="font-semibold text-sm">Notifications</h4>
+          <h4 className="font-semibold text-sm">{t('common.notifications')}</h4>
           {unreadCount > 0 && (
             <button 
               onClick={markAllAsRead}
               className="text-xs text-muted-foreground hover:text-primary transition-colors"
             >
-              Mark all read
+              {t('common.markAllRead')}
             </button>
           )}
         </div>
         
         <ScrollArea className="h-[300px]">
           {isLoading ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">Loading...</div>
+            <div className="p-4 text-center text-sm text-muted-foreground">{t('common.loading')}</div>
           ) : notifications.length === 0 ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">No notifications</div>
+            <div className="p-4 text-center text-sm text-muted-foreground">{t('common.noNotifications')}</div>
           ) : (
             <div className="divide-y">
               {notifications.slice(0, 10).map((notification) => (
@@ -130,7 +134,7 @@ export const NotificationBell = () => {
             className="w-full text-xs" 
             onClick={() => window.location.href = '/notifications'}
           >
-            View all notifications
+            {t('common.viewAllNotifications')}
           </Button>
         </div>
       </PopoverContent>

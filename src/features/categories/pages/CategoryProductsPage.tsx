@@ -3,9 +3,11 @@ import { useCategoryBySlug } from "../hooks/useCategories";
 import { useProducts } from "@/hooks/useProducts";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useTranslation } from "react-i18next";
 
 export function CategoryProductsPage() {
   const { slug } = useParams<{ slug: string }>();
+  const { t } = useTranslation();
 
   const {
     data: category,
@@ -33,9 +35,9 @@ export function CategoryProductsPage() {
   if (!category && !categoryLoading) {
     return (
       <div className="container mx-auto px-4 py-12 text-center">
-        <h1 className="text-2xl font-bold mb-2">Category not found</h1>
+        <h1 className="text-2xl font-bold mb-2">{t('category.notFound')}</h1>
         <p className="text-muted-foreground">
-          The category you're looking for doesn't exist or is inactive.
+          {t('category.notFoundDesc')}
         </p>
       </div>
     );
@@ -54,7 +56,9 @@ export function CategoryProductsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">{category.name}</h1>
+        <h1 className="text-3xl font-bold mb-2">
+          {t(`categories.${slug}`, { defaultValue: category.name })}
+        </h1>
         {category.description && (
           <p className="text-muted-foreground">{category.description}</p>
         )}

@@ -14,6 +14,7 @@ import {
   ShoppingBag,
   Headset,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
@@ -25,6 +26,7 @@ interface MobileNavProps {
 }
 
 export function MobileNav({ isOpen, onClose }: MobileNavProps) {
+  const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -35,23 +37,23 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
   };
 
   const menuItems = [
-    { icon: Home, label: "Home", href: ROUTES.HOME },
-    { icon: Search, label: "Products", href: ROUTES.PRODUCTS },
-    { icon: Headset, label: "Services", href: ROUTES.SERVICES },
-    { icon: ShoppingBag, label: "Categories", href: ROUTES.CATEGORIES },
-    { icon: User, label: "About", href: ROUTES.ABOUT },
-    { icon: MessageSquare, label: "Contact", href: ROUTES.CONTACT },
-    { icon: ShoppingCart, label: "Cart", href: ROUTES.CART },
+    { icon: Home, label: t("nav.home"), href: ROUTES.HOME },
+    { icon: Search, label: t("nav.products"), href: ROUTES.PRODUCTS },
+    { icon: Headset, label: t("nav.services"), href: ROUTES.SERVICES },
+    { icon: ShoppingBag, label: t("nav.categories"), href: ROUTES.CATEGORIES },
+    { icon: User, label: t("nav.about"), href: ROUTES.ABOUT },
+    { icon: MessageSquare, label: t("nav.contact"), href: ROUTES.CONTACT },
+    { icon: ShoppingCart, label: t("common.cart"), href: ROUTES.CART },
   ];
 
   const authMenuItems = [
-    { icon: User, label: "Profile", href: ROUTES.PROFILE },
-    { icon: ShoppingCart, label: "Orders", href: ROUTES.ORDERS },
-    { icon: MapPin, label: "Addresses", href: ROUTES.ADDRESSES },
-    { icon: Star, label: "Reviews", href: ROUTES.REVIEWS },
-    { icon: MessageSquare, label: "Messages", href: ROUTES.MESSAGES },
-    { icon: Bell, label: "Notifications", href: ROUTES.NOTIFICATIONS },
-    { icon: Settings, label: "Settings", href: ROUTES.SETTINGS },
+    { icon: User, label: t("common.profile"), href: ROUTES.PROFILE },
+    { icon: ShoppingCart, label: t("common.orders"), href: ROUTES.ORDERS },
+    { icon: MapPin, label: t("common.addresses"), href: ROUTES.ADDRESSES },
+    { icon: Star, label: t("common.reviews"), href: ROUTES.REVIEWS },
+    { icon: MessageSquare, label: t("common.messages"), href: ROUTES.MESSAGES },
+    { icon: Bell, label: t("common.notifications"), href: ROUTES.NOTIFICATIONS },
+    { icon: Settings, label: t("common.settings"), href: ROUTES.SETTINGS },
   ];
 
   return (
@@ -107,7 +109,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
           <>
             <div className="px-4 py-2 border-t">
               <p className="text-sm font-medium mb-1">
-                {user.user_metadata.full_name || "User"}
+                {user.user_metadata.full_name || t("common.user")}
               </p>
               <p className="text-xs text-muted-foreground">{user.email}</p>
             </div>
@@ -133,7 +135,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 onClick={handleSignOut}
               >
                 <LogOut className="mr-2 h-4 w-4" />
-                Sign Out
+                {t("auth.signOut")}
               </Button>
             </div>
           </>
@@ -146,7 +148,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 navigate(ROUTES.SIGNUP);
               }}
             >
-              Sign Up
+              {t("auth.signUp")}
             </Button>
             <Button
               variant="outline"
@@ -156,7 +158,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
                 navigate(ROUTES.LOGIN);
               }}
             >
-              Sign In
+              {t("auth.signIn")}
             </Button>
           </div>
         )}

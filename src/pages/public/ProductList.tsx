@@ -2,14 +2,16 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Grid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { FilterSidebar } from "@/components/products/FilterSidebar.tsx";
+import { useTranslation } from "react-i18next";
 import { Pagination } from "@/components/shared/Pagination";
 import { useProducts } from "@/hooks/useProducts";
 import { cn } from "@/lib/utils";
 
 export function ProductList() {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortBy, setSortBy] = useState(
@@ -66,28 +68,33 @@ export function ProductList() {
         <div>
           <h1 className="text-3xl font-bold">
             {searchQuery
-              ? `Search results for "${searchQuery}"`
-              : "All Products"}
+              ? t('productList.searchResults', { query: searchQuery })
+              : t('productList.allProducts')}
           </h1>
           {data && (
             <p className="text-muted-foreground mt-1">
-              {data.totalCount} products found
+              {t('productList.productsFound', { count: data.totalCount })}
             </p>
           )}
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto">
           {/* Sort */}
           <Select
             value={`${sortBy}-${sortOrder}`}
             onValueChange={handleSortChange}
           >
-            <option value="created_at-desc">Newest First</option>
-            <option value="created_at-asc">Oldest First</option>
-            <option value="price-asc">Price: Low to High</option>
-            <option value="price-desc">Price: High to Low</option>
-            <option value="title-asc">Name: A to Z</option>
-            <option value="title-desc">Name: Z to A</option>
+            <SelectTrigger className="w-[160px] sm:w-[180px]">
+              <SelectValue placeholder={t('productList.sortBy')} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="created_at-desc">{t('productList.newestFirst')}</SelectItem>
+              <SelectItem value="created_at-asc">{t('productList.oldestFirst')}</SelectItem>
+              <SelectItem value="price-asc">{t('productList.priceLowHigh')}</SelectItem>
+              <SelectItem value="price-desc">{t('productList.priceHighLow')}</SelectItem>
+              <SelectItem value="title-asc">{t('productList.nameAZ')}</SelectItem>
+              <SelectItem value="title-desc">{t('productList.nameZA')}</SelectItem>
+            </SelectContent>
           </Select>
 
           {/* View Mode */}
@@ -127,15 +134,15 @@ export function ProductList() {
         <div className="flex-1 min-w-0">
           {error ? (
             <div className="text-center py-12">
-              <p className="text-destructive">Error loading products</p>
+              <p className="text-destructive">{t('productList.errorLoading')}</p>
             </div>
           ) : isLoading ? (
             <ProductGrid isLoading={true} />
           ) : data && data.products.length === 0 ? (
             <div className="text-center py-12">
-              <h2 className="text-xl font-semibold mb-2">No products found</h2>
+              <h2 className="text-xl font-semibold mb-2">{t('productList.noProductsFound')}</h2>
               <p className="text-muted-foreground">
-                Try adjusting your filters or search query
+                {t('productList.tryAdjusting')}
               </p>
             </div>
           ) : (

@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabase";
 import { Badge } from "@/components/ui/badge";
+import { useTranslation } from "react-i18next";
 
 interface ServiceCategoryWithSubcategories {
   id: string;
@@ -32,6 +33,7 @@ interface ServiceListing {
 
 export function ServiceCategoryPage() {
   const { categorySlug } = useParams<{ categorySlug: string }>();
+  const { t } = useTranslation();
   const [category, setCategory] =
     useState<ServiceCategoryWithSubcategories | null>(null);
   const [listings, setListings] = useState<ServiceListing[]>([]);
@@ -100,7 +102,7 @@ export function ServiceCategoryPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading services...</p>
+          <p className="text-muted-foreground">{t('services.loading')}</p>
         </div>
       </div>
     );
@@ -110,9 +112,9 @@ export function ServiceCategoryPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold mb-4">Category not found</h2>
+          <h2 className="text-2xl font-bold mb-4">{t('services.categoryNotFound')}</h2>
           <Button asChild>
-            <Link to="/services">Browse All Services</Link>
+            <Link to="/services">{t('services.browseAll')}</Link>
           </Button>
         </div>
       </div>
@@ -126,7 +128,7 @@ export function ServiceCategoryPage() {
         <Button variant="ghost" asChild className="mb-4">
           <Link to="/services">
             <ArrowLeft size={16} className="mr-2" />
-            Back to Services
+            {t('services.backToServices')}
           </Link>
         </Button>
         <h1 className="text-4xl font-bold mb-2">{category.name}</h1>
@@ -138,7 +140,7 @@ export function ServiceCategoryPage() {
       {/* Subcategories */}
       {category.subcategories.length > 0 && (
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3">Subcategories</h3>
+          <h3 className="text-lg font-semibold mb-3">{t('services.subcategories')}</h3>
           <div className="flex flex-wrap gap-2">
             {category.subcategories.map((sub) => (
               <Badge key={sub.id} variant="secondary" className="text-sm">
@@ -154,8 +156,7 @@ export function ServiceCategoryPage() {
         <>
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">
-              {listings.length} {listings.length === 1 ? "Listing" : "Listings"}{" "}
-              Found
+              {t('services.listingsFound', { count: listings.length })}
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -184,10 +185,10 @@ export function ServiceCategoryPage() {
                 )}
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <span>
-                    Provider:{" "}
-                    {listing.provider?.provider_name?.slice(0, 20) || "Unknown"}
+                    {t('services.provider')}{" "}
+                    {listing.provider?.provider_name?.slice(0, 20) || t('services.unknown')}
                   </span>
-                  <span className="text-primary">View Details →</span>
+                  <span className="text-primary">{t('services.viewDetails')}</span>
                 </div>
               </Link>
             ))}
@@ -196,13 +197,13 @@ export function ServiceCategoryPage() {
       ) : (
         <div className="text-center py-12 bg-muted rounded-xl">
           <h3 className="text-xl font-semibold mb-2">
-            No listings in this category yet
+            {t('services.noListings')}
           </h3>
           <p className="text-muted-foreground mb-6">
-            Check back later or explore other categories
+            {t('services.checkBack')}
           </p>
           <Button asChild>
-            <Link to="/services">Browse All Services</Link>
+            <Link to="/services">{t('services.browseAll')}</Link>
           </Button>
         </div>
       )}

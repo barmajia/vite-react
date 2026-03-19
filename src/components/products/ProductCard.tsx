@@ -7,6 +7,7 @@ import type { Product } from '@/types/database';
 import { formatPrice, getProductImage } from '@/lib/utils';
 import { ROUTES } from '@/lib/constants';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface ProductCardProps {
   product: Product & {
@@ -16,6 +17,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+  const { t } = useTranslation();
   const [isWishlisted, setIsWishlisted] = useState(false);
   const imageUrl = getProductImage(product.images);
 
@@ -47,7 +49,7 @@ export function ProductCard({ product }: ProductCardProps) {
         {/* Out of Stock Badge */}
         {product.quantity === 0 && (
           <Badge className="absolute top-2 left-2" variant="destructive">
-            Out of Stock
+            {t('product.outOfStock')}
           </Badge>
         )}
       </div>

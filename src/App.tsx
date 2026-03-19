@@ -33,6 +33,7 @@ import { Inbox } from "@/pages/messaging/Inbox";
 import { Chat } from "@/pages/messaging/Chat";
 import { ServicesInbox } from "@/features/services/components/ServicesInbox";
 import { ServicesChat } from "@/features/services/components/ServicesChat";
+import { useTranslation } from "react-i18next";
 
 // Services Module
 import { ServicesHome } from "@/features/services/pages/ServicesHome";
@@ -83,22 +84,23 @@ function BrandProducts() {
 }
 
 function App() {
+  const { t } = useTranslation();
   return (
     <ThemeProvider>
       <AuthProvider>
         <Toaster position="top-right" richColors />
         <ErrorBoundary
-          fallback={
+                  fallback={
             <div className="min-h-screen flex items-center justify-center">
               <div className="text-center">
                 <h1 className="text-2xl font-bold mb-4">
-                  Something went wrong
+                  {t("common.error")}
                 </h1>
                 <button
                   onClick={() => window.location.reload()}
                   className="px-4 py-2 bg-primary text-primary-foreground rounded"
                 >
-                  Refresh Page
+                  {t("common.refreshPage")}
                 </button>
               </div>
             </div>

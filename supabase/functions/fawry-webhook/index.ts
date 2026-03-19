@@ -53,7 +53,6 @@ serve(async (req) => {
 
     // Re-calculate signature to verify authenticity
     // Format: merchantCode + merchantRefNo + amount + currency + secretKey
-    // Note: Check Fawry docs for exact webhook signature format
     const stringToHash = `${merchantCode}${merchantRefNo}${amount}${currency}${secretKey}`;
     
     const encoder = new TextEncoder();
@@ -62,11 +61,19 @@ serve(async (req) => {
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const calculatedSignature = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
 
-    // Compare signatures (use constant-time comparison in production)
-    if (calculatedSignature !== webhookSignature) {
+    // Safe constant-time comparison helper
+    const safeCompare = (a: string, b: string) => {
+      if (a.length !== b.length) return false;
+      let result = 0;
+      for (let i = 0; i < a.length; i++) {
+        result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+      }
+      return result === 0;
+    };
+
+    // Compare signatures (use constant-time comparison to prevent timing attacks)
+    if (!safeCompare(calculatedSignature, webhookSignature)) {
       console.error("Signature mismatch!");
-      console.error("Expected:", webhookSignature);
-      console.error("Calculated:", calculatedSignature);
       throw new Error("Invalid webhook signature - possible fraud attempt");
     }
 
@@ -80,10 +87,21 @@ serve(async (req) => {
       .single();
 
     if (findError || !paymentIntention) {
+      console.error("Payment intention not found for ref:", referenceNumber || merchantRefNo);
       throw new Error("Payment intention not found");
     }
 
-    // 5. Check if already processed (idempotency)
+    // 5. SECURE VALIDATION: Verify amount and currency match our records
+    const recordedAmount = parseFloat(paymentIntention.amount.toString()).toFixed(2);
+    const webhookAmount = parseFloat(amount.toString()).toFixed(2);
+
+    if (recordedAmount !== webhookAmount || currency !== paymentIntention.currency) {
+      console.error(`Security Alert: Webhook amount/currency mismatch!`);
+      console.error(`Expected: ${recordedAmount} ${paymentIntention.currency}, Got: ${webhookAmount} ${currency}`);
+      throw new Error("Webhook data mismatch - possible manipulation");
+    }
+
+    // 6. Check if already processed (idempotency)
     if (paymentIntention.status === "succeeded") {
       console.log("Payment already processed, skipping");
       return new Response(

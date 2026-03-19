@@ -42,29 +42,50 @@ serve(async (req) => {
     if (orderError || !order) throw new Error("Order not found or unauthorized");
     if (order.status !== "pending") throw new Error("Order is not pending");
 
-    // 4. IDEMPOTENCY CHECK: Prevent Duplicate Payment Process
-    const { data: existingIntentions } = await supabase
+    // 4. IDEMPOTENCY & RATE LIMIT CHECK
+    // Prevent duplicate payment process and mitigate hammering the Fawry API
+    const { data: recentIntentions } = await supabase
       .from("payment_intentions")
-      .select("*")
+      .select("id, status, created_at, provider_reference_id, checkout_url")
       .eq("order_id", order_id)
-      .eq("status", "pending")
       .eq("payment_method", "fawry")
       .order("created_at", { ascending: false })
       .limit(1);
 
-    if (existingIntentions && existingIntentions.length > 0) {
-      const existing = existingIntentions[0];
-      // Return existing reference if still pending
-      return new Response(
-        JSON.stringify({
-          success: true,
-          message: "Payment session already created",
-          referenceNumber: existing.provider_reference_id,
-          checkoutUrl: existing.checkout_url,
-          existing: true,
-        }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
-      );
+    if (recentIntentions && recentIntentions.length > 0) {
+      const recent = recentIntentions[0];
+      const createdAt = new Date(recent.created_at).getTime();
+      const now = new Date().getTime();
+      const secondsSince = (now - createdAt) / 1000;
+
+      // If there's a pending session created less than 30 seconds ago, return it (Rate Limit)
+      if (recent.status === "pending" && secondsSince < 30) {
+        console.log(`Rate limit: Returning existing session created ${secondsSince}s ago`);
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: "Please wait a moment before trying again. Returning your existing session.",
+            referenceNumber: recent.provider_reference_id,
+            checkoutUrl: recent.checkout_url,
+            existing: true,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        );
+      }
+
+      // If there's a pending session (even if older), we still return it to follow idempotency
+      if (recent.status === "pending") {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: "Payment session already created",
+            referenceNumber: recent.provider_reference_id,
+            checkoutUrl: recent.checkout_url,
+            existing: true,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        );
+      }
     }
 
     // 5. Prepare Fawry Data (Force EGP)

@@ -18,6 +18,7 @@ import {
   type ServiceCategory,
   type ServiceListing,
 } from "../hooks/useServices";
+import { useTranslation } from "react-i18next";
 
 const categoryIcons: Record<string, JSX.Element> = {
   programming: <Code size={24} />,
@@ -31,6 +32,7 @@ const categoryIcons: Record<string, JSX.Element> = {
 };
 
 export function ServicesHome() {
+  const { t } = useTranslation();
   const { getCategories, getListings } = useServices();
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
   const [listings, setListings] = useState<ServiceListing[]>([]);
@@ -56,7 +58,7 @@ export function ServicesHome() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading services...</p>
+          <p className="text-muted-foreground">{t('services.loading')}</p>
         </div>
       </div>
     );
@@ -67,11 +69,10 @@ export function ServicesHome() {
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-10 md:p-16 text-white mb-12 text-center shadow-xl">
         <h1 className="text-3xl md:text-5xl font-bold mb-4">
-          Find Expert Services & Freelancers
+          {t('servicesHome.heroTitle')}
         </h1>
         <p className="text-indigo-100 text-lg md:text-xl mb-8 max-w-2xl mx-auto">
-          From software development to consulting, find the right professional
-          for your needs.
+          {t('servicesHome.heroSubtitle')}
         </p>
 
         {/* Search Bar */}
@@ -83,7 +84,7 @@ export function ServicesHome() {
             />
             <Input
               type="text"
-              placeholder="Search for services..."
+              placeholder={t('servicesHome.searchPlaceholder')}
               className="w-full pl-12 pr-4 py-6 rounded-full text-gray-900 text-lg focus:outline-none focus:ring-4 focus:ring-white/30 border-0"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -94,7 +95,7 @@ export function ServicesHome() {
 
       {/* Categories Grid */}
       <section className="mb-16">
-        <h2 className="text-2xl font-bold mb-6">Browse by Category</h2>
+        <h2 className="text-2xl font-bold mb-6">{t('servicesHome.browseByCategory')}</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {categories.map((cat) => (
             <Link
@@ -105,7 +106,9 @@ export function ServicesHome() {
               <div className="text-primary mb-3 group-hover:scale-110 transition-transform">
                 {categoryIcons[cat.slug] || <Briefcase />}
               </div>
-              <span className="font-medium text-center">{cat.name}</span>
+              <span className="font-medium text-center">
+                {t(`services.categories.${cat.slug}`, { defaultValue: cat.name })}
+              </span>
             </Link>
           ))}
         </div>
@@ -114,12 +117,12 @@ export function ServicesHome() {
       {/* Recent Listings */}
       <section className="mb-16">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Recent Service Listings</h2>
+          <h2 className="text-2xl font-bold">{t('servicesHome.recentListings')}</h2>
           <Link
             to="/services"
             className="text-primary hover:underline text-sm font-medium"
           >
-            View All →
+            {t('servicesHome.viewAll')}
           </Link>
         </div>
         {listings.length > 0 ? (
@@ -148,18 +151,18 @@ export function ServicesHome() {
                   </p>
                 )}
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>Active: {listing.is_active ? "Yes" : "No"}</span>
-                  <span className="text-primary">View Details →</span>
+                  <span>{t('servicesHome.active')} {listing.is_active ? t('servicesHome.yes') : t('servicesHome.no')}</span>
+                  <span className="text-primary">{t('services.viewDetails')}</span>
                 </div>
               </Link>
             ))}
           </div>
         ) : (
           <div className="text-center py-12 bg-muted rounded-xl">
-            <p className="text-muted-foreground">No service listings yet</p>
+            <p className="text-muted-foreground">{t('servicesHome.noListings')}</p>
             <Button asChild className="mt-4">
               <Link to="/services/dashboard/create-listing">
-                Create First Listing
+                {t('servicesHome.createFirst')}
               </Link>
             </Button>
           </div>
@@ -169,14 +172,13 @@ export function ServicesHome() {
       {/* CTA Section */}
       <section className="bg-muted rounded-2xl p-8 md:p-12 text-center">
         <h2 className="text-2xl md:text-3xl font-bold mb-4">
-          Are you a Service Provider?
+          {t('servicesHome.areYouProvider')}
         </h2>
         <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-          Join Aurora and start offering your services. Create your profile and
-          connect with clients.
+          {t('servicesHome.joinAurora')}
         </p>
         <Button size="lg" asChild>
-          <Link to="/services/dashboard">Start Offering Services</Link>
+          <Link to="/services/dashboard">{t('servicesHome.startOffering')}</Link>
         </Button>
       </section>
     </div>

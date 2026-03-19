@@ -10,6 +10,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
@@ -28,8 +29,10 @@ import { Badge } from "@/components/ui/badge";
 import { ROUTES } from "@/lib/constants";
 import { MobileNav } from "./MobileNav";
 import { NotificationBell } from "./NotificationBell";
+import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 
 export function Header() {
+  const { t } = useTranslation();
   const { theme, toggleTheme } = useTheme();
   const { user, signOut } = useAuth();
   const { itemCount } = useCart();
@@ -74,31 +77,31 @@ export function Header() {
                 to={ROUTES.PRODUCTS}
                 className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
-                Products
+                {t("nav.products")}
               </Link>
               <Link
                 to="/services"
                 className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
-                Services
+                {t("nav.services")}
               </Link>
               <Link
                 to={ROUTES.CATEGORIES}
                 className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
-                Categories
+                {t("nav.categories")}
               </Link>
               <Link
                 to={ROUTES.ABOUT}
                 className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
-                About
+                {t("nav.about")}
               </Link>
               <Link
                 to={ROUTES.CONTACT}
                 className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
-                Contact
+                {t("nav.contact")}
               </Link>
             </nav>
 
@@ -120,7 +123,7 @@ export function Header() {
               <div className="relative">
                 <Input
                   type="text"
-                  placeholder="Search products..."
+                  placeholder={t("common.searchProducts")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4"
@@ -141,12 +144,15 @@ export function Header() {
                 <Search className="h-5 w-5" />
               </Button>
 
+              {/* Language Switcher */}
+              <LanguageSwitcher />
+
               {/* Theme Toggle */}
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={toggleTheme}
-                aria-label="Toggle theme"
+                aria-label={t(theme === "dark" ? "common.lightMode" : "common.darkMode")}
               >
                 {theme === "dark" ? (
                   <Sun className="h-5 w-5" />
@@ -164,6 +170,7 @@ export function Header() {
                 size="icon"
                 onClick={() => navigate(ROUTES.CART)}
                 className="relative"
+                aria-label={t("common.cart")}
               >
                 <ShoppingCart className="h-5 w-5" />
                 {itemCount > 0 && (
@@ -193,7 +200,7 @@ export function Header() {
                     <DropdownMenuLabel>
                       <div className="flex flex-col space-y-1">
                         <p className="text-sm font-medium">
-                          {user.user_metadata.full_name || "User"}
+                          {user.user_metadata.full_name || t("common.user")}
                         </p>
                         <p className="text-xs text-muted-foreground">
                           {user.email}
@@ -203,26 +210,26 @@ export function Header() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => navigate(ROUTES.PROFILE)}>
                       <User className="mr-2 h-4 w-4" />
-                      Profile
+                      {t("common.profile")}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate(ROUTES.ORDERS)}>
                       <ShoppingCart className="mr-2 h-4 w-4" />
-                      Orders
+                      {t("common.orders")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => navigate(ROUTES.ADDRESSES)}
                     >
                       <Bell className="mr-2 h-4 w-4" />
-                      Addresses
+                      {t("common.addresses")}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate(ROUTES.SETTINGS)}>
                       <Moon className="mr-2 h-4 w-4" />
-                      Settings
+                      {t("common.settings")}
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={handleSignOut}>
                       <LogOut className="mr-2 h-4 w-4" />
-                      Sign out
+                      {t("auth.signOut")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -234,10 +241,10 @@ export function Header() {
                     onClick={() => navigate(ROUTES.LOGIN)}
                     className="hidden sm:inline-flex"
                   >
-                    Sign In
+                    {t("auth.signIn")}
                   </Button>
                   <Button size="sm" onClick={() => navigate(ROUTES.SIGNUP)}>
-                    Sign Up
+                    {t("auth.signUp")}
                   </Button>
                 </div>
               )}
@@ -249,7 +256,7 @@ export function Header() {
             <form onSubmit={handleSearch} className="relative">
               <Input
                 type="text"
-                placeholder="Search products..."
+                placeholder={t("common.searchProducts")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4"

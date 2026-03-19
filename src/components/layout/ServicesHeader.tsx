@@ -14,6 +14,7 @@ import {
   CheckCircle2,
   ArrowRight,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
 export function ServicesHeader() {
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -107,16 +109,16 @@ export function ServicesHeader() {
             <nav className="hidden lg:flex items-center gap-1">
               {[
                 {
-                  label: "Find Talent",
+                  label: t("services.findTalent"),
                   href: "/services/programming",
                   icon: "",
                 },
                 {
-                  label: "Healthcare",
+                  label: t("services.healthcare"),
                   href: "/services/healthcare",
                   icon: "",
                 },
-                { label: "All Services", href: "/services", icon: "✨" },
+                { label: t("services.allServices"), href: "/services", icon: "✨" },
               ].map((item) => (
                 <Link
                   key={item.label}
@@ -147,7 +149,7 @@ export function ServicesHeader() {
                 <div className="p-1.5 rounded-lg bg-gray-100 group-hover:bg-indigo-50 transition-colors">
                   <ShoppingBag size={14} strokeWidth={2.5} />
                 </div>
-                <span className="hidden xl:inline">Shop Products</span>
+                <span className="hidden xl:inline">{t("services.shopProducts")}</span>
                 <ArrowRight
                   size={14}
                   className="group-hover:translate-x-0.5 transition-transform"
@@ -160,7 +162,7 @@ export function ServicesHeader() {
               <form onSubmit={handleSearch} className="relative">
                 <input
                   type="text"
-                  placeholder="Search services..."
+                  placeholder={t("services.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-64 pl-10 pr-4 py-2 bg-gray-100/80 border-0 rounded-full text-sm focus:bg-white focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all placeholder:text-gray-400 hover:bg-gray-100"
@@ -217,7 +219,7 @@ export function ServicesHeader() {
                             {providerProfile?.is_verified && (
                               <Badge className="h-4 text-[8px] px-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
                                 <CheckCircle2 size={10} className="mr-0.5" />
-                                Verified
+                                {t("services.verified")}
                               </Badge>
                             )}
                           </div>
@@ -231,13 +233,13 @@ export function ServicesHeader() {
                           className="flex items-center"
                         >
                           <UserCircle className="mr-2 h-4 w-4" />
-                          <span>Dashboard</span>
+                          <span>{t("common.dashboard")}</span>
                         </Link>
                       </DropdownMenuItem>
                       <DropdownMenuItem asChild className="cursor-pointer">
                         <Link to="/orders" className="flex items-center">
                           <ShoppingBag className="mr-2 h-4 w-4" />
-                          <span>My Orders</span>
+                          <span>{t("common.orders")}</span>
                         </Link>
                       </DropdownMenuItem>
                       {!providerProfile && (
@@ -252,7 +254,7 @@ export function ServicesHeader() {
                               className="flex items-center font-medium"
                             >
                               <Briefcase className="mr-2 h-4 w-4" />
-                              <span>Become a Provider</span>
+                              <span>{t("services.becomeProvider")}</span>
                             </Link>
                           </DropdownMenuItem>
                         </>
@@ -263,7 +265,7 @@ export function ServicesHeader() {
                         className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
                       >
                         <LogOut className="mr-2 h-4 w-4" />
-                        <span>Sign Out</span>
+                        <span>{t("auth.signOut")}</span>
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -275,13 +277,13 @@ export function ServicesHeader() {
                     onClick={() => navigate("/login")}
                     className="text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
                   >
-                    Log In
+                    {t("auth.signIn")}
                   </Button>
                   <Button
                     onClick={() => navigate("/signup")}
                     className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:from-violet-700 hover:to-indigo-700 transition-all shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50"
                   >
-                    Join Now
+                    {t("auth.joinNow")}
                   </Button>
                 </div>
               )}
@@ -311,7 +313,7 @@ export function ServicesHeader() {
           <div className="fixed top-0 right-0 z-50 h-full w-[300px] bg-white shadow-2xl lg:hidden overflow-y-auto">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-100 sticky top-0 bg-white z-10">
-              <span className="font-bold text-lg">Aurora Services</span>
+              <span className="font-bold text-lg">{t("services.auroraServices")}</span>
               <button
                 className="p-2 text-gray-500 hover:bg-gray-100 rounded-lg"
                 onClick={() => setIsMobileMenuOpen(false)}
@@ -326,7 +328,7 @@ export function ServicesHeader() {
               <form onSubmit={handleSearch} className="relative">
                 <input
                   type="text"
-                  placeholder="Search services..."
+                  placeholder={t("services.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-gray-100 border-0 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-violet-500/20 focus:outline-none"
@@ -345,7 +347,7 @@ export function ServicesHeader() {
                   className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-violet-50 hover:text-violet-700 rounded-xl transition-colors"
                 >
                   <span>💻</span>
-                  Find Talent
+                  {t("services.findTalent")}
                 </Link>
                 <Link
                   to="/services/healthcare"
@@ -353,7 +355,7 @@ export function ServicesHeader() {
                   className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-violet-50 hover:text-violet-700 rounded-xl transition-colors"
                 >
                   <span>🏥</span>
-                  Healthcare
+                  {t("services.healthcare")}
                 </Link>
                 <Link
                   to="/services"
@@ -361,7 +363,7 @@ export function ServicesHeader() {
                   className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-violet-50 hover:text-violet-700 rounded-xl transition-colors"
                 >
                   <span>✨</span>
-                  All Services
+                  {t("services.allServices")}
                 </Link>
               </div>
 
@@ -372,7 +374,7 @@ export function ServicesHeader() {
                 className="flex items-center justify-center gap-2 w-full px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 rounded-xl shadow-md transition-all"
               >
                 <ShoppingBag size={18} />
-                Switch to Shop Products
+                {t("services.shopProducts")}
               </Link>
 
               <div className="border-t border-gray-100 my-4" />
@@ -400,7 +402,7 @@ export function ServicesHeader() {
                     className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 hover:bg-gray-50 rounded-xl transition-colors"
                   >
                     <UserCircle size={20} />
-                    Dashboard
+                    {t("common.dashboard")}
                   </Link>
                   <button
                     onClick={() => {
@@ -410,7 +412,7 @@ export function ServicesHeader() {
                     className="w-full flex items-center gap-3 px-4 py-3 text-base font-medium text-red-600 hover:bg-red-50 rounded-xl transition-colors"
                   >
                     <LogOut size={20} />
-                    Sign Out
+                    {t("auth.signOut")}
                   </button>
                 </div>
               ) : (
@@ -423,7 +425,7 @@ export function ServicesHeader() {
                     }}
                     className="w-full"
                   >
-                    Log In
+                    {t("auth.signIn")}
                   </Button>
                   <Button
                     onClick={() => {
@@ -432,7 +434,7 @@ export function ServicesHeader() {
                     }}
                     className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white"
                   >
-                    Join Now
+                    {t("auth.joinNow")}
                   </Button>
                 </div>
               )}

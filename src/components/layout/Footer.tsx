@@ -8,10 +8,12 @@ import {
   Phone,
   MapPin,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ROUTES } from "@/lib/constants";
 import { Separator } from "@/components/ui/separator";
 
 export function Footer() {
+  const { t } = useTranslation();
   const currentYear = new Date().getFullYear();
 
   return (
@@ -27,8 +29,7 @@ export function Footer() {
               <span className="text-xl font-bold">AURORA</span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              Discover premium products from verified sellers worldwide. Quality
-              meets convenience.
+              {t("footer.tagline")}
             </p>
             <div className="flex gap-4">
               <a
@@ -68,14 +69,14 @@ export function Footer() {
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h3 className="font-semibold">Quick Links</h3>
+            <h3 className="font-semibold">{t("footer.quickLinks")}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
                   to={ROUTES.ABOUT}
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  About Us
+                  {t("footer.aboutUs")}
                 </Link>
               </li>
               <li>
@@ -83,7 +84,7 @@ export function Footer() {
                   to={ROUTES.CONTACT}
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Contact
+                  {t("footer.contact")}
                 </Link>
               </li>
               <li>
@@ -91,7 +92,7 @@ export function Footer() {
                   to={ROUTES.HELP}
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Help Center
+                  {t("footer.helpCenter")}
                 </Link>
               </li>
               <li>
@@ -99,7 +100,7 @@ export function Footer() {
                   to={ROUTES.PRODUCTS}
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  All Products
+                  {t("footer.allProducts")}
                 </Link>
               </li>
               <li>
@@ -107,7 +108,7 @@ export function Footer() {
                   to={ROUTES.CATEGORIES}
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Categories
+                  {t("footer.categories")}
                 </Link>
               </li>
             </ul>
@@ -115,14 +116,14 @@ export function Footer() {
 
           {/* Customer Service */}
           <div className="space-y-4">
-            <h3 className="font-semibold">Customer Service</h3>
+            <h3 className="font-semibold">{t("footer.customerService")}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
                   to={`${ROUTES.HELP}?topic=shipping`}
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Shipping Info
+                  {t("footer.shippingInfo")}
                 </Link>
               </li>
               <li>
@@ -130,7 +131,7 @@ export function Footer() {
                   to={`${ROUTES.HELP}?topic=returns`}
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Returns & Refunds
+                  {t("footer.returnsRefunds")}
                 </Link>
               </li>
               <li>
@@ -138,7 +139,7 @@ export function Footer() {
                   to={`${ROUTES.HELP}?topic=orders`}
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Order Tracking
+                  {t("footer.orderTracking")}
                 </Link>
               </li>
               <li>
@@ -146,7 +147,7 @@ export function Footer() {
                   to={`${ROUTES.HELP}?topic=payment`}
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Payment Options
+                  {t("footer.paymentOptions")}
                 </Link>
               </li>
               <li>
@@ -154,7 +155,7 @@ export function Footer() {
                   to={ROUTES.CONTACT}
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Support
+                  {t("footer.support")}
                 </Link>
               </li>
             </ul>
@@ -162,14 +163,14 @@ export function Footer() {
 
           {/* For Sellers */}
           <div className="space-y-4">
-            <h3 className="font-semibold">For Sellers</h3>
+            <h3 className="font-semibold">{t("footer.forSellers")}</h3>
             <ul className="space-y-2 text-sm">
               <li>
                 <Link
                   to="/factory"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Factory Dashboard
+                  {t("footer.factoryDashboard")}
                 </Link>
               </li>
               <li>
@@ -177,7 +178,7 @@ export function Footer() {
                   to="/factory/production"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Production Orders
+                  {t("footer.productionOrders")}
                 </Link>
               </li>
               <li>
@@ -185,7 +186,7 @@ export function Footer() {
                   to="/factory/quotes"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Quote Requests
+                  {t("footer.quoteRequests")}
                 </Link>
               </li>
               <li>
@@ -193,7 +194,7 @@ export function Footer() {
                   to="/factory/connections"
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Connections
+                  {t("footer.connections")}
                 </Link>
               </li>
               <li>
@@ -201,7 +202,7 @@ export function Footer() {
                   to={ROUTES.CONTACT}
                   className="text-muted-foreground hover:text-primary transition-colors"
                 >
-                  Seller Support
+                  {t("footer.sellerSupport")}
                 </Link>
               </li>
             </ul>
@@ -209,7 +210,7 @@ export function Footer() {
 
           {/* Contact Info */}
           <div className="space-y-4">
-            <h3 className="font-semibold">Contact Us</h3>
+            <h3 className="font-semibold">{t("footer.contactUs")}</h3>
             <ul className="space-y-3 text-sm">
               <li className="flex items-start gap-3">
                 <Mail className="h-5 w-5 text-primary shrink-0 mt-0.5" />
@@ -243,22 +244,24 @@ export function Footer() {
 
         {/* Bottom Bar */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <p>© {currentYear} Aurora. All rights reserved.</p>
+          <p>
+            © {currentYear} Aurora. {t("footer.allRightsReserved")}
+          </p>
           <div className="flex gap-6">
             <Link
               to="/privacy"
               className="hover:text-primary transition-colors"
             >
-              Privacy Policy
+              {t("footer.privacyPolicy")}
             </Link>
             <Link to="/terms" className="hover:text-primary transition-colors">
-              Terms of Service
+              {t("footer.termsOfService")}
             </Link>
             <Link
               to="/cookies"
               className="hover:text-primary transition-colors"
             >
-              Cookie Policy
+              {t("footer.cookiePolicy")}
             </Link>
           </div>
         </div>

@@ -8,12 +8,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useServices, type ServiceListing } from "../hooks/useServices";
+import { useTranslation } from "react-i18next";
 
 export function ServiceDetailPage() {
   const { listingSlug } = useParams<{ listingSlug: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
   const { getListingBySlug } = useServices();
+  const { t } = useTranslation();
   const [listing, setListing] = useState<ServiceListing | null>(null);
   const [loading, setLoading] = useState(true);
   const [requirements, setRequirements] = useState("");
@@ -33,19 +35,19 @@ export function ServiceDetailPage() {
 
   const handleOrder = () => {
     if (!user) {
-      toast.error("Please sign in to book this service");
+      toast.error(t('serviceDetail.signInToBook'));
       navigate("/login", {
         state: { from: { pathname: window.location.pathname } },
       });
       return;
     }
 
-    toast.success("Service booking feature coming soon!");
+    toast.success(t('serviceDetail.bookingComingSoon'));
     // Future: Implement svc_orders table
   };
 
   const formatPrice = () => {
-    if (!listing?.price) return "Contact for pricing";
+    if (!listing?.price) return t('serviceDetail.contactForPricing');
     const currency = listing.currency === "EGP" ? "EGP" : "$";
     return `${currency}${listing.price.toFixed(2)}`;
   };
@@ -55,7 +57,7 @@ export function ServiceDetailPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">Loading service details...</p>
+          <p className="text-muted-foreground">{t('serviceDetail.loading')}</p>
         </div>
       </div>
     );
@@ -65,9 +67,9 @@ export function ServiceDetailPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold mb-4">Service not found</h2>
+          <h2 className="text-2xl font-bold mb-4">{t('serviceDetail.notFound')}</h2>
           <Button asChild>
-            <Link to="/services">Browse Services</Link>
+            <Link to="/services">{t('serviceDetail.browseServices')}</Link>
           </Button>
         </div>
       </div>
@@ -79,7 +81,7 @@ export function ServiceDetailPage() {
       <Button variant="ghost" asChild className="mb-6">
         <Link to="/services">
           <ArrowLeft size={16} className="mr-2" />
-          Back to Services
+          {t('services.backToServices')}
         </Link>
       </Button>
 
@@ -106,15 +108,14 @@ export function ServiceDetailPage() {
                   {listing.provider_id.slice(0, 2).toUpperCase()}
                 </div>
                 <div className="flex-1">
-                  <p className="font-semibold text-lg">Service Provider</p>
+                  <p className="font-semibold text-lg">{t('serviceDetail.serviceProvider')}</p>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Star
                       size={14}
                       className="text-yellow-400 fill-yellow-400"
                     />
                     <span>
-                      Provider since{" "}
-                      {new Date(listing.created_at).toLocaleDateString()}
+                      {t('serviceDetail.providerSince', { date: new Date(listing.created_at).toLocaleDateString() })}
                     </span>
                   </div>
                 </div>
@@ -139,10 +140,10 @@ export function ServiceDetailPage() {
               {/* Requirements */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">
-                  Project Requirements
+                  {t('serviceDetail.projectReqs')}
                 </label>
                 <Textarea
-                  placeholder="Describe your project requirements, timeline, and any specific needs..."
+                  placeholder={t('serviceDetail.reqPlaceholder')}
                   value={requirements}
                   onChange={(e) => setRequirements(e.target.value)}
                   rows={5}
@@ -153,22 +154,22 @@ export function ServiceDetailPage() {
               {/* Order Button */}
               <Button className="w-full" size="lg" onClick={handleOrder}>
                 <CheckCircle size={18} className="mr-2" />
-                Book This Service
+                {t('serviceDetail.bookService')}
               </Button>
 
               {/* Features */}
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <CheckCircle size={16} className="text-green-500" />
-                  <span>Secure booking</span>
+                  <span>{t('serviceDetail.secureBooking')}</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <CheckCircle size={16} className="text-green-500" />
-                  <span>Satisfaction guaranteed</span>
+                  <span>{t('serviceDetail.satisfactionGuaranteed')}</span>
                 </div>
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Clock size={16} />
-                  <span>Fast delivery</span>
+                  <span>{t('serviceDetail.fastDelivery')}</span>
                 </div>
               </div>
             </CardContent>

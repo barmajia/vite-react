@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, ShoppingBag, Truck, Shield, Star, Zap } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { ProductGrid } from '@/components/products/ProductGrid';
 import { useFeaturedProducts } from '@/hooks/useProducts';
@@ -7,38 +8,39 @@ import { ROUTES } from '@/lib/constants';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export function Home() {
+  const { t } = useTranslation();
   const { data: featuredProducts, isLoading } = useFeaturedProducts(8);
   const navigate = useNavigate();
 
   const categories = [
-    { id: '1', name: 'Electronics', icon: '📱', color: 'from-gray-700 to-gray-900' },
-    { id: '2', name: 'Fashion', icon: '👕', color: 'from-gray-600 to-gray-800' },
-    { id: '3', name: 'Home & Garden', icon: '🏠', color: 'from-gray-500 to-gray-700' },
-    { id: '4', name: 'Sports', icon: '⚽', color: 'from-gray-400 to-gray-600' },
-    { id: '5', name: 'Beauty', icon: '💄', color: 'from-gray-300 to-gray-500' },
-    { id: '6', name: 'Books', icon: '📚', color: 'from-gray-200 to-gray-400' },
+    { id: '1', name: t('home.categories.electronics'), icon: '📱', color: 'from-gray-700 to-gray-900' },
+    { id: '2', name: t('home.categories.fashion'), icon: '👕', color: 'from-gray-600 to-gray-800' },
+    { id: '3', name: t('home.categories.homeGarden'), icon: '🏠', color: 'from-gray-500 to-gray-700' },
+    { id: '4', name: t('home.categories.sports'), icon: '⚽', color: 'from-gray-400 to-gray-600' },
+    { id: '5', name: t('home.categories.beauty'), icon: '💄', color: 'from-gray-300 to-gray-500' },
+    { id: '6', name: t('home.categories.books'), icon: '📚', color: 'from-gray-200 to-gray-400' },
   ];
 
   const features = [
     {
       icon: <ShoppingBag className="h-6 w-6" />,
-      title: 'Wide Selection',
-      description: 'Discover thousands of products from verified sellers worldwide',
+      title: t('home.features.wideSelection'),
+      description: t('home.features.wideSelectionDesc'),
     },
     {
       icon: <Truck className="h-6 w-6" />,
-      title: 'Fast Shipping',
-      description: 'Free delivery on orders over $50 with express shipping options',
+      title: t('home.features.fastShipping'),
+      description: t('home.features.fastShippingDesc'),
     },
     {
       icon: <Shield className="h-6 w-6" />,
-      title: 'Secure Payment',
-      description: 'Your transactions are protected with industry-leading security',
+      title: t('home.features.securePayment'),
+      description: t('home.features.securePaymentDesc'),
     },
     {
       icon: <Star className="h-6 w-6" />,
-      title: 'Quality Guaranteed',
-      description: 'All products are verified for authenticity and quality',
+      title: t('home.features.qualityGuaranteed'),
+      description: t('home.features.qualityGuaranteedDesc'),
     },
   ];
 
@@ -51,13 +53,13 @@ export function Home() {
           <div className="max-w-3xl space-y-6">
             <div className="inline-flex items-center gap-2 rounded-full bg-background/10 px-4 py-2 text-sm backdrop-blur">
               <Zap className="h-4 w-4" />
-              <span>New Season Arrivals</span>
+              <span>{t('home.newArrivals')}</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-bold tracking-tight">
-              Discover Premium Products
+              {t('home.heroTitle')}
             </h1>
             <p className="text-lg md:text-xl text-background/80 max-w-2xl">
-              Shop from thousands of verified sellers. Quality meets convenience with Aurora's curated marketplace.
+              {t('home.heroSubtitle')}
             </p>
             <div className="flex flex-wrap gap-4">
               <Button
@@ -65,7 +67,7 @@ export function Home() {
                 className="bg-background text-foreground hover:bg-background/90"
                 onClick={() => navigate(ROUTES.PRODUCTS)}
               >
-                Shop Now
+                {t('home.shopNow')}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button
@@ -74,7 +76,7 @@ export function Home() {
                 className="border-2 border-background bg-background/10 text-foreground hover:bg-background/20"
                 onClick={() => navigate(ROUTES.CATEGORIES)}
               >
-                Browse Categories
+                {t('home.browseCategories')}
               </Button>
             </div>
           </div>
@@ -86,12 +88,12 @@ export function Home() {
       {/* Categories */}
       <section>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Shop by Category</h2>
+          <h2 className="text-2xl font-bold">{t('home.shopByCategory')}</h2>
           <Link
             to={ROUTES.CATEGORIES}
             className="text-primary hover:underline text-sm font-medium flex items-center"
           >
-            View All
+            {t('home.viewAll')}
             <ArrowRight className="ml-1 h-4 w-4" />
           </Link>
         </div>
@@ -118,12 +120,12 @@ export function Home() {
       {/* Featured Products */}
       <section>
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold">Featured Products</h2>
+          <h2 className="text-2xl font-bold">{t('home.featuredProducts')}</h2>
           <Link
             to={ROUTES.PRODUCTS}
             className="text-primary hover:underline text-sm font-medium flex items-center"
           >
-            View All
+            {t('home.viewAll')}
             <ArrowRight className="ml-1 h-4 w-4" />
           </Link>
         </div>
@@ -165,14 +167,14 @@ export function Home() {
       {/* Newsletter */}
       <section className="rounded-2xl bg-gradient-to-br from-primary via-accent to-muted text-background p-8 md:p-12">
         <div className="max-w-2xl mx-auto text-center space-y-6">
-          <h2 className="text-3xl font-bold">Stay in the Loop</h2>
+          <h2 className="text-3xl font-bold">{t('home.newsletter.title')}</h2>
           <p className="text-background/80">
-            Subscribe to our newsletter for exclusive deals, new arrivals, and insider-only discounts.
+            {t('home.newsletter.subtitle')}
           </p>
           <form className="flex flex-col sm:flex-row gap-3" onSubmit={(e) => e.preventDefault()}>
             <input
               type="email"
-              placeholder="Enter your email"
+              placeholder={t('home.newsletter.emailPlaceholder')}
               className="flex-1 px-4 py-3 rounded-lg bg-background/10 border border-background/20 text-background placeholder:text-background/60 focus:outline-none focus:ring-2 focus:ring-background/30"
             />
             <Button
@@ -180,7 +182,7 @@ export function Home() {
               size="lg"
               className="bg-background text-foreground hover:bg-background/90 whitespace-nowrap"
             >
-              Subscribe
+              {t('home.newsletter.subscribe')}
             </Button>
           </form>
         </div>

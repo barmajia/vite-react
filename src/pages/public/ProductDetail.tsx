@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   ShoppingCart,
   Share2,
@@ -40,6 +41,7 @@ import {
 import { Label } from "@/components/ui/label";
 
 export function ProductDetail() {
+  const { t } = useTranslation();
   const { asin } = useParams<{ asin: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -62,7 +64,7 @@ export function ProductDetail() {
 
   const handleAddToCart = async () => {
     if (!user) {
-      toast.error("Please sign in to add items to cart");
+      toast.error(t('productDetail.signInToCart'));
       navigate(ROUTES.LOGIN, {
         state: { from: { pathname: window.location.pathname } },
       });
@@ -82,15 +84,15 @@ export function ProductDetail() {
           : null,
         stock_quantity: product.quantity,
       });
-      toast.success("Added to cart!");
+      toast.success(t('productDetail.addedToCart'));
     } catch (_err) {
-      toast.error("Failed to add to cart");
+      toast.error(t('productDetail.failedAddToCart'));
     }
   };
 
   const handleChatWithSeller = async () => {
     if (!user) {
-      toast.error("Please sign in to chat with seller");
+      toast.error(t('productDetail.signInToChat'));
       navigate(ROUTES.LOGIN, {
         state: { from: { pathname: window.location.pathname } },
       });
@@ -98,12 +100,12 @@ export function ProductDetail() {
     }
 
     if (!product?.seller_id) {
-      toast.error("Seller information not available");
+      toast.error(t('productDetail.sellerInfoUnavailable'));
       return;
     }
 
     if (user.id === product.seller_id) {
-      toast.error("You can't chat with yourself");
+      toast.error(t('productDetail.cannotChatSelf'));
       return;
     }
 
@@ -129,13 +131,13 @@ export function ProductDetail() {
       }
     } else {
       navigator.clipboard.writeText(window.location.href);
-      toast.success("Link copied to clipboard!");
+      toast.success(t('productDetail.linkCopied'));
     }
   };
 
   const handleSubmitReview = async () => {
     if (!user) {
-      toast.error("Please sign in to write a review");
+      toast.error(t('productDetail.signInToReview'));
       navigate(ROUTES.LOGIN, {
         state: { from: { pathname: window.location.pathname } },
       });
@@ -150,18 +152,18 @@ export function ProductDetail() {
         rating: reviewData.rating,
         comment: reviewData.comment || undefined,
       });
-      toast.success("Review submitted!");
+      toast.success(t('productDetail.reviewSubmitted'));
       setReviewDialogOpen(false);
       setReviewData({ rating: 5, comment: "" });
     } catch (_err) {
-      toast.error("Failed to submit review");
+      toast.error(t('productDetail.failedSubmitReview'));
     }
   };
 
   if (isLoading) {
     return (
       <div className="py-12">
-        <LoadingSpinner size="lg" text="Loading product..." />
+        <LoadingSpinner size="lg" text={t('productDetail.loading')} />
       </div>
     );
   }
@@ -169,11 +171,11 @@ export function ProductDetail() {
   if (error || !product) {
     return (
       <EmptyState
-        title="Product not found"
-        description="The product you're looking for doesn't exist or has been removed."
+        title={t('productDetail.notFound')}
+        description={t('productDetail.notFoundDesc')}
         action={
           <Button onClick={() => navigate(ROUTES.PRODUCTS)}>
-            Browse Products
+            {t('errors.browseProducts')}
           </Button>
         }
       />
@@ -204,9 +206,9 @@ export function ProductDetail() {
                 </h1>
                 {seller && (
                   <p className="text-sm text-muted-foreground">
-                    Sold by{" "}
+                    {t('productDetail.soldBy')}{" "}
                     <span className="text-primary">
-                      {seller.full_name || "Seller"}
+                      {seller.full_name || t('productDetail.seller')}
                     </span>
                   </p>
                 )}
@@ -241,7 +243,7 @@ export function ProductDetail() {
                   to="#reviews"
                   className="text-sm text-primary hover:underline"
                 >
-                  {product.reviews.length} reviews
+                  {product.reviews.length} {t('product.reviews').toLowerCase()}
                 </Link>
               </div>
             )}
@@ -256,13 +258,13 @@ export function ProductDetail() {
                 {formatPrice(product.price)}
               </span>
               {product.quantity > 10 && (
-                <Badge variant="success">In Stock</Badge>
+                <Badge variant="success">{t('product.inStock')}</Badge>
               )}
               {product.quantity > 0 && product.quantity <= 10 && (
-                <Badge variant="warning">Only {product.quantity} left</Badge>
+                <Badge variant="warning">{t('productDetail.onlyLeft', { count: product.quantity })}</Badge>
               )}
               {product.quantity === 0 && (
-                <Badge variant="destructive">Out of Stock</Badge>
+                <Badge variant="destructive">{t('product.outOfStock')}</Badge>
               )}
             </div>
           </div>
@@ -270,7 +272,7 @@ export function ProductDetail() {
           {/* Description */}
           {product.description && (
             <div>
-              <h3 className="font-semibold mb-2">Description</h3>
+              <h3 className="font-semibold mb-2">{t('product.description')}</h3>
               <p className="text-muted-foreground">{product.description}</p>
             </div>
           )}
@@ -278,7 +280,7 @@ export function ProductDetail() {
           {/* Quantity & Add to Cart */}
           <div className="space-y-4">
             <div className="flex items-center gap-4">
-              <Label>Quantity</Label>
+              <Label>{t('product.quantity')}</Label>
               <div className="flex items-center border rounded-md">
                 <Button
                   variant="ghost"
@@ -311,7 +313,7 @@ export function ProductDetail() {
                 disabled={product.quantity === 0}
               >
                 <ShoppingCart className="mr-2 h-4 w-4" />
-                {product.quantity === 0 ? "Out of Stock" : "Add to Cart"}
+                {product.quantity === 0 ? t('product.outOfStock') : t('product.addToCart')}
               </Button>
               <Button
                 size="lg"
@@ -322,7 +324,7 @@ export function ProductDetail() {
                 }}
                 disabled={product.quantity === 0}
               >
-                Buy Now
+                {t('productDetail.buyNow')}
               </Button>
             </div>
             <Button
@@ -333,7 +335,7 @@ export function ProductDetail() {
               className="w-full"
             >
               <MessageSquare className="mr-2 h-4 w-4" />
-              {isCreating ? "Starting chat..." : "Ask Seller a Question"}
+              {isCreating ? t('productDetail.startingChat') : t('productDetail.askSeller')}
             </Button>
           </div>
 
@@ -342,29 +344,29 @@ export function ProductDetail() {
             <div className="flex items-center gap-3 text-sm">
               <Truck className="h-5 w-5 text-primary" />
               <div>
-                <p className="font-medium">Free Shipping</p>
-                <p className="text-muted-foreground">On orders over $50</p>
+                <p className="font-medium">{t('productDetail.freeShipping')}</p>
+                <p className="text-muted-foreground">{t('productDetail.freeShippingDesc')}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 text-sm">
               <Shield className="h-5 w-5 text-primary" />
               <div>
-                <p className="font-medium">Secure Payment</p>
-                <p className="text-muted-foreground">100% protected</p>
+                <p className="font-medium">{t('home.features.securePayment')}</p>
+                <p className="text-muted-foreground">{t('productDetail.securePaymentDesc')}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 text-sm">
               <RotateCcw className="h-5 w-5 text-primary" />
               <div>
-                <p className="font-medium">Easy Returns</p>
-                <p className="text-muted-foreground">30-day policy</p>
+                <p className="font-medium">{t('productDetail.easyReturns')}</p>
+                <p className="text-muted-foreground">{t('productDetail.easyReturnsDesc')}</p>
               </div>
             </div>
             <div className="flex items-center gap-3 text-sm">
               <MessageSquare className="h-5 w-5 text-primary" />
               <div>
-                <p className="font-medium">24/7 Support</p>
-                <p className="text-muted-foreground">Here to help</p>
+                <p className="font-medium">{t('productDetail.support247')}</p>
+                <p className="text-muted-foreground">{t('productDetail.supportDesc')}</p>
               </div>
             </div>
           </div>
@@ -375,27 +377,27 @@ export function ProductDetail() {
       <section id="reviews" className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold">Customer Reviews</h2>
+            <h2 className="text-2xl font-bold">{t('productDetail.customerReviews')}</h2>
             {product.reviews && product.reviews.length > 0 && (
               <div className="flex items-center gap-2 mt-1">
                 <StarRating rating={averageRating} size="sm" />
                 <span className="text-sm text-muted-foreground">
-                  Based on {product.reviews.length} reviews
+                  {t('productDetail.basedOnReviews', { count: product.reviews.length })}
                 </span>
               </div>
             )}
           </div>
           <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
             <DialogTrigger asChild>
-              <Button>Write a Review</Button>
+              <Button>{t('productDetail.writeReview')}</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Write a Review</DialogTitle>
+                <DialogTitle>{t('productDetail.writeReview')}</DialogTitle>
               </DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>Rating</Label>
+                  <Label>{t('product.rating')}</Label>
                   <div className="flex gap-2">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
@@ -419,18 +421,18 @@ export function ProductDetail() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label>Comment (optional)</Label>
+                  <Label>{t('productDetail.commentOptional')}</Label>
                   <Textarea
                     value={reviewData.comment}
                     onChange={(e) =>
                       setReviewData({ ...reviewData, comment: e.target.value })
                     }
-                    placeholder="Share your experience with this product..."
+                    placeholder={t('productDetail.commentPlaceholder')}
                     rows={4}
                   />
                 </div>
                 <Button onClick={handleSubmitReview} className="w-full">
-                  Submit Review
+                  {t('productDetail.submitReview')}
                 </Button>
               </div>
             </DialogContent>
@@ -477,8 +479,8 @@ export function ProductDetail() {
           </div>
         ) : (
           <EmptyState
-            title="No reviews yet"
-            description="Be the first to review this product"
+            title={t('productDetail.noReviewsYet')}
+            description={t('productDetail.beFirstReview')}
           />
         )}
       </section>
@@ -486,7 +488,7 @@ export function ProductDetail() {
       {/* Related Products */}
       {relatedProducts && relatedProducts.length > 0 && (
         <section>
-          <h2 className="text-2xl font-bold mb-6">Related Products</h2>
+          <h2 className="text-2xl font-bold mb-6">{t('product.relatedProducts')}</h2>
           <ProductGrid products={relatedProducts} />
         </section>
       )}
