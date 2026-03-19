@@ -3,89 +3,90 @@
  */
 
 // App Information
-export const APP_NAME = 'Aurora';
-export const APP_TAGLINE = 'Discover Premium Products';
-export const APP_VERSION = '1.0.0';
+export const APP_NAME = "Aurora";
+export const APP_TAGLINE = "Discover Premium Products";
+export const APP_VERSION = "1.0.0";
 
 // Routes
 export const ROUTES = {
   // Public
-  HOME: '/',
-  PRODUCTS: '/products',
-  PRODUCT_DETAIL: '/product/:asin',
-  CATEGORIES: '/categories',
-  CATEGORY_PRODUCTS: '/category/:id',
-  BRANDS: '/brands',
-  BRAND_PRODUCTS: '/brand/:id',
-  ABOUT: '/about',
-  CONTACT: '/contact',
-  HELP: '/help',
+  HOME: "/",
+  PRODUCTS: "/products",
+  PRODUCT_DETAIL: "/product/:asin",
+  CATEGORIES: "/categories",
+  CATEGORY_PRODUCTS: "/category/:id",
+  BRANDS: "/brands",
+  BRAND_PRODUCTS: "/brand/:id",
+  SERVICES: "/services",
+  ABOUT: "/about",
+  CONTACT: "/contact",
+  HELP: "/help",
 
   // Auth
-  LOGIN: '/login',
-  SIGNUP: '/signup',
-  FORGOT_PASSWORD: '/forgot-password',
-  RESET_PASSWORD: '/reset-password',
-  VERIFY_EMAIL: '/verify-email',
+  LOGIN: "/login",
+  SIGNUP: "/signup",
+  FORGOT_PASSWORD: "/forgot-password",
+  RESET_PASSWORD: "/reset-password",
+  VERIFY_EMAIL: "/verify-email",
 
   // Customer (Protected)
-  CART: '/cart',
-  CHECKOUT: '/checkout',
-  ORDER_SUCCESS: '/order-success/:id',
-  PROFILE: '/profile',
-  ORDERS: '/orders',
-  ORDER_DETAIL: '/orders/:id',
-  WISHLIST: '/wishlist',
-  ADDRESSES: '/addresses',
-  REVIEWS: '/reviews',
-  MESSAGES: '/messages',
-  CONVERSATION: '/messages/:id',
-  NOTIFICATIONS: '/notifications',
-  SETTINGS: '/settings',
+  CART: "/cart",
+  CHECKOUT: "/checkout",
+  ORDER_SUCCESS: "/order-success/:id",
+  PROFILE: "/profile",
+  ORDERS: "/orders",
+  ORDER_DETAIL: "/orders/:id",
+  WISHLIST: "/wishlist",
+  ADDRESSES: "/addresses",
+  REVIEWS: "/reviews",
+  MESSAGES: "/messages",
+  CONVERSATION: "/messages/:id",
+  NOTIFICATIONS: "/notifications",
+  SETTINGS: "/settings",
 
   // Errors
-  NOT_FOUND: '*',
-  SERVER_ERROR: '/error',
+  NOT_FOUND: "*",
+  SERVER_ERROR: "/error",
 } as const;
 
 // Order Status
 export const ORDER_STATUS = {
-  PENDING: 'pending',
-  CONFIRMED: 'confirmed',
-  PROCESSING: 'processing',
-  SHIPPED: 'shipped',
-  DELIVERED: 'delivered',
-  CANCELLED: 'cancelled',
-  REFUNDED: 'refunded',
+  PENDING: "pending",
+  CONFIRMED: "confirmed",
+  PROCESSING: "processing",
+  SHIPPED: "shipped",
+  DELIVERED: "delivered",
+  CANCELLED: "cancelled",
+  REFUNDED: "refunded",
 } as const;
 
 export const ORDER_STATUS_LABELS: Record<string, string> = {
-  pending: 'Pending',
-  confirmed: 'Confirmed',
-  processing: 'Processing',
-  shipped: 'Shipped',
-  delivered: 'Delivered',
-  cancelled: 'Cancelled',
-  refunded: 'Refunded',
+  pending: "Pending",
+  confirmed: "Confirmed",
+  processing: "Processing",
+  shipped: "Shipped",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+  refunded: "Refunded",
 };
 
 export const ORDER_STATUS_COLORS: Record<string, string> = {
-  pending: 'bg-yellow-500',
-  confirmed: 'bg-blue-500',
-  processing: 'bg-purple-500',
-  shipped: 'bg-indigo-500',
-  delivered: 'bg-green-500',
-  cancelled: 'bg-red-500',
-  refunded: 'bg-gray-500',
+  pending: "bg-yellow-500",
+  confirmed: "bg-blue-500",
+  processing: "bg-purple-500",
+  shipped: "bg-indigo-500",
+  delivered: "bg-green-500",
+  cancelled: "bg-red-500",
+  refunded: "bg-gray-500",
 };
 
 // Notification Types
 export const NOTIFICATION_TYPES = {
-  ORDER_UPDATE: 'order_update',
-  MESSAGE: 'message',
-  PROMOTION: 'promotion',
-  REVIEW: 'review',
-  SYSTEM: 'system',
+  ORDER_UPDATE: "order_update",
+  MESSAGE: "message",
+  PROMOTION: "promotion",
+  REVIEW: "review",
+  SYSTEM: "system",
 } as const;
 
 // Pagination
@@ -110,7 +111,7 @@ export const RATING = {
 // Image Upload
 export const IMAGE_UPLOAD = {
   MAX_SIZE: 5 * 1024 * 1024, // 5MB
-  ALLOWED_TYPES: ['image/jpeg', 'image/png', 'image/webp'],
+  ALLOWED_TYPES: ["image/jpeg", "image/png", "image/webp"],
   MAX_IMAGES: 5,
 } as const;
 
@@ -129,15 +130,15 @@ export const CACHE = {
 
 // Social Links
 export const SOCIAL_LINKS = {
-  FACEBOOK: 'https://facebook.com/aurora',
-  TWITTER: 'https://twitter.com/aurora',
-  INSTAGRAM: 'https://instagram.com/aurora',
-  LINKEDIN: 'https://linkedin.com/company/aurora',
+  FACEBOOK: "https://facebook.com/aurora",
+  TWITTER: "https://twitter.com/aurora",
+  INSTAGRAM: "https://instagram.com/aurora",
+  LINKEDIN: "https://linkedin.com/company/aurora",
 } as const;
 
 // Contact
 export const CONTACT = {
-  EMAIL: 'support@aurora.com',
-  PHONE: '+1 (555) 123-4567',
-  ADDRESS: '123 Aurora Street, San Francisco, CA 94102',
+  EMAIL: "support@aurora.com",
+  PHONE: "+1 (555) 123-4567",
+  ADDRESS: "123 Aurora Street, San Francisco, CA 94102",
 } as const;
