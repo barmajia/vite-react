@@ -42,7 +42,6 @@ import { ServiceDetailPage } from "@/features/services/pages/ServiceDetailPage";
 import { ProviderProfilePage } from "@/features/services/pages/ProviderProfilePage";
 import { CreateProviderProfile } from "@/features/services/pages/CreateProviderProfile";
 import { CreateServiceListing } from "@/features/services/pages/CreateServiceListing";
-import { OnboardingWizard } from "@/features/services/pages/OnboardingWizard";
 import { ServiceOnboardingWizard } from "@/features/services/components/ServiceOnboardingWizard";
 import { DashboardLayout } from "@/features/services/dashboard/components/layout/DashboardLayout";
 import { DashboardHome } from "@/features/services/dashboard/pages/DashboardHome";
@@ -90,12 +89,10 @@ function App() {
       <AuthProvider>
         <Toaster position="top-right" richColors />
         <ErrorBoundary
-                  fallback={
+          fallback={
             <div className="min-h-screen flex items-center justify-center">
               <div className="text-center">
-                <h1 className="text-2xl font-bold mb-4">
-                  {t("common.error")}
-                </h1>
+                <h1 className="text-2xl font-bold mb-4">{t("common.error")}</h1>
                 <button
                   onClick={() => window.location.reload()}
                   className="px-4 py-2 bg-primary text-primary-foreground rounded"
@@ -110,7 +107,6 @@ function App() {
             {/* Auth Routes (Full Page - No Layout) */}
             <Route path="/signup" element={<ServicesSignup />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/services/onboarding" element={<OnboardingWizard />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 

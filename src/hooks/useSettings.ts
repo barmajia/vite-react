@@ -33,29 +33,32 @@ export function useSettings() {
 
       switch (profile.account_type) {
         case "seller":
-        case "factory":
+        case "factory": {
           const { data: seller } = await supabase
             .from("sellers")
             .select("*")
             .eq("user_id", profile.user_id)
             .maybeSingle();
           return seller;
+        }
 
-        case "middleman":
+        case "middleman": {
           const { data: middleman } = await supabase
             .from("middleman_profiles")
             .select("*")
             .eq("user_id", profile.user_id)
             .maybeSingle();
           return middleman;
+        }
 
-        case "delivery":
+        case "delivery": {
           const { data: delivery } = await supabase
             .from("delivery_profiles")
             .select("*")
             .eq("user_id", profile.user_id)
             .maybeSingle();
           return delivery;
+        }
 
         default:
           return null;

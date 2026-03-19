@@ -1,10 +1,10 @@
 # Aurora E-commerce Platform
 
-> A modern, production-ready full-stack B2B2C e-commerce platform built with React, Vite, TypeScript, Tailwind CSS, and Supabase. Features a minimalist, high-contrast luxury tech aesthetic with real-time messaging, factory management, services marketplace, and geolocation capabilities.
+> A modern, production-ready full-stack B2B2C e-commerce platform built with React, Vite, TypeScript, Tailwind CSS, and Supabase. Features a minimalist, high-contrast luxury tech aesthetic with real-time messaging, factory management, services marketplace, geolocation capabilities, and multi-language support (i18n).
 
-**Version:** 2.2.0
-**Status:** ✅ Production Ready (Phases 1-4 Complete + Factory Features + Services Marketplace + Services Messaging)
-**Last Updated:** March 18, 2026
+**Version:** 2.3.0
+**Status:** ✅ Production Ready (Phases 1-4 Complete + Factory Features + Services Marketplace + Services Messaging + i18n)
+**Last Updated:** March 19, 2026
 **Developer:** Youssef
 
 ---
@@ -37,8 +37,9 @@ Aurora is a comprehensive e-commerce platform that supports multiple business mo
 1. **B2C E-commerce** - Traditional retail with products, cart, checkout, and orders
 2. **B2B Factory** - Factory dashboard, production tracking, quote requests, and seller connections
 3. **Services Marketplace** - Service providers can list services, manage bookings, and connect with clients
+4. **Multi-Language Support (i18n)** - 12+ languages with automatic geolocation-based detection and RTL support
 
-The platform features real-time messaging between buyers and sellers, geolocation for finding nearby sellers, dark/light theme support, and a production-ready deployment pipeline optimized for Vercel.
+The platform features real-time messaging between buyers and sellers, geolocation for finding nearby sellers, dark/light theme support, internationalization (i18n), and a production-ready deployment pipeline optimized for Vercel.
 
 ---
 
@@ -86,6 +87,14 @@ The application will run at `http://localhost:5173`
 - Role-based access (buyer, seller, factory, service provider)
 - Onboarding wizard for new users
 
+### 🌍 Multi-Language Support (i18n)
+
+- **12+ Supported Languages:** English, Arabic, French, Chinese, German, Spanish, Italian, Portuguese, Russian, Japanese, Korean, Turkish
+- **Geolocation Detection:** Auto-detects user language based on IP location
+- **RTL Support:** Full right-to-left layout for Arabic, Hebrew, Persian, Urdu
+- **Persistent Preference:** Language choice saved in localStorage
+- **Dynamic Language Switching:** Change language without page reload
+
 ### 🛍️ Product Management
 
 - Product listing with infinite scroll pagination
@@ -108,7 +117,7 @@ The application will run at `http://localhost:5173`
 - Order creation with status tracking
 - **Payment Methods:**
   - Credit/Debit Card (placeholder for Stripe integration)
-  - **Fawry (Egypt)** - Online PayPage or kiosk payment (EGP) - New!
+  - **Fawry (Egypt)** - Online PayPage or kiosk payment (EGP)
 
 ### 📦 Order Management
 
@@ -141,7 +150,6 @@ The application will run at `http://localhost:5173`
 - Full-text search on message content
 - Secure RLS policies ensuring participant-only access
 - Routes: `/services/messages`, `/services/messages/:conversationId`
-- Schema: `services-messaging-isolated.sql`
 
 ### 🏭 Factory Features (B2B)
 
@@ -175,7 +183,7 @@ The application will run at `http://localhost:5173`
 - Connected sellers management
 - B2B relationship building
 
-### 🧰 Services Marketplace (New!)
+### 🧰 Services Marketplace
 
 A comprehensive **Professional Services Ecosystem** supporting multiple verticals:
 
@@ -190,11 +198,11 @@ A comprehensive **Professional Services Ecosystem** supporting multiple vertical
 
 #### Freelance & Professional Gigs
 
-- **Providers:** Developers, Designers, Translators, Consultants
+- **Providers:** Developers, Designers, Translators, Writers
 - **Engagement Models:**
   - **Hourly Contracts:** Time-tracking ready
   - **Fixed-Price Projects:** Milestone-based payments
-  - **B2B Hiring:** Companies (e.g., Hospitals) can hire specialists (e.g., Medical Translators)
+  - **B2B Hiring:** Companies can hire specialists
 - **Features:**
   - Portfolio showcase
   - Skill-based filtering
@@ -269,6 +277,8 @@ A comprehensive **Professional Services Ecosystem** supporting multiple vertical
 | **Sonner**                | 2.0.7   | Toast notifications                  |
 | **Lucide React**          | 0.577.0 | Icon library                         |
 | **Recharts**              | 3.8.0   | Data visualization                   |
+| **i18next**               | 25.8.19 | Internationalization (i18n)          |
+| **react-i18next**         | 16.5.8  | React i18n integration               |
 | **Vercel Analytics**      | 1.6.1   | Performance monitoring               |
 | **Vercel Speed Insights** | 1.3.1   | Core Web Vitals                      |
 
@@ -357,20 +367,8 @@ vite-react/
 │   │   │   └── pages/
 │   │   ├── factory/                    # B2B Factory Features
 │   │   │   ├── components/
-│   │   │   │   ├── ConnectionRequestsList.tsx
-│   │   │   │   ├── FactoryDashboard.tsx
-│   │   │   │   ├── ProductionPipeline.tsx
-│   │   │   │   ├── ProductionPipelineList.tsx
-│   │   │   │   ├── QuoteRequestsList.tsx
-│   │   │   │   ├── SalesChart.tsx
-│   │   │   │   └── StatCard.tsx
 │   │   │   ├── hooks/
-│   │   │   │   ├── useFactoryAnalytics.ts
-│   │   │   │   ├── useFactoryConnections.ts
-│   │   │   │   ├── useProductionOrders.ts
-│   │   │   │   └── useQuoteRequests.ts
 │   │   │   ├── types/
-│   │   │   │   └── factory.ts
 │   │   │   └── index.ts
 │   │   ├── messaging/
 │   │   │   ├── components/
@@ -409,6 +407,9 @@ vite-react/
 │   │   ├── useProfileLocation.ts       # User location
 │   │   └── useSettings.ts              # Settings state
 │   │
+│   ├── i18n/                           # Internationalization
+│   │   └── config.ts                   # i18next configuration
+│   │
 │   ├── lib/
 │   │   ├── supabase.ts                 # Supabase client config
 │   │   ├── supabase-realtime.ts        # Realtime subscriptions
@@ -433,8 +434,8 @@ vite-react/
 │   │   ├── messaging/
 │   │   │   ├── Inbox.tsx               # Product messages inbox
 │   │   │   ├── Chat.tsx                # Product messages chat
-│   │   │   ├── ServicesInbox.tsx       # Services messages inbox (New!)
-│   │   │   └── ServicesChat.tsx        # Services messages chat (New!)
+│   │   │   ├── ServicesInbox.tsx       # Services messages inbox
+│   │   │   └── ServicesChat.tsx        # Services messages chat
 │   │   └── public/
 │   │       ├── Home.tsx
 │   │       ├── ProductList.tsx
@@ -463,13 +464,19 @@ vite-react/
 │   ├── main.tsx                        # Entry point
 │   └── index.css                       # Tailwind + theme CSS
 │
+├── public/
+│   ├── grid.svg                        # Background grid pattern
+│   ├── vite.svg                        # Favicon
+│   └── locales/                        # i18n translation files
+│       ├── en/
+│       │   └── translation.json
+│       ├── ar/
+│       │   └── translation.json
+│       └── ... (other languages)
+│
 ├── supabase/
 │   ├── config.toml                     # Supabase local config
 │   └── snippets/                       # SQL snippets
-│
-├── public/
-│   ├── grid.svg                        # Background grid pattern
-│   └── vite.svg                        # Favicon
 │
 ├── *.sql                               # Database migrations
 ├── package.json
@@ -514,8 +521,8 @@ vite-react/
 | `/services/dashboard`                | `ProviderDashboardPage` | Provider dashboard             |
 | `/services/dashboard/create-profile` | `CreateProviderProfile` | Create provider profile        |
 | `/services/dashboard/create-listing` | `CreateServiceListing`  | Create service listing         |
-| `/services/messages`                 | `ServicesInbox`         | Services messages inbox (New!) |
-| `/services/messages/:conversationId` | `ServicesChat`          | Services chat (New!)           |
+| `/services/messages`                 | `ServicesInbox`         | Services messages inbox        |
+| `/services/messages/:conversationId` | `ServicesChat`          | Services chat                  |
 
 ### Factory Routes (Protected)
 
@@ -565,7 +572,7 @@ vite-react/
 
 ## 🗄️ Database Schema
 
-### Core Tables (16+)
+### Core Tables (20+)
 
 | Table                         | Description               | Key Columns                                                                    |
 | ----------------------------- | ------------------------- | ------------------------------------------------------------------------------ |
@@ -589,6 +596,8 @@ vite-react/
 | `service_providers`           | Service provider profiles | `id`, `user_id`, `business_name`, `rating`                                     |
 | `service_listings`            | Service offerings         | `id`, `provider_id`, `title`, `price`, `category`                              |
 | `service_bookings`            | Service appointments      | `id`, `listing_id`, `customer_id`, `date`, `status`                            |
+| `services_conversations`      | Services message threads  | `id`, `provider_id`, `customer_id`, `listing_id`, `last_message`               |
+| `services_messages`           | Services chat messages    | `id`, `conversation_id`, `sender_id`, `content`, `is_read`                     |
 
 ### Database Functions
 
@@ -657,6 +666,7 @@ type user_role = "buyer" | "seller" | "factory" | "service_provider" | "admin";
 | `npm run build`   | Build for production (tsc + vite build) |
 | `npm run preview` | Preview production build locally        |
 | `npm run lint`    | Run ESLint code quality check           |
+| `npm run routes`  | Start repomap routes server             |
 
 ### Development Workflow
 
@@ -673,6 +683,8 @@ cp .env.example .env
 # - all.sql (main schema)
 # - factory-features-migration.sql (factory features)
 # - factory-chat-deals-migration.sql (factory chat)
+# - services-marketplace-migration.sql (services marketplace)
+# - services-messaging-isolated.sql (services messaging)
 
 # 4. Start development server
 npm run dev
@@ -931,15 +943,17 @@ const { location, isLoading, error, requestLocation } = useGeolocation();
 | [DEPLOYMENT.md](./DEPLOYMENT.md)                               | Detailed deployment guide with optimizations |
 | [FACTORY_IMPLEMENTATION.md](./FACTORY_IMPLEMENTATION.md)       | Factory features complete guide              |
 | [SIMPLE_SERVICES_SCHEMA.md](./SIMPLE_SERVICES_SCHEMA.md)       | Services marketplace schema guide            |
-| [SERVICES-MESSAGING.md](./SERVICES-MESSAGING.md)               | **Services messaging system guide (New!)**   |
-| [FAWRY_INTEGRATION.md](./FAWRY_INTEGRATION.md)                 | **Fawry payment integration guide (New!)**   |
+| [SERVICES-MESSAGING.md](./SERVICES-MESSAGING.md)               | Services messaging system guide              |
+| [FAWRY_INTEGRATION.md](./FAWRY_INTEGRATION.md)                 | Fawry payment integration guide              |
 | [GEOLOCATION_COMPLETE.md](./GEOLOCATION_COMPLETE.md)           | Geolocation feature documentation            |
 | [LOCATION_FEATURE_COMPLETE.md](./LOCATION_FEATURE_COMPLETE.md) | Location settings guide                      |
 | [PHASE_1_COMPLETE.md](./PHASE_1_COMPLETE.md)                   | Phase 1 completion report                    |
 | [PHASE_4_COMPLETE.md](./PHASE_4_COMPLETE.md)                   | Phase 4 (Messaging) completion               |
 | [PROJECT_ANALYSIS.md](./PROJECT_ANALYSIS.md)                   | Comprehensive project analysis               |
 | [MESSAGING_FIX.md](./MESSAGING_FIX.md)                         | Messaging bug fix documentation              |
-| [FIX-SVC-PROVIDERS.md](./FIX-SVC-PROVIDERS.md)                 | Service providers table fix (New!)           |
+| [FIX-SVC-PROVIDERS.md](./FIX-SVC-PROVIDERS.md)                 | Service providers table fix                  |
+| [SERVICES-ECOSYSTEM-PLAN.md](./SERVICES-ECOSYSTEM-PLAN.md)     | Services ecosystem planning                  |
+| [ONBOARDING-COMPLETE.md](./ONBOARDING-COMPLETE.md)             | Onboarding wizard completion                 |
 
 ---
 
@@ -954,7 +968,8 @@ const { location, isLoading, error, requestLocation } = useGeolocation();
 | **Geolocation**           | ✅ Complete | Browser geolocation for nearby sellers                                |
 | **Factory Features**      | ✅ Complete | Dashboard, production tracking, quotes, connections                   |
 | **Services Marketplace**  | ✅ Complete | Services gateway, provider profiles, listings                         |
-| **Services Messaging**    | ✅ Complete | Dedicated messaging for service providers & customers (New!)          |
+| **Services Messaging**    | ✅ Complete | Dedicated messaging for service providers & customers                 |
+| **i18n Integration**      | ✅ Complete | Multi-language support with geolocation detection                     |
 | **Analytics Integration** | ✅ Complete | Vercel Analytics & Speed Insights                                     |
 | **Phase 5**               | 🔮 Planned  | Reviews Management (review CRUD, seller responses)                    |
 | **Future**                | 🔮 Planned  | Analytics Dashboard, Admin Panel, Mobile App                          |
@@ -995,21 +1010,6 @@ The app is integrated with Vercel's analytics and performance monitoring tools:
 2. Visit your Vercel dashboard
 3. Navigate to **Analytics** tab
 4. View **Speed Insights** for performance metrics
-
-### Disabling Analytics
-
-To disable analytics in development or production:
-
-```tsx
-// In main.tsx
-<VercelAnalytics disabled={true} />
-```
-
-Or set environment variable:
-
-```
-VITE_VERCEL_ANALYTICS_ID=
-```
 
 ---
 
@@ -1060,7 +1060,7 @@ VITE_VERCEL_ANALYTICS_ID=
 
 - **Developer:** Youssef
 - **Project:** Aurora E-commerce Platform
-- **Version:** 2.2.0
+- **Version:** 2.3.0
 - **License:** © 2026 Aurora E-commerce. All rights reserved.
 - **Contact:** support@aurora.com
 
@@ -1124,9 +1124,6 @@ ADD COLUMN IF NOT EXISTS phone VARCHAR(20);
 ALTER TABLE public.svc_providers
 ADD COLUMN IF NOT EXISTS website VARCHAR(200);
 
--- Add other missing columns (email, logo_url, etc.)
--- See fix-svc-providers-all-columns.sql for complete list
-
 -- Update status constraint to include 'pending_review'
 ALTER TABLE public.svc_providers
 DROP CONSTRAINT IF EXISTS svc_providers_status_check;
@@ -1152,11 +1149,12 @@ See [FIX-SVC-PROVIDERS.md](./FIX-SVC-PROVIDERS.md) for complete details.
 - [Zustand](https://zustand-demo.pmnd.rs/) - Bear necessities for state management
 - [Lucide Icons](https://lucide.dev/) - Beautiful & consistent icons
 - [Vercel](https://vercel.com/) - Develop. Preview. Ship.
+- [i18next](https://www.i18next.com/) - Internationalization framework
 
 ---
 
-**Built with ❤️ using React, Vite, TypeScript, Tailwind CSS, and Supabase**
+**Built with ❤️ using React, Vite, TypeScript, Tailwind CSS, Supabase, and i18next**
 
 ---
 
-_Last Updated: March 18, 2026_
+_Last Updated: March 19, 2026_

@@ -12,7 +12,9 @@ function applyStoredLanguage() {
   const stored = localStorage.getItem(LANGUAGE_STORAGE_KEY);
   if (stored) {
     document.documentElement.lang = stored;
-    document.documentElement.dir = RTL_LANGUAGES.includes(stored) ? "rtl" : "ltr";
+    document.documentElement.dir = RTL_LANGUAGES.includes(stored)
+      ? "rtl"
+      : "ltr";
   }
 }
 applyStoredLanguage();
