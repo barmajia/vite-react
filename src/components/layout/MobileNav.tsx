@@ -1,4 +1,4 @@
-import { href, Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   X,
   User,
@@ -12,12 +12,12 @@ import {
   Home,
   Search,
   ShoppingBag,
+  Headset,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { Label } from "recharts";
 
 interface MobileNavProps {
   isOpen: boolean;
@@ -37,7 +37,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
   const menuItems = [
     { icon: Home, label: "Home", href: ROUTES.HOME },
     { icon: Search, label: "Products", href: ROUTES.PRODUCTS },
-    { icons: "", Label: "services", href: ROUTES.SERVICES },
+    { icon: Headset, label: "Services", href: ROUTES.SERVICES },
     { icon: ShoppingBag, label: "Categories", href: ROUTES.CATEGORIES },
     { icon: User, label: "About", href: ROUTES.ABOUT },
     { icon: MessageSquare, label: "Contact", href: ROUTES.CONTACT },
