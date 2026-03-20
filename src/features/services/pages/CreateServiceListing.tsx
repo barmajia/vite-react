@@ -23,15 +23,17 @@ export function CreateServiceListing() {
   const [formData, setFormData] = useState({
     title: "",
     description: "",
-    category_slug: "",
-    price_numeric: "",
+    category_id: "",
+    price_min: "",
+    listing_type: "service_package",
+    currency: "EGP",
   });
 
   useEffect(() => {
     const fetchCategories = async () => {
       const { data } = await supabase
         .from("svc_categories")
-        .select("*")
+        .select("id, name, slug")
         .order("name");
 
       setCategories(data || []);
@@ -62,11 +64,12 @@ export function CreateServiceListing() {
           provider_id: user.id,
           title: formData.title,
           slug,
-          category_slug: formData.category_slug || null,
-          price_numeric: formData.price_numeric
-            ? parseFloat(formData.price_numeric)
-            : null,
+          category_id: formData.category_id || null,
+          price_min: formData.price_min ? parseFloat(formData.price_min) : null,
           description: formData.description,
+          listing_type: formData.listing_type,
+          currency: formData.currency,
+          status: "active",
         })
         .select()
         .single();
@@ -124,15 +127,15 @@ export function CreateServiceListing() {
               <Label htmlFor="category">Category (Optional)</Label>
               <select
                 id="category"
-                value={formData.category_slug}
+                value={formData.category_id}
                 onChange={(e) =>
-                  setFormData({ ...formData, category_slug: e.target.value })
+                  setFormData({ ...formData, category_id: e.target.value })
                 }
                 className="flex h-10 w-full appearance-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <option value="">Select a category</option>
                 {categories.map((cat) => (
-                  <option key={cat.id} value={cat.slug}>
+                  <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>
                 ))}
@@ -140,14 +143,30 @@ export function CreateServiceListing() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="price">Price (Optional)</Label>
+              <Label htmlFor="listing_type">Listing Type</Label>
+              <select
+                id="listing_type"
+                value={formData.listing_type}
+                onChange={(e) =>
+                  setFormData({ ...formData, listing_type: e.target.value })
+                }
+                className="flex h-10 w-full appearance-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <option value="service_package">Service Package</option>
+                <option value="appointment">Appointment</option>
+                <option value="quote_request">Quote Request</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="price">Minimum Price (Optional)</Label>
               <Input
                 id="price"
                 type="number"
                 step="0.01"
-                value={formData.price_numeric}
+                value={formData.price_min}
                 onChange={(e) =>
-                  setFormData({ ...formData, price_numeric: e.target.value })
+                  setFormData({ ...formData, price_min: e.target.value })
                 }
                 placeholder="0.00"
               />

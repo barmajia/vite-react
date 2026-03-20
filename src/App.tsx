@@ -33,6 +33,7 @@ import { Inbox } from "@/pages/messaging/Inbox";
 import { Chat } from "@/pages/messaging/Chat";
 import { ServicesInbox } from "@/features/services/components/ServicesInbox";
 import { ServicesChat } from "@/features/services/components/ServicesChat";
+import { ServicesMessagingLayout } from "@/features/services/components/ServicesMessagingLayout";
 import { useTranslation } from "react-i18next";
 
 // Services Module
@@ -148,11 +149,6 @@ function App() {
                   path="provider/:providerId"
                   element={<ProviderProfilePage />}
                 />
-                <Route path="messages" element={<ServicesInbox />} />
-                <Route
-                  path="messages/:conversationId"
-                  element={<ServicesChat />}
-                />
               </Route>
 
               {/* Services Dashboard Routes (Separate Layout) */}
@@ -219,11 +215,13 @@ function App() {
               <Route path="reviews" element={<Reviews />} />
               <Route path="messages" element={<Inbox />} />
               <Route path="messages/:conversationId" element={<Chat />} />
-              <Route path="services/messages" element={<ServicesInbox />} />
-              <Route
-                path="services/messages/:conversationId"
-                element={<ServicesChat />}
-              />
+              <Route element={<ServicesMessagingLayout />}>
+                <Route path="services/messages" element={<ServicesInbox />} />
+                <Route
+                  path="services/messages/:conversationId"
+                  element={<ServicesChat />}
+                />
+              </Route>
               <Route path="notifications" element={<NotificationsPage />} />
               <Route path="settings" element={<SettingsPage />} />
 

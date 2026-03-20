@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
+import { useSwipeToOpen } from "@/hooks/useSwipeToOpen";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
@@ -29,6 +30,15 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+
+  const { onTouchStart } = useSwipeToOpen({
+    isOpen,
+    onOpen: () => {},
+    onClose,
+    threshold: 100,
+    direction: "left",
+    edgeWidth: 20,
+  });
 
   const handleSignOut = async () => {
     await signOut();
@@ -52,7 +62,11 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
     { icon: MapPin, label: t("common.addresses"), href: ROUTES.ADDRESSES },
     { icon: Star, label: t("common.reviews"), href: ROUTES.REVIEWS },
     { icon: MessageSquare, label: t("common.messages"), href: ROUTES.MESSAGES },
-    { icon: Bell, label: t("common.notifications"), href: ROUTES.NOTIFICATIONS },
+    {
+      icon: Bell,
+      label: t("common.notifications"),
+      href: ROUTES.NOTIFICATIONS,
+    },
     { icon: Settings, label: t("common.settings"), href: ROUTES.SETTINGS },
   ];
 
@@ -65,6 +79,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
           isOpen ? "opacity-100" : "opacity-0 pointer-events-none",
         )}
         onClick={onClose}
+        onTouchStart={onTouchStart}
       />
 
       {/* Drawer */}
@@ -73,6 +88,7 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
           "fixed top-0 left-0 z-50 h-full w-[280px] bg-background shadow-lg transition-transform md:hidden",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
+        onTouchStart={onTouchStart}
       >
         {/* Header */}
         <div className="flex items-center justify-between p-4 border-b">

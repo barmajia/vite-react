@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { ServicesHeader } from "@/components/layout/ServicesHeader";
@@ -15,18 +16,24 @@ const servicesRoutes = ["/services"];
 
 export function Layout() {
   const location = useLocation();
+  const { user } = useAuth();
+
   const showLayout = !noLayoutRoutes.some((route) =>
     location.pathname.startsWith(route),
   );
   const isServicesRoute = servicesRoutes.some((route) =>
     location.pathname.startsWith(route),
   );
-  const { user } = useAuth();
+
+  // Scroll to top on route change
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
 
   return (
     <div className="min-h-screen flex flex-col">
       {showLayout && (isServicesRoute ? <ServicesHeader /> : <Header />)}
-      <main className="flex-1">
+      <main className={`flex-1 ${isServicesRoute ? "pt-20" : ""}`}>
         <div className="container mx-auto px-4 py-8">
           <Outlet />
         </div>

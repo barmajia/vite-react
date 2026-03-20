@@ -523,5 +523,16 @@
     "secureBooking": "Secure booking",
     "satisfactionGuaranteed": "Satisfaction guaranteed",
     "fastDelivery": "Fast delivery"
+  },
+  "servicesChat": {
+    "loadingConversation": "Loading conversation...",
+    "typeMessage": "Type a message...",
+    "service": "Service",
+    "user": "User",
+    "theme": {
+      "light": "Light",
+      "dark": "Dark",
+      "toggle": "Toggle theme"
+    }
   }
 }

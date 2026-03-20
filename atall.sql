@@ -87,6 +87,18 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";
 
 
 
+CREATE TYPE "public"."engagement_model" AS ENUM (
+    'online_only',
+    'offline_only',
+    'hybrid',
+    'project_based',
+    'hourly'
+);
+
+
+ALTER TYPE "public"."engagement_model" OWNER TO "postgres";
+
+
 CREATE TYPE "public"."factory_order_status" AS ENUM (
     'pending',
     'in_production',
@@ -99,6 +111,40 @@ CREATE TYPE "public"."factory_order_status" AS ENUM (
 
 
 ALTER TYPE "public"."factory_order_status" OWNER TO "postgres";
+
+
+CREATE TYPE "public"."provider_category" AS ENUM (
+    'health',
+    'freelance',
+    'home_service',
+    'professional',
+    'education'
+);
+
+
+ALTER TYPE "public"."provider_category" OWNER TO "postgres";
+
+
+CREATE TYPE "public"."trading_conv_type" AS ENUM (
+    'product_inquiry',
+    'custom_request',
+    'b2b_sourcing',
+    'middleman_restock'
+);
+
+
+ALTER TYPE "public"."trading_conv_type" OWNER TO "postgres";
+
+
+CREATE TYPE "public"."trading_msg_type" AS ENUM (
+    'text',
+    'image',
+    'file',
+    'system_notification'
+);
+
+
+ALTER TYPE "public"."trading_msg_type" OWNER TO "postgres";
 
 
 CREATE TYPE "public"."user_role" AS ENUM (
@@ -1157,6 +1203,35 @@ $$;
 ALTER FUNCTION "public"."get_middle_man_ids"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."get_or_create_service_conversation"("p_provider_id" "uuid", "p_listing_id" "uuid") RETURNS "uuid"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_conversation_id UUID;
+  v_client_id UUID := auth.uid();
+BEGIN
+  -- Check existing
+  SELECT id INTO v_conversation_id
+  FROM public.services_conversations
+  WHERE provider_id = p_provider_id
+    AND client_id = v_client_id
+    AND listing_id = p_listing_id;
+
+  IF v_conversation_id IS NULL THEN
+    -- Create new
+    INSERT INTO public.services_conversations (provider_id, client_id, listing_id)
+    VALUES (p_provider_id, v_client_id, p_listing_id)
+    RETURNING id INTO v_conversation_id;
+  END IF;
+
+  RETURN v_conversation_id;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."get_or_create_service_conversation"("p_provider_id" "uuid", "p_listing_id" "uuid") OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."get_product_image_url"("image_path" "text") RETURNS "text"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -1167,6 +1242,48 @@ $$;
 
 
 ALTER FUNCTION "public"."get_product_image_url"("image_path" "text") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."get_provider_revenue"() RETURNS TABLE("provider_id" "uuid", "total_revenue" numeric)
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+    -- Replace this with your actual logic to calculate provider revenue
+    RETURN QUERY
+    SELECT
+        p.id AS provider_id,
+        SUM(o.amount) AS total_revenue
+    FROM
+        providers p
+    JOIN
+        orders o ON p.id = o.provider_id
+    GROUP BY
+        p.id;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."get_provider_revenue"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."get_provider_revenue"("p_provider_id" "uuid") RETURNS numeric
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_revenue NUMERIC;
+BEGIN
+  SELECT COALESCE(SUM(total_price), 0)
+  INTO v_revenue
+  FROM public.service_bookings
+  WHERE provider_id = p_provider_id
+    AND status = 'completed'; -- Only count completed bookings as revenue
+  
+  RETURN v_revenue;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."get_provider_revenue"("p_provider_id" "uuid") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."get_seller_kpis"("p_seller_id" "uuid", "p_period" "text" DEFAULT '30d'::"text") RETURNS "jsonb"
@@ -1440,6 +1557,104 @@ $$;
 ALTER FUNCTION "public"."handle_new_user"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."handle_service_booking_notifications"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_provider_id UUID;
+  v_customer_id UUID;
+  v_listing_title TEXT;
+  v_notification_message TEXT;
+BEGIN
+  -- A. Fetch Related Data
+  -- Get Provider ID from the service listing
+  SELECT provider_id INTO v_provider_id 
+  FROM public.service_listings 
+  WHERE id = NEW.listing_id;
+  
+  -- Get Customer ID (assuming NEW.customer_id is the auth user ID)
+  v_customer_id := NEW.customer_id;
+  
+  -- Get Listing Title for context
+  SELECT title INTO v_listing_title 
+  FROM public.service_listings 
+  WHERE id = NEW.listing_id;
+
+  -- B. Handle INSERT (New Booking Request)
+  IF TG_OP = 'INSERT' THEN
+    -- Notify the Provider about the new request
+    INSERT INTO public.notifications (user_id, type, title, message, metadata)
+    VALUES (
+      v_provider_id,
+      'booking_request',
+      '🔔 New Service Booking Request',
+      'You have a new booking request for "' || COALESCE(v_listing_title, 'Service') || '".',
+      jsonb_build_object(
+        'booking_id', NEW.id, 
+        'listing_id', NEW.listing_id, 
+        'customer_id', NEW.customer_id,
+        'action_url', '/services/dashboard/bookings'
+      )
+    );
+    
+    RETURN NEW;
+  END IF;
+
+  -- C. Handle UPDATE (Status Changes)
+  IF TG_OP = 'UPDATE' THEN
+    
+    -- Scenario 1: Status changed to 'confirmed' -> Notify Customer
+    IF OLD.status IS DISTINCT FROM NEW.status AND NEW.status = 'confirmed' THEN
+      INSERT INTO public.notifications (user_id, type, title, message, metadata)
+      VALUES (
+        v_customer_id,
+        'booking_confirmed',
+        '✅ Booking Confirmed!',
+        'Your booking for "' || COALESCE(v_listing_title, 'Service') || '" has been confirmed by the provider.',
+        jsonb_build_object(
+          'booking_id', NEW.id, 
+          'listing_id', NEW.listing_id,
+          'action_url', '/services/dashboard/bookings'
+        )
+      );
+    END IF;
+
+    -- Scenario 2: Status changed to 'cancelled' -> Notify Both
+    IF OLD.status IS DISTINCT FROM NEW.status AND NEW.status = 'cancelled' THEN
+      -- Notify Customer
+      INSERT INTO public.notifications (user_id, type, title, message, metadata)
+      VALUES (
+        v_customer_id,
+        'booking_cancelled',
+        '❌ Booking Cancelled',
+        'Your booking for "' || COALESCE(v_listing_title, 'Service') || '" has been cancelled.',
+        jsonb_build_object('booking_id', NEW.id)
+      );
+      
+      -- Notify Provider
+      INSERT INTO public.notifications (user_id, type, title, message, metadata)
+      VALUES (
+        v_provider_id,
+        'booking_cancelled',
+        '⚠️ Booking Cancelled by Customer',
+        'A booking for "' || COALESCE(v_listing_title, 'Service') || '" was cancelled.',
+        jsonb_build_object('booking_id', NEW.id)
+      );
+    END IF;
+
+    -- Scenario 3: Status changed to 'completed' -> Prompt for Review (Optional Future Logic)
+    -- You can add logic here to notify the customer to leave a review after completion.
+    
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."handle_service_booking_notifications"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."haversine_distance"("lat1" double precision, "lon1" double precision, "lat2" double precision, "lon2" double precision) RETURNS double precision
     LANGUAGE "plpgsql" IMMUTABLE
     AS $$
@@ -1609,30 +1824,6 @@ $$;
 ALTER FUNCTION "public"."update_conversation_on_deal_proposal"() OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."update_conversation_on_message"() RETURNS "trigger"
-    LANGUAGE "plpgsql"
-    AS $$
-BEGIN
-  IF TG_OP = 'INSERT' AND NOT NEW.is_deleted THEN
-    UPDATE conversations
-    SET 
-      last_message = CASE 
-        WHEN NEW.message_type = 'image' THEN '📷 Image'
-        WHEN NEW.message_type = 'file' THEN '📎 Attachment'
-        ELSE NEW.content
-      END,
-      last_message_at = NEW.created_at,
-      updated_at = NOW()
-    WHERE id = NEW.conversation_id;
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
-
-ALTER FUNCTION "public"."update_conversation_on_message"() OWNER TO "postgres";
-
-
 CREATE OR REPLACE FUNCTION "public"."update_customer_stats_on_sale"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -1779,6 +1970,33 @@ $$;
 ALTER FUNCTION "public"."update_sales_timestamp"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."update_svc_conv_on_message"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  IF TG_OP = 'INSERT' AND NOT NEW.is_read THEN -- Assuming is_read false means new/unread logic or just update text
+    UPDATE public.services_conversations
+    SET
+      last_message = CASE 
+        WHEN NEW.message_type = 'image' THEN '📷 Image' 
+        WHEN NEW.message_type = 'file' THEN '📎 Attachment'
+        ELSE LEFT(NEW.content, 60) 
+      END,
+      last_message_at = NEW.created_at,
+      updated_at = NOW(),
+      -- Mark as unread for the receiver
+      is_read_by_provider = CASE WHEN NEW.sender_id = provider_id THEN TRUE ELSE FALSE END,
+      is_read_by_client = CASE WHEN NEW.sender_id = client_id THEN TRUE ELSE FALSE END
+    WHERE id = NEW.conversation_id;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_svc_conv_on_message"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."update_svc_provider_rating"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -1823,17 +2041,37 @@ $$;
 ALTER FUNCTION "public"."update_svc_provider_stats"() OWNER TO "postgres";
 
 
-CREATE OR REPLACE FUNCTION "public"."update_updated_at_column"() RETURNS "trigger"
+CREATE OR REPLACE FUNCTION "public"."update_svc_timestamps"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
 BEGIN
-  NEW.updated_at = now();
+  NEW.updated_at = NOW();
   RETURN NEW;
 END;
 $$;
 
 
-ALTER FUNCTION "public"."update_updated_at_column"() OWNER TO "postgres";
+ALTER FUNCTION "public"."update_svc_timestamps"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."update_trading_conv_on_message"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE public.trading_conversations
+    SET
+      last_message = CASE WHEN NEW.message_type = 'image' THEN '📷 Image' ELSE LEFT(NEW.content, 50) END,
+      last_message_at = NEW.created_at,
+      updated_at = NOW()
+    WHERE id = NEW.conversation_id;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_trading_conv_on_message"() OWNER TO "postgres";
 
 SET default_tablespace = '';
 
@@ -2005,55 +2243,6 @@ CREATE TABLE IF NOT EXISTS "public"."commissions" (
 
 
 ALTER TABLE "public"."commissions" OWNER TO "postgres";
-
-
-CREATE TABLE IF NOT EXISTS "public"."conversation_deals" (
-    "id" "uuid" NOT NULL,
-    "conversation_id" "uuid" NOT NULL,
-    "deal_id" "uuid",
-    "proposer_id" "uuid" NOT NULL,
-    "recipient_id" "uuid" NOT NULL,
-    "proposal_data" "jsonb" NOT NULL,
-    "status" "text",
-    "expires_at" timestamp with time zone,
-    "created_at" timestamp with time zone,
-    "updated_at" timestamp with time zone
-);
-
-
-ALTER TABLE "public"."conversation_deals" OWNER TO "postgres";
-
-
-CREATE TABLE IF NOT EXISTS "public"."conversation_participants" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "conversation_id" "uuid" NOT NULL,
-    "user_id" "uuid" NOT NULL,
-    "role" "public"."user_role" NOT NULL,
-    "last_read_message_id" "uuid",
-    "is_muted" boolean DEFAULT false,
-    "joined_at" timestamp with time zone DEFAULT "now"()
-);
-
-
-ALTER TABLE "public"."conversation_participants" OWNER TO "postgres";
-
-
-CREATE TABLE IF NOT EXISTS "public"."conversations" (
-    "id" "uuid" NOT NULL,
-    "product_id" "uuid",
-    "deal_id" "uuid",
-    "conversation_type" "text",
-    "user_id" "uuid",
-    "seller_id" "uuid",
-    "last_message" "text",
-    "last_message_at" timestamp with time zone,
-    "is_archived" boolean,
-    "created_at" timestamp with time zone,
-    "updated_at" timestamp with time zone
-);
-
-
-ALTER TABLE "public"."conversations" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."customers" (
@@ -2298,7 +2487,9 @@ CREATE TABLE IF NOT EXISTS "public"."sellers" (
     "wholesale_discount" numeric(5,2) DEFAULT 0,
     "accepts_returns" boolean DEFAULT true,
     "production_capacity" "text",
-    "verified_at" timestamp with time zone
+    "verified_at" timestamp with time zone,
+    "allow_product_chats" boolean DEFAULT true,
+    "allow_custom_requests" boolean DEFAULT false
 );
 
 
@@ -2437,23 +2628,6 @@ CREATE TABLE IF NOT EXISTS "public"."location_history" (
 ALTER TABLE "public"."location_history" OWNER TO "postgres";
 
 
-CREATE TABLE IF NOT EXISTS "public"."messages" (
-    "id" "uuid" NOT NULL,
-    "conversation_id" "uuid" NOT NULL,
-    "sender_id" "uuid" NOT NULL,
-    "content" "text",
-    "message_type" "text",
-    "message_subtype" "text",
-    "attachment_url" "text",
-    "read_at" timestamp with time zone,
-    "created_at" timestamp with time zone,
-    CONSTRAINT "messages_message_subtype_check" CHECK (("message_subtype" = ANY (ARRAY['text'::"text", 'deal_proposal'::"text", 'deal_counter'::"text", 'deal_accepted'::"text", 'deal_rejected'::"text", 'file'::"text", 'image'::"text"])))
-);
-
-
-ALTER TABLE "public"."messages" OWNER TO "postgres";
-
-
 CREATE TABLE IF NOT EXISTS "public"."middle_man_deals" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "middle_man_id" "uuid" NOT NULL,
@@ -2514,7 +2688,7 @@ CREATE TABLE IF NOT EXISTS "public"."notifications" (
     "is_read" boolean DEFAULT false,
     "metadata" "jsonb" DEFAULT '{}'::"jsonb",
     "created_at" timestamp with time zone DEFAULT "now"(),
-    CONSTRAINT "notifications_type_check" CHECK (("type" = ANY (ARRAY['order'::"text", 'product'::"text", 'system'::"text", 'promotion'::"text", 'message'::"text"])))
+    CONSTRAINT "notifications_type_check" CHECK (("type" = ANY (ARRAY['order'::"text", 'product'::"text", 'system'::"text", 'promotion'::"text", 'message'::"text", 'booking_request'::"text", 'booking_confirmed'::"text", 'booking_cancelled'::"text", 'quote_submitted'::"text", 'review_received'::"text", 'milestone_completed'::"text"])))
 );
 
 
@@ -2703,17 +2877,25 @@ ALTER TABLE "public"."sellers_backup" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."service_bookings" (
-    "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
-    "listing_id" "uuid" NOT NULL,
-    "customer_id" "uuid" NOT NULL,
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "listing_id" "uuid",
     "provider_id" "uuid" NOT NULL,
-    "scheduled_date" timestamp with time zone NOT NULL,
+    "customer_id" "uuid" NOT NULL,
+    "booking_type" "text" NOT NULL,
+    "start_date" timestamp with time zone,
+    "end_date" timestamp with time zone,
+    "project_title" "text",
+    "project_description" "text",
+    "agreed_price" numeric(10,2),
+    "milestone_data" "jsonb",
     "status" "text" DEFAULT 'pending'::"text",
-    "total_price" numeric(10,2) NOT NULL,
-    "notes" "text",
+    "interaction_mode" "text",
+    "meeting_link" "text",
     "created_at" timestamp with time zone DEFAULT "now"(),
     "updated_at" timestamp with time zone DEFAULT "now"(),
-    CONSTRAINT "service_bookings_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'confirmed'::"text", 'completed'::"text", 'cancelled'::"text"])))
+    CONSTRAINT "service_bookings_booking_type_check" CHECK (("booking_type" = ANY (ARRAY['appointment'::"text", 'project_contract'::"text"]))),
+    CONSTRAINT "service_bookings_interaction_mode_check" CHECK (("interaction_mode" = ANY (ARRAY['online'::"text", 'offline'::"text"]))),
+    CONSTRAINT "service_bookings_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'confirmed'::"text", 'in_progress'::"text", 'completed'::"text", 'cancelled'::"text", 'disputed'::"text"])))
 );
 
 
@@ -2759,19 +2941,23 @@ ALTER TABLE "public"."service_gigs" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."service_listings" (
-    "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "provider_id" "uuid" NOT NULL,
     "title" "text" NOT NULL,
-    "slug" "text" NOT NULL,
-    "description" "text",
+    "description" "text" NOT NULL,
     "category_slug" "text" NOT NULL,
-    "price_numeric" numeric(10,2) NOT NULL,
-    "currency" "text" DEFAULT 'USD'::"text",
-    "unit_type" "text" DEFAULT 'hour'::"text",
+    "pricing_type" "text" NOT NULL,
+    "price" numeric(10,2),
+    "currency" "text" DEFAULT 'EGP'::"text",
+    "estimated_duration_hours" integer,
+    "delivery_days" integer,
+    "is_remote_allowed" boolean DEFAULT true,
+    "requires_physical_presence" boolean DEFAULT false,
     "images" "jsonb" DEFAULT '[]'::"jsonb",
+    "attachments" "jsonb" DEFAULT '[]'::"jsonb",
     "is_active" boolean DEFAULT true,
     "created_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"()
+    CONSTRAINT "service_listings_pricing_type_check" CHECK (("pricing_type" = ANY (ARRAY['fixed'::"text", 'hourly'::"text", 'consultation'::"text"])))
 );
 
 
@@ -2806,15 +2992,28 @@ ALTER TABLE "public"."service_orders" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."service_providers" (
-    "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "user_id" "uuid" NOT NULL,
-    "provider_name" "text" NOT NULL,
-    "slug" "text" NOT NULL,
-    "bio" "text",
-    "logo_url" "text",
+    "provider_type" "public"."provider_category" NOT NULL,
+    "business_name" "text" NOT NULL,
+    "tagline" "text",
+    "description" "text",
+    "engagement_models" "public"."engagement_model"[] NOT NULL,
+    "metadata" "jsonb" DEFAULT '{}'::"jsonb",
+    "latitude" numeric(9,6),
+    "longitude" numeric(9,6),
+    "address_line1" "text",
+    "city" "text",
+    "country" "text" DEFAULT 'EG'::"text",
     "is_verified" boolean DEFAULT false,
+    "verification_documents" "text"[],
+    "status" "text" DEFAULT 'pending'::"text",
+    "rating_avg" numeric(3,2) DEFAULT 0.00,
+    "total_jobs" integer DEFAULT 0,
+    "total_hours_worked" integer DEFAULT 0,
     "created_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"()
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    CONSTRAINT "service_providers_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'active'::"text", 'suspended'::"text"])))
 );
 
 
@@ -2850,6 +3049,43 @@ CREATE TABLE IF NOT EXISTS "public"."service_subcategories" (
 
 
 ALTER TABLE "public"."service_subcategories" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."services_conversations" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    "provider_id" "uuid" NOT NULL,
+    "client_id" "uuid" NOT NULL,
+    "listing_id" "uuid" NOT NULL,
+    "last_message" "text",
+    "last_message_at" timestamp with time zone,
+    "is_archived" boolean DEFAULT false,
+    "is_read_by_provider" boolean DEFAULT true,
+    "is_read_by_client" boolean DEFAULT true
+);
+
+
+ALTER TABLE "public"."services_conversations" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."services_messages" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "conversation_id" "uuid" NOT NULL,
+    "sender_id" "uuid" NOT NULL,
+    "content" "text",
+    "message_type" "text" DEFAULT 'text'::"text",
+    "attachment_url" "text",
+    "attachment_name" "text",
+    "is_read" boolean DEFAULT false,
+    "read_at" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "content_tsvector" "tsvector" GENERATED ALWAYS AS ("to_tsvector"('"english"'::"regconfig", COALESCE("content", ''::"text"))) STORED,
+    CONSTRAINT "services_messages_message_type_check" CHECK (("message_type" = ANY (ARRAY['text'::"text", 'image'::"text", 'file'::"text", 'system'::"text"])))
+);
+
+
+ALTER TABLE "public"."services_messages" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."shipping_addresses" (
@@ -3052,6 +3288,51 @@ CREATE TABLE IF NOT EXISTS "public"."svc_subcategories" (
 ALTER TABLE "public"."svc_subcategories" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."trading_conversations" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    "conversation_type" "public"."trading_conv_type" DEFAULT 'product_inquiry'::"public"."trading_conv_type" NOT NULL,
+    "product_id" "uuid",
+    "deal_id" "uuid",
+    "initiator_id" "uuid" NOT NULL,
+    "receiver_id" "uuid" NOT NULL,
+    "initiator_role" "text" NOT NULL,
+    "receiver_role" "text" NOT NULL,
+    "is_custom_request" boolean DEFAULT false,
+    "custom_request_details" "jsonb",
+    "factory_id" "uuid",
+    "middleman_id" "uuid",
+    "last_message" "text",
+    "last_message_at" timestamp with time zone,
+    "is_archived" boolean DEFAULT false,
+    "is_closed" boolean DEFAULT false,
+    CONSTRAINT "trading_conversations_initiator_role_check" CHECK (("initiator_role" = ANY (ARRAY['customer'::"text", 'seller'::"text", 'factory'::"text", 'middleman'::"text"]))),
+    CONSTRAINT "trading_conversations_receiver_role_check" CHECK (("receiver_role" = ANY (ARRAY['customer'::"text", 'seller'::"text", 'factory'::"text", 'middleman'::"text"])))
+);
+
+
+ALTER TABLE "public"."trading_conversations" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."trading_messages" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "conversation_id" "uuid" NOT NULL,
+    "sender_id" "uuid" NOT NULL,
+    "content" "text",
+    "message_type" "public"."trading_msg_type" DEFAULT 'text'::"public"."trading_msg_type",
+    "attachment_url" "text",
+    "attachment_name" "text",
+    "is_read" boolean DEFAULT false,
+    "read_at" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "content_tsvector" "tsvector" GENERATED ALWAYS AS ("to_tsvector"('"english"'::"regconfig", COALESCE("content", ''::"text"))) STORED
+);
+
+
+ALTER TABLE "public"."trading_messages" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."user_events" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "user_id" "uuid" NOT NULL,
@@ -3153,26 +3434,6 @@ ALTER TABLE ONLY "public"."commissions"
 
 
 
-ALTER TABLE ONLY "public"."conversation_deals"
-    ADD CONSTRAINT "conversation_deals_pkey" PRIMARY KEY ("id");
-
-
-
-ALTER TABLE ONLY "public"."conversation_participants"
-    ADD CONSTRAINT "conversation_participants_conversation_id_user_id_key" UNIQUE ("conversation_id", "user_id");
-
-
-
-ALTER TABLE ONLY "public"."conversation_participants"
-    ADD CONSTRAINT "conversation_participants_pkey" PRIMARY KEY ("id");
-
-
-
-ALTER TABLE ONLY "public"."conversations"
-    ADD CONSTRAINT "conversations_pkey" PRIMARY KEY ("id");
-
-
-
 ALTER TABLE ONLY "public"."customers"
     ADD CONSTRAINT "customers_pkey" PRIMARY KEY ("id");
 
@@ -3250,11 +3511,6 @@ ALTER TABLE ONLY "public"."idempotency_keys"
 
 ALTER TABLE ONLY "public"."idempotency_keys"
     ADD CONSTRAINT "idempotency_keys_pkey" PRIMARY KEY ("id");
-
-
-
-ALTER TABLE ONLY "public"."messages"
-    ADD CONSTRAINT "messages_pkey" PRIMARY KEY ("id");
 
 
 
@@ -3388,11 +3644,6 @@ ALTER TABLE ONLY "public"."service_listings"
 
 
 
-ALTER TABLE ONLY "public"."service_listings"
-    ADD CONSTRAINT "service_listings_slug_key" UNIQUE ("slug");
-
-
-
 ALTER TABLE ONLY "public"."service_orders"
     ADD CONSTRAINT "service_orders_pkey" PRIMARY KEY ("id");
 
@@ -3400,11 +3651,6 @@ ALTER TABLE ONLY "public"."service_orders"
 
 ALTER TABLE ONLY "public"."service_providers"
     ADD CONSTRAINT "service_providers_pkey" PRIMARY KEY ("id");
-
-
-
-ALTER TABLE ONLY "public"."service_providers"
-    ADD CONSTRAINT "service_providers_slug_key" UNIQUE ("slug");
 
 
 
@@ -3425,6 +3671,16 @@ ALTER TABLE ONLY "public"."service_subcategories"
 
 ALTER TABLE ONLY "public"."service_subcategories"
     ADD CONSTRAINT "service_subcategories_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."services_conversations"
+    ADD CONSTRAINT "services_conversations_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."services_messages"
+    ADD CONSTRAINT "services_messages_pkey" PRIMARY KEY ("id");
 
 
 
@@ -3513,8 +3769,28 @@ ALTER TABLE ONLY "public"."svc_subcategories"
 
 
 
+ALTER TABLE ONLY "public"."trading_conversations"
+    ADD CONSTRAINT "trading_conversations_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."trading_messages"
+    ADD CONSTRAINT "trading_messages_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."service_providers"
+    ADD CONSTRAINT "unique_provider_user" UNIQUE ("user_id");
+
+
+
 ALTER TABLE ONLY "public"."analytics_snapshots"
     ADD CONSTRAINT "unique_seller_period" UNIQUE ("seller_id", "period_type", "period_start", "period_end");
+
+
+
+ALTER TABLE ONLY "public"."services_conversations"
+    ADD CONSTRAINT "unique_service_conv" UNIQUE ("provider_id", "client_id", "listing_id");
 
 
 
@@ -3583,6 +3859,14 @@ CREATE INDEX "idx_async_jobs_scheduled" ON "public"."async_jobs" USING "btree" (
 
 
 
+CREATE INDEX "idx_bookings_customer" ON "public"."service_bookings" USING "btree" ("customer_id");
+
+
+
+CREATE INDEX "idx_bookings_provider" ON "public"."service_bookings" USING "btree" ("provider_id");
+
+
+
 CREATE INDEX "idx_cart_asin" ON "public"."cart" USING "btree" ("asin");
 
 
@@ -3608,38 +3892,6 @@ CREATE INDEX "idx_commissions_middle_man" ON "public"."commissions" USING "btree
 
 
 CREATE INDEX "idx_commissions_status" ON "public"."commissions" USING "btree" ("status");
-
-
-
-CREATE INDEX "idx_conversation_deals_conversation" ON "public"."conversation_deals" USING "btree" ("conversation_id");
-
-
-
-CREATE INDEX "idx_conversation_deals_proposer" ON "public"."conversation_deals" USING "btree" ("proposer_id");
-
-
-
-CREATE INDEX "idx_conversation_deals_recipient" ON "public"."conversation_deals" USING "btree" ("recipient_id");
-
-
-
-CREATE INDEX "idx_conversation_deals_status" ON "public"."conversation_deals" USING "btree" ("status");
-
-
-
-CREATE INDEX "idx_conversations_deal_id" ON "public"."conversations" USING "btree" ("deal_id");
-
-
-
-CREATE INDEX "idx_conversations_product_id" ON "public"."conversations" USING "btree" ("product_id");
-
-
-
-CREATE INDEX "idx_conversations_type" ON "public"."conversations" USING "btree" ("conversation_type");
-
-
-
-CREATE INDEX "idx_conversations_user_seller" ON "public"."conversations" USING "btree" ("user_id", "seller_id");
 
 
 
@@ -3731,10 +3983,6 @@ CREATE INDEX "idx_location_history_user_id" ON "public"."location_history" USING
 
 
 
-CREATE INDEX "idx_messages_subtype" ON "public"."messages" USING "btree" ("message_subtype");
-
-
-
 CREATE INDEX "idx_middle_man_deals_middle_man" ON "public"."middle_man_deals" USING "btree" ("middle_man_id");
 
 
@@ -3776,14 +4024,6 @@ CREATE INDEX "idx_orders_status" ON "public"."orders" USING "btree" ("status");
 
 
 CREATE INDEX "idx_orders_user_id" ON "public"."orders" USING "btree" ("user_id");
-
-
-
-CREATE INDEX "idx_participants_conversation_id" ON "public"."conversation_participants" USING "btree" ("conversation_id");
-
-
-
-CREATE INDEX "idx_participants_user_id" ON "public"."conversation_participants" USING "btree" ("user_id");
 
 
 
@@ -3835,18 +4075,6 @@ CREATE INDEX "idx_sellers_location" ON "public"."sellers" USING "btree" ("latitu
 
 
 
-CREATE INDEX "idx_service_bookings_customer_id" ON "public"."service_bookings" USING "btree" ("customer_id");
-
-
-
-CREATE INDEX "idx_service_bookings_listing_id" ON "public"."service_bookings" USING "btree" ("listing_id");
-
-
-
-CREATE INDEX "idx_service_bookings_provider_id" ON "public"."service_bookings" USING "btree" ("provider_id");
-
-
-
 CREATE INDEX "idx_service_gigs_category" ON "public"."service_gigs" USING "btree" ("category_id");
 
 
@@ -3856,22 +4084,6 @@ CREATE INDEX "idx_service_gigs_freelancer_id" ON "public"."service_gigs" USING "
 
 
 CREATE INDEX "idx_service_gigs_status" ON "public"."service_gigs" USING "btree" ("status");
-
-
-
-CREATE INDEX "idx_service_listings_category" ON "public"."service_listings" USING "btree" ("category_slug");
-
-
-
-CREATE INDEX "idx_service_listings_created_at" ON "public"."service_listings" USING "btree" ("created_at" DESC);
-
-
-
-CREATE INDEX "idx_service_listings_provider_id" ON "public"."service_listings" USING "btree" ("provider_id");
-
-
-
-CREATE INDEX "idx_service_listings_slug" ON "public"."service_listings" USING "btree" ("slug");
 
 
 
@@ -3887,19 +4099,39 @@ CREATE INDEX "idx_service_orders_status" ON "public"."service_orders" USING "btr
 
 
 
-CREATE INDEX "idx_service_providers_slug" ON "public"."service_providers" USING "btree" ("slug");
-
-
-
-CREATE INDEX "idx_service_providers_user_id" ON "public"."service_providers" USING "btree" ("user_id");
-
-
-
 CREATE INDEX "idx_subcategories_category" ON "public"."subcategories" USING "btree" ("category_id");
 
 
 
+CREATE INDEX "idx_svc_bookings_customer" ON "public"."service_bookings" USING "btree" ("customer_id");
+
+
+
+CREATE INDEX "idx_svc_bookings_provider" ON "public"."service_bookings" USING "btree" ("provider_id");
+
+
+
+CREATE INDEX "idx_svc_conv_client" ON "public"."services_conversations" USING "btree" ("client_id");
+
+
+
+CREATE INDEX "idx_svc_conv_listing" ON "public"."services_conversations" USING "btree" ("listing_id");
+
+
+
+CREATE INDEX "idx_svc_conv_provider" ON "public"."services_conversations" USING "btree" ("provider_id");
+
+
+
+CREATE INDEX "idx_svc_conv_updated" ON "public"."services_conversations" USING "btree" ("updated_at" DESC);
+
+
+
 CREATE INDEX "idx_svc_listings_category" ON "public"."svc_listings" USING "btree" ("category_id");
+
+
+
+CREATE INDEX "idx_svc_listings_provider" ON "public"."service_listings" USING "btree" ("provider_id");
 
 
 
@@ -3908,6 +4140,18 @@ CREATE INDEX "idx_svc_listings_status" ON "public"."svc_listings" USING "btree" 
 
 
 CREATE INDEX "idx_svc_listings_type" ON "public"."svc_listings" USING "btree" ("listing_type");
+
+
+
+CREATE INDEX "idx_svc_msg_conv" ON "public"."services_messages" USING "btree" ("conversation_id", "created_at" DESC);
+
+
+
+CREATE INDEX "idx_svc_msg_search" ON "public"."services_messages" USING "gin" ("content_tsvector");
+
+
+
+CREATE INDEX "idx_svc_msg_sender" ON "public"."services_messages" USING "btree" ("sender_id");
 
 
 
@@ -3931,7 +4175,39 @@ CREATE INDEX "idx_svc_providers_specialties" ON "public"."svc_providers" USING "
 
 
 
+CREATE INDEX "idx_svc_providers_status" ON "public"."svc_providers" USING "btree" ("status");
+
+
+
 CREATE INDEX "idx_svc_providers_type" ON "public"."svc_providers" USING "btree" ("provider_type");
+
+
+
+CREATE INDEX "idx_svc_providers_user" ON "public"."service_providers" USING "btree" ("user_id");
+
+
+
+CREATE INDEX "idx_trading_conv_initiator" ON "public"."trading_conversations" USING "btree" ("initiator_id");
+
+
+
+CREATE INDEX "idx_trading_conv_product" ON "public"."trading_conversations" USING "btree" ("product_id");
+
+
+
+CREATE INDEX "idx_trading_conv_receiver" ON "public"."trading_conversations" USING "btree" ("receiver_id");
+
+
+
+CREATE INDEX "idx_trading_conv_updated" ON "public"."trading_conversations" USING "btree" ("updated_at" DESC);
+
+
+
+CREATE INDEX "idx_trading_msg_conv" ON "public"."trading_messages" USING "btree" ("conversation_id", "created_at" DESC);
+
+
+
+CREATE INDEX "idx_trading_msg_search" ON "public"."trading_messages" USING "gin" ("content_tsvector");
 
 
 
@@ -3975,10 +4251,6 @@ CREATE OR REPLACE TRIGGER "products_tsvector_update" BEFORE INSERT OR UPDATE ON 
 
 
 
-CREATE OR REPLACE TRIGGER "trigger_add_seller_on_conversation" AFTER INSERT ON "public"."conversations" FOR EACH ROW EXECUTE FUNCTION "public"."add_seller_to_conversation"();
-
-
-
 CREATE OR REPLACE TRIGGER "trigger_calculate_commission" BEFORE INSERT OR UPDATE OF "deal_id", "subtotal" ON "public"."orders" FOR EACH ROW EXECUTE FUNCTION "public"."calculate_order_commission"();
 
 
@@ -3991,11 +4263,23 @@ CREATE OR REPLACE TRIGGER "trigger_cleanup_product_images" BEFORE UPDATE ON "pub
 
 
 
+CREATE OR REPLACE TRIGGER "trigger_service_booking_notifications" AFTER INSERT OR UPDATE ON "public"."service_bookings" FOR EACH ROW EXECUTE FUNCTION "public"."handle_service_booking_notifications"();
+
+
+
+CREATE OR REPLACE TRIGGER "trigger_svc_conv_update" AFTER INSERT ON "public"."services_messages" FOR EACH ROW EXECUTE FUNCTION "public"."update_svc_conv_on_message"();
+
+
+
 CREATE OR REPLACE TRIGGER "trigger_svc_rating" AFTER INSERT ON "public"."svc_reviews" FOR EACH ROW EXECUTE FUNCTION "public"."update_svc_provider_rating"();
 
 
 
 CREATE OR REPLACE TRIGGER "trigger_svc_stats" AFTER UPDATE ON "public"."svc_orders" FOR EACH ROW EXECUTE FUNCTION "public"."update_svc_provider_stats"();
+
+
+
+CREATE OR REPLACE TRIGGER "trigger_trading_conv_update" AFTER INSERT ON "public"."trading_messages" FOR EACH ROW EXECUTE FUNCTION "public"."update_trading_conv_on_message"();
 
 
 
@@ -4011,71 +4295,11 @@ CREATE OR REPLACE TRIGGER "trigger_update_freelancer_stats_on_completion" AFTER 
 
 
 
-CREATE OR REPLACE TRIGGER "update_brands_updated_at" BEFORE UPDATE ON "public"."brands" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
-
-CREATE OR REPLACE TRIGGER "update_cart_updated_at" BEFORE UPDATE ON "public"."cart" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
-
-CREATE OR REPLACE TRIGGER "update_categories_updated_at" BEFORE UPDATE ON "public"."categories" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
-
-CREATE OR REPLACE TRIGGER "update_customers_updated_at" BEFORE UPDATE ON "public"."customers" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
-
-CREATE OR REPLACE TRIGGER "update_freelancer_profiles_timestamp" BEFORE UPDATE ON "public"."freelancer_profiles" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
-
 CREATE OR REPLACE TRIGGER "update_order_status_timestamps" BEFORE UPDATE ON "public"."orders" FOR EACH ROW EXECUTE FUNCTION "public"."update_order_status_timestamps"();
 
 
 
-CREATE OR REPLACE TRIGGER "update_orders_updated_at" BEFORE UPDATE ON "public"."orders" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
-
-CREATE OR REPLACE TRIGGER "update_products_updated_at" BEFORE UPDATE ON "public"."products" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
-
-CREATE OR REPLACE TRIGGER "update_seller_profiles_updated_at" BEFORE UPDATE ON "public"."seller_profiles" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
-
-CREATE OR REPLACE TRIGGER "update_sellers_updated_at" BEFORE UPDATE ON "public"."sellers" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
-
-CREATE OR REPLACE TRIGGER "update_service_gigs_timestamp" BEFORE UPDATE ON "public"."service_gigs" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
-
-CREATE OR REPLACE TRIGGER "update_service_orders_timestamp" BEFORE UPDATE ON "public"."service_orders" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
-
-CREATE OR REPLACE TRIGGER "update_shipping_addresses_updated_at" BEFORE UPDATE ON "public"."shipping_addresses" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
-
-CREATE OR REPLACE TRIGGER "update_subcategories_updated_at" BEFORE UPDATE ON "public"."subcategories" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
-
-CREATE OR REPLACE TRIGGER "update_svc_listings_ts" BEFORE UPDATE ON "public"."svc_listings" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
-
-CREATE OR REPLACE TRIGGER "update_svc_orders_ts" BEFORE UPDATE ON "public"."svc_orders" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
-
-CREATE OR REPLACE TRIGGER "update_svc_providers_ts" BEFORE UPDATE ON "public"."svc_providers" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
+CREATE OR REPLACE TRIGGER "update_svc_conv_timestamp" BEFORE UPDATE ON "public"."services_conversations" FOR EACH ROW EXECUTE FUNCTION "public"."update_svc_timestamps"();
 
 
 
@@ -4126,56 +4350,6 @@ ALTER TABLE ONLY "public"."commissions"
 
 ALTER TABLE ONLY "public"."commissions"
     ADD CONSTRAINT "commissions_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE SET NULL;
-
-
-
-ALTER TABLE ONLY "public"."conversation_deals"
-    ADD CONSTRAINT "conversation_deals_conversation_id_fkey" FOREIGN KEY ("conversation_id") REFERENCES "public"."conversations"("id") ON DELETE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."conversation_deals"
-    ADD CONSTRAINT "conversation_deals_deal_id_fkey" FOREIGN KEY ("deal_id") REFERENCES "public"."deals"("id") ON DELETE SET NULL;
-
-
-
-ALTER TABLE ONLY "public"."conversation_deals"
-    ADD CONSTRAINT "conversation_deals_proposer_id_fkey" FOREIGN KEY ("proposer_id") REFERENCES "auth"."users"("id");
-
-
-
-ALTER TABLE ONLY "public"."conversation_deals"
-    ADD CONSTRAINT "conversation_deals_recipient_id_fkey" FOREIGN KEY ("recipient_id") REFERENCES "auth"."users"("id");
-
-
-
-ALTER TABLE ONLY "public"."conversation_participants"
-    ADD CONSTRAINT "conversation_participants_conversation_id_fkey" FOREIGN KEY ("conversation_id") REFERENCES "public"."conversations"("id") ON DELETE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."conversation_participants"
-    ADD CONSTRAINT "conversation_participants_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."conversations"
-    ADD CONSTRAINT "conversations_deal_id_fkey" FOREIGN KEY ("deal_id") REFERENCES "public"."deals"("id") ON DELETE SET NULL;
-
-
-
-ALTER TABLE ONLY "public"."conversations"
-    ADD CONSTRAINT "conversations_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE SET NULL;
-
-
-
-ALTER TABLE ONLY "public"."conversations"
-    ADD CONSTRAINT "conversations_seller_id_fkey" FOREIGN KEY ("seller_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."conversations"
-    ADD CONSTRAINT "conversations_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -4345,17 +4519,22 @@ ALTER TABLE ONLY "public"."sellers"
 
 
 ALTER TABLE ONLY "public"."service_bookings"
+    ADD CONSTRAINT "service_bookings_client_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."service_bookings"
     ADD CONSTRAINT "service_bookings_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
 ALTER TABLE ONLY "public"."service_bookings"
-    ADD CONSTRAINT "service_bookings_listing_id_fkey" FOREIGN KEY ("listing_id") REFERENCES "public"."service_listings"("id") ON DELETE CASCADE;
+    ADD CONSTRAINT "service_bookings_listing_id_fkey" FOREIGN KEY ("listing_id") REFERENCES "public"."service_listings"("id") ON DELETE SET NULL;
 
 
 
 ALTER TABLE ONLY "public"."service_bookings"
-    ADD CONSTRAINT "service_bookings_provider_id_fkey" FOREIGN KEY ("provider_id") REFERENCES "public"."service_providers"("id") ON DELETE CASCADE;
+    ADD CONSTRAINT "service_bookings_provider_id_fkey" FOREIGN KEY ("provider_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -4421,6 +4600,31 @@ ALTER TABLE ONLY "public"."service_reviews"
 
 ALTER TABLE ONLY "public"."service_subcategories"
     ADD CONSTRAINT "service_subcategories_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "public"."service_categories"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."services_conversations"
+    ADD CONSTRAINT "services_conversations_client_id_fkey" FOREIGN KEY ("client_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."services_conversations"
+    ADD CONSTRAINT "services_conversations_listing_id_fkey" FOREIGN KEY ("listing_id") REFERENCES "public"."service_listings"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."services_conversations"
+    ADD CONSTRAINT "services_conversations_provider_id_fkey" FOREIGN KEY ("provider_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."services_messages"
+    ADD CONSTRAINT "services_messages_conversation_id_fkey" FOREIGN KEY ("conversation_id") REFERENCES "public"."services_conversations"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."services_messages"
+    ADD CONSTRAINT "services_messages_sender_id_fkey" FOREIGN KEY ("sender_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -4494,6 +4698,41 @@ ALTER TABLE ONLY "public"."svc_subcategories"
 
 
 
+ALTER TABLE ONLY "public"."trading_conversations"
+    ADD CONSTRAINT "trading_conversations_factory_id_fkey" FOREIGN KEY ("factory_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."trading_conversations"
+    ADD CONSTRAINT "trading_conversations_initiator_id_fkey" FOREIGN KEY ("initiator_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."trading_conversations"
+    ADD CONSTRAINT "trading_conversations_middleman_id_fkey" FOREIGN KEY ("middleman_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."trading_conversations"
+    ADD CONSTRAINT "trading_conversations_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."trading_conversations"
+    ADD CONSTRAINT "trading_conversations_receiver_id_fkey" FOREIGN KEY ("receiver_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."trading_messages"
+    ADD CONSTRAINT "trading_messages_conversation_id_fkey" FOREIGN KEY ("conversation_id") REFERENCES "public"."trading_conversations"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."trading_messages"
+    ADD CONSTRAINT "trading_messages_sender_id_fkey" FOREIGN KEY ("sender_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."user_events"
     ADD CONSTRAINT "user_events_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
@@ -4520,10 +4759,6 @@ CREATE POLICY "Buyers create service orders" ON "public"."service_orders" FOR IN
 
 
 CREATE POLICY "Categories are publicly viewable" ON "public"."categories" FOR SELECT USING (("is_active" = true));
-
-
-
-CREATE POLICY "Customers create bookings" ON "public"."service_bookings" FOR INSERT WITH CHECK (("auth"."uid"() = "customer_id"));
 
 
 
@@ -4563,17 +4798,7 @@ CREATE POLICY "Freelancers update own orders" ON "public"."service_orders" FOR U
 
 
 
-CREATE POLICY "Providers manage own listings" ON "public"."service_listings" USING ((EXISTS ( SELECT 1
-   FROM "public"."service_providers" "sp"
-  WHERE (("sp"."id" = "service_listings"."provider_id") AND ("sp"."user_id" = "auth"."uid"())))));
-
-
-
 CREATE POLICY "Public view active gigs" ON "public"."service_gigs" FOR SELECT TO "authenticated", "anon" USING (("status" = 'active'::"text"));
-
-
-
-CREATE POLICY "Public view active listings" ON "public"."service_listings" FOR SELECT USING (("is_active" = true));
 
 
 
@@ -4582,10 +4807,6 @@ CREATE POLICY "Public view freelancer profiles" ON "public"."freelancer_profiles
 
 
 CREATE POLICY "Public view portfolio" ON "public"."freelancer_portfolio" FOR SELECT TO "authenticated", "anon" USING (true);
-
-
-
-CREATE POLICY "Public view providers" ON "public"."service_providers" FOR SELECT USING (true);
 
 
 
@@ -4613,17 +4834,7 @@ CREATE POLICY "Users insert own profile" ON "public"."freelancer_profiles" FOR I
 
 
 
-CREATE POLICY "Users manage own profile" ON "public"."service_providers" USING (("auth"."uid"() = "user_id"));
-
-
-
 CREATE POLICY "Users update own profile" ON "public"."freelancer_profiles" FOR UPDATE TO "authenticated" USING (("user_id" = "auth"."uid"()));
-
-
-
-CREATE POLICY "Users view own bookings" ON "public"."service_bookings" FOR SELECT USING ((("auth"."uid"() = "customer_id") OR (EXISTS ( SELECT 1
-   FROM "public"."service_providers" "sp"
-  WHERE (("sp"."id" = "service_bookings"."provider_id") AND ("sp"."user_id" = "auth"."uid"()))))));
 
 
 
@@ -4671,49 +4882,18 @@ ALTER TABLE "public"."cart" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."categories" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "clients_view_own_bookings" ON "public"."service_bookings" FOR SELECT USING (("auth"."uid"() = "customer_id"));
+
+
+
 ALTER TABLE "public"."commissions" ENABLE ROW LEVEL SECURITY;
 
 
-ALTER TABLE "public"."conversation_deals" ENABLE ROW LEVEL SECURITY;
-
-
-CREATE POLICY "conversation_deals_insert_own" ON "public"."conversation_deals" FOR INSERT TO "authenticated" WITH CHECK (("proposer_id" = "auth"."uid"()));
-
-
-
-CREATE POLICY "conversation_deals_update_own" ON "public"."conversation_deals" FOR UPDATE TO "authenticated" USING ((("proposer_id" = "auth"."uid"()) OR ("recipient_id" = "auth"."uid"()))) WITH CHECK ((("proposer_id" = "auth"."uid"()) OR ("recipient_id" = "auth"."uid"())));
-
-
-
-CREATE POLICY "conversation_deals_view_own" ON "public"."conversation_deals" FOR SELECT TO "authenticated" USING ((("proposer_id" = "auth"."uid"()) OR ("recipient_id" = "auth"."uid"())));
-
-
-
-ALTER TABLE "public"."conversation_participants" ENABLE ROW LEVEL SECURITY;
-
-
-ALTER TABLE "public"."conversations" ENABLE ROW LEVEL SECURITY;
-
-
-CREATE POLICY "conversations_insert_own" ON "public"."conversations" FOR INSERT TO "authenticated" WITH CHECK ((("user_id" = "auth"."uid"()) OR ("seller_id" = "auth"."uid"())));
-
-
-
-CREATE POLICY "conversations_update_own" ON "public"."conversations" FOR UPDATE TO "authenticated" USING (("id" IN ( SELECT "conversation_participants"."conversation_id"
-   FROM "public"."conversation_participants"
-  WHERE ("conversation_participants"."user_id" = "auth"."uid"())))) WITH CHECK (("id" IN ( SELECT "conversation_participants"."conversation_id"
-   FROM "public"."conversation_participants"
-  WHERE ("conversation_participants"."user_id" = "auth"."uid"()))));
-
-
-
-CREATE POLICY "conversations_view_own" ON "public"."conversations" FOR SELECT TO "authenticated" USING (("id" IN ( SELECT "conversation_participants"."conversation_id"
-   FROM "public"."conversation_participants"
-  WHERE ("conversation_participants"."user_id" = "auth"."uid"()))));
-
-
-
 ALTER TABLE "public"."customers" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "customers_create_bookings" ON "public"."service_bookings" FOR INSERT WITH CHECK (("auth"."uid"() = "customer_id"));
+
 
 
 CREATE POLICY "customers_view_active_products" ON "public"."products" FOR SELECT TO "authenticated" USING (("status" = 'active'::"text"));
@@ -4799,26 +4979,11 @@ CREATE POLICY "idempotency_keys_user_own" ON "public"."idempotency_keys" TO "aut
 
 
 
+CREATE POLICY "listings_public_read" ON "public"."service_listings" FOR SELECT TO "authenticated" USING (true);
+
+
+
 ALTER TABLE "public"."location_history" ENABLE ROW LEVEL SECURITY;
-
-
-ALTER TABLE "public"."messages" ENABLE ROW LEVEL SECURITY;
-
-
-CREATE POLICY "messages_insert_own" ON "public"."messages" FOR INSERT TO "authenticated" WITH CHECK ((("sender_id" = "auth"."uid"()) AND ("conversation_id" IN ( SELECT "conversation_participants"."conversation_id"
-   FROM "public"."conversation_participants"
-  WHERE ("conversation_participants"."user_id" = "auth"."uid"())))));
-
-
-
-CREATE POLICY "messages_update_own" ON "public"."messages" FOR UPDATE TO "authenticated" USING (("sender_id" = "auth"."uid"())) WITH CHECK (("sender_id" = "auth"."uid"()));
-
-
-
-CREATE POLICY "messages_view_own" ON "public"."messages" FOR SELECT TO "authenticated" USING (("conversation_id" IN ( SELECT "conversation_participants"."conversation_id"
-   FROM "public"."conversation_participants"
-  WHERE ("conversation_participants"."user_id" = "auth"."uid"()))));
-
 
 
 ALTER TABLE "public"."middle_man_deals" ENABLE ROW LEVEL SECURITY;
@@ -4850,19 +5015,7 @@ CREATE POLICY "middle_men_view_own_orders" ON "public"."orders" FOR SELECT TO "a
 ALTER TABLE "public"."middleman_profiles" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "middlemen_create_conversations" ON "public"."conversations" FOR INSERT TO "authenticated" WITH CHECK ((EXISTS ( SELECT 1
-   FROM "public"."users"
-  WHERE (("users"."user_id" = "auth"."uid"()) AND ("users"."account_type" = 'middleman'::"text")))));
-
-
-
 CREATE POLICY "middlemen_create_own_deals" ON "public"."middle_man_deals" FOR INSERT TO "authenticated" WITH CHECK (("middle_man_id" = "auth"."uid"()));
-
-
-
-CREATE POLICY "middlemen_join_participants" ON "public"."conversation_participants" FOR INSERT TO "authenticated" WITH CHECK ((EXISTS ( SELECT 1
-   FROM "public"."users"
-  WHERE (("users"."user_id" = "auth"."uid"()) AND ("users"."account_type" = 'middleman'::"text")))));
 
 
 
@@ -4897,26 +5050,46 @@ ALTER TABLE "public"."order_items" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."orders" ENABLE ROW LEVEL SECURITY;
 
 
-CREATE POLICY "participants_insert_own" ON "public"."conversation_participants" FOR INSERT TO "authenticated" WITH CHECK (("user_id" = "auth"."uid"()));
-
-
-
-CREATE POLICY "participants_update_own" ON "public"."conversation_participants" FOR UPDATE TO "authenticated" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
-
-
-
-CREATE POLICY "participants_view_own" ON "public"."conversation_participants" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
-
-
-
 ALTER TABLE "public"."products" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "providers_manage_listings" ON "public"."service_listings" TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."service_providers" "sp"
+  WHERE (("sp"."id" = "service_listings"."provider_id") AND ("sp"."user_id" = "auth"."uid"())))));
+
+
+
+CREATE POLICY "providers_update_bookings" ON "public"."service_bookings" FOR UPDATE USING (("auth"."uid"() = "provider_id"));
+
+
+
+CREATE POLICY "providers_update_own" ON "public"."service_providers" FOR UPDATE USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "providers_view_own_bookings" ON "public"."service_bookings" FOR SELECT USING (("auth"."uid"() = "provider_id"));
+
+
+
+CREATE POLICY "providers_view_related_bookings" ON "public"."service_bookings" FOR SELECT USING (("auth"."uid"() = ( SELECT "service_providers"."user_id"
+   FROM "public"."service_providers"
+  WHERE ("service_providers"."id" = "service_bookings"."provider_id"))));
+
 
 
 CREATE POLICY "public_view_active_products" ON "public"."products" FOR SELECT TO "anon" USING (("status" = 'active'::"text"));
 
 
 
+CREATE POLICY "public_view_listings" ON "public"."service_listings" FOR SELECT USING (("is_active" = true));
+
+
+
 CREATE POLICY "public_view_middleman_profiles" ON "public"."middleman_profiles" FOR SELECT TO "authenticated" USING (true);
+
+
+
+CREATE POLICY "public_view_providers" ON "public"."service_providers" FOR SELECT USING ((("status" = 'active'::"text") OR ("auth"."uid"() = "user_id")));
 
 
 
@@ -4977,6 +5150,12 @@ ALTER TABLE "public"."service_reviews" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."service_subcategories" ENABLE ROW LEVEL SECURITY;
 
 
+ALTER TABLE "public"."services_conversations" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."services_messages" ENABLE ROW LEVEL SECURITY;
+
+
 ALTER TABLE "public"."shipping_addresses" ENABLE ROW LEVEL SECURITY;
 
 
@@ -4985,6 +5164,10 @@ CREATE POLICY "svc_cat_public_read" ON "public"."svc_categories" FOR SELECT TO "
 
 
 ALTER TABLE "public"."svc_categories" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "svc_clients_create_conversations" ON "public"."services_conversations" FOR INSERT WITH CHECK (("auth"."uid"() = "client_id"));
+
 
 
 CREATE POLICY "svc_list_owner_write" ON "public"."svc_listings" TO "authenticated" USING (("provider_id" = ( SELECT "svc_providers"."id"
@@ -5059,6 +5242,38 @@ ALTER TABLE "public"."svc_reviews" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."svc_subcategories" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "svc_users_send_messages" ON "public"."services_messages" FOR INSERT WITH CHECK ((("sender_id" = "auth"."uid"()) AND (EXISTS ( SELECT 1
+   FROM "public"."services_conversations" "c"
+  WHERE (("c"."id" = "services_messages"."conversation_id") AND (("c"."provider_id" = "auth"."uid"()) OR ("c"."client_id" = "auth"."uid"())))))));
+
+
+
+CREATE POLICY "svc_users_update_own_conversations" ON "public"."services_conversations" FOR UPDATE USING ((("auth"."uid"() = "provider_id") OR ("auth"."uid"() = "client_id")));
+
+
+
+CREATE POLICY "svc_users_update_own_messages" ON "public"."services_messages" FOR UPDATE USING ((("sender_id" = "auth"."uid"()) OR (EXISTS ( SELECT 1
+   FROM "public"."services_conversations" "c"
+  WHERE (("c"."id" = "services_messages"."conversation_id") AND (("c"."provider_id" = "auth"."uid"()) OR ("c"."client_id" = "auth"."uid"())))))));
+
+
+
+CREATE POLICY "svc_users_view_messages" ON "public"."services_messages" FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM "public"."services_conversations" "c"
+  WHERE (("c"."id" = "services_messages"."conversation_id") AND (("c"."provider_id" = "auth"."uid"()) OR ("c"."client_id" = "auth"."uid"()))))));
+
+
+
+CREATE POLICY "svc_users_view_own_conversations" ON "public"."services_conversations" FOR SELECT USING ((("auth"."uid"() = "provider_id") OR ("auth"."uid"() = "client_id")));
+
+
+
+ALTER TABLE "public"."trading_conversations" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."trading_messages" ENABLE ROW LEVEL SECURITY;
+
+
 ALTER TABLE "public"."user_events" ENABLE ROW LEVEL SECURITY;
 
 
@@ -5066,6 +5281,10 @@ ALTER TABLE "public"."users" ENABLE ROW LEVEL SECURITY;
 
 
 CREATE POLICY "users_create_own_reviews" ON "public"."reviews" FOR INSERT TO "authenticated" WITH CHECK (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "users_create_trading_conversations" ON "public"."trading_conversations" FOR INSERT WITH CHECK (("auth"."uid"() = "initiator_id"));
 
 
 
@@ -5090,6 +5309,14 @@ CREATE POLICY "users_insert_own_location_history" ON "public"."location_history"
 
 
 CREATE POLICY "users_insert_own_profile" ON "public"."seller_profiles" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() = "id"));
+
+
+
+CREATE POLICY "users_insert_own_provider" ON "public"."service_providers" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "users_insert_own_svc_provider" ON "public"."svc_providers" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
 
 
 
@@ -5121,7 +5348,7 @@ CREATE POLICY "users_manage_own_middleman_profile" ON "public"."middleman_profil
 
 
 
-CREATE POLICY "users_manage_own_notifications" ON "public"."notifications" TO "authenticated" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
+CREATE POLICY "users_manage_own_notifications" ON "public"."notifications" TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
 
 
 
@@ -5137,7 +5364,17 @@ CREATE POLICY "users_manage_own_wishlist" ON "public"."wishlist" TO "authenticat
 
 
 
+CREATE POLICY "users_send_trading_messages" ON "public"."trading_messages" FOR INSERT WITH CHECK ((("sender_id" = "auth"."uid"()) AND (EXISTS ( SELECT 1
+   FROM "public"."trading_conversations" "c"
+  WHERE (("c"."id" = "trading_messages"."conversation_id") AND (("c"."initiator_id" = "auth"."uid"()) OR ("c"."receiver_id" = "auth"."uid"())))))));
+
+
+
 CREATE POLICY "users_update_own_profile" ON "public"."seller_profiles" FOR UPDATE TO "authenticated" USING (("auth"."uid"() = "id"));
+
+
+
+CREATE POLICY "users_update_own_provider" ON "public"."service_providers" FOR UPDATE USING (("auth"."uid"() = "user_id"));
 
 
 
@@ -5145,7 +5382,19 @@ CREATE POLICY "users_update_own_reviews" ON "public"."reviews" FOR UPDATE TO "au
 
 
 
+CREATE POLICY "users_update_own_svc_provider" ON "public"."svc_providers" FOR UPDATE USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "users_update_own_trading_conversations" ON "public"."trading_conversations" FOR UPDATE USING ((("auth"."uid"() = "initiator_id") OR ("auth"."uid"() = "receiver_id")));
+
+
+
 CREATE POLICY "users_view_own_activity_logs" ON "public"."activity_logs" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "users_view_own_bookings" ON "public"."service_bookings" FOR SELECT USING ((("auth"."uid"() = "customer_id") OR ("auth"."uid"() = "provider_id")));
 
 
 
@@ -5162,6 +5411,20 @@ CREATE POLICY "users_view_own_profile" ON "public"."seller_profiles" FOR SELECT 
 
 
 CREATE POLICY "users_view_own_seller" ON "public"."sellers" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "users_view_own_svc_provider" ON "public"."svc_providers" FOR SELECT USING ((("auth"."uid"() = "user_id") OR ("status" = 'active'::"text")));
+
+
+
+CREATE POLICY "users_view_own_trading_conversations" ON "public"."trading_conversations" FOR SELECT USING ((("auth"."uid"() = "initiator_id") OR ("auth"."uid"() = "receiver_id")));
+
+
+
+CREATE POLICY "users_view_trading_messages" ON "public"."trading_messages" FOR SELECT USING ((EXISTS ( SELECT 1
+   FROM "public"."trading_conversations" "c"
+  WHERE (("c"."id" = "trading_messages"."conversation_id") AND (("c"."initiator_id" = "auth"."uid"()) OR ("c"."receiver_id" = "auth"."uid"()))))));
 
 
 
@@ -5184,6 +5447,10 @@ ALTER PUBLICATION "supabase_realtime" OWNER TO "postgres";
 
 
 ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."factories";
+
+
+
+ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."notifications";
 
 
 
@@ -7734,9 +8001,27 @@ GRANT ALL ON FUNCTION "public"."get_middle_man_ids"() TO "service_role";
 
 
 
+GRANT ALL ON FUNCTION "public"."get_or_create_service_conversation"("p_provider_id" "uuid", "p_listing_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."get_or_create_service_conversation"("p_provider_id" "uuid", "p_listing_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_or_create_service_conversation"("p_provider_id" "uuid", "p_listing_id" "uuid") TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."get_product_image_url"("image_path" "text") TO "anon";
 GRANT ALL ON FUNCTION "public"."get_product_image_url"("image_path" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_product_image_url"("image_path" "text") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."get_provider_revenue"() TO "anon";
+GRANT ALL ON FUNCTION "public"."get_provider_revenue"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_provider_revenue"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."get_provider_revenue"("p_provider_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."get_provider_revenue"("p_provider_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_provider_revenue"("p_provider_id" "uuid") TO "service_role";
 
 
 
@@ -7780,6 +8065,12 @@ GRANT ALL ON FUNCTION "public"."get_user_conversations_with_products"("p_user_id
 GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "anon";
 GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."handle_service_booking_notifications"() TO "anon";
+GRANT ALL ON FUNCTION "public"."handle_service_booking_notifications"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."handle_service_booking_notifications"() TO "service_role";
 
 
 
@@ -7831,12 +8122,6 @@ GRANT ALL ON FUNCTION "public"."update_conversation_on_deal_proposal"() TO "serv
 
 
 
-GRANT ALL ON FUNCTION "public"."update_conversation_on_message"() TO "anon";
-GRANT ALL ON FUNCTION "public"."update_conversation_on_message"() TO "authenticated";
-GRANT ALL ON FUNCTION "public"."update_conversation_on_message"() TO "service_role";
-
-
-
 GRANT ALL ON FUNCTION "public"."update_customer_stats_on_sale"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_customer_stats_on_sale"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_customer_stats_on_sale"() TO "service_role";
@@ -7885,6 +8170,12 @@ GRANT ALL ON FUNCTION "public"."update_sales_timestamp"() TO "service_role";
 
 
 
+GRANT ALL ON FUNCTION "public"."update_svc_conv_on_message"() TO "anon";
+GRANT ALL ON FUNCTION "public"."update_svc_conv_on_message"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_svc_conv_on_message"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."update_svc_provider_rating"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_svc_provider_rating"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_svc_provider_rating"() TO "service_role";
@@ -7897,9 +8188,15 @@ GRANT ALL ON FUNCTION "public"."update_svc_provider_stats"() TO "service_role";
 
 
 
-GRANT ALL ON FUNCTION "public"."update_updated_at_column"() TO "anon";
-GRANT ALL ON FUNCTION "public"."update_updated_at_column"() TO "authenticated";
-GRANT ALL ON FUNCTION "public"."update_updated_at_column"() TO "service_role";
+GRANT ALL ON FUNCTION "public"."update_svc_timestamps"() TO "anon";
+GRANT ALL ON FUNCTION "public"."update_svc_timestamps"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_svc_timestamps"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."update_trading_conv_on_message"() TO "anon";
+GRANT ALL ON FUNCTION "public"."update_trading_conv_on_message"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_trading_conv_on_message"() TO "service_role";
 
 
 
@@ -8059,24 +8356,6 @@ GRANT ALL ON TABLE "public"."commissions" TO "service_role";
 
 
 
-GRANT ALL ON TABLE "public"."conversation_deals" TO "anon";
-GRANT ALL ON TABLE "public"."conversation_deals" TO "authenticated";
-GRANT ALL ON TABLE "public"."conversation_deals" TO "service_role";
-
-
-
-GRANT ALL ON TABLE "public"."conversation_participants" TO "anon";
-GRANT ALL ON TABLE "public"."conversation_participants" TO "authenticated";
-GRANT ALL ON TABLE "public"."conversation_participants" TO "service_role";
-
-
-
-GRANT ALL ON TABLE "public"."conversations" TO "anon";
-GRANT ALL ON TABLE "public"."conversations" TO "authenticated";
-GRANT ALL ON TABLE "public"."conversations" TO "service_role";
-
-
-
 GRANT SELECT,REFERENCES,TRIGGER,TRUNCATE,MAINTAIN ON TABLE "public"."customers" TO "anon";
 GRANT ALL ON TABLE "public"."customers" TO "authenticated";
 GRANT ALL ON TABLE "public"."customers" TO "service_role";
@@ -8176,12 +8455,6 @@ GRANT ALL ON TABLE "public"."idempotency_keys" TO "service_role";
 GRANT ALL ON TABLE "public"."location_history" TO "anon";
 GRANT ALL ON TABLE "public"."location_history" TO "authenticated";
 GRANT ALL ON TABLE "public"."location_history" TO "service_role";
-
-
-
-GRANT ALL ON TABLE "public"."messages" TO "anon";
-GRANT ALL ON TABLE "public"."messages" TO "authenticated";
-GRANT ALL ON TABLE "public"."messages" TO "service_role";
 
 
 
@@ -8305,6 +8578,18 @@ GRANT ALL ON TABLE "public"."service_subcategories" TO "service_role";
 
 
 
+GRANT ALL ON TABLE "public"."services_conversations" TO "anon";
+GRANT ALL ON TABLE "public"."services_conversations" TO "authenticated";
+GRANT ALL ON TABLE "public"."services_conversations" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."services_messages" TO "anon";
+GRANT ALL ON TABLE "public"."services_messages" TO "authenticated";
+GRANT ALL ON TABLE "public"."services_messages" TO "service_role";
+
+
+
 GRANT ALL ON TABLE "public"."shipping_addresses" TO "anon";
 GRANT ALL ON TABLE "public"."shipping_addresses" TO "authenticated";
 GRANT ALL ON TABLE "public"."shipping_addresses" TO "service_role";
@@ -8356,6 +8641,18 @@ GRANT ALL ON TABLE "public"."svc_reviews" TO "service_role";
 GRANT ALL ON TABLE "public"."svc_subcategories" TO "anon";
 GRANT ALL ON TABLE "public"."svc_subcategories" TO "authenticated";
 GRANT ALL ON TABLE "public"."svc_subcategories" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."trading_conversations" TO "anon";
+GRANT ALL ON TABLE "public"."trading_conversations" TO "authenticated";
+GRANT ALL ON TABLE "public"."trading_conversations" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."trading_messages" TO "anon";
+GRANT ALL ON TABLE "public"."trading_messages" TO "authenticated";
+GRANT ALL ON TABLE "public"."trading_messages" TO "service_role";
 
 
 

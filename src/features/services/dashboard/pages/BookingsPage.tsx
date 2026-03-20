@@ -14,8 +14,6 @@ import {
   MoreVertical,
   Eye,
   MessageSquare,
-  Phone,
-  Mail,
   DollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -44,16 +42,10 @@ interface Booking {
   listing_id: string;
   customer_id: string;
   provider_id: string;
-  booking_date: string;
-  booking_time: string;
+  start_date: string;
   status: "pending" | "confirmed" | "completed" | "cancelled" | "disputed";
-  total_price: number;
-  currency: string;
+  agreed_price: number;
   booking_type: string;
-  customer_name?: string;
-  customer_email?: string;
-  customer_phone?: string;
-  customer_notes?: string;
   listing?: {
     title: string;
     price_numeric: number;
@@ -80,6 +72,10 @@ export const BookingsPage = () => {
         .from("service_bookings")
         .select(
           `
+          id,
+          start_date,
+          status,
+          agreed_price,
           *,
           listing_id
         `,
@@ -141,11 +137,7 @@ export const BookingsPage = () => {
   // Filter bookings by search query
   const filteredBookings = bookings?.filter((booking) => {
     const searchTerm = searchQuery.toLowerCase();
-    return (
-      booking.listing?.title.toLowerCase().includes(searchTerm) ||
-      booking.customer_name?.toLowerCase().includes(searchTerm) ||
-      booking.customer_email?.toLowerCase().includes(searchTerm)
-    );
+    return booking.listing?.title.toLowerCase().includes(searchTerm);
   });
 
   // Get status badge variant
@@ -259,14 +251,14 @@ export const BookingsPage = () => {
             <div className="text-2xl font-bold">
               {bookings
                 ?.filter((b) => {
-                  const bookingDate = new Date(b.booking_date);
+                  const bookingDate = new Date(b.start_date);
                   const now = new Date();
                   return (
                     bookingDate.getMonth() === now.getMonth() &&
                     bookingDate.getFullYear() === now.getFullYear()
                   );
                 })
-                .reduce((sum, b) => sum + (b.total_price || 0), 0)
+                .reduce((sum, b) => sum + (b.agreed_price || 0), 0)
                 .toFixed(2)}{" "}
               EGP
             </div>
@@ -325,7 +317,7 @@ export const BookingsPage = () => {
                           {booking.listing?.title || "Service Booking"}
                         </h4>
                         <p className="text-sm text-muted-foreground">
-                          {booking.customer_name || "Customer"}
+                          Booking #{booking.id.slice(0, 8)}
                         </p>
                       </div>
                       {getStatusBadge(booking.status)}
@@ -336,46 +328,28 @@ export const BookingsPage = () => {
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Calendar size={14} />
                         <span>
-                          {format(
-                            new Date(booking.booking_date),
-                            "MMM dd, yyyy",
-                          )}
+                          {format(new Date(booking.start_date), "MMM dd, yyyy")}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <Clock size={14} />
-                        <span>{booking.booking_time}</span>
+                        <span>
+                          {new Date(booking.start_date).toLocaleTimeString(
+                            "en-US",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2 text-muted-foreground">
                         <DollarSign size={14} />
                         <span>
-                          {booking.total_price?.toFixed(2) || "0.00"}{" "}
-                          {booking.currency || "EGP"}
+                          {booking.agreed_price?.toFixed(2) || "0.00"} EGP
                         </span>
                       </div>
-                      {booking.customer_email && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Mail size={14} />
-                          <span>{booking.customer_email}</span>
-                        </div>
-                      )}
-                      {booking.customer_phone && (
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Phone size={14} />
-                          <span>{booking.customer_phone}</span>
-                        </div>
-                      )}
                     </div>
-
-                    {/* Notes */}
-                    {booking.customer_notes && (
-                      <div className="bg-gray-50 rounded-md p-3">
-                        <p className="text-xs font-medium text-muted-foreground mb-1">
-                          Customer Notes:
-                        </p>
-                        <p className="text-sm">{booking.customer_notes}</p>
-                      </div>
-                    )}
                   </div>
 
                   {/* Actions */}

@@ -58,7 +58,7 @@ export function ServicesHome() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">{t('services.loading')}</p>
+          <p className="text-muted-foreground">{t("services.loading")}</p>
         </div>
       </div>
     );
@@ -69,10 +69,10 @@ export function ServicesHome() {
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-10 md:p-16 text-white mb-12 text-center shadow-xl">
         <h1 className="text-3xl md:text-5xl font-bold mb-4">
-          {t('servicesHome.heroTitle')}
+          {t("servicesHome.heroTitle")}
         </h1>
         <p className="text-indigo-100 text-lg md:text-xl mb-8 max-w-2xl mx-auto">
-          {t('servicesHome.heroSubtitle')}
+          {t("servicesHome.heroSubtitle")}
         </p>
 
         {/* Search Bar */}
@@ -84,7 +84,7 @@ export function ServicesHome() {
             />
             <Input
               type="text"
-              placeholder={t('servicesHome.searchPlaceholder')}
+              placeholder={t("servicesHome.searchPlaceholder")}
               className="w-full pl-12 pr-4 py-6 rounded-full text-gray-900 text-lg focus:outline-none focus:ring-4 focus:ring-white/30 border-0"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -95,7 +95,9 @@ export function ServicesHome() {
 
       {/* Categories Grid */}
       <section className="mb-16">
-        <h2 className="text-2xl font-bold mb-6">{t('servicesHome.browseByCategory')}</h2>
+        <h2 className="text-2xl font-bold mb-6">
+          {t("servicesHome.browseByCategory")}
+        </h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {categories.map((cat) => (
             <Link
@@ -107,7 +109,9 @@ export function ServicesHome() {
                 {categoryIcons[cat.slug] || <Briefcase />}
               </div>
               <span className="font-medium text-center">
-                {t(`services.categories.${cat.slug}`, { defaultValue: cat.name })}
+                {t(`services.categories.${cat.slug}`, {
+                  defaultValue: cat.name,
+                })}
               </span>
             </Link>
           ))}
@@ -117,12 +121,14 @@ export function ServicesHome() {
       {/* Recent Listings */}
       <section className="mb-16">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">{t('servicesHome.recentListings')}</h2>
+          <h2 className="text-2xl font-bold">
+            {t("servicesHome.recentListings")}
+          </h2>
           <Link
             to="/services"
             className="text-primary hover:underline text-sm font-medium"
           >
-            {t('servicesHome.viewAll')}
+            {t("servicesHome.viewAll")}
           </Link>
         </div>
         {listings.length > 0 ? (
@@ -151,18 +157,27 @@ export function ServicesHome() {
                   </p>
                 )}
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>{t('servicesHome.active')} {listing.is_active ? t('servicesHome.yes') : t('servicesHome.no')}</span>
-                  <span className="text-primary">{t('services.viewDetails')}</span>
+                  <span>
+                    {t("servicesHome.active")}{" "}
+                    {listing.is_active
+                      ? t("servicesHome.yes")
+                      : t("servicesHome.no")}
+                  </span>
+                  <span className="text-primary">
+                    {t("services.viewDetails")}
+                  </span>
                 </div>
               </Link>
             ))}
           </div>
         ) : (
           <div className="text-center py-12 bg-muted rounded-xl">
-            <p className="text-muted-foreground">{t('servicesHome.noListings')}</p>
+            <p className="text-muted-foreground">
+              {t("servicesHome.noListings")}
+            </p>
             <Button asChild className="mt-4">
               <Link to="/services/dashboard/create-listing">
-                {t('servicesHome.createFirst')}
+                {t("servicesHome.createFirst")}
               </Link>
             </Button>
           </div>
@@ -172,13 +187,15 @@ export function ServicesHome() {
       {/* CTA Section */}
       <section className="bg-muted rounded-2xl p-8 md:p-12 text-center">
         <h2 className="text-2xl md:text-3xl font-bold mb-4">
-          {t('servicesHome.areYouProvider')}
+          {t("servicesHome.areYouProvider")}
         </h2>
         <p className="text-muted-foreground mb-6 max-w-xl mx-auto">
-          {t('servicesHome.joinAurora')}
+          {t("servicesHome.joinAurora")}
         </p>
         <Button size="lg" asChild>
-          <Link to="/services/dashboard">{t('servicesHome.startOffering')}</Link>
+          <Link to="/services/dashboard">
+            {t("servicesHome.startOffering")}
+          </Link>
         </Button>
       </section>
     </div>

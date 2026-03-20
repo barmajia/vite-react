@@ -22,13 +22,15 @@ export const useProviderAnalytics = () => {
       // 2. Fetch Bookings Stats
       const { data: bookingsStats } = await supabase
         .from("service_bookings")
-        .select("status, total_price", { count: "exact" })
+        .select("id, start_date, status, agreed_price", {
+          count: "exact",
+        })
         .eq("provider_id", user.id);
 
       // 3. Calculate Revenue (Sum of completed bookings)
       const revenueData = bookingsStats
         ?.filter((b: any) => b.status === "completed")
-        .reduce((sum: number, b: any) => sum + (b.total_price || 0), 0);
+        .reduce((sum: number, b: any) => sum + (b.agreed_price || 0), 0);
 
       const pendingCount =
         bookingsStats?.filter((b: any) => b.status === "pending").length || 0;

@@ -522,5 +522,16 @@
     "secureBooking": "حجز آمن",
     "satisfactionGuaranteed": "الرضا مضمون",
     "fastDelivery": "التسليم السريع"
+  },
+  "servicesChat": {
+    "loadingConversation": "جاري تحميل المحادثة...",
+    "typeMessage": "اكتب رسالة...",
+    "service": "الخدمة",
+    "user": "مستخدم",
+    "theme": {
+      "light": "فاتح",
+      "dark": "داكن",
+      "toggle": "تبديل السمة"
+    }
   }
 }

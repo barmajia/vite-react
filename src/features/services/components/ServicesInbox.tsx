@@ -126,9 +126,9 @@ export const ServicesInbox = () => {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full max-w-4xl mx-auto">
       {/* Header */}
-      <div className="border-b p-4">
+      <div className="border-b p-4 bg-background">
         <div>
           <h1 className="text-xl font-bold">Service Messages</h1>
           <p className="text-sm text-muted-foreground">

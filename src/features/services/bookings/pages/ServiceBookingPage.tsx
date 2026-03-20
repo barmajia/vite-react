@@ -6,6 +6,7 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 // Import Components
 import { BookingCalendar } from "../components/BookingCalendar";
@@ -15,6 +16,7 @@ import { BookingSummary } from "../components/BookingSummary";
 export const ServiceBookingPage = () => {
   const { listingId } = useParams<{ listingId: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Form State
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -30,11 +32,11 @@ export const ServiceBookingPage = () => {
     queryKey: ["service-listing", listingId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from("service_listings")
+        .from("svc_listings")
         .select(
           `
           *,
-          provider:service_providers (
+          provider:svc_providers (
             id,
             provider_name,
             user_id
@@ -57,39 +59,29 @@ export const ServiceBookingPage = () => {
 
     setIsSubmitting(true);
     try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Get provider's user_id from service_providers
-      const { data: providerData } = await supabase
-        .from("service_providers")
-        .select("user_id")
-        .eq("id", listing.provider?.id)
-        .single();
-
-      if (!providerData?.user_id) {
-        throw new Error("Provider not found");
-      }
-
-      // Insert Booking
-      const { error } = await supabase.from("service_bookings").insert({
+      // Create order/booking in svc_orders
+      const { error } = await supabase.from("svc_orders").insert({
         listing_id: listingId,
+        provider_id: listing.provider?.id,
         customer_id: user.id,
-        provider_id: providerData.user_id,
-        booking_date: selectedDate.toISOString().split("T")[0],
-        booking_time: selectedTime,
+        order_type: "booking",
         status: "pending",
-        total_price: listing?.price_numeric || 0,
+        agreed_price: listing?.price_min || 0,
         currency: listing?.currency || "EGP",
-        booking_type: "appointment",
+        customer_name: customerName,
+        customer_phone: customerPhone,
+        customer_email: customerEmail || null,
+        customer_notes: notes || null,
+        booking_date: selectedDate.toISOString(),
+        booking_time: selectedTime,
       });
 
       if (error) throw error;
 
       toast.success("Booking request sent successfully!");
-      navigate("/services/dashboard/bookings");
+      navigate("/services");
     } catch (error: any) {
       toast.error("Failed to create booking: " + error.message);
     } finally {

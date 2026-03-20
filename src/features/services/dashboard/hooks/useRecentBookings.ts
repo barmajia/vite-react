@@ -16,14 +16,10 @@ export const useRecentBookings = () => {
         .select(
           `
           id,
-          booking_date,
-          booking_time,
+          start_date,
           status,
-          total_price,
+          agreed_price,
           created_at,
-          customer_name,
-          customer_email,
-          customer_phone,
           listing_id
         `,
         )

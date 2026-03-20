@@ -1,118 +1,145 @@
-import { useState } from "react";
+import { Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Clock, CheckCircle2 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { format, addDays, isToday, isTomorrow } from "date-fns";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 interface BookingCalendarProps {
   selectedDate: Date | undefined;
   setSelectedDate: (date: Date | undefined) => void;
   selectedTime: string | null;
   setSelectedTime: (time: string | null) => void;
-  durationMinutes?: number;
+  durationMinutes?: number | null;
 }
 
-// Generate time slots based on provider availability
-const generateTimeSlots = () => {
-  const slots = [];
-  const startHour = 9; // 9 AM
-  const endHour = 17; // 5 PM
+const TIME_SLOTS = [
+  "09:00",
+  "09:30",
+  "10:00",
+  "10:30",
+  "11:00",
+  "11:30",
+  "12:00",
+  "12:30",
+  "14:00",
+  "14:30",
+  "15:00",
+  "15:30",
+  "16:00",
+  "16:30",
+  "17:00",
+  "17:30",
+];
 
-  for (let i = startHour; i < endHour; i++) {
-    slots.push(`${i.toString().padStart(2, "0")}:00`);
-    slots.push(`${i.toString().padStart(2, "0")}:30`);
-  }
-  return slots;
-};
-
-export const BookingCalendar = ({
+export function BookingCalendar({
   selectedDate,
   setSelectedDate,
   selectedTime,
   setSelectedTime,
   durationMinutes,
-}: BookingCalendarProps) => {
-  const [timeSlots] = useState(generateTimeSlots());
+}: BookingCalendarProps) {
+  // Generate next 14 days
+  const today = new Date();
+  const availableDates = Array.from({ length: 14 }, (_, i) => {
+    const date = new Date(today);
+    date.setDate(today.getDate() + i);
+    return date;
+  });
 
-  const getLabel = (_date: Date) => {
-    if (isToday(_date)) return "Today";
-    if (isTomorrow(_date)) return "Tomorrow";
-    return format(_date, "EEEE, MMM d");
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
   };
 
-  // Simple calendar UI
-  const renderCalendarDays = () => {
-    const days = [];
-    const today = new Date();
-
-    for (let i = 0; i < 14; i++) {
-      const date = addDays(today, i);
-      const isSelected =
-        selectedDate &&
-        format(date, "yyyy-MM-dd") === format(selectedDate, "yyyy-MM-dd");
-
-      days.push(
-        <button
-          key={i}
-          onClick={() => setSelectedDate(date)}
-          className={cn(
-            "flex flex-col items-center justify-center min-w-[70px] h-20 rounded-lg border-2 transition-all",
-            isSelected
-              ? "border-black bg-black text-white"
-              : "border-gray-200 hover:border-gray-300 bg-white",
-          )}
-        >
-          <span className="text-xs font-medium uppercase">
-            {format(date, "EEE")}
-          </span>
-          <span className="text-xl font-bold">{format(date, "d")}</span>
-        </button>,
-      );
-    }
-    return days;
+  const isDateDisabled = (date: Date) => {
+    // Disable weekends (optional - remove if you want to allow weekends)
+    const day = date.getDay();
+    return day === 0 || day === 6;
   };
 
   return (
     <div className="space-y-6">
+      {/* Date Selection */}
       <div>
-        <h3 className="text-lg font-semibold mb-4">Select Date</h3>
-        <div className="flex gap-2 overflow-x-auto pb-2">
-          {renderCalendarDays()}
+        <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+          <Calendar className="h-5 w-5" />
+          Select Date
+        </h3>
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-2">
+          {availableDates.map((date) => {
+            const disabled = isDateDisabled(date);
+            const isSelected =
+              selectedDate?.toDateString() === date.toDateString();
+
+            return (
+              <Button
+                key={date.toISOString()}
+                variant={isSelected ? "default" : "outline"}
+                className={`h-20 flex flex-col gap-1 p-2 ${
+                  disabled ? "opacity-50 cursor-not-allowed" : ""
+                }`}
+                onClick={() => {
+                  if (!disabled) {
+                    setSelectedDate(date);
+                    setSelectedTime(null); // Reset time when date changes
+                  }
+                }}
+                disabled={disabled}
+              >
+                <span className="text-xs font-medium">
+                  {date.toLocaleDateString("en-US", { weekday: "short" })}
+                </span>
+                <span className="text-lg font-bold">{date.getDate()}</span>
+              </Button>
+            );
+          })}
         </div>
       </div>
 
+      {/* Time Selection */}
       {selectedDate && (
-        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Clock className="h-5 w-5" />
-            Available Times for {getLabel(selectedDate)}
-          </h3>
+        <div>
+          <h3 className="text-lg font-semibold mb-4">Available Times</h3>
+          <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+            {TIME_SLOTS.map((time) => {
+              const isSelected = selectedTime === time;
 
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-            {timeSlots.map((time) => (
-              <Button
-                key={time}
-                variant={selectedTime === time ? "default" : "outline"}
-                className={cn(
-                  "h-10 text-sm",
-                  selectedTime === time &&
-                    "bg-black text-white hover:bg-black/90",
-                )}
-                onClick={() => setSelectedTime(time)}
-              >
-                {time}
-              </Button>
-            ))}
+              return (
+                <Button
+                  key={time}
+                  variant={isSelected ? "default" : "outline"}
+                  className="h-10"
+                  onClick={() => setSelectedTime(time)}
+                >
+                  {time}
+                </Button>
+              );
+            })}
           </div>
-
-          {durationMinutes && (
-            <p className="text-xs text-muted-foreground mt-4 flex items-center gap-1">
-              <CheckCircle2 className="h-3 w-3" />
-              Estimated duration: {durationMinutes} minutes
-            </p>
-          )}
         </div>
+      )}
+
+      {/* Duration Info */}
+      {durationMinutes && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <Badge variant="secondary">Duration</Badge>
+          <span>{durationMinutes} minutes</span>
+        </div>
+      )}
+
+      {/* Selected Info */}
+      {selectedDate && selectedTime && (
+        <Card className="bg-muted/50">
+          <CardContent className="p-4">
+            <p className="text-sm font-medium">Selected:</p>
+            <p className="text-lg font-semibold">
+              {formatDate(selectedDate)} at {selectedTime}
+            </p>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
-};
+}
