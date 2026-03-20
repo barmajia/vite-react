@@ -307,9 +307,36 @@
     "providerSince": "Provider since {{date}}",
     "projectReqs": "Project Requirements",
     "reqPlaceholder": "Describe your project requirements, timeline, and any specific needs...",
-    "bookService": "Book This Service",
-    "secureBooking": "Secure booking",
-    "satisfactionGuaranteed": "Satisfaction guaranteed",
-    "fastDelivery": "Fast delivery"
+    "bookService": "このサービスを予約",
+    "secureBooking": "安全な予約",
+    "satisfactionGuaranteed": "満足度保証",
+    "fastDelivery": "迅速な配信"
+  },
+  "servicesHome": {
+    "heroTitle": "専門家とフリーランサーを見つける",
+    "heroSubtitle": "ソフトウェア開発からコンサルティングまで、ニーズに合ったプロフェッショナルを見つけましょう。",
+    "searchPlaceholder": "サービスを検索...",
+    "browseByCategory": "カテゴリから探す",
+    "recentListings": "最新のサービス",
+    "viewAll": "すべて見る →",
+    "active": "アクティブ:",
+    "yes": "はい",
+    "no": "いいえ",
+    "noListings": "まだサービスはありません",
+    "createFirst": "最初のサービスを作成",
+    "areYouProvider": "サービスプロバイダーですか？",
+    "joinAurora": "Aurora に参加してサービスを提供しましょう。プロフィールを作成してクライアントとつながりましょう。",
+    "startOffering": "サービス提供を開始"
+  },
+  "servicesChat": {
+    "loadingConversation": "会話を読み込んでいます...",
+    "typeMessage": "メッセージを入力...",
+    "service": "サービス",
+    "user": "ユーザー",
+    "theme": {
+      "light": "ライト",
+      "dark": "ダーク",
+      "toggle": "テーマを切り替え"
+    }
   }
 }

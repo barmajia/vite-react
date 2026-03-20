@@ -307,9 +307,36 @@
     "providerSince": "Provider since {{date}}",
     "projectReqs": "Project Requirements",
     "reqPlaceholder": "Describe your project requirements, timeline, and any specific needs...",
-    "bookService": "Book This Service",
-    "secureBooking": "Secure booking",
-    "satisfactionGuaranteed": "Satisfaction guaranteed",
-    "fastDelivery": "Fast delivery"
+    "bookService": "Bu hizmeti rezerve et",
+    "secureBooking": "Güvenli rezervasyon",
+    "satisfactionGuaranteed": "Memnuniyet garantisi",
+    "fastDelivery": "Hızlı teslimat"
+  },
+  "servicesHome": {
+    "heroTitle": "Uzmanlar ve freelancerlar bulun",
+    "heroSubtitle": "Yazılım geliştirmeden danışmanlığa kadar, ihtiyaçlarınıza uygun profesyoneli bulun.",
+    "searchPlaceholder": "Hizmet ara...",
+    "browseByCategory": "Kategoriye göre göz at",
+    "recentListings": "Son hizmetler",
+    "viewAll": "Tümünü gör →",
+    "active": "Aktif:",
+    "yes": "Evet",
+    "no": "Hayır",
+    "noListings": "Henüz hizmet yok",
+    "createFirst": "İlk hizmeti oluştur",
+    "areYouProvider": "Hizmet sağlayıcısı mısınız?",
+    "joinAurora": "Aurora'ya katılın ve hizmetlerinizi sunun. Profil oluşturun ve müşterilerle bağlantı kurun.",
+    "startOffering": "Hizmet sunmaya başla"
+  },
+  "servicesChat": {
+    "loadingConversation": "Konuşma yükleniyor...",
+    "typeMessage": "Mesaj yaz...",
+    "service": "Hizmet",
+    "user": "Kullanıcı",
+    "theme": {
+      "light": "Açık",
+      "dark": "Koyu",
+      "toggle": "Temayı değiştir"
+    }
   }
 }

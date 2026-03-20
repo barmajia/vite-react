@@ -10,7 +10,6 @@ import {
   LogOut,
   ShoppingBag,
   Bell,
-  UserCircle,
   CheckCircle2,
   ArrowRight,
   Sun,
@@ -37,7 +36,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 
 export function ServicesHeader() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -46,8 +45,8 @@ export function ServicesHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [providerProfile, setProviderProfile] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [notificationCount, setNotificationCount] = useState(2);
-  const [messageCount, setMessageCount] = useState(1);
+  const notificationCount = 2;
+  const messageCount = 1;
 
   const { onTouchStart } = useSwipeToOpen({
     isOpen: isMobileMenuOpen,

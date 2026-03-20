@@ -307,9 +307,36 @@
     "providerSince": "Provider since {{date}}",
     "projectReqs": "Project Requirements",
     "reqPlaceholder": "Describe your project requirements, timeline, and any specific needs...",
-    "bookService": "Book This Service",
-    "secureBooking": "Secure booking",
-    "satisfactionGuaranteed": "Satisfaction guaranteed",
-    "fastDelivery": "Fast delivery"
+    "bookService": "이 서비스 예약",
+    "secureBooking": "안전한 예약",
+    "satisfactionGuaranteed": "만족도 보장",
+    "fastDelivery": "신속한 배송"
+  },
+  "servicesHome": {
+    "heroTitle": "전문가와 프리랜서 찾기",
+    "heroSubtitle": "소프트웨어 개발부터 컨설팅까지, 필요에 맞는 전문가를 찾아보세요.",
+    "searchPlaceholder": "서비스 검색...",
+    "browseByCategory": "카테고리별로 탐색",
+    "recentListings": "최신 서비스",
+    "viewAll": "전체 보기 →",
+    "active": "활성:",
+    "yes": "예",
+    "no": "아니오",
+    "noListings": "아직 서비스가 없습니다",
+    "createFirst": "첫 번째 서비스 만들기",
+    "areYouProvider": "서비스 제공자이신가요?",
+    "joinAurora": "Aurora 에 참여하여 서비스를 제공하세요. 프로필을 만들고 고객과 연결하세요.",
+    "startOffering": "서비스 제공 시작"
+  },
+  "servicesChat": {
+    "loadingConversation": "대화 로딩 중...",
+    "typeMessage": "메시지 입력...",
+    "service": "서비스",
+    "user": "사용자",
+    "theme": {
+      "light": "라이트",
+      "dark": "다크",
+      "toggle": "테마 전환"
+    }
   }
 }

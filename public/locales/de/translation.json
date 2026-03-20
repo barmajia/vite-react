@@ -311,5 +311,32 @@
     "secureBooking": "Sichere Buchung",
     "satisfactionGuaranteed": "Zufriedenheitsgarantie",
     "fastDelivery": "Schnelle Lieferung"
+  },
+  "servicesHome": {
+    "heroTitle": "Finden Sie Experten & Freelancer",
+    "heroSubtitle": "Von Softwareentwicklung bis Beratung - finden Sie den richtigen Profi für Ihre Bedürfnisse.",
+    "searchPlaceholder": "Dienste suchen...",
+    "browseByCategory": "Nach Kategorie durchsuchen",
+    "recentListings": "Aktuelle Dienstleistungen",
+    "viewAll": "Alle anzeigen →",
+    "active": "Aktiv:",
+    "yes": "Ja",
+    "no": "Nein",
+    "noListings": "Noch keine Dienstleistungen",
+    "createFirst": "Erste Dienstleistung erstellen",
+    "areYouProvider": "Sind Sie Dienstleister?",
+    "joinAurora": "Treten Sie Aurora bei und bieten Sie Ihre Dienste an. Erstellen Sie Ihr Profil und verbinden Sie sich mit Kunden.",
+    "startOffering": "Dienste anbieten"
+  },
+  "servicesChat": {
+    "loadingConversation": "Konversation wird geladen...",
+    "typeMessage": "Nachricht eingeben...",
+    "service": "Dienst",
+    "user": "Benutzer",
+    "theme": {
+      "light": "Hell",
+      "dark": "Dunkel",
+      "toggle": "Design umschalten"
+    }
   }
 }

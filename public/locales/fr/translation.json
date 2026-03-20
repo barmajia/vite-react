@@ -311,5 +311,32 @@
     "secureBooking": "Réservation sécurisée",
     "satisfactionGuaranteed": "Satisfait ou remboursé",
     "fastDelivery": "Livraison rapide"
+  },
+  "servicesHome": {
+    "heroTitle": "Trouvez des experts et freelances",
+    "heroSubtitle": "Du développement logiciel au conseil, trouvez le professionnel adapté à vos besoins.",
+    "searchPlaceholder": "Rechercher des services...",
+    "browseByCategory": "Parcourir par catégorie",
+    "recentListings": "Services récents",
+    "viewAll": "Voir tout →",
+    "active": "Actif:",
+    "yes": "Oui",
+    "no": "Non",
+    "noListings": "Aucun service pour le moment",
+    "createFirst": "Créer le premier service",
+    "areYouProvider": "Êtes-vous prestataire ?",
+    "joinAurora": "Rejoignez Aurora et proposez vos services. Créez votre profil et connectez-vous avec des clients.",
+    "startOffering": "Commencer à proposer des services"
+  },
+  "servicesChat": {
+    "loadingConversation": "Chargement de la conversation...",
+    "typeMessage": "Tapez un message...",
+    "service": "Service",
+    "user": "Utilisateur",
+    "theme": {
+      "light": "Clair",
+      "dark": "Sombre",
+      "toggle": "Changer de thème"
+    }
   }
 }

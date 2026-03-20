@@ -307,9 +307,36 @@
     "providerSince": "Provider since {{date}}",
     "projectReqs": "Project Requirements",
     "reqPlaceholder": "Describe your project requirements, timeline, and any specific needs...",
-    "bookService": "Book This Service",
-    "secureBooking": "Secure booking",
-    "satisfactionGuaranteed": "Satisfaction guaranteed",
-    "fastDelivery": "Fast delivery"
+    "bookService": "Забронировать эту услугу",
+    "secureBooking": "Безопасное бронирование",
+    "satisfactionGuaranteed": "Гарантия удовлетворения",
+    "fastDelivery": "Быстрая доставка"
+  },
+  "servicesHome": {
+    "heroTitle": "Найдите экспертов и фрилансеров",
+    "heroSubtitle": "От разработки программного обеспечения до консалтинга — найдите подходящего профессионала для ваших нужд.",
+    "searchPlaceholder": "Поиск услуг...",
+    "browseByCategory": "Просмотр по категории",
+    "recentListings": "Последние услуги",
+    "viewAll": "Посмотреть все →",
+    "active": "Активно:",
+    "yes": "Да",
+    "no": "Нет",
+    "noListings": "Пока нет услуг",
+    "createFirst": "Создать первую услугу",
+    "areYouProvider": "Вы поставщик услуг?",
+    "joinAurora": "Присоединяйтесь к Aurora и предлагайте свои услуги. Создайте профиль и свяжитесь с клиентами.",
+    "startOffering": "Начать предлагать услуги"
+  },
+  "servicesChat": {
+    "loadingConversation": "Загрузка разговора...",
+    "typeMessage": "Введите сообщение...",
+    "service": "Услуга",
+    "user": "Пользователь",
+    "theme": {
+      "light": "Светлая",
+      "dark": "Тёмная",
+      "toggle": "Переключить тему"
+    }
   }
 }

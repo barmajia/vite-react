@@ -307,9 +307,36 @@
     "providerSince": "Provider since {{date}}",
     "projectReqs": "Project Requirements",
     "reqPlaceholder": "Describe your project requirements, timeline, and any specific needs...",
-    "bookService": "Book This Service",
-    "secureBooking": "Secure booking",
-    "satisfactionGuaranteed": "Satisfaction guaranteed",
-    "fastDelivery": "Fast delivery"
+    "bookService": "Reservar este serviço",
+    "secureBooking": "Reserva segura",
+    "satisfactionGuaranteed": "Satisfação garantida",
+    "fastDelivery": "Entrega rápida"
+  },
+  "servicesHome": {
+    "heroTitle": "Encontre especialistas e freelancers",
+    "heroSubtitle": "Do desenvolvimento de software à consultoria, encontre o profissional certo para suas necessidades.",
+    "searchPlaceholder": "Buscar serviços...",
+    "browseByCategory": "Navegar por categoria",
+    "recentListings": "Serviços recentes",
+    "viewAll": "Ver tudo →",
+    "active": "Ativo:",
+    "yes": "Sim",
+    "no": "Não",
+    "noListings": "Nenhum serviço ainda",
+    "createFirst": "Criar primeiro serviço",
+    "areYouProvider": "Você é um provedor de serviços?",
+    "joinAurora": "Junte-se à Aurora e ofereça seus serviços. Crie seu perfil e conecte-se com clientes.",
+    "startOffering": "Começar a oferecer serviços"
+  },
+  "servicesChat": {
+    "loadingConversation": "Carregando conversa...",
+    "typeMessage": "Digite uma mensagem...",
+    "service": "Serviço",
+    "user": "Usuário",
+    "theme": {
+      "light": "Claro",
+      "dark": "Escuro",
+      "toggle": "Alternar tema"
+    }
   }
 }

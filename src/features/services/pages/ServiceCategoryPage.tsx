@@ -139,6 +139,20 @@ export function ServiceCategoryPage() {
         <div className="bg-green-200 dark:bg-green-800 text-black p-6 rounded-2xl mb-8 shadow-lg border-4 border-green-400 font-bold text-lg flex items-center gap-3">
           🔍 DEBUG: ServiceCategoryPage (/services/{categorySlug})
           <div className="ml-auto">
+            Slug:{" "}
+            <span className="font-mono bg-white px-2 py-1 rounded text-sm">
+              {categorySlug}
+            </span>{" "}
+            | Category:{" "}
+            <span className="font-mono bg-white px-2 py-1 rounded text-sm">
+              {category?.name || "Loading..."}
+            </span>{" "}
+            | Listings:{" "}
+            <span className="font-mono bg-white px-2 py-1 rounded text-sm">
+              {listings.length}
+            </span>
+          </div>
+        </div>
         {category.description && (
           <p className="text-muted-foreground">{category.description}</p>
         )}

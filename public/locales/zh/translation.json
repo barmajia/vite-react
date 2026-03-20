@@ -307,9 +307,36 @@
     "providerSince": "Provider since {{date}}",
     "projectReqs": "Project Requirements",
     "reqPlaceholder": "Describe your project requirements, timeline, and any specific needs...",
-    "bookService": "Book This Service",
-    "secureBooking": "Secure booking",
-    "satisfactionGuaranteed": "Satisfaction guaranteed",
-    "fastDelivery": "Fast delivery"
+    "bookService": "预订此服务",
+    "secureBooking": "安全预订",
+    "satisfactionGuaranteed": "满意度保证",
+    "fastDelivery": "快速交付"
+  },
+  "servicesHome": {
+    "heroTitle": "寻找专家和自由职业者",
+    "heroSubtitle": "从软件开发到咨询，找到适合您需求的专业人士。",
+    "searchPlaceholder": "搜索服务...",
+    "browseByCategory": "按类别浏览",
+    "recentListings": "最新服务",
+    "viewAll": "查看全部 →",
+    "active": "活跃:",
+    "yes": "是",
+    "no": "否",
+    "noListings": "暂无服务",
+    "createFirst": "创建第一个服务",
+    "areYouProvider": "您是服务提供者吗？",
+    "joinAurora": "加入 Aurora 并提供您的服务。创建您的资料并与客户建立联系。",
+    "startOffering": "开始提供服务"
+  },
+  "servicesChat": {
+    "loadingConversation": "正在加载对话...",
+    "typeMessage": "输入消息...",
+    "service": "服务",
+    "user": "用户",
+    "theme": {
+      "light": "浅色",
+      "dark": "深色",
+      "toggle": "切换主题"
+    }
   }
 }
