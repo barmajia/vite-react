@@ -97,17 +97,17 @@ export function ServicesHeader() {
     {
       label: t("services.findTalent"),
       href: "/services/programming",
-      icon: "💻",
+      icon: "",
     },
     {
       label: t("services.healthcare"),
       href: "/services/healthcare",
-      icon: "🏥",
+      icon: "",
     },
     {
       label: t("services.allServices"),
       href: "/services",
-      icon: "✨",
+      icon: "",
     },
   ];
 

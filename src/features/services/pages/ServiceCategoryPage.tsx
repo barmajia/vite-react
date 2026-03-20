@@ -102,7 +102,7 @@ export function ServiceCategoryPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">{t('services.loading')}</p>
+          <p className="text-muted-foreground">{t("services.loading")}</p>
         </div>
       </div>
     );
@@ -112,9 +112,11 @@ export function ServiceCategoryPage() {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="text-center py-12">
-          <h2 className="text-2xl font-bold mb-4">{t('services.categoryNotFound')}</h2>
+          <h2 className="text-2xl font-bold mb-4">
+            {t("services.categoryNotFound")}
+          </h2>
           <Button asChild>
-            <Link to="/services">{t('services.browseAll')}</Link>
+            <Link to="/services">{t("services.browseAll")}</Link>
           </Button>
         </div>
       </div>
@@ -128,10 +130,15 @@ export function ServiceCategoryPage() {
         <Button variant="ghost" asChild className="mb-4">
           <Link to="/services">
             <ArrowLeft size={16} className="mr-2" />
-            {t('services.backToServices')}
+            {t("services.backToServices")}
           </Link>
         </Button>
         <h1 className="text-4xl font-bold mb-2">{category.name}</h1>
+
+        {/* DEBUG BANNER */}
+        <div className="bg-green-200 dark:bg-green-800 text-black p-6 rounded-2xl mb-8 shadow-lg border-4 border-green-400 font-bold text-lg flex items-center gap-3">
+          🔍 DEBUG: ServiceCategoryPage (/services/{categorySlug})
+          <div className="ml-auto">
         {category.description && (
           <p className="text-muted-foreground">{category.description}</p>
         )}
@@ -140,7 +147,9 @@ export function ServiceCategoryPage() {
       {/* Subcategories */}
       {category.subcategories.length > 0 && (
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3">{t('services.subcategories')}</h3>
+          <h3 className="text-lg font-semibold mb-3">
+            {t("services.subcategories")}
+          </h3>
           <div className="flex flex-wrap gap-2">
             {category.subcategories.map((sub) => (
               <Badge key={sub.id} variant="secondary" className="text-sm">
@@ -156,7 +165,7 @@ export function ServiceCategoryPage() {
         <>
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-xl font-semibold">
-              {t('services.listingsFound', { count: listings.length })}
+              {t("services.listingsFound", { count: listings.length })}
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -185,10 +194,13 @@ export function ServiceCategoryPage() {
                 )}
                 <div className="flex items-center justify-between text-sm text-muted-foreground">
                   <span>
-                    {t('services.provider')}{" "}
-                    {listing.provider?.provider_name?.slice(0, 20) || t('services.unknown')}
+                    {t("services.provider")}{" "}
+                    {listing.provider?.provider_name?.slice(0, 20) ||
+                      t("services.unknown")}
                   </span>
-                  <span className="text-primary">{t('services.viewDetails')}</span>
+                  <span className="text-primary">
+                    {t("services.viewDetails")}
+                  </span>
                 </div>
               </Link>
             ))}
@@ -197,13 +209,13 @@ export function ServiceCategoryPage() {
       ) : (
         <div className="text-center py-12 bg-muted rounded-xl">
           <h3 className="text-xl font-semibold mb-2">
-            {t('services.noListings')}
+            {t("services.noListings")}
           </h3>
           <p className="text-muted-foreground mb-6">
-            {t('services.checkBack')}
+            {t("services.checkBack")}
           </p>
           <Button asChild>
-            <Link to="/services">{t('services.browseAll')}</Link>
+            <Link to="/services">{t("services.browseAll")}</Link>
           </Button>
         </div>
       )}

@@ -10,31 +10,28 @@
   },
   "auth": {
     "signIn": "تسجيل الدخول",
-    "signUp": "إنشاء حساب",
     "signOut": "تسجيل الخروج",
-    "signingIn": "جارٍ تسجيل الدخول...",
-    "createAccount": "إنشاء حساب جديد",
-    "email": "البريد الإلكتروني",
-    "password": "كلمة المرور",
-    "forgotPassword": "نسيت كلمة المرور؟",
-    "resetPassword": "إعادة تعيين كلمة المرور",
-    "emailPlaceholder": "john@example.com",
-    "passwordPlaceholder": "••••••••",
-    "signInToAurora": "تسجيل الدخول إلى Aurora",
-    "orText": "أو",
-    "goToProducts": "انتقل إلى منتجات Aurora",
-    "lookingForProducts": "هل تبحث عن منتجات؟",
-    "welcomeBack": "مرحباً بعودتك!",
-    "unexpectedError": "حدث خطأ غير متوقع",
-    "emailRequired": "البريد الإلكتروني مطلوب",
-    "validEmail": "يرجى إدخال بريد إلكتروني صحيح",
-    "passwordRequired": "كلمة المرور مطلوبة",
-    "passwordMinLength": "كلمة المرور يجب أن تكون 6 أحرف على الأقل",
-    "pendingReview": "حساب المزود الخاص بك في انتظار موافقة المشرف",
-    "fullName": "الاسم الكامل",
-    "confirmPassword": "تأكيد كلمة المرور",
-    "agreeToTerms": "أوافق على شروط الخدمة وسياسة الخصوصية",
-    "joinNow": "Join Now"
+    "joinNow": "انضم الآن"
+  },
+  "common": {
+    "dashboard": "لوحة التحكم",
+    "orders": "الطلبات",
+    "messages": "الرسائل",
+    "signIn": "تسجيل الدخول"
+  },
+  "services": {
+    "title": "الخدمات",
+    "findTalent": "ابحث عن المواهب",
+    "healthcare": "الرعاية الصحية",
+    "allServices": "جميع الخدمات",
+    "shopProducts": "تسوق المنتجات",
+    "searchPlaceholder": "ابحث عن الخدمات...",
+    "verified": "معتمد",
+    "auroraServices": "خدمات أورورا",
+    "becomeProvider": "كن مقدم خدمة"
+  },
+  "servicesChat": {
+    "theme": { "light": "فاتح", "dark": "داكن", "toggle": "تبديل السمة" }
   },
   "home": {
     "newArrivals": "وصل حديثاً",
@@ -139,7 +136,7 @@
     "noNotifications": "لا توجد إشعارات",
     "viewAllNotifications": "عرض كل الإشعارات",
     "reviews": "التقييمات",
-    "dashboard": "Dashboard"
+    "dashboard": "لوحة التحكم"
   },
   "product": {
     "addToCart": "أضف إلى السلة",
@@ -180,7 +177,7 @@
   },
   "errors": {
     "notFound": "الصفحة غير موجودة",
-    "notFoundDesc": "الصفحة التي تبحث عنها غير موجودة أو تم نقلها.",
+    "notTodo.md": "الصفحة التي تبحث عنها غير موجودة أو تم نقلها.",
     "serverError": "خطأ في الخادم",
     "serverErrorDesc": "حدث خطأ من جانبنا. يرجى المحاولة مرة أخرى لاحقاً.",
     "goHome": "الذهاب للرئيسية",
@@ -329,7 +326,7 @@
     "title": "إعادة تعيين كلمة المرور",
     "subtitle": "أدخل كلمة المرور الجديدة أدناه",
     "newPassword": "كلمة المرور الجديدة",
-    "confirmNewPassword": "تأكيد كلمة المرور الجديدة",
+    "confirmNewPassword": "تأكيد كلمة المرر الجديدة",
     "resetBtn": "إعادة تعيين كلمة المرور",
     "passwordUpdated": "تم تحديث كلمة المرور بنجاح!",
     "invalidLink": "رابط غير صالح",
@@ -482,14 +479,14 @@
     "unknown": "غير معروف",
     "noListings": "لا توجد خدمات في هذه الفئة حتى الآن",
     "checkBack": "الرجاء التحقق لاحقًا أو استكشاف فئات أخرى",
-    "findTalent": "Find Talent",
-    "healthcare": "Healthcare",
-    "allServices": "All Services",
-    "shopProducts": "Shop Products",
-    "searchPlaceholder": "Search services...",
-    "verified": "Verified",
-    "becomeProvider": "Become a Provider",
-    "auroraServices": "Aurora Services"
+    "findTalent": "ابحث عن المواهب",
+    "healthcare": "الرعاية الصحية",
+    "allServices": "جميع الخدمات",
+    "shopProducts": "تسوق المنتجات",
+    "searchPlaceholder": "ابحث عن الخدمات...",
+    "verified": "معتمد",
+    "becomeProvider": "كن مقدم خدمة",
+    "auroraServices": "خدمات أورورا"
   },
   "servicesHome": {
     "heroTitle": "اعثر على خدمات الخبراء والمستقلين",
@@ -528,10 +525,6 @@
     "typeMessage": "اكتب رسالة...",
     "service": "الخدمة",
     "user": "مستخدم",
-    "theme": {
-      "light": "فاتح",
-      "dark": "داكن",
-      "toggle": "تبديل السمة"
-    }
+    "theme": { "light": "فاتح", "dark": "داكن", "toggle": "تبديل السمة" }
   }
 }

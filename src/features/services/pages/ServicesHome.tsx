@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, Outlet } from "react-router-dom";
 import {
   Code,
   PenTool,
@@ -71,7 +71,10 @@ export function ServicesHome() {
         <h1 className="text-3xl md:text-5xl font-bold mb-4">
           {t("servicesHome.heroTitle")}
         </h1>
-        <p className="text-indigo-100 text-lg md:text-xl mb-8 max-w-2xl mx-auto">
+
+        {/* DEBUG BANNER */}
+        <div className="bg-yellow-200 dark:bg-yellow-800 text-black p-6 rounded-2xl mb-8 shadow-lg border-4 border-yellow-400 font-bold text-lg flex items-center gap-3">
+          <p className="text-indigo-100 text-lg md:text-xl mb-8 max-w-2xl mx-auto">
           {t("servicesHome.heroSubtitle")}
         </p>
 
@@ -198,6 +201,8 @@ export function ServicesHome() {
           </Link>
         </Button>
       </section>
+
+      {/* Nested Route Outlet */}
     </div>
   );
 }

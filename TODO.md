@@ -1,38 +1,66 @@
-# Multilingual (en/ar) Implementation TODO
+# Navigation Fix - Route Content Not Updating
 
-## ✅ Planning Complete
+## Status: [IN PROGRESS]
 
-## ✅ Step 1: Core i18n Setup
+## Steps:
 
-- [x] Update src/main.tsx (I18nextProvider)
-- [x] Create public/locales/en/translation.json
-- [x] Create public/locales/ar/translation.json
-- [x] Update src/i18n/config.ts (limit langs, path prefix)
+### 1. [DONE] Analyze routing structure ✅
 
-**Current: Step 2**
+- Confirmed React Router v6 setup correct
+- Layout uses <Outlet />
+- Nav uses proper <Link to>
 
-## ⬜ Step 2: Language Switcher + Navs
+### 2. [DONE] Debug ✅ - Routing broken, banners DON'T change
 
-- [ ] Create src/components/shared/LanguageSwitcher.tsx
-- [ ] Update src/components/layout/Header.tsx
-- [ ] Update src/components/layout/MobileNav.tsx
-- [ ] Update src/components/layout/ServicesHeader.tsx
+- ✅ ServicesHome: Yellow banner shows
+- ❌ Click /services/programming: Stays yellow (ServiceCategoryPage never renders)
+- **ROOT CAUSE:** ServicesHome.tsx missing <Outlet /> for nested :categorySlug route
 
-## ⬜ Step 3: Layout RTL + Constants
+### 3. [DONE] Fix nested routes ✅
 
-- [ ] Update src/components/layout/Layout.tsx (html lang/dir)
-- [ ] Update src/lib/constants.ts (keys only)
+- ✅ Added <Outlet /> to ServicesHome.tsx end (before </div>)
+- Now /services shows ServicesHome content + nested routes render below
 
-## ⬜ Step 4: Final Polish
+### 4. [DONE] Fixed TS error ✅
 
-- [ ] Update index.html (dynamic lang)
-- [ ] Tailwind RTL config (tailwind.config.js)
-- [ ] Update key open tabs (ServicesHome titles etc.)
+- ✅ Added \`import { Outlet } from "react-router-dom"\` to ServicesHome.tsx
 
-## ⬜ Step 5: Test & Complete
+### 5. [DONE] Routing FIXED ✅
 
-- [ ] Run dev server
-- [ ] Test switcher/RTL/persist
-- [ ] attempt_completion
+- ✅ Green banner appears on /services/programming!
+- ✅ Navigation now updates page content
+- Next: Remove debug banners + check data
 
-**Current: Step 1**
+### 5. [PENDING] Database data
+
+- If listings=0: Add test data
+
+- Check if svc_categories and svc_listings have data for "programming", "healthcare"
+- Insert test data if empty
+
+### 4. [PENDING] Check React Query caching in useServices hook
+
+- Add query invalidation on route change if needed
+
+### 5. [PENDING] Test full flow
+
+- / → /services → /services/programming
+- Confirm visual + data differences
+
+### 6. [PENDING] Cleanup debug code
+
+- Remove banners once fixed
+
+## Testing Commands:
+
+\`\`\`bash
+npm run dev
+
+# Test nav clicks, check Network tab for API calls, Console for errors
+
+\`\`\`
+
+## Notes:
+
+- User confirmed issue with services nav clicks
+- Suspected cause: Empty DB data → identical "no listings" UI
