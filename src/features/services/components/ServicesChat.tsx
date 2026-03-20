@@ -84,7 +84,7 @@ export const ServicesChat = () => {
           provider_id,
           client_id,
           listing_id,
-          listing:service_listings (
+          listing:svc_listings (
             id,
             title,
             price

@@ -74,7 +74,7 @@ export const DashboardSidebar = () => {
   useEffect(() => {
     if (user) {
       supabase
-        .from("service_providers")
+        .from("svc_providers")
         .select("provider_type")
         .eq("user_id", user.id)
         .single()

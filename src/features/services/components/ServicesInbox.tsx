@@ -65,7 +65,7 @@ export const ServicesInbox = () => {
           updated_at,
           is_read_by_provider,
           is_read_by_client,
-          listing:service_listings (
+          listing:svc_listings (
             id,
             title,
             price

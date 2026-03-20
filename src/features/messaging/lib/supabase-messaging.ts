@@ -57,7 +57,7 @@ export const getServiceConversations = async (userId: string) => {
       is_read_by_client,
       provider:users!provider_id(id, full_name, avatar_url),
       client:users!client_id(id, full_name, avatar_url),
-      listing:service_listings(id, title, price)
+      listing:svc_listings(id, title, price)
     `,
     )
     .or(`provider_id.eq.${userId},client_id.eq.${userId}`)

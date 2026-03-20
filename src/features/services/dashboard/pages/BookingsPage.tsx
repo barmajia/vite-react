@@ -48,7 +48,7 @@ interface Booking {
   booking_type: string;
   listing?: {
     title: string;
-    price_numeric: number;
+    price: number;
     id: string;
   };
 }
@@ -69,7 +69,7 @@ export const BookingsPage = () => {
       if (!user) return [];
 
       let query = supabase
-        .from("service_bookings")
+        .from("svc_orders")
         .select(
           `
           id,
@@ -97,8 +97,8 @@ export const BookingsPage = () => {
         ];
         if (listingIds.length > 0) {
           const { data: listings } = await supabase
-            .from("service_listings")
-            .select("id, title, price_numeric")
+            .from("svc_listings")
+            .select("id, title, price")
             .in("id", listingIds);
 
           // Merge listings with bookings
@@ -121,7 +121,7 @@ export const BookingsPage = () => {
   ) => {
     try {
       const { error } = await supabase
-        .from("service_bookings")
+        .from("svc_orders")
         .update({ status: newStatus })
         .eq("id", bookingId);
 

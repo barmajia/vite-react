@@ -203,7 +203,7 @@ export function OnboardingWizard() {
       }
 
       const { data, error } = await supabase
-        .from("service_providers")
+        .from("svc_providers")
         .insert({
           user_id: user.id,
           provider_type: formData.provider_type,

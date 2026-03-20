@@ -12,7 +12,7 @@ export const useProviderAnalytics = () => {
 
       // 1. Get Provider Profile to determine type
       const { data: profile } = await supabase
-        .from("service_providers")
+        .from("svc_providers")
         .select("provider_type, rating_avg, total_jobs")
         .eq("user_id", user.id)
         .single();
@@ -21,7 +21,7 @@ export const useProviderAnalytics = () => {
 
       // 2. Fetch Bookings Stats
       const { data: bookingsStats } = await supabase
-        .from("service_bookings")
+        .from("svc_orders")
         .select("id, start_date, status, agreed_price", {
           count: "exact",
         })

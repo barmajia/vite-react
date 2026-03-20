@@ -12,7 +12,7 @@ export const useRecentBookings = () => {
 
       // Fetch recent bookings with customer info
       const { data, error } = await supabase
-        .from("service_bookings")
+        .from("svc_orders")
         .select(
           `
           id,
@@ -34,7 +34,7 @@ export const useRecentBookings = () => {
         const listingIds = data.map((b) => b.listing_id).filter(Boolean);
         if (listingIds.length > 0) {
           const { data: listings } = await supabase
-            .from("service_listings")
+            .from("svc_listings")
             .select("id, title")
             .in("id", listingIds);
 

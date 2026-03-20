@@ -23,11 +23,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 
-type ProviderType =
-  | "individual"
-  | "company"
-  | "health_provider"
-  | "hospital";
+type ProviderType = "individual" | "company" | "health_provider" | "hospital";
 
 interface FormData {
   business_name: string;
@@ -94,7 +90,7 @@ export const ServiceOnboardingWizard = () => {
 
       // 1. Create Service Provider Profile
       const { error: providerError } = await supabase
-        .from("service_providers")
+        .from("svc_providers")
         .insert({
           user_id: user.id,
           provider_type: providerType,
@@ -362,9 +358,7 @@ export const ServiceOnboardingWizard = () => {
               {/* Conditional Fields: Company */}
               {providerType === "company" && (
                 <div className="space-y-2">
-                  <Label htmlFor="tax_id">
-                    Tax ID / Registration Number *
-                  </Label>
+                  <Label htmlFor="tax_id">Tax ID / Registration Number *</Label>
                   <Input
                     id="tax_id"
                     value={formData.tax_id}
@@ -382,9 +376,7 @@ export const ServiceOnboardingWizard = () => {
                     <Input
                       id="skills"
                       value={formData.skills}
-                      onChange={(e) =>
-                        updateFormData("skills", e.target.value)
-                      }
+                      onChange={(e) => updateFormData("skills", e.target.value)}
                       placeholder="e.g. React, TypeScript, UI Design"
                     />
                   </div>
@@ -395,7 +387,10 @@ export const ServiceOnboardingWizard = () => {
                       type="number"
                       value={formData.hourly_rate}
                       onChange={(e) =>
-                        updateFormData("hourly_rate", parseFloat(e.target.value))
+                        updateFormData(
+                          "hourly_rate",
+                          parseFloat(e.target.value),
+                        )
                       }
                       placeholder="e.g. 200"
                     />

@@ -40,7 +40,7 @@ export const useAvailability = (
 
       // Fetch existing bookings for the date
       const { data: bookings } = await supabase
-        .from("service_bookings")
+        .from("svc_orders")
         .select("id, start_date, status")
         .eq("provider_id", providerId)
         .gte("start_date", dateStr)
