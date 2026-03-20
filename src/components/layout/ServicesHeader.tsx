@@ -90,7 +90,14 @@ export function ServicesHeader() {
     }
   };
 
-  const isActive = (path: string) => location.pathname.startsWith(path);
+  const isActive = (path: string) => {
+    if (path === "/services") {
+      // For "All Services", only match exact /services or /
+      return location.pathname === "/services" || location.pathname === "/";
+    }
+    // For nested routes like /services/health, /services/health/doctors, etc.
+    return location.pathname.startsWith(path);
+  };
 
   const navItems = [
     {
@@ -100,7 +107,7 @@ export function ServicesHeader() {
     },
     {
       label: t("services.healthcare"),
-      href: "/services/healthcare",
+      href: "/services/health",
       icon: "",
     },
     {
@@ -138,7 +145,7 @@ export function ServicesHeader() {
                   Aurora
                 </span>
                 <span className="text-[9px] font-semibold text-violet-600 dark:text-violet-400 tracking-[0.25em] uppercase">
-                  {t("services.title")}
+                  {t("      services      ")}
                 </span>
               </div>
             </Link>
@@ -222,37 +229,25 @@ export function ServicesHeader() {
                     )}
                   </Link>
 
-                  {/* Theme Toggle */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        className="relative p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-                        aria-label={t("servicesChat.theme.toggle")}
-                      >
-                        <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                        <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="dark:bg-gray-800 dark:border-gray-700"
-                    >
-                      <DropdownMenuItem
-                        onClick={() => setTheme("light")}
-                        className="dark:text-gray-200 dark:focus:bg-gray-700"
-                      >
-                        <Sun className="mr-2 h-4 w-4" />
-                        {t("servicesChat.theme.light")}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => setTheme("dark")}
-                        className="dark:text-gray-200 dark:focus:bg-gray-700"
-                      >
-                        <Moon className="mr-2 h-4 w-4" />
-                        {t("servicesChat.theme.dark")}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {/* Theme Toggle - One Click */}
+                  <button
+                    onClick={() =>
+                      setTheme(theme === "light" ? "dark" : "light")
+                    }
+                    className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all hover:scale-110"
+                    aria-label="Toggle theme"
+                    title={
+                      theme === "light"
+                        ? "Switch to Dark Mode"
+                        : "Switch to Light Mode"
+                    }
+                  >
+                    {theme === "light" ? (
+                      <Moon className="h-5 w-5" />
+                    ) : (
+                      <Sun className="h-5 w-5 text-amber-500" />
+                    )}
+                  </button>
 
                   {/* Profile Dropdown */}
                   <DropdownMenu>

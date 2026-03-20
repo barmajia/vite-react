@@ -49,6 +49,19 @@ import { DashboardHome } from "@/features/services/dashboard/pages/DashboardHome
 import { BookingsPage } from "@/features/services/dashboard/pages/BookingsPage";
 import { ServiceBookingPage } from "@/features/services/bookings/pages/ServiceBookingPage";
 
+// Healthcare Module
+import HealthLayout from "@/features/health/layouts/HealthLayout";
+import HealthLanding from "@/features/health/pages/HealthLanding";
+import DoctorList from "@/features/health/pages/DoctorList";
+import DoctorSignup from "@/features/health/pages/DoctorSignup";
+import DoctorPendingApproval from "@/features/health/pages/DoctorPendingApproval";
+import BookingPage from "@/features/health/pages/BookingPage";
+import PatientDashboard from "@/features/health/pages/PatientDashboard";
+import DoctorDashboard from "@/features/health/pages/DoctorDashboard";
+import AdminVerification from "@/features/health/pages/AdminVerification";
+import ConsultationRoom from "@/features/health/pages/ConsultationRoom";
+import PharmacyList from "@/features/health/pages/PharmacyList";
+
 // Factory pages
 import { FactoryDashboardPage } from "@/pages/factory/FactoryDashboardPage";
 import { FactoryProductionPage } from "@/pages/factory/FactoryProductionPage";
@@ -236,6 +249,26 @@ function App() {
                 path="factory/connections"
                 element={<FactoryConnectionsPage />}
               />
+
+              {/* Healthcare Routes */}
+              <Route path="services/health" element={<HealthLayout />}>
+                <Route index element={<HealthLanding />} />
+                <Route path="doctors" element={<DoctorList />} />
+                <Route path="doctor/signup" element={<DoctorSignup />} />
+                <Route
+                  path="doctor/pending-approval"
+                  element={<DoctorPendingApproval />}
+                />
+                <Route path="book/:id" element={<BookingPage />} />
+                <Route
+                  path="patient/dashboard"
+                  element={<PatientDashboard />}
+                />
+                <Route path="doctor/dashboard" element={<DoctorDashboard />} />
+                <Route path="admin/verify" element={<AdminVerification />} />
+                <Route path="consult/:id" element={<ConsultationRoom />} />
+                <Route path="pharmacies" element={<PharmacyList />} />
+              </Route>
 
               {/* Error Routes */}
               <Route path="error" element={<ServerError />} />
