@@ -91,8 +91,8 @@ export function Header() {
         className={cn(
           "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b",
           isScrolled
-            ? "bg-white/95 backdrop-blur-lg shadow-lg shadow-gray-200/50 dark:bg-gray-900/95 dark:border-gray-800 dark:shadow-gray-900/50"
-            : "bg-white/90 backdrop-blur-md dark:bg-gray-900/90 dark:border-gray-800",
+            ? "bg-white/95 backdrop-blur-lg shadow-lg shadow-gray-200/50 dark:bg-gray-950/95 dark:border-gray-800 dark:shadow-gray-900/50"
+            : "bg-white/90 backdrop-blur-md dark:bg-gray-950/90 dark:border-gray-800",
         )}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -110,7 +110,7 @@ export function Header() {
               </div>
               <div className="flex flex-col">
                 <span className="text-xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-gray-200 bg-clip-text text-transparent leading-none">
-                  A U R O R A
+                  AURORA
                 </span>
                 <span className="text-[9px] font-semibold text-violet-600 dark:text-violet-400 tracking-[0.25em] uppercase">
                   {t("s h o p")}
@@ -177,9 +177,6 @@ export function Header() {
 
               {user ? (
                 <>
-                  {/* Language Switcher */}
-                  <LanguageSwitcher />
-
                   {/* Theme Toggle - One Click */}
                   <button
                     onClick={() =>
@@ -199,6 +196,9 @@ export function Header() {
                       <Sun className="h-5 w-5 text-amber-500" />
                     )}
                   </button>
+
+                  {/* Language Switcher */}
+                  <LanguageSwitcher />
 
                   {/* Notifications */}
                   {user && <NotificationBell />}

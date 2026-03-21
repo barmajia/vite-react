@@ -130,7 +130,7 @@ export const CACHE = {
 
 // Social Links
 export const SOCIAL_LINKS = {
-  FACEBOOK: "https://facebook.com/aurora",
+  FACEBOOK: "https://facebook.com/aurura",
   TWITTER: "https://twitter.com/aurora",
   INSTAGRAM: "https://instagram.com/aurora",
   LINKEDIN: "https://linkedin.com/company/aurora",
@@ -138,7 +138,6 @@ export const SOCIAL_LINKS = {
 
 // Contact
 export const CONTACT = {
-  EMAIL: "support@aurora.com",
-  PHONE: "+1 (555) 123-4567",
-  ADDRESS: "123 Aurora Street, San Francisco, CA 94102",
+  EMAIL: "contact@aurora.com",
+  PHONE: "+201028551087",
 } as const;

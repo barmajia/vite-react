@@ -225,7 +225,7 @@ const ProductDetailsPage = () => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 pt-20">
       <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
         {/* Image Gallery */}
         <div className="flex flex-col gap-4">

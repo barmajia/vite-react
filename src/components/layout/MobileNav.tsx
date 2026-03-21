@@ -20,6 +20,7 @@ import { useSwipeToOpen } from "@/hooks/useSwipeToOpen";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { useEffect } from "react";
 
 interface MobileNavProps {
   isOpen: boolean;
@@ -30,6 +31,21 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+
+  // Prevent body scroll when mobile nav is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, [isOpen]);
 
   const { onTouchStart } = useSwipeToOpen({
     isOpen,
@@ -85,13 +101,13 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
       {/* Drawer */}
       <div
         className={cn(
-          "fixed top-0 left-0 z-50 h-full w-[280px] bg-background shadow-lg transition-transform md:hidden",
+          "fixed top-0 left-0 z-50 h-full w-[280px] bg-background shadow-lg transition-transform md:hidden flex flex-col",
           isOpen ? "translate-x-0" : "-translate-x-full",
         )}
         onTouchStart={onTouchStart}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
+        <div className="flex items-center justify-between p-4 border-b shrink-0">
           <Link to={ROUTES.HOME} className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-foreground text-background dark:bg-background dark:text-foreground flex items-center justify-center">
               <span className="font-bold text-lg">A</span>
@@ -105,79 +121,81 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
           </Button>
         </div>
 
-        {/* Menu Items */}
-        <div className="p-4 space-y-2">
-          {menuItems.map((item) => (
-            <Link
-              key={item.href}
-              to={item.href}
-              onClick={onClose}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors"
-            >
-              <item.icon className="h-5 w-5" />
-              <span className="font-medium">{item.label}</span>
-            </Link>
-          ))}
-        </div>
+        {/* Menu Items - Scrollable */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="p-4 space-y-2">
+            {menuItems.map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                onClick={onClose}
+                className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors"
+              >
+                <item.icon className="h-5 w-5" />
+                <span className="font-medium">{item.label}</span>
+              </Link>
+            ))}
+          </div>
 
-        {/* Auth Section */}
-        {user ? (
-          <>
-            <div className="px-4 py-2 border-t">
-              <p className="text-sm font-medium mb-1">
-                {user.user_metadata.full_name || t("common.user")}
-              </p>
-              <p className="text-xs text-muted-foreground">{user.email}</p>
-            </div>
+          {/* Auth Section */}
+          {user ? (
+            <>
+              <div className="px-4 py-2 border-t shrink-0">
+                <p className="text-sm font-medium mb-1">
+                  {user.user_metadata.full_name || t("common.user")}
+                </p>
+                <p className="text-xs text-muted-foreground">{user.email}</p>
+              </div>
 
-            <div className="p-4 space-y-2">
-              {authMenuItems.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
-                  onClick={onClose}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors"
+              <div className="p-4 space-y-2">
+                {authMenuItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    onClick={onClose}
+                    className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent transition-colors"
+                  >
+                    <item.icon className="h-5 w-5" />
+                    <span className="font-medium">{item.label}</span>
+                  </Link>
+                ))}
+              </div>
+
+              <div className="p-4 border-t shrink-0">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleSignOut}
                 >
-                  <item.icon className="h-5 w-5" />
-                  <span className="font-medium">{item.label}</span>
-                </Link>
-              ))}
-            </div>
-
-            <div className="p-4 border-t">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  {t("auth.signOut")}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <div className="p-4 space-y-2 border-t shrink-0">
+              <Button
+                className="w-full"
+                onClick={() => {
+                  onClose();
+                  navigate(ROUTES.SIGNUP);
+                }}
+              >
+                {t("auth.signUp")}
+              </Button>
               <Button
                 variant="outline"
                 className="w-full"
-                onClick={handleSignOut}
+                onClick={() => {
+                  onClose();
+                  navigate(ROUTES.LOGIN);
+                }}
               >
-                <LogOut className="mr-2 h-4 w-4" />
-                {t("auth.signOut")}
+                {t("auth.signIn")}
               </Button>
             </div>
-          </>
-        ) : (
-          <div className="p-4 space-y-2 border-t">
-            <Button
-              className="w-full"
-              onClick={() => {
-                onClose();
-                navigate(ROUTES.SIGNUP);
-              }}
-            >
-              {t("auth.signUp")}
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                onClose();
-                navigate(ROUTES.LOGIN);
-              }}
-            >
-              {t("auth.signIn")}
-            </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </>
   );

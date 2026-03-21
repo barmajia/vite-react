@@ -51,6 +51,34 @@
   }
 }
 
+@layer utilities {
+  @keyframes slide-in-right {
+    from {
+      transform: translateX(100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slide-in-left {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out;
+  }
+
+  .animate-slide-in-left {
+    animation: slide-in-left 0.3s ease-out;
+  }
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -63,10 +91,11 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  
+
   /* RTL Typography overrides */
   [dir="rtl"] body {
-    font-family: "Tajawal", "Cairo", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    font-family:
+      "Tajawal", "Cairo", "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   }
 }
 

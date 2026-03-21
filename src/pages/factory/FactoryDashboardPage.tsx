@@ -1,10 +1,16 @@
-import { FactoryDashboard } from '@/features/factory/components/FactoryDashboard';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Building2, TrendingUp } from 'lucide-react';
+import { FactoryDashboard } from "@/features/factory/components/FactoryDashboard";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Building2, TrendingUp } from "lucide-react";
 
 export const FactoryDashboardPage = () => {
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pt-20">
       {/* Header */}
       <div className="flex items-center gap-4">
         <div className="p-3 bg-primary rounded-lg">
@@ -32,7 +38,10 @@ export const FactoryDashboardPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <a href="/factory/production" className="text-primary text-sm font-medium hover:underline">
+            <a
+              href="/factory/production"
+              className="text-primary text-sm font-medium hover:underline"
+            >
               View all orders →
             </a>
           </CardContent>
@@ -47,7 +56,10 @@ export const FactoryDashboardPage = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <a href="/factory/quotes" className="text-primary text-sm font-medium hover:underline">
+            <a
+              href="/factory/quotes"
+              className="text-primary text-sm font-medium hover:underline"
+            >
               View requests →
             </a>
           </CardContent>
@@ -57,12 +69,13 @@ export const FactoryDashboardPage = () => {
           <CardHeader>
             <Building2 className="h-8 w-8 text-primary mb-2" />
             <CardTitle>Connections</CardTitle>
-            <CardDescription>
-              Manage your seller partnerships
-            </CardDescription>
+            <CardDescription>Manage your seller partnerships</CardDescription>
           </CardHeader>
           <CardContent>
-            <a href="/factory/connections" className="text-primary text-sm font-medium hover:underline">
+            <a
+              href="/factory/connections"
+              className="text-primary text-sm font-medium hover:underline"
+            >
               View connections →
             </a>
           </CardContent>

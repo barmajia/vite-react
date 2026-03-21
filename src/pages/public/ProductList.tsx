@@ -2,7 +2,13 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Grid, List } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { FilterSidebar } from "@/components/products/FilterSidebar.tsx";
 import { useTranslation } from "react-i18next";
@@ -62,18 +68,18 @@ export function ProductList() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pt-20">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold">
             {searchQuery
-              ? t('productList.searchResults', { query: searchQuery })
-              : t('productList.allProducts')}
+              ? t("productList.searchResults", { query: searchQuery })
+              : t("productList.allProducts")}
           </h1>
           {data && (
             <p className="text-muted-foreground mt-1">
-              {t('productList.productsFound', { count: data.totalCount })}
+              {t("productList.productsFound", { count: data.totalCount })}
             </p>
           )}
         </div>
@@ -85,15 +91,27 @@ export function ProductList() {
             onValueChange={handleSortChange}
           >
             <SelectTrigger className="w-[160px] sm:w-[180px]">
-              <SelectValue placeholder={t('productList.sortBy')} />
+              <SelectValue placeholder={t("productList.sortBy")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="created_at-desc">{t('productList.newestFirst')}</SelectItem>
-              <SelectItem value="created_at-asc">{t('productList.oldestFirst')}</SelectItem>
-              <SelectItem value="price-asc">{t('productList.priceLowHigh')}</SelectItem>
-              <SelectItem value="price-desc">{t('productList.priceHighLow')}</SelectItem>
-              <SelectItem value="title-asc">{t('productList.nameAZ')}</SelectItem>
-              <SelectItem value="title-desc">{t('productList.nameZA')}</SelectItem>
+              <SelectItem value="created_at-desc">
+                {t("productList.newestFirst")}
+              </SelectItem>
+              <SelectItem value="created_at-asc">
+                {t("productList.oldestFirst")}
+              </SelectItem>
+              <SelectItem value="price-asc">
+                {t("productList.priceLowHigh")}
+              </SelectItem>
+              <SelectItem value="price-desc">
+                {t("productList.priceHighLow")}
+              </SelectItem>
+              <SelectItem value="title-asc">
+                {t("productList.nameAZ")}
+              </SelectItem>
+              <SelectItem value="title-desc">
+                {t("productList.nameZA")}
+              </SelectItem>
             </SelectContent>
           </Select>
 
@@ -134,15 +152,19 @@ export function ProductList() {
         <div className="flex-1 min-w-0">
           {error ? (
             <div className="text-center py-12">
-              <p className="text-destructive">{t('productList.errorLoading')}</p>
+              <p className="text-destructive">
+                {t("productList.errorLoading")}
+              </p>
             </div>
           ) : isLoading ? (
             <ProductGrid isLoading={true} />
           ) : data && data.products.length === 0 ? (
             <div className="text-center py-12">
-              <h2 className="text-xl font-semibold mb-2">{t('productList.noProductsFound')}</h2>
+              <h2 className="text-xl font-semibold mb-2">
+                {t("productList.noProductsFound")}
+              </h2>
               <p className="text-muted-foreground">
-                {t('productList.tryAdjusting')}
+                {t("productList.tryAdjusting")}
               </p>
             </div>
           ) : (

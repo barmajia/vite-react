@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 
 export function ServicesHeader() {
   const { t } = useTranslation();
@@ -63,16 +64,41 @@ export function ServicesHeader() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
+    };
+  }, [isMobileMenuOpen]);
+
   useEffect(() => {
     const getProviderProfile = async () => {
       if (!user) return;
-      const { data, error } = await supabase
-        .from("svc_providers")
-        .select("id, provider_name, logo_url, is_verified")
-        .eq("user_id", user.id);
+      try {
+        const { data, error } = await supabase
+          .from("svc_providers")
+          .select("id, provider_name, logo_url, is_verified")
+          .eq("user_id", user.id)
+          .maybeSingle();
 
-      if (!error && data && data.length > 0) {
-        setProviderProfile(data[0]);
+        if (error) {
+          console.error("Error fetching provider profile:", error);
+          return;
+        }
+
+        if (data) {
+          setProviderProfile(data);
+        }
+      } catch (err) {
+        console.error("Unexpected error fetching provider profile:", err);
       }
     };
     getProviderProfile();
@@ -92,10 +118,8 @@ export function ServicesHeader() {
 
   const isActive = (path: string) => {
     if (path === "/services") {
-      // For "All Services", only match exact /services or /
       return location.pathname === "/services" || location.pathname === "/";
     }
-    // For nested routes like /services/health, /services/health/doctors, etc.
     return location.pathname.startsWith(path);
   };
 
@@ -123,8 +147,8 @@ export function ServicesHeader() {
         className={cn(
           "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b",
           isScrolled
-            ? "bg-white/95 backdrop-blur-lg shadow-lg shadow-gray-200/50 dark:bg-gray-900/95 dark:border-gray-800 dark:shadow-gray-900/50"
-            : "bg-white/90 backdrop-blur-md dark:bg-gray-900/90 dark:border-gray-800",
+            ? "bg-white/95 backdrop-blur-lg shadow-lg shadow-gray-200/50 dark:bg-gray-950/95 dark:border-gray-800 dark:shadow-gray-900/50"
+            : "bg-white/90 backdrop-blur-md dark:bg-gray-950/90 dark:border-gray-800",
         )}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -138,10 +162,10 @@ export function ServicesHeader() {
                 <div className="bg-gradient-to-br from-violet-600 to-indigo-600 text-white p-2.5 rounded-xl shadow-lg shadow-violet-500/30 group-hover:shadow-violet-500/50 transition-all duration-300 group-hover:scale-105">
                   <Briefcase size={22} strokeWidth={2.5} />
                 </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
+                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-gray-950 shadow-sm" />
               </div>
               <div className="flex flex-col">
-                <span className="text-xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-gray-200 bg-clip-text text-transparent leading-none">
+                <span className="text-xl font-bold text-gray-900 dark:text-white leading-none">
                   A U R O R A
                 </span>
                 <span className="text-[9px] font-semibold text-violet-600 dark:text-violet-400 tracking-[0.25em] uppercase">
@@ -177,9 +201,9 @@ export function ServicesHeader() {
               {/* Products Cross-Link */}
               <Link
                 to="/products"
-                className="group flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                className="group flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
               >
-                <div className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-900/20 transition-colors">
+                <div className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-violet-50 dark:group-hover:bg-violet-900/20 transition-colors">
                   <ShoppingBag size={14} strokeWidth={2.5} />
                 </div>
                 <span className="hidden xl:inline">
@@ -214,7 +238,7 @@ export function ServicesHeader() {
                   <button className="relative p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
                     <Bell size={20} />
                     {notificationCount > 0 && (
-                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-900" />
+                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-950" />
                     )}
                   </button>
 
@@ -225,7 +249,7 @@ export function ServicesHeader() {
                   >
                     <MessageSquare size={20} />
                     {messageCount > 0 && (
-                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-900" />
+                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-950" />
                     )}
                   </Link>
 
@@ -249,10 +273,13 @@ export function ServicesHeader() {
                     )}
                   </button>
 
+                  {/* Language Switcher */}
+                  <LanguageSwitcher />
+
                   {/* Profile Dropdown */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <button className="flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-800 px-2 py-1.5 rounded-full transition-all border border-transparent hover:border-gray-200 dark:hover:border-gray-700">
+                      <button className="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1.5 rounded-full transition-all border border-transparent hover:border-gray-200 dark:hover:border-gray-700">
                         <Avatar
                           name={
                             providerProfile?.provider_name ||
@@ -260,14 +287,17 @@ export function ServicesHeader() {
                           }
                           src={providerProfile?.logo_url}
                           size="md"
-                          className="w-9 h-9 border-2 border-white dark:border-gray-700 shadow-sm"
+                          className="w-9 h-9 border-2 border-gray-200 dark:border-gray-700 shadow-sm"
                         />
-                        <ChevronDown size={15} className="text-gray-400" />
+                        <ChevronDown
+                          size={15}
+                          className="text-gray-500 dark:text-gray-400"
+                        />
                       </button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent
                       align="end"
-                      className="w-64 rounded-xl shadow-xl border-gray-100 dark:bg-gray-800 dark:border-gray-700"
+                      className="w-64 rounded-xl shadow-xl border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700"
                     >
                       <DropdownMenuLabel className="font-normal">
                         <div className="flex flex-col space-y-1">
@@ -287,10 +317,10 @@ export function ServicesHeader() {
                           </p>
                         </div>
                       </DropdownMenuLabel>
-                      <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-700" />
+                      <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
                       <DropdownMenuItem
                         asChild
-                        className="cursor-pointer dark:text-gray-200 dark:focus:bg-gray-700"
+                        className="cursor-pointer text-gray-700 dark:text-gray-200 dark:focus:bg-gray-700"
                       >
                         <Link
                           to="/services/dashboard"
@@ -302,7 +332,7 @@ export function ServicesHeader() {
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         asChild
-                        className="cursor-pointer dark:text-gray-200 dark:focus:bg-gray-700"
+                        className="cursor-pointer text-gray-700 dark:text-gray-200 dark:focus:bg-gray-700"
                       >
                         <Link to="/orders" className="flex items-center">
                           <ShoppingBag className="mr-2 h-4 w-4" />
@@ -311,7 +341,7 @@ export function ServicesHeader() {
                       </DropdownMenuItem>
                       {!providerProfile && (
                         <>
-                          <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-700" />
+                          <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
                           <DropdownMenuItem
                             asChild
                             className="cursor-pointer text-violet-600 dark:text-violet-400 dark:focus:bg-gray-700"
@@ -326,7 +356,7 @@ export function ServicesHeader() {
                           </DropdownMenuItem>
                         </>
                       )}
-                      <DropdownMenuSeparator className="bg-gray-100 dark:bg-gray-700" />
+                      <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
                       <DropdownMenuItem
                         onClick={handleLogout}
                         className="cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-900/20"
@@ -357,12 +387,28 @@ export function ServicesHeader() {
             </div>
 
             {/* Mobile Menu Button */}
-            <button
-              className="lg:hidden p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            <div className="flex items-center gap-2 lg:hidden">
+              {/* Theme Toggle - Mobile Quick Access */}
+              <button
+                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                aria-label="Toggle theme"
+              >
+                {theme === "light" ? (
+                  <Moon className="h-5 w-5" />
+                ) : (
+                  <Sun className="h-5 w-5 text-amber-500" />
+                )}
+              </button>
+
+              {/* Mobile Menu Button */}
+              <button
+                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              >
+                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
           </div>
         </div>
       </header>
@@ -379,11 +425,11 @@ export function ServicesHeader() {
 
           {/* Drawer */}
           <div
-            className="fixed top-0 right-0 z-50 h-full w-[300px] bg-white dark:bg-gray-900 shadow-2xl lg:hidden overflow-y-auto"
+            className="fixed top-0 right-0 z-50 h-full w-[300px] bg-white dark:bg-gray-950 shadow-2xl lg:hidden flex flex-col"
             onTouchStart={onTouchStart}
           >
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800 sticky top-0 bg-white dark:bg-gray-900 z-10">
+            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
               <span className="font-bold text-lg text-gray-900 dark:text-white">
                 {t("services.auroraServices")}
               </span>
@@ -395,8 +441,8 @@ export function ServicesHeader() {
               </button>
             </div>
 
-            {/* Content */}
-            <div className="p-4 space-y-3">
+            {/* Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
               {/* Search */}
               <form onSubmit={handleSearch} className="relative">
                 <input
