@@ -12,7 +12,10 @@ type AuthContextType = {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signIn: (
+    email: string,
+    password: string,
+  ) => Promise<{ error: Error | null; data: any }>;
   signUp: (
     email: string,
     password: string,
@@ -28,6 +31,7 @@ type AuthContextType = {
   ) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;
+  resendVerification: (email: string) => Promise<{ error: Error | null }>;
   checkProviderProfile: () => Promise<{
     hasProviderProfile: boolean;
     status?: string;
@@ -66,11 +70,79 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    return { data, error: error as Error | null };
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        // Log the full error for debugging
+        console.error("Supabase Auth Error:", {
+          message: error.message,
+          status: error.status,
+          code: (error as any).code,
+        });
+
+        // Handle specific error cases
+        const errorCode = (error as any).code;
+
+        if (
+          errorCode === "email_not_confirmed" ||
+          error.message?.includes("Email not confirmed")
+        ) {
+          return {
+            data: null,
+            error: {
+              ...error,
+              message:
+                "Please verify your email before signing in. Check your inbox and spam folder.",
+            } as Error,
+          };
+        }
+
+        if (
+          errorCode === "invalid_credentials" ||
+          error.message?.includes("Invalid login credentials")
+        ) {
+          return {
+            data: null,
+            error: {
+              ...error,
+              message: "Invalid email or password. Please try again.",
+            } as Error,
+          };
+        }
+
+        if (errorCode === "user_not_found") {
+          return {
+            data: null,
+            error: {
+              ...error,
+              message: "No account found with this email address.",
+            } as Error,
+          };
+        }
+
+        if (errorCode === "rate_limit_exceeded" || error.status === 429) {
+          return {
+            data: null,
+            error: {
+              ...error,
+              message: "Too many attempts. Please wait a moment and try again.",
+            } as Error,
+          };
+        }
+      }
+
+      return { data, error: error as Error | null };
+    } catch (err: any) {
+      console.error("Unexpected sign in error:", err);
+      return {
+        data: null,
+        error: new Error("An unexpected error occurred. Please try again."),
+      };
+    }
   };
 
   const signUp = async (
@@ -126,6 +198,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return { error: error as Error | null };
   };
 
+  const resendVerification = async (email: string) => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email,
+      });
+      return { error: error as Error | null };
+    } catch (err: any) {
+      console.error("Resend verification error:", err);
+      return { error: err as Error };
+    }
+  };
+
   const checkProviderProfile = async () => {
     const {
       data: { user },
@@ -151,6 +236,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signUpWithRole,
     signOut,
     resetPassword,
+    resendVerification,
     checkProviderProfile,
   };
 

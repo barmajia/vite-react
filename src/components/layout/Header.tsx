@@ -182,28 +182,26 @@ export function Header() {
                 />
               </form>
 
+              {/* Theme Toggle - Enhanced Visibility */}
+              <button
+                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                className="relative p-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-yellow-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-all hover:scale-110 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700"
+                aria-label="Toggle theme"
+                title={
+                  theme === "light"
+                    ? "Switch to Dark Mode 🌙"
+                    : "Switch to Light Mode ☀️"
+                }
+              >
+                {theme === "light" ? (
+                  <Moon className="h-5 w-5 text-indigo-600" />
+                ) : (
+                  <Sun className="h-5 w-5 text-amber-500" />
+                )}
+              </button>
+
               {user ? (
                 <>
-                  {/* Theme Toggle - One Click */}
-                  <button
-                    onClick={() =>
-                      setTheme(theme === "light" ? "dark" : "light")
-                    }
-                    className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-all hover:scale-110"
-                    aria-label="Toggle theme"
-                    title={
-                      theme === "light"
-                        ? "Switch to Dark Mode"
-                        : "Switch to Light Mode"
-                    }
-                  >
-                    {theme === "light" ? (
-                      <Moon className="h-5 w-5" />
-                    ) : (
-                      <Sun className="h-5 w-5 text-amber-500" />
-                    )}
-                  </button>
-
                   {/* Language Switcher - Compact for desktop header */}
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>

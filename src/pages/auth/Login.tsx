@@ -1,37 +1,32 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Mail, Lock, Eye, EyeOff, Loader2, Briefcase } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Loader2,
+  Briefcase,
+  Sun,
+  Moon,
+  ArrowLeft,
+} from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 import { supabase } from "@/lib/supabase";
 import { isValidEmail } from "@/lib/utils";
 import { toast } from "sonner";
-
-// Map Supabase error codes/messages to safe, user-friendly messages
-function getAuthErrorMessage(t: (key: string) => string, rawMessage: string): string {
-  if (!rawMessage) return t("auth.unexpectedError");
-  const msg = rawMessage.toLowerCase();
-  if (msg.includes("invalid login credentials") || msg.includes("invalid email or password")) {
-    return t("auth.invalidCredentials") ?? "Invalid email or password.";
-  }
-  if (msg.includes("email not confirmed")) {
-    return t("auth.emailNotConfirmed") ?? "Please confirm your email before signing in.";
-  }
-  if (msg.includes("too many requests")) {
-    return t("auth.tooManyRequests") ?? "Too many attempts. Please wait a moment and try again.";
-  }
-  // Generic fallback — do NOT expose the raw server message
-  return t("auth.unexpectedError");
-}
 
 export function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { signIn } = useAuth();
+  const { theme, setTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -73,8 +68,9 @@ export function Login() {
       const data = (result as any).data;
 
       if (error) {
-        // Security: sanitize error message before display
-        toast.error(getAuthErrorMessage(t, error.message ?? ""));
+        // Show error in UI
+        setError(error.message ?? t("auth.unexpectedError"));
+        toast.error(error.message ?? t("auth.unexpectedError"));
       } else {
         toast.success(t("auth.welcomeBack"));
 
@@ -107,21 +103,55 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-brand-blue-50 via-white to-brand-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative">
+      {/* Theme Toggle */}
+      <div className="absolute top-6 right-6 flex items-center gap-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+          className="border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm"
+          title={
+            theme === "light"
+              ? "Switch to Dark Mode 🌙"
+              : "Switch to Light Mode ☀️"
+          }
+        >
+          {theme === "light" ? (
+            <Moon className="h-4 w-4 text-indigo-600" />
+          ) : (
+            <Sun className="h-4 w-4 text-amber-500" />
+          )}
+          <span className="ml-2 text-xs font-medium hidden sm:inline">
+            {theme === "light" ? "Dark" : "Light"}
+          </span>
+        </Button>
+      </div>
+
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <div className="flex justify-center">
           <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
             <Briefcase className="h-8 w-8 text-primary-foreground" />
           </div>
         </div>
-        <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+        <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
           {t("auth.signInToAurora")}
         </h2>
-        <p className="mt-2 text-sm text-gray-600">
+        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
           {t("auth.orText")}{" "}
           <Link
             to="/signup"
-            className="font-medium text-primary-600 hover:text-primary-500"
+            className="font-medium text-primary-600 hover:text-primary-500 dark:text-brand-blue-400 dark:hover:text-brand-blue-300"
           >
             {t("auth.createAccount")}
           </Link>
@@ -129,10 +159,10 @@ export function Login() {
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <Card className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-slate-200">
+        <Card className="bg-white dark:bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-slate-200 dark:border-gray-700">
           <CardContent className="space-y-6">
             {error && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm">
+              <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-md text-sm">
                 {error}
               </div>
             )}
@@ -141,7 +171,7 @@ export function Login() {
               <div>
                 <Label
                   htmlFor="email"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
                   {t("auth.email")}
                 </Label>
@@ -153,7 +183,7 @@ export function Login() {
                     id="email"
                     type="email"
                     required
-                    className="pl-10"
+                    className="pl-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 dark:text-white"
                     value={formData.email}
                     onChange={(e) =>
                       setFormData({ ...formData, email: e.target.value })
@@ -166,7 +196,7 @@ export function Login() {
               <div>
                 <Label
                   htmlFor="password"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
                   {t("auth.password")}
                 </Label>
@@ -178,7 +208,7 @@ export function Login() {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     required
-                    className="pl-10 pr-10"
+                    className="pl-10 pr-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 dark:text-white"
                     value={formData.password}
                     onChange={(e) =>
                       setFormData({ ...formData, password: e.target.value })
@@ -187,13 +217,13 @@ export function Login() {
                   />
                   <button
                     type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                     onClick={() => setShowPassword(!showPassword)}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400" />
+                      <EyeOff className="h-5 w-5" />
                     ) : (
-                      <Eye className="h-5 w-5 text-gray-400" />
+                      <Eye className="h-5 w-5" />
                     )}
                   </button>
                 </div>
@@ -214,10 +244,10 @@ export function Login() {
             <div className="mt-6">
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
+                  <div className="w-full border-t border-gray-300 dark:border-gray-600" />
                 </div>
                 <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">
+                  <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
                     {t("auth.lookingForProducts")}
                   </span>
                 </div>
@@ -225,7 +255,7 @@ export function Login() {
               <div className="mt-6">
                 <Button
                   variant="outline"
-                  className="w-full"
+                  className="w-full border-gray-200 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700"
                   onClick={() => navigate("/products")}
                 >
                   {t("auth.goToProducts")}

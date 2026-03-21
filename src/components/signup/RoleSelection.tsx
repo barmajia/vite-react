@@ -1,0 +1,120 @@
+import { UserRole } from "@/types/signup";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
+interface RoleSelectionProps {
+  onSelect: (role: UserRole) => void;
+}
+
+const roles: {
+  id: UserRole;
+  title: string;
+  description: string;
+  icon: string;
+  color: string;
+}[] = [
+  {
+    id: "customer",
+    title: "Customer",
+    description: "Browse and buy products from sellers",
+    icon: "🛒",
+    color: "hover:border-blue-500",
+  },
+  {
+    id: "seller",
+    title: "Seller",
+    description: "Sell products to customers and factories",
+    icon: "📦",
+    color: "hover:border-green-500",
+  },
+  {
+    id: "factory",
+    title: "Factory",
+    description: "Manufacture products for wholesale",
+    icon: "🏭",
+    color: "hover:border-orange-500",
+  },
+  {
+    id: "middleman",
+    title: "Middleman",
+    description: "Connect buyers and sellers, earn commissions",
+    icon: "🤝",
+    color: "hover:border-purple-500",
+  },
+  {
+    id: "delivery",
+    title: "Delivery",
+    description: "Deliver orders and earn per delivery",
+    icon: "🚚",
+    color: "hover:border-red-500",
+  },
+];
+
+export function RoleSelection({ onSelect }: RoleSelectionProps) {
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {roles.map((role) => (
+          <Button
+            key={role.id}
+            onClick={() => onSelect(role.id)}
+            variant="outline"
+            className={`h-auto p-6 rounded-lg border-2 transition-all ${role.color} hover:shadow-lg text-left bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700`}
+          >
+            <div className="space-y-3">
+              <div className="text-4xl">{role.icon}</div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  {role.title}
+                </h3>
+                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                  {role.description}
+                </p>
+              </div>
+            </div>
+          </Button>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
+        <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+          <CardHeader>
+            <CardTitle className="text-lg text-gray-900 dark:text-white">
+              ✨ Quick Start
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Create your account in minutes and get instant access to the
+              platform.
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800">
+          <CardHeader>
+            <CardTitle className="text-lg text-gray-900 dark:text-white">
+              🔒 Secure
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Your data is protected with enterprise-grade security.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="text-center mt-6">
+        <p className="text-sm text-gray-600 dark:text-gray-300">
+          Already have an account?{" "}
+          <a
+            href="/login"
+            className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+          >
+            Sign In
+          </a>
+        </p>
+      </div>
+    </div>
+  );
+}

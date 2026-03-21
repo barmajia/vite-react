@@ -18,7 +18,8 @@ import { ForgotPassword } from "@/pages/auth/ForgotPassword";
 import { ResetPassword } from "@/pages/auth/ResetPassword";
 import { NotFound } from "@/pages/errors/NotFound";
 import { ServerError } from "@/pages/errors/ServerError";
-import { ServicesSignup } from "@/pages/auth/ServicesSignup";
+import { SignupPage } from "@/pages/signup/SignupPage";
+import { MiddlemanSignup } from "@/pages/middleman/MiddlemanSignup";
 import { CategoriesPage } from "@/features/categories/pages/CategoriesPage";
 import { CategoryProductsPage } from "@/features/categories/pages/CategoryProductsPage";
 import { CartPage } from "@/features/cart/pages/CartPage";
@@ -69,6 +70,19 @@ import { FactoryDashboardPage } from "@/pages/factory/FactoryDashboardPage";
 import { FactoryProductionPage } from "@/pages/factory/FactoryProductionPage";
 import { FactoryQuotesPage } from "@/pages/factory/FactoryQuotesPage";
 import { FactoryConnectionsPage } from "@/pages/factory/FactoryConnectionsPage";
+
+// Middleman pages
+import { MiddlemanDashboard } from "@/pages/middleman/MiddlemanDashboard";
+import { MiddlemanDeals } from "@/pages/middleman/MiddlemanDeals";
+import { MiddlemanCreateDeal } from "@/pages/middleman/MiddlemanCreateDeal";
+import { MiddlemanDealDetails } from "@/pages/middleman/MiddlemanDealDetails";
+import { MiddlemanOrders } from "@/pages/middleman/MiddlemanOrders";
+import { MiddlemanAnalytics } from "@/pages/middleman/MiddlemanAnalytics";
+import { MiddlemanConnections } from "@/pages/middleman/MiddlemanConnections";
+import { MiddlemanCommission } from "@/pages/middleman/MiddlemanCommission";
+import { MiddlemanProfile } from "@/pages/middleman/MiddlemanProfile";
+import { MiddlemanSettings } from "@/pages/middleman/MiddlemanSettings";
+import { MiddlemanMessages } from "@/pages/middleman/MiddlemanMessages";
 
 // Placeholder components for customer pages
 function Reviews() {
@@ -124,7 +138,8 @@ function App() {
           >
             <Routes>
               {/* Auth Routes (Full Page - No Layout) */}
-              <Route path="/signup" element={<ServicesSignup />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/signup/middleman" element={<MiddlemanSignup />} />
               <Route path="/login" element={<Login />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
@@ -150,6 +165,47 @@ function App() {
                 <Route path="about" element={<About />} />
                 <Route path="contact" element={<Contact />} />
                 <Route path="help" element={<Help />} />
+
+                {/* 🌟 Middleman Routes (Special Role - Right After Public) */}
+                <Route path="middleman" element={<MiddlemanDashboard />} />
+                <Route
+                  path="middleman/dashboard"
+                  element={<MiddlemanDashboard />}
+                />
+                <Route path="middleman/deals" element={<MiddlemanDeals />} />
+                <Route
+                  path="middleman/deals/new"
+                  element={<MiddlemanCreateDeal />}
+                />
+                <Route
+                  path="middleman/deals/:dealId"
+                  element={<MiddlemanDealDetails />}
+                />
+                <Route path="middleman/orders" element={<MiddlemanOrders />} />
+                <Route
+                  path="middleman/analytics"
+                  element={<MiddlemanAnalytics />}
+                />
+                <Route
+                  path="middleman/connections"
+                  element={<MiddlemanConnections />}
+                />
+                <Route
+                  path="middleman/commission"
+                  element={<MiddlemanCommission />}
+                />
+                <Route
+                  path="middleman/profile"
+                  element={<MiddlemanProfile />}
+                />
+                <Route
+                  path="middleman/settings"
+                  element={<MiddlemanSettings />}
+                />
+                <Route
+                  path="middleman/messages"
+                  element={<MiddlemanMessages />}
+                />
 
                 {/* Services Routes - Main Focus (Wrapped in ServicesLayout) */}
                 <Route path="services" element={<ServicesHome />}>
