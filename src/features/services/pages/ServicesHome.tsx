@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, Outlet } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Code,
   PenTool,
@@ -38,16 +38,22 @@ export function ServicesHome() {
   const [listings, setListings] = useState<ServiceListing[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      const [cats, allListings] = await Promise.all([
-        getCategories(),
-        getListings(),
-      ]);
-      setCategories(cats);
-      setListings(allListings.slice(0, 6)); // Show first 6 listings
-      setLoading(false);
+      try {
+        const [cats, allListings] = await Promise.all([
+          getCategories(),
+          getListings(),
+        ]);
+        setCategories(cats);
+        setListings(allListings.slice(0, 6)); // Show first 6 listings
+        setLoading(false);
+      } catch (err) {
+        setError("Failed to load services");
+        setLoading(false);
+      }
     };
 
     fetchData();
@@ -59,6 +65,19 @@ export function ServicesHome() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
           <p className="text-muted-foreground">{t("services.loading")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="text-center py-12">
+          <h2 className="text-2xl font-bold mb-4 text-destructive">{error}</h2>
+          <Button onClick={() => window.location.reload()}>
+            {t("common.refreshPage")}
+          </Button>
         </div>
       </div>
     );
@@ -107,7 +126,7 @@ export function ServicesHome() {
               className="flex flex-col items-center p-6 bg-card border rounded-xl hover:shadow-lg hover:border-primary transition-all cursor-pointer group"
             >
               <div className="text-primary mb-3 group-hover:scale-110 transition-transform">
-                {categoryIcons[cat.slug] || <Briefcase />}
+                {categoryIcons[cat.slug] || <Briefcase size={24} />}
               </div>
               <span className="font-medium text-center">
                 {t(`services.categories.${cat.slug}`, {
@@ -199,9 +218,6 @@ export function ServicesHome() {
           </Link>
         </Button>
       </section>
-
-      {/* Nested Route Outlet */}
-      <Outlet />
     </div>
   );
 }

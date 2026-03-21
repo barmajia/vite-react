@@ -153,7 +153,6 @@ function App() {
 
                 {/* Services Routes - Main Focus (Wrapped in ServicesLayout) */}
                 <Route path="services" element={<ServicesHome />}>
-                  <Route index element={<ServicesHome />} />
                   <Route
                     path=":categorySlug"
                     element={<ServiceCategoryPage />}
