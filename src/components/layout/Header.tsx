@@ -11,15 +11,16 @@ import {
   X,
   ChevronDown,
   CheckCircle2,
-  LayoutDashboard,
   ShoppingBag,
   Briefcase,
+  Globe,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
+import { useLanguage } from "@/hooks/useLanguage";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -34,7 +35,6 @@ import { Badge } from "@/components/ui/badge";
 import { ROUTES } from "@/lib/constants";
 import { MobileNav } from "./MobileNav";
 import { NotificationBell } from "./NotificationBell";
-import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
@@ -44,11 +44,18 @@ export function Header() {
   const { theme, setTheme } = useTheme();
   const { user, signOut } = useAuth();
   const { itemCount } = useCart();
+  const { currentLang, setLanguage, supportedLanguages } = useLanguage();
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [providerProfile, setProviderProfile] = useState<any>(null);
+
+  // Detect whether current language was auto-detected
+  const hasManualChoice = !!localStorage.getItem("aurora-language");
+  const geoLang = sessionStorage.getItem("aurora-geo-lang");
+  const isAutoDetected =
+    !hasManualChoice && !!geoLang && geoLang === currentLang.code;
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -197,8 +204,62 @@ export function Header() {
                     )}
                   </button>
 
-                  {/* Language Switcher */}
-                  <LanguageSwitcher />
+                  {/* Language Switcher - Compact for desktop header */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="flex items-center gap-1.5 px-2 h-9"
+                        aria-label={t("common.language")}
+                      >
+                        <Globe className="h-4 w-4 shrink-0" />
+                        <span className="hidden sm:inline text-sm font-medium">
+                          {currentLang.flag} {currentLang.code.toUpperCase()}
+                        </span>
+                        <span className="sm:hidden text-base">
+                          {currentLang.flag}
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      sideOffset={8}
+                      align="end"
+                      className="w-52 max-h-80 overflow-y-auto z-50"
+                    >
+                      <DropdownMenuLabel className="flex items-center gap-2 text-xs text-muted-foreground font-normal">
+                        <Globe className="h-3.5 w-3.5" />
+                        {t("common.language")}
+                        {isAutoDetected && (
+                          <span className="ml-auto text-[10px] rounded-full bg-primary/10 text-primary px-1.5 py-0.5">
+                            {t("common.autoDetected")}
+                          </span>
+                        )}
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {supportedLanguages.map((lang) => (
+                        <DropdownMenuItem
+                          key={lang.code}
+                          onClick={() => setLanguage(lang.code)}
+                          className={`flex items-center gap-3 cursor-pointer ${
+                            currentLang.code === lang.code
+                              ? "bg-primary/5 font-medium text-primary"
+                              : ""
+                          }`}
+                        >
+                          <span className="text-base leading-none">
+                            {lang.flag}
+                          </span>
+                          <span className="flex-1 text-sm">
+                            {lang.nativeName}
+                          </span>
+                          {currentLang.code === lang.code && (
+                            <span className="text-primary text-xs">✓</span>
+                          )}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
 
                   {/* Notifications */}
                   {user && <NotificationBell />}
@@ -310,19 +371,6 @@ export function Header() {
 
             {/* Mobile Menu Button */}
             <div className="flex items-center gap-2 lg:hidden">
-              {/* Theme Toggle - Mobile */}
-              <button
-                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                aria-label="Toggle theme"
-              >
-                {theme === "light" ? (
-                  <Moon className="h-5 w-5" />
-                ) : (
-                  <Sun className="h-5 w-5 text-amber-500" />
-                )}
-              </button>
-
               {/* Mobile Menu Button */}
               <button
                 className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"

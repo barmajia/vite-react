@@ -10,9 +10,6 @@ import {
   Briefcase,
   Calendar,
   PlusCircle,
-  TrendingUp,
-  CheckCircle2,
-  Award,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";

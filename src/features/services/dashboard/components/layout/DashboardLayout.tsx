@@ -2,12 +2,10 @@ import { Outlet } from "react-router-dom";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { NotificationBell } from "@/components/layout/NotificationBell";
 import { useAuth } from "@/hooks/useAuth";
-import { useLanguage } from "@/hooks/useLanguage";
 import { useState } from "react";
 
 export const DashboardLayout = () => {
   const { user, loading } = useAuth();
-  const { isRTL } = useLanguage();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   if (loading) {

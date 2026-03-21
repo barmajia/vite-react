@@ -16,14 +16,18 @@ import {
   Moon,
   LayoutDashboard,
   UserPlus,
+  Globe,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
+import { useLanguage } from "@/hooks/useLanguage";
 import { useSwipeToOpen } from "@/hooks/useSwipeToOpen";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,9 +36,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
+import { LanguageSwitcher } from "../shared/LanguageSwitcher";
 
 export function ServicesHeader() {
   const { t } = useTranslation();
@@ -42,12 +44,19 @@ export function ServicesHeader() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
+  const { currentLang, setLanguage, supportedLanguages } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [providerProfile, setProviderProfile] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const notificationCount = 2;
   const messageCount = 1;
+
+  // Detect whether current language was auto-detected
+  const hasManualChoice = !!localStorage.getItem("aurora-language");
+  const geoLang = sessionStorage.getItem("aurora-geo-lang");
+  const isAutoDetected =
+    !hasManualChoice && !!geoLang && geoLang === currentLang.code;
 
   const { onTouchStart } = useSwipeToOpen({
     isOpen: isMobileMenuOpen,
@@ -166,7 +175,7 @@ export function ServicesHeader() {
               </div>
               <div className="flex flex-col">
                 <span className="text-xl font-bold text-gray-900 dark:text-white leading-none">
-                  A U R O R A
+                  AURORA
                 </span>
                 <span className="text-[9px] font-semibold text-violet-600 dark:text-violet-400 tracking-[0.25em] uppercase">
                   {t("      services      ")}
@@ -388,19 +397,6 @@ export function ServicesHeader() {
 
             {/* Mobile Menu Button */}
             <div className="flex items-center gap-2 lg:hidden">
-              {/* Theme Toggle - Mobile Quick Access */}
-              <button
-                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                aria-label="Toggle theme"
-              >
-                {theme === "light" ? (
-                  <Moon className="h-5 w-5" />
-                ) : (
-                  <Sun className="h-5 w-5 text-amber-500" />
-                )}
-              </button>
-
               {/* Mobile Menu Button */}
               <button
                 className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
@@ -433,12 +429,29 @@ export function ServicesHeader() {
               <span className="font-bold text-lg text-gray-900 dark:text-white">
                 {t("services.auroraServices")}
               </span>
-              <button
-                className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <X size={22} />
-              </button>
+              <div className="flex items-center gap-2">
+                {/* Language Switcher */}
+                <LanguageSwitcher />
+                {/* Theme Toggle */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9"
+                  onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                >
+                  {theme === "light" ? (
+                    <Moon className="h-5 w-5" />
+                  ) : (
+                    <Sun className="h-5 w-5 text-amber-500" />
+                  )}
+                </Button>
+                <button
+                  className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <X size={22} />
+                </button>
+              </div>
             </div>
 
             {/* Content - Scrollable */}
@@ -457,26 +470,6 @@ export function ServicesHeader() {
                   size={18}
                 />
               </form>
-
-              {/* Theme Toggle - Mobile */}
-              <div className="flex gap-2">
-                <Button
-                  variant={theme === "light" ? "default" : "outline"}
-                  onClick={() => setTheme("light")}
-                  className="flex-1"
-                >
-                  <Sun className="mr-2 h-4 w-4" />
-                  {t("servicesChat.theme.light")}
-                </Button>
-                <Button
-                  variant={theme === "dark" ? "default" : "outline"}
-                  onClick={() => setTheme("dark")}
-                  className="flex-1"
-                >
-                  <Moon className="mr-2 h-4 w-4" />
-                  {t("servicesChat.theme.dark")}
-                </Button>
-              </div>
 
               {/* Navigation */}
               <div className="space-y-1">

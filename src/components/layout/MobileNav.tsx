@@ -13,14 +13,18 @@ import {
   Search,
   ShoppingBag,
   Headset,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "@/hooks/useTheme";
 import { useSwipeToOpen } from "@/hooks/useSwipeToOpen";
 import { Button } from "@/components/ui/button";
 import { ROUTES } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 import { useEffect } from "react";
+import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 
 interface MobileNavProps {
   isOpen: boolean;
@@ -30,6 +34,7 @@ interface MobileNavProps {
 export function MobileNav({ isOpen, onClose }: MobileNavProps) {
   const { t } = useTranslation();
   const { user, signOut } = useAuth();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
   // Prevent body scroll when mobile nav is open
@@ -116,9 +121,26 @@ export function MobileNav({ isOpen, onClose }: MobileNavProps) {
               AURORA
             </span>
           </Link>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-5 w-5" />
-          </Button>
+          <div className="flex items-center gap-2">
+            {/* Language Switcher */}
+            <LanguageSwitcher />
+            {/* Theme Toggle */}
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            >
+              {theme === "light" ? (
+                <Moon className="h-5 w-5" />
+              ) : (
+                <Sun className="h-5 w-5 text-amber-500" />
+              )}
+            </Button>
+            <Button variant="ghost" size="icon" onClick={onClose}>
+              <X className="h-5 w-5" />
+            </Button>
+          </div>
         </div>
 
         {/* Menu Items - Scrollable */}

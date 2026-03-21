@@ -1,13 +1,13 @@
-import { Link } from 'react-router-dom';
-import { ShoppingCart, Star, Heart } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import type { Product } from '@/types/database';
-import { formatPrice, getProductImage } from '@/lib/utils';
-import { ROUTES } from '@/lib/constants';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { Link } from "react-router-dom";
+import { ShoppingCart, Star, Heart } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import type { Product } from "@/types/database";
+import { formatPrice, getProductImage } from "@/lib/utils";
+import { ROUTES } from "@/lib/constants";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface ProductCardProps {
   product: Product & {
@@ -22,9 +22,12 @@ export function ProductCard({ product }: ProductCardProps) {
   const imageUrl = getProductImage(product.images);
 
   return (
-    <Card className="group overflow-hidden transition-all hover:shadow-lg">
+    <Card
+      className="group overflow-hidden transition-all hover:shadow-lg"
+      style={{ backgroundColor: "#060810" }}
+    >
       <div className="relative aspect-square overflow-hidden bg-muted">
-        <Link to={`${ROUTES.PRODUCT_DETAIL.replace(':asin', product.id)}`}>
+        <Link to={`${ROUTES.PRODUCT_DETAIL.replace(":asin", product.id)}`}>
           <img
             src={imageUrl}
             alt={product.title}
@@ -32,7 +35,7 @@ export function ProductCard({ product }: ProductCardProps) {
             loading="lazy"
           />
         </Link>
-        
+
         {/* Wishlist Button */}
         <Button
           variant="ghost"
@@ -43,19 +46,21 @@ export function ProductCard({ product }: ProductCardProps) {
             setIsWishlisted(!isWishlisted);
           }}
         >
-          <Heart className={`h-4 w-4 ${isWishlisted ? 'fill-red-500 text-red-500' : ''}`} />
+          <Heart
+            className={`h-4 w-4 ${isWishlisted ? "fill-red-500 text-red-500" : ""}`}
+          />
         </Button>
 
         {/* Out of Stock Badge */}
         {product.quantity === 0 && (
           <Badge className="absolute top-2 left-2" variant="destructive">
-            {t('product.outOfStock')}
+            {t("product.outOfStock")}
           </Badge>
         )}
       </div>
 
       <CardContent className="p-4 space-y-2">
-        <Link to={`${ROUTES.PRODUCT_DETAIL.replace(':asin', product.id)}`}>
+        <Link to={`${ROUTES.PRODUCT_DETAIL.replace(":asin", product.id)}`}>
           <h3 className="font-medium line-clamp-2 hover:text-primary transition-colors">
             {product.title}
           </h3>

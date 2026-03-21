@@ -1,9 +1,11 @@
 import { Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { AuthProvider } from "@/hooks/useAuth";
+import { PreferencesProvider } from "@/context/PreferencesContext";
 import { Toaster } from "sonner";
 import { Layout } from "@/components/layout/Layout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { ServicesGateway } from "@/pages/public/ServicesGateway";
 import { ProductList } from "@/pages/public/ProductList";
 import { ProductDetail } from "@/pages/public/ProductDetail";
@@ -101,181 +103,195 @@ function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <Toaster position="top-right" richColors />
-        <ErrorBoundary
-          fallback={
-            <div className="min-h-screen flex items-center justify-center">
-              <div className="text-center">
-                <h1 className="text-2xl font-bold mb-4">{t("common.error")}</h1>
-                <button
-                  onClick={() => window.location.reload()}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded"
-                >
-                  {t("common.refreshPage")}
-                </button>
+        <PreferencesProvider>
+          <Toaster position="top-right" richColors />
+          <ErrorBoundary
+            fallback={
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                  <h1 className="text-2xl font-bold mb-4">
+                    {t("common.error")}
+                  </h1>
+                  <button
+                    onClick={() => window.location.reload()}
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded"
+                  >
+                    {t("common.refreshPage")}
+                  </button>
+                </div>
               </div>
-            </div>
-          }
-        >
-          <Routes>
-            {/* Auth Routes (Full Page - No Layout) */}
-            <Route path="/signup" element={<ServicesSignup />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+            }
+          >
+            <Routes>
+              {/* Auth Routes (Full Page - No Layout) */}
+              <Route path="/signup" element={<ServicesSignup />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
 
-            <Route path="/" element={<Layout />}>
-              {/* Default - Services Gateway */}
-              <Route index element={<ServicesGateway />} />
+              <Route path="/" element={<Layout />}>
+                {/* Default - Services Gateway */}
+                <Route index element={<ServicesGateway />} />
 
-              {/* Public Routes */}
-              <Route path="products" element={<ProductList />} />
-              <Route path="product/:asin" element={<ProductDetail />} />
-              <Route
-                path="product-details/:asin"
-                element={<ProductDetailsPage />}
-              />
-              <Route path="categories" element={<CategoriesPage />} />
-              <Route
-                path="categories/:slug"
-                element={<CategoryProductsPage />}
-              />
-              <Route path="brands" element={<Brands />} />
-              <Route path="brand/:id" element={<BrandProducts />} />
-              <Route path="about" element={<About />} />
-              <Route path="contact" element={<Contact />} />
-              <Route path="help" element={<Help />} />
-
-              {/* Services Routes - Main Focus (Wrapped in ServicesLayout) */}
-              <Route path="services" element={<ServicesHome />}>
-                <Route index element={<ServicesHome />} />
-                <Route path=":categorySlug" element={<ServiceCategoryPage />} />
+                {/* Public Routes */}
+                <Route path="products" element={<ProductList />} />
+                <Route path="product/:asin" element={<ProductDetail />} />
                 <Route
-                  path="listing/:listingId"
-                  element={<ServiceDetailPage />}
+                  path="product-details/:asin"
+                  element={<ProductDetailsPage />}
+                />
+                <Route path="categories" element={<CategoriesPage />} />
+                <Route
+                  path="categories/:slug"
+                  element={<CategoryProductsPage />}
+                />
+                <Route path="brands" element={<Brands />} />
+                <Route path="brand/:id" element={<BrandProducts />} />
+                <Route path="about" element={<About />} />
+                <Route path="contact" element={<Contact />} />
+                <Route path="help" element={<Help />} />
+
+                {/* Services Routes - Main Focus (Wrapped in ServicesLayout) */}
+                <Route path="services" element={<ServicesHome />}>
+                  <Route index element={<ServicesHome />} />
+                  <Route
+                    path=":categorySlug"
+                    element={<ServiceCategoryPage />}
+                  />
+                  <Route
+                    path="listing/:listingId"
+                    element={<ServiceDetailPage />}
+                  />
+                  <Route
+                    path="listing/:listingId/book"
+                    element={<ServiceBookingPage />}
+                  />
+                  <Route
+                    path="provider/:providerId"
+                    element={<ProviderProfilePage />}
+                  />
+                </Route>
+
+                {/* Services Dashboard Routes (Separate Layout) */}
+                <Route path="services/dashboard" element={<DashboardLayout />}>
+                  <Route index element={<DashboardHome />} />
+                  <Route path="bookings" element={<BookingsPage />} />
+                  <Route
+                    path="projects"
+                    element={
+                      <div className="p-4">Projects Page (Coming Soon)</div>
+                    }
+                  />
+                  <Route
+                    path="listings"
+                    element={
+                      <div className="p-4">Listings Page (Coming Soon)</div>
+                    }
+                  />
+                  <Route
+                    path="finance"
+                    element={
+                      <div className="p-4">Finance Page (Coming Soon)</div>
+                    }
+                  />
+                  <Route
+                    path="clients"
+                    element={
+                      <div className="p-4">Clients Page (Coming Soon)</div>
+                    }
+                  />
+                  <Route
+                    path="settings"
+                    element={
+                      <div className="p-4">Settings Page (Coming Soon)</div>
+                    }
+                  />
+                </Route>
+                <Route
+                  path="services/dashboard/create-profile"
+                  element={<CreateProviderProfile />}
                 />
                 <Route
-                  path="listing/:listingId/book"
-                  element={<ServiceBookingPage />}
+                  path="services/dashboard/create-listing"
+                  element={<CreateServiceListing />}
                 />
                 <Route
-                  path="provider/:providerId"
-                  element={<ProviderProfilePage />}
+                  path="services/dashboard/onboard"
+                  element={<ServiceOnboardingWizard />}
                 />
+                <Route
+                  path="services/onboarding"
+                  element={<ServiceOnboardingWizard />}
+                />
+
+                {/* Customer Routes (Protected) */}
+                <Route path="cart" element={<CartPage />} />
+                <Route path="checkout" element={<CheckoutPage />} />
+                <Route
+                  path="order-success/:id"
+                  element={<OrderSuccessPage />}
+                />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="orders" element={<OrdersListPage />} />
+                <Route path="orders/:id" element={<OrderDetailPage />} />
+                <Route path="wishlist" element={<WishlistPage />} />
+                <Route path="addresses" element={<AddressesPage />} />
+                <Route path="reviews" element={<Reviews />} />
+                <Route path="messages" element={<Inbox />} />
+                <Route path="messages/:conversationId" element={<Chat />} />
+                <Route element={<ServicesMessagingLayout />}>
+                  <Route path="services/messages" element={<ServicesInbox />} />
+                  <Route
+                    path="services/messages/:conversationId"
+                    element={<ServicesChat />}
+                  />
+                </Route>
+                <Route path="notifications" element={<NotificationsPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+
+                {/* Factory Routes (Protected) */}
+                <Route path="factory" element={<FactoryDashboardPage />} />
+                <Route
+                  path="factory/production"
+                  element={<FactoryProductionPage />}
+                />
+                <Route path="factory/quotes" element={<FactoryQuotesPage />} />
+                <Route
+                  path="factory/connections"
+                  element={<FactoryConnectionsPage />}
+                />
+
+                {/* Healthcare Routes */}
+                <Route path="services/health" element={<HealthLayout />}>
+                  <Route index element={<HealthLanding />} />
+                  <Route path="doctors" element={<DoctorList />} />
+                  <Route path="doctor/signup" element={<DoctorSignup />} />
+                  <Route
+                    path="doctor/pending-approval"
+                    element={<DoctorPendingApproval />}
+                  />
+                  <Route path="book/:id" element={<BookingPage />} />
+                  <Route
+                    path="patient/dashboard"
+                    element={<PatientDashboard />}
+                  />
+                  <Route
+                    path="doctor/dashboard"
+                    element={<DoctorDashboard />}
+                  />
+                  <Route path="admin/verify" element={<AdminVerification />} />
+                  <Route path="consult/:id" element={<ConsultationRoom />} />
+                  <Route path="pharmacies" element={<PharmacyList />} />
+                </Route>
+
+                {/* Error Routes */}
+                <Route path="error" element={<ServerError />} />
+                <Route path="*" element={<NotFound />} />
               </Route>
-
-              {/* Services Dashboard Routes (Separate Layout) */}
-              <Route path="services/dashboard" element={<DashboardLayout />}>
-                <Route index element={<DashboardHome />} />
-                <Route path="bookings" element={<BookingsPage />} />
-                <Route
-                  path="projects"
-                  element={
-                    <div className="p-4">Projects Page (Coming Soon)</div>
-                  }
-                />
-                <Route
-                  path="listings"
-                  element={
-                    <div className="p-4">Listings Page (Coming Soon)</div>
-                  }
-                />
-                <Route
-                  path="finance"
-                  element={
-                    <div className="p-4">Finance Page (Coming Soon)</div>
-                  }
-                />
-                <Route
-                  path="clients"
-                  element={
-                    <div className="p-4">Clients Page (Coming Soon)</div>
-                  }
-                />
-                <Route
-                  path="settings"
-                  element={
-                    <div className="p-4">Settings Page (Coming Soon)</div>
-                  }
-                />
-              </Route>
-              <Route
-                path="services/dashboard/create-profile"
-                element={<CreateProviderProfile />}
-              />
-              <Route
-                path="services/dashboard/create-listing"
-                element={<CreateServiceListing />}
-              />
-              <Route
-                path="services/dashboard/onboard"
-                element={<ServiceOnboardingWizard />}
-              />
-              <Route
-                path="services/onboarding"
-                element={<ServiceOnboardingWizard />}
-              />
-
-              {/* Customer Routes (Protected) */}
-              <Route path="cart" element={<CartPage />} />
-              <Route path="checkout" element={<CheckoutPage />} />
-              <Route path="order-success/:id" element={<OrderSuccessPage />} />
-              <Route path="profile" element={<ProfilePage />} />
-              <Route path="orders" element={<OrdersListPage />} />
-              <Route path="orders/:id" element={<OrderDetailPage />} />
-              <Route path="wishlist" element={<WishlistPage />} />
-              <Route path="addresses" element={<AddressesPage />} />
-              <Route path="reviews" element={<Reviews />} />
-              <Route path="messages" element={<Inbox />} />
-              <Route path="messages/:conversationId" element={<Chat />} />
-              <Route element={<ServicesMessagingLayout />}>
-                <Route path="services/messages" element={<ServicesInbox />} />
-                <Route
-                  path="services/messages/:conversationId"
-                  element={<ServicesChat />}
-                />
-              </Route>
-              <Route path="notifications" element={<NotificationsPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-
-              {/* Factory Routes (Protected) */}
-              <Route path="factory" element={<FactoryDashboardPage />} />
-              <Route
-                path="factory/production"
-                element={<FactoryProductionPage />}
-              />
-              <Route path="factory/quotes" element={<FactoryQuotesPage />} />
-              <Route
-                path="factory/connections"
-                element={<FactoryConnectionsPage />}
-              />
-
-              {/* Healthcare Routes */}
-              <Route path="services/health" element={<HealthLayout />}>
-                <Route index element={<HealthLanding />} />
-                <Route path="doctors" element={<DoctorList />} />
-                <Route path="doctor/signup" element={<DoctorSignup />} />
-                <Route
-                  path="doctor/pending-approval"
-                  element={<DoctorPendingApproval />}
-                />
-                <Route path="book/:id" element={<BookingPage />} />
-                <Route
-                  path="patient/dashboard"
-                  element={<PatientDashboard />}
-                />
-                <Route path="doctor/dashboard" element={<DoctorDashboard />} />
-                <Route path="admin/verify" element={<AdminVerification />} />
-                <Route path="consult/:id" element={<ConsultationRoom />} />
-                <Route path="pharmacies" element={<PharmacyList />} />
-              </Route>
-
-              {/* Error Routes */}
-              <Route path="error" element={<ServerError />} />
-              <Route path="*" element={<NotFound />} />
-            </Route>
-          </Routes>
-        </ErrorBoundary>
+            </Routes>
+          </ErrorBoundary>
+          <CookieConsentBanner />
+        </PreferencesProvider>
       </AuthProvider>
     </ThemeProvider>
   );
