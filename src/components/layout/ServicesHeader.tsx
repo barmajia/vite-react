@@ -16,18 +16,17 @@ import {
   Moon,
   LayoutDashboard,
   UserPlus,
-  Globe,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
-import { useLanguage } from "@/hooks/useLanguage";
 import { useSwipeToOpen } from "@/hooks/useSwipeToOpen";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,7 +35,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LanguageSwitcher } from "../shared/LanguageSwitcher";
 
 export function ServicesHeader() {
   const { t } = useTranslation();
@@ -44,19 +42,12 @@ export function ServicesHeader() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
-  const { currentLang, setLanguage, supportedLanguages } = useLanguage();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [providerProfile, setProviderProfile] = useState<any>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const notificationCount = 2;
   const messageCount = 1;
-
-  // Detect whether current language was auto-detected
-  const hasManualChoice = !!localStorage.getItem("aurora-language");
-  const geoLang = sessionStorage.getItem("aurora-geo-lang");
-  const isAutoDetected =
-    !hasManualChoice && !!geoLang && geoLang === currentLang.code;
 
   const { onTouchStart } = useSwipeToOpen({
     isOpen: isMobileMenuOpen,
