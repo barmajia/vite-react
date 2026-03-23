@@ -43,8 +43,8 @@ export function useFullProfile(userId?: string) {
               totalEarned: 0,
             },
             notifications: { total: 0, unread: 0 },
-            wishlist: { count: 0 },
-            conversations: { activeChats: 0, unreadMessages: 0 },
+            wishlist: { totalItems: 0, count: 0 },
+            conversations: { activeChats: 0, unreadMessages: 0, total: 0, unread: 0 },
             analytics: null,
           },
         } as FullUserProfile;

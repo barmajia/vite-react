@@ -6,7 +6,7 @@ import { ROUTES } from "@/lib/constants";
 import { useLanguage } from "@/hooks/useLanguage";
 
 export function About() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { currentLang } = useLanguage();
 
   const isRTL = currentLang.code === "ar";

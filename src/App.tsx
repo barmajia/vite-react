@@ -9,6 +9,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
 import { ChatWidgetWrapper } from "@/components/chat/ChatWidgetWrapper";
 import { useTranslation } from "react-i18next";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 // ==================== Layouts ====================
 import { DashboardLayout } from "@/features/services/dashboard/components/layout/DashboardLayout";
@@ -207,15 +208,15 @@ function App() {
 
                   {/* Shopping Flow */}
                   <Route path="cart" element={<CartPage />} />
-                  <Route path="checkout" element={<CheckoutPage />} />
+                  <Route path="checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
                   <Route
                     path="order-success/:id"
-                    element={<OrderSuccessPage />}
+                    element={<ProtectedRoute><OrderSuccessPage /></ProtectedRoute>}
                   />
-                  <Route path="orders" element={<OrdersListPage />} />
-                  <Route path="orders/:id" element={<OrderDetailPage />} />
-                  <Route path="wishlist" element={<WishlistPage />} />
-                  <Route path="addresses" element={<AddressesPage />} />
+                  <Route path="orders" element={<ProtectedRoute><OrdersListPage /></ProtectedRoute>} />
+                  <Route path="orders/:id" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
+                  <Route path="wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
+                  <Route path="addresses" element={<ProtectedRoute><AddressesPage /></ProtectedRoute>} />
 
                   {/* ==================== SERVICES VERTICAL ==================== */}
                   <Route path="services">
@@ -238,7 +239,7 @@ function App() {
                     />
 
                     {/* Services Dashboard */}
-                    <Route path="dashboard" element={<DashboardLayout />}>
+                    <Route path="dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
                       <Route index element={<DashboardHome />} />
                       <Route path="bookings" element={<BookingsPage />} />
                       <Route
@@ -374,8 +375,8 @@ function App() {
                   <Route path="reviews" element={<Reviews />} />
 
                   {/* ==================== SETTINGS & NOTIFICATIONS ==================== */}
-                  <Route path="settings" element={<SettingsPage />} />
-                  <Route path="notifications" element={<NotificationsPage />} />
+                  <Route path="settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
+                  <Route path="notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
 
                   {/* ==================== INFO PAGES ==================== */}
                   <Route path="about" element={<About />} />

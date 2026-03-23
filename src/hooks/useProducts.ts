@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
+import { sanitizeSearchQuery } from "@/utils/sanitize";
 import type { Product, ProductWithDetails } from "@/types/database";
 
 interface UseProductsOptions {
@@ -68,8 +69,9 @@ export function useProducts(options: UseProductsOptions = {}) {
 
       // Apply filters
       if (search) {
+        const safeSearch = sanitizeSearchQuery(search);
         query = query.or(
-          `title.ilike.%${search}%,description.ilike.%${search}%`,
+          `title.ilike.%${safeSearch}%,description.ilike.%${safeSearch}%`,
         );
       }
 

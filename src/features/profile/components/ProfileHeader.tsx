@@ -11,13 +11,13 @@ interface ProfileHeaderProps {
   onEdit?: () => void;
 }
 
-const roleConfig: Record<
+const roleConfig: Partial<Record<
   AccountType,
   { label: string; icon: string; color: string }
-> = {
+>> = {
   factory: { label: "Factory", icon: "🏭", color: "bg-blue-500" },
   seller: { label: "Seller", icon: "🏪", color: "bg-green-500" },
-  middle_man: { label: "Middleman", icon: "🤝", color: "bg-purple-500" },
+  middleman: { label: "Middleman", icon: "🤝", color: "bg-purple-500" },
   user: { label: "User", icon: "👤", color: "bg-gray-500" },
   admin: { label: "Admin", icon: "⚙️", color: "bg-red-500" },
 };
@@ -27,7 +27,7 @@ export function ProfileHeader({
   isOwnProfile,
   onEdit,
 }: ProfileHeaderProps) {
-  const role = roleConfig[user.account_type];
+  const role = roleConfig[user.account_type] || { label: user.account_type || "User", icon: "👤", color: "bg-gray-500" };
 
   return (
     <Card className="overflow-hidden">

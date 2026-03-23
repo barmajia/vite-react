@@ -31,7 +31,7 @@ export const SERVICE_TABLES = {
 } as const;
 
 // Type definitions for service tables
-export type ServiceTable = typeof SERVICE_TABLES[keyof typeof SERVICE_TABLES];
+export type ServiceTable = typeof SERVICE_TABLES[keyof Omit<typeof SERVICE_TABLES, 'legacy'>];
 export type LegacyServiceTable = typeof SERVICE_TABLES.legacy[keyof typeof SERVICE_TABLES.legacy];
 
 /**
@@ -150,12 +150,12 @@ export function getMigrationInfo(tableName: string): {
   recommendedTable: string;
   note?: string;
 } | null {
-  for (const [key, info] of Object.entries(MIGRATION_STATUS)) {
+  for (const info of Object.values(MIGRATION_STATUS)) {
     if (info.legacyTable === tableName || info.activeTable === tableName) {
       return {
         migrated: info.migrated,
         recommendedTable: info.activeTable,
-        note: info.note,
+        note: (info as any).note,
       };
     }
   }

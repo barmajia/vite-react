@@ -15,7 +15,6 @@ import {
   Stethoscope, 
   CheckCircle,
   AlertCircle,
-  Download,
   Shield
 } from "lucide-react";
 import { format } from "date-fns";

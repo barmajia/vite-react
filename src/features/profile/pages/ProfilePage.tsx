@@ -137,9 +137,12 @@ export function ProfilePage() {
             orders: stats.orders,
             notifications: stats.notifications,
             wishlist: {
-              count: stats.wishlist.totalItems || stats.wishlist.count || 0,
+              count: (stats.wishlist as any).totalItems || (stats.wishlist as any).count || 0,
             },
-            conversations: stats.conversations,
+            conversations: {
+              activeChats: (stats.conversations as any).activeChats || (stats.conversations as any).total || 0,
+              unreadMessages: (stats.conversations as any).unreadMessages || (stats.conversations as any).unread || 0,
+            },
             analytics: stats.analytics,
           }}
           accountType={core.account_type}
@@ -168,7 +171,7 @@ export function ProfilePage() {
           <div>
             <p className="font-medium">Wishlist</p>
             <p className="text-xs text-muted-foreground">
-              {stats?.wishlist.totalItems || stats?.wishlist.count || 0} items
+              {(stats?.wishlist as any)?.totalItems || (stats?.wishlist as any)?.count || 0} items
             </p>
           </div>
         </Link>

@@ -9,8 +9,12 @@ interface DeliveryProfileDetailsProps {
 }
 
 export function DeliveryProfileDetails({ data }: DeliveryProfileDetailsProps) {
-  const completionRate = data.total_deliveries > 0
-    ? Math.round((data.completed_deliveries / data.total_deliveries) * 100)
+  const totalDeliveries = data.total_deliveries || 0;
+  const completedDeliveries = data.completed_deliveries || 0;
+  const cancelledDeliveries = data.cancelled_deliveries || 0;
+
+  const completionRate = totalDeliveries > 0
+    ? Math.round((completedDeliveries / totalDeliveries) * 100)
     : 0;
 
   return (
@@ -83,17 +87,17 @@ export function DeliveryProfileDetails({ data }: DeliveryProfileDetailsProps) {
 
           <div className="grid grid-cols-3 gap-2 text-center">
             <div className="p-3 bg-surface rounded-lg">
-              <div className="text-2xl font-bold text-green-600">{data.completed_deliveries}</div>
+              <div className="text-2xl font-bold text-green-600">{completedDeliveries}</div>
               <div className="text-xs text-muted-foreground">Completed</div>
             </div>
             <div className="p-3 bg-surface rounded-lg">
               <div className="text-2xl font-bold text-orange-600">
-                {data.total_deliveries - data.completed_deliveries - data.cancelled_deliveries}
+                {totalDeliveries - completedDeliveries - cancelledDeliveries}
               </div>
               <div className="text-xs text-muted-foreground">In Progress</div>
             </div>
             <div className="p-3 bg-surface rounded-lg">
-              <div className="text-2xl font-bold text-red-600">{data.cancelled_deliveries}</div>
+              <div className="text-2xl font-bold text-red-600">{cancelledDeliveries}</div>
               <div className="text-xs text-muted-foreground">Cancelled</div>
             </div>
           </div>

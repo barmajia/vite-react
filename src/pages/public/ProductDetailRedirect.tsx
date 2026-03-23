@@ -6,7 +6,6 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 export const ProductDetailRedirect = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const location = useLocation();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

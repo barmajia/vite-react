@@ -7,6 +7,8 @@ import {
 } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase, onAuthStateChange, getSession } from "@/lib/supabase";
+import { validatePassword } from "@/utils/sanitize";
+import { authRateLimiter } from "@/lib/security";
 
 type AuthContextType = {
   session: Session | null;
@@ -70,6 +72,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
+    if (!authRateLimiter.isAllowed(email)) {
+      const waitTime = authRateLimiter.getBlockTimeRemaining(email);
+      return {
+        data: null,
+        error: new Error(`Too many attempts. Try again in ${waitTime} seconds.`),
+      };
+    }
+    
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
@@ -77,6 +87,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
 
       if (error) {
+        authRateLimiter.recordAttempt(email);
         // Log the full error for debugging
         console.error("Supabase Auth Error:", {
           message: error.message,
@@ -151,6 +162,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     fullName?: string,
     accountType: "buyer" | "seller" | "provider" = "buyer",
   ) => {
+    const passwordCheck = validatePassword(password);
+    if (!passwordCheck.isValid) {
+      return { error: new Error(passwordCheck.errors[0]) };
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -171,6 +187,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     phone: string,
     role: "client" | "individual" | "company" | "hospital",
   ) => {
+    const passwordCheck = validatePassword(password);
+    if (!passwordCheck.isValid) {
+      return { error: new Error(passwordCheck.errors[0]) };
+    }
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
