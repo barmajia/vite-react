@@ -44,7 +44,12 @@ export function ServicesHeader() {
   const { theme, setTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [providerProfile, setProviderProfile] = useState<any>(null);
+  const [providerProfile, setProviderProfile] = useState<{
+    id: string;
+    provider_name: string | null;
+    logo_url: string | null;
+    is_verified: boolean | null;
+  } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const notificationCount = 2;
   const messageCount = 1;
@@ -159,7 +164,7 @@ export function ServicesHeader() {
               className="flex items-center gap-3 group hover:opacity-90 transition-opacity"
             >
               <div className="relative">
-                <div className="bg-gradient-to-br from-violet-600 to-indigo-600 text-white p-2.5 rounded-xl shadow-lg shadow-violet-500/30 group-hover:shadow-violet-500/50 transition-all duration-300 group-hover:scale-105">
+                <div className="bg-gradient-to-br from-blue-600 to-blue-600 text-white p-2.5 rounded-xl shadow-lg shadow-blue-500/30 group-hover:shadow-violet-500/50 transition-all duration-300 group-hover:scale-105">
                   <Briefcase size={22} strokeWidth={2.5} />
                 </div>
                 <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-gray-950 shadow-sm" />
@@ -168,7 +173,7 @@ export function ServicesHeader() {
                 <span className="text-xl font-bold text-gray-900 dark:text-white leading-none">
                   AURORA
                 </span>
-                <span className="text-[9px] font-semibold text-violet-600 dark:text-violet-400 tracking-[0.25em] uppercase">
+                <span className="text-[9px] font-semibold text-blue-600 dark:text-blue-400 tracking-[0.25em] uppercase">
                   {t("      services      ")}
                 </span>
               </div>
@@ -183,7 +188,7 @@ export function ServicesHeader() {
                   className={cn(
                     "relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
                     isActive(item.href)
-                      ? "text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20"
+                      ? "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
                       : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
                   )}
                 >

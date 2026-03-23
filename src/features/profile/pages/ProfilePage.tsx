@@ -1,25 +1,25 @@
-import { useState } from 'react';
-import { Link, Navigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { useProfile } from '../hooks/useProfile';
-import { useFullProfile } from '@/hooks/useFullProfile';
-import { ProfileForm } from '../components/ProfileForm';
-import { ChangePassword } from '../components/ChangePassword';
-import { ProfileHeader } from '../components/ProfileHeader';
-import { StatsCards } from '../components/StatsCards';
-import { AddressesSection } from '../components/AddressesSection';
-import { ProfileSettings } from '../components/ProfileSettings';
-import { SellerProfileDetails } from '../components/SellerProfileDetails';
-import { CustomerProfileDetails } from '../components/CustomerProfileDetails';
-import { DeliveryProfileDetails } from '../components/DeliveryProfileDetails';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Package, Heart, MapPin, MessageSquare, Bell } from 'lucide-react';
+import { useState } from "react";
+import { Link, Navigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "../hooks/useProfile";
+import { useFullProfile } from "@/hooks/useFullProfile";
+import { ProfileForm } from "../components/ProfileForm";
+import { ChangePassword } from "../components/ChangePassword";
+import { ProfileHeader } from "../components/ProfileHeader";
+import { StatsCards } from "../components/StatsCards";
+import { AddressesSection } from "../components/AddressesSection";
+import { ProfileSettings } from "../components/ProfileSettings";
+import { SellerProfileDetails } from "../components/SellerProfileDetails";
+import { CustomerProfileDetails } from "../components/CustomerProfileDetails";
+import { DeliveryProfileDetails } from "../components/DeliveryProfileDetails";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Package, Heart, MapPin, MessageSquare, Bell } from "lucide-react";
 
 export function ProfilePage() {
   const { user, loading } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
-  
+  const [activeTab, setActiveTab] = useState("overview");
+
   const {
     formData,
     updateFormData,
@@ -61,7 +61,7 @@ export function ProfilePage() {
 
   // Handle edit button click - navigate to settings tab
   const handleEdit = () => {
-    setActiveTab('settings');
+    setActiveTab("settings");
     setIsEditing(true);
   };
 
@@ -91,14 +91,14 @@ export function ProfilePage() {
   // Render role-specific details
   const renderRoleDetails = () => {
     switch (core.account_type) {
-      case 'seller':
-      case 'factory':
+      case "seller":
+      case "factory":
         return seller && <SellerProfileDetails data={seller} />;
-      case 'customer':
+      case "user":
         return customer && <CustomerProfileDetails data={customer} />;
-      case 'delivery':
+      case "delivery_driver":
         return delivery && <DeliveryProfileDetails data={delivery} />;
-      case 'middleman':
+      case "middleman":
         return (
           <Card>
             <CardContent className="p-6">
@@ -131,7 +131,20 @@ export function ProfilePage() {
       />
 
       {/* Stats Overview */}
-      <StatsCards stats={stats} accountType={core.account_type} />
+      {stats && (
+        <StatsCards
+          stats={{
+            orders: stats.orders,
+            notifications: stats.notifications,
+            wishlist: {
+              count: stats.wishlist.totalItems || stats.wishlist.count || 0,
+            },
+            conversations: stats.conversations,
+            analytics: stats.analytics,
+          }}
+          accountType={core.account_type}
+        />
+      )}
 
       {/* Quick Links Sidebar */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -142,7 +155,9 @@ export function ProfilePage() {
           <Package className="w-5 h-5 text-muted-foreground" />
           <div>
             <p className="font-medium">Orders</p>
-            <p className="text-xs text-muted-foreground">{stats.orders.totalOrders} total</p>
+            <p className="text-xs text-muted-foreground">
+              {stats?.orders.totalOrders || 0} total
+            </p>
           </div>
         </Link>
         <Link
@@ -152,7 +167,9 @@ export function ProfilePage() {
           <Heart className="w-5 h-5 text-muted-foreground" />
           <div>
             <p className="font-medium">Wishlist</p>
-            <p className="text-xs text-muted-foreground">{stats.wishlist.count} items</p>
+            <p className="text-xs text-muted-foreground">
+              {stats?.wishlist.totalItems || stats?.wishlist.count || 0} items
+            </p>
           </div>
         </Link>
         <Link
@@ -162,7 +179,9 @@ export function ProfilePage() {
           <MapPin className="w-5 h-5 text-muted-foreground" />
           <div>
             <p className="font-medium">Addresses</p>
-            <p className="text-xs text-muted-foreground">{addresses.length} saved</p>
+            <p className="text-xs text-muted-foreground">
+              {addresses?.length || 0} saved
+            </p>
           </div>
         </Link>
         <Link
@@ -182,13 +201,19 @@ export function ProfilePage() {
           <Bell className="w-5 h-5 text-muted-foreground" />
           <div>
             <p className="font-medium">Notifications</p>
-            <p className="text-xs text-muted-foreground">{stats.notifications.unread} unread</p>
+            <p className="text-xs text-muted-foreground">
+              {stats?.notifications.unread || 0} unread
+            </p>
           </div>
         </Link>
       </div>
 
       {/* Tabbed Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="space-y-6"
+      >
         <TabsList>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="addresses">Addresses</TabsTrigger>
@@ -204,16 +229,20 @@ export function ProfilePage() {
             <CardContent>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <span className="text-sm text-muted-foreground">Account Type</span>
+                  <span className="text-sm text-muted-foreground">
+                    Account Type
+                  </span>
                   <p className="font-medium capitalize">{core.account_type}</p>
                 </div>
                 <div>
-                  <span className="text-sm text-muted-foreground">Member Since</span>
+                  <span className="text-sm text-muted-foreground">
+                    Member Since
+                  </span>
                   <p className="font-medium">
-                    {new Date(core.created_at).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
+                    {new Date(core.created_at).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                      day: "numeric",
                     })}
                   </p>
                 </div>
@@ -223,7 +252,7 @@ export function ProfilePage() {
                 </div>
                 <div>
                   <span className="text-sm text-muted-foreground">Phone</span>
-                  <p className="font-medium">{core.phone || 'Not provided'}</p>
+                  <p className="font-medium">{core.phone || "Not provided"}</p>
                 </div>
               </div>
             </CardContent>
@@ -233,13 +262,19 @@ export function ProfilePage() {
           {renderRoleDetails()}
 
           {/* Addresses Preview */}
-          {addresses.length > 0 && (
-            <AddressesSection addresses={addresses.slice(0, 2)} showViewAll editable={false} />
+          {addresses && addresses.length > 0 && (
+            <AddressesSection
+              addresses={addresses.slice(0, 2)}
+              showViewAll
+              editable={false}
+            />
           )}
         </TabsContent>
 
         <TabsContent value="addresses">
-          <AddressesSection addresses={addresses} editable={isOwnProfile} />
+          {addresses && (
+            <AddressesSection addresses={addresses} editable={isOwnProfile} />
+          )}
         </TabsContent>
 
         <TabsContent value="settings">

@@ -1,36 +1,47 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from '@/hooks/useAuth';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/useAuth";
 
-export type ThemePreference = 'light' | 'dark' | 'system';
-export type SidebarState = 'expanded' | 'collapsed';
+export type ThemePreference = "light" | "dark" | "system";
+export type SidebarState = "expanded" | "collapsed";
 
 export interface UserPreferences {
   theme: ThemePreference;
   language: string;
   currency: string;
   sidebar: SidebarState;
-  cookieConsent: 'accepted' | 'rejected' | null;
+  cookieConsent: "accepted" | "rejected" | null;
 }
 
 interface PreferencesContextType {
   preferences: UserPreferences;
-  updatePreference: <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => Promise<void>;
-  setCookieConsent: (status: 'accepted' | 'rejected') => void;
+  updatePreference: <K extends keyof UserPreferences>(
+    key: K,
+    value: UserPreferences[K],
+  ) => Promise<void>;
+  setCookieConsent: (status: "accepted" | "rejected") => void;
   resetCookieConsent: () => void;
   loading: boolean;
 }
 
-const PreferencesContext = createContext<PreferencesContextType | undefined>(undefined);
+const PreferencesContext = createContext<PreferencesContextType | undefined>(
+  undefined,
+);
 
-const PREFERENCES_STORAGE_KEY = 'aurora-preferences';
-const COOKIE_CONSENT_KEY = 'aurora-cookie-consent';
+const PREFERENCES_STORAGE_KEY = "aurora-preferences";
+const COOKIE_CONSENT_KEY = "aurora-cookie-consent";
 
 const defaultPreferences: UserPreferences = {
-  theme: 'system',
-  language: 'en',
-  currency: 'USD',
-  sidebar: 'expanded',
+  theme: "system",
+  language: "en",
+  currency: "USD",
+  sidebar: "expanded",
   cookieConsent: null,
 };
 
@@ -40,7 +51,8 @@ interface PreferencesProviderProps {
 
 export function PreferencesProvider({ children }: PreferencesProviderProps) {
   const { user } = useAuth();
-  const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
+  const [preferences, setPreferences] =
+    useState<UserPreferences>(defaultPreferences);
   const [loading, setLoading] = useState(true);
 
   // Load from LocalStorage immediately (fast UI)
@@ -48,16 +60,18 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
     const loadLocalPreferences = () => {
       try {
         const localPrefs = localStorage.getItem(PREFERENCES_STORAGE_KEY);
-        const cookieConsent = localStorage.getItem(COOKIE_CONSENT_KEY) as UserPreferences['cookieConsent'];
-        
+        const cookieConsent = localStorage.getItem(
+          COOKIE_CONSENT_KEY,
+        ) as UserPreferences["cookieConsent"];
+
         const stored = localPrefs ? JSON.parse(localPrefs) : {};
-        setPreferences(prev => ({
+        setPreferences((prev) => ({
           ...prev,
           ...stored,
           cookieConsent: cookieConsent || prev.cookieConsent,
         }));
       } catch (error) {
-        console.error('Error loading local preferences:', error);
+        console.error("Error loading local preferences:", error);
       }
       setLoading(false);
     };
@@ -67,11 +81,16 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
 
   // Apply theme preference
   useEffect(() => {
-    if (preferences.theme === 'system') {
-      const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      document.documentElement.classList.toggle('dark', systemDark);
+    if (preferences.theme === "system") {
+      const systemDark = window.matchMedia(
+        "(prefers-color-scheme: dark)",
+      ).matches;
+      document.documentElement.classList.toggle("dark", systemDark);
     } else {
-      document.documentElement.classList.toggle('dark', preferences.theme === 'dark');
+      document.documentElement.classList.toggle(
+        "dark",
+        preferences.theme === "dark",
+      );
     }
   }, [preferences.theme]);
 
@@ -80,7 +99,8 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
     if (preferences.language) {
       document.documentElement.lang = preferences.language;
       // Set RTL for Arabic
-      document.documentElement.dir = preferences.language === 'ar' ? 'rtl' : 'ltr';
+      document.documentElement.dir =
+        preferences.language === "ar" ? "rtl" : "ltr";
     }
   }, [preferences.language]);
 
@@ -94,25 +114,42 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
   const fetchUserPreferences = async () => {
     try {
       const { data, error } = await supabase
-        .from('users')
-        .select('preferred_language, preferred_currency, theme_preference, sidebar_state')
-        .eq('user_id', user!.id)
+        .from("users")
+        .select(
+          "preferred_language, preferred_currency, theme_preference, sidebar_state",
+        )
+        .eq("user_id", user!.id)
         .single();
-      
-      if (data && !error) {
+
+      if (error) {
+        // Silently fail and use localStorage preferences
+        // This handles cases where columns don't exist yet
+        console.warn(
+          "Could not fetch database preferences, using local storage:",
+          error.message,
+        );
+        return;
+      }
+
+      if (data) {
         const dbPrefs = {
-          theme: (data.theme_preference as ThemePreference) || preferences.theme,
+          theme:
+            (data.theme_preference as ThemePreference) || preferences.theme,
           language: data.preferred_language || preferences.language,
           currency: data.preferred_currency || preferences.currency,
           sidebar: (data.sidebar_state as SidebarState) || preferences.sidebar,
           cookieConsent: preferences.cookieConsent, // Keep local consent
         };
-        
+
         setPreferences(dbPrefs);
         localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(dbPrefs));
       }
-    } catch (error) {
-      console.error('Error fetching user preferences:', error);
+    } catch (error: any) {
+      // Silently fail - localStorage preferences will be used
+      console.warn(
+        "Error fetching user preferences from database:",
+        error?.message || error,
+      );
     }
   };
 
@@ -125,37 +162,46 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
     localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(newPrefs));
 
     // Sync with Supabase if user is logged in
-    if (user && key !== 'cookieConsent') {
+    if (user && key !== "cookieConsent") {
       const dbMap: Record<string, string> = {
-        theme: 'theme_preference',
-        language: 'preferred_language',
-        currency: 'preferred_currency',
-        sidebar: 'sidebar_state',
+        theme: "theme_preference",
+        language: "preferred_language",
+        currency: "preferred_currency",
+        sidebar: "sidebar_state",
       };
-      
+
       if (dbMap[key]) {
         try {
-          await supabase
-            .from('users')
+          const { error } = await supabase
+            .from("users")
             .update({ [dbMap[key]]: value })
-            .eq('user_id', user.id);
-        } catch (error) {
-          console.error('Error updating preference in database:', error);
-          // Revert to previous preference on error
-          setPreferences(preferences);
-          localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
+            .eq("user_id", user.id);
+
+          if (error) {
+            // Silently fail - preference is saved in localStorage
+            console.warn(
+              "Could not sync preference to database:",
+              error.message,
+            );
+          }
+        } catch (error: any) {
+          // Silently fail - preference is saved in localStorage
+          console.warn(
+            "Error syncing preference to database:",
+            error?.message || error,
+          );
         }
       }
     }
   };
 
-  const setCookieConsent = (status: 'accepted' | 'rejected') => {
-    setPreferences(prev => ({ ...prev, cookieConsent: status }));
+  const setCookieConsent = (status: "accepted" | "rejected") => {
+    setPreferences((prev) => ({ ...prev, cookieConsent: status }));
     localStorage.setItem(COOKIE_CONSENT_KEY, status);
   };
 
   const resetCookieConsent = () => {
-    setPreferences(prev => ({ ...prev, cookieConsent: null }));
+    setPreferences((prev) => ({ ...prev, cookieConsent: null }));
     localStorage.removeItem(COOKIE_CONSENT_KEY);
   };
 
@@ -177,7 +223,7 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
 export function usePreferences() {
   const context = useContext(PreferencesContext);
   if (context === undefined) {
-    throw new Error('usePreferences must be used within a PreferencesProvider');
+    throw new Error("usePreferences must be used within a PreferencesProvider");
   }
   return context;
 }

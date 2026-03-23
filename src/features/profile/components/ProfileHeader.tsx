@@ -1,9 +1,9 @@
-import { Avatar } from '@/components/ui/avatar';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Mail, Phone, Edit, Calendar } from 'lucide-react';
-import type { UserProfile, AccountType } from '@/types/profile';
+import { Avatar } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Mail, Phone, Edit, Calendar } from "lucide-react";
+import type { UserProfile, AccountType } from "@/types/profile";
 
 interface ProfileHeaderProps {
   user: UserProfile;
@@ -11,15 +11,22 @@ interface ProfileHeaderProps {
   onEdit?: () => void;
 }
 
-const roleConfig: Record<AccountType, { label: string; icon: string; color: string }> = {
-  factory: { label: 'Factory', icon: '🏭', color: 'bg-blue-500' },
-  seller: { label: 'Seller', icon: '🏪', color: 'bg-green-500' },
-  middleman: { label: 'Middleman', icon: '🤝', color: 'bg-purple-500' },
-  customer: { label: 'Customer', icon: '👤', color: 'bg-gray-500' },
-  delivery: { label: 'Delivery', icon: '🚚', color: 'bg-orange-500' },
+const roleConfig: Record<
+  AccountType,
+  { label: string; icon: string; color: string }
+> = {
+  factory: { label: "Factory", icon: "🏭", color: "bg-blue-500" },
+  seller: { label: "Seller", icon: "🏪", color: "bg-green-500" },
+  middle_man: { label: "Middleman", icon: "🤝", color: "bg-purple-500" },
+  user: { label: "User", icon: "👤", color: "bg-gray-500" },
+  admin: { label: "Admin", icon: "⚙️", color: "bg-red-500" },
 };
 
-export function ProfileHeader({ user, isOwnProfile, onEdit }: ProfileHeaderProps) {
+export function ProfileHeader({
+  user,
+  isOwnProfile,
+  onEdit,
+}: ProfileHeaderProps) {
   const role = roleConfig[user.account_type];
 
   return (
@@ -52,7 +59,9 @@ export function ProfileHeader({ user, isOwnProfile, onEdit }: ProfileHeaderProps
           {/* User Info */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-bold">{user.full_name || 'Unnamed User'}</h1>
+              <h1 className="text-2xl font-bold">
+                {user.full_name || "Unnamed User"}
+              </h1>
             </div>
 
             <Badge className={`mt-1 ${role.color} text-white`}>

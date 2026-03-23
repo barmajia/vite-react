@@ -110,7 +110,7 @@ export function Header() {
               className="flex items-center gap-3 group hover:opacity-90 transition-opacity"
             >
               <div className="relative">
-                <div className="bg-gradient-to-br from-violet-600 to-indigo-600 text-white p-2.5 rounded-xl shadow-lg shadow-violet-500/30 group-hover:shadow-violet-500/50 transition-all duration-300 group-hover:scale-105">
+                <div className="bg-gradient-to-br from-blue-600 to-blue-600 text-white p-2.5 rounded-xl shadow-lg shadow-blue-500/30 group-hover:shadow-blue-500/50 transition-all duration-300 group-hover:scale-105">
                   <ShoppingBag size={22} strokeWidth={2.5} />
                 </div>
                 <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
@@ -119,7 +119,7 @@ export function Header() {
                 <span className="text-xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-gray-200 bg-clip-text text-transparent leading-none">
                   AURORA
                 </span>
-                <span className="text-[9px] font-semibold text-violet-600 dark:text-violet-400 tracking-[0.25em] uppercase">
+                <span className="text-[9px] font-semibold text-blue-600 dark:text-blue-400 tracking-[0.25em] uppercase">
                   {t("s h o p")}
                 </span>
               </div>
@@ -129,8 +129,6 @@ export function Header() {
             <nav className="hidden lg:flex items-center gap-1">
               {[
                 { label: t("nav.products"), href: ROUTES.PRODUCTS },
-                { label: t("nav.services"), href: "/services" },
-                { label: t("nav.categories"), href: ROUTES.CATEGORIES },
                 { label: t("nav.about"), href: ROUTES.ABOUT },
                 { label: t("nav.contact"), href: ROUTES.CONTACT },
               ].map((item) => (
@@ -140,13 +138,13 @@ export function Header() {
                   className={cn(
                     "relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
                     location.pathname === item.href
-                      ? "text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20"
+                      ? "text-violet-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
                       : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
                   )}
                 >
                   {item.label}
                   {location.pathname === item.href && (
-                    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-violet-600 dark:bg-violet-400 rounded-full" />
+                    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full" />
                   )}
                 </Link>
               ))}
@@ -159,7 +157,7 @@ export function Header() {
                 to="/services"
                 className="group flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
               >
-                <div className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-violet-50 dark:group-hover:bg-violet-900/20 transition-colors">
+                <div className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors">
                   <Briefcase size={14} strokeWidth={2.5} />
                 </div>
                 <span className="hidden xl:inline">{t("nav.services")}</span>
@@ -359,7 +357,7 @@ export function Header() {
                   </Button>
                   <Button
                     onClick={() => navigate(ROUTES.SIGNUP)}
-                    className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:from-violet-700 hover:to-indigo-700 transition-all shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50"
+                    className="bg-gradient-to-r from-blue-600 to-blue-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:from-violet-700 hover:to-indigo-700 transition-all shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50"
                   >
                     {t("auth.joinNow")}
                   </Button>
@@ -368,15 +366,19 @@ export function Header() {
             </div>
 
             {/* Mobile Menu Button */}
-            <div className="flex items-center gap-2 lg:hidden">
-              {/* Mobile Menu Button */}
-              <button
-                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                onClick={() => setIsMobileNavOpen(!isMobileNavOpen)}
-              >
-                {isMobileNavOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-            </div>
+            <button
+              type="button"
+              className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors lg:hidden z-50 relative"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsMobileNavOpen((prev) => !prev);
+              }}
+              aria-label="Toggle menu"
+              aria-expanded={isMobileNavOpen}
+            >
+              {isMobileNavOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
           </div>
         </div>
       </header>

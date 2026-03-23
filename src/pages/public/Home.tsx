@@ -124,7 +124,7 @@ export function Home() {
   ];
 
   return (
-    <div className="space-y-16 pb-16 pt-20">
+    <div className="space-y-16 pb-16 pt-20 bg-[#1f2937]">
       {/* Hero Section - Multi-Role Platform */}
       <section className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-accent to-muted text-background">
         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />

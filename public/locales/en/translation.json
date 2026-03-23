@@ -360,7 +360,8 @@
     "title": "Products",
     "subtitle": "Browse our collection",
     "showingResults": "Showing {{start}}-{{end}} of {{total}} products",
-    "showingAll": "Showing {{count}} products"
+    "showingAll": "Showing {{count}} products",
+    "clearFilters": "Clear Filters"
   },
   "filter": {
     "title": "Filters",

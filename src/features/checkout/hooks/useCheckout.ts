@@ -61,7 +61,24 @@ export function useCheckout() {
         throw new Error("Cart is empty");
       }
 
-      // Group items by product (simplified - single order for all items)
+      // Fetch seller_id from products (cart only has snapshot)
+      // For multi-seller orders, you'd group by seller_id and create multiple orders
+      const productIds = items.map((item) => item.productId);
+
+      const { data: products, error: productsError } = await supabase
+        .from("products")
+        .select("id, seller_id")
+        .in("id", productIds);
+
+      if (productsError) throw productsError;
+      if (!products || products.length === 0)
+        throw new Error("Products not found");
+
+      // Get seller_id from first product (simplified - assumes single seller)
+      // For multi-seller, split orders by seller_id
+      const sellerId = products[0].seller_id;
+
+      // Prepare order items
       const orderItems = items.map((item) => ({
         product_id: item.productId,
         quantity: item.quantity,
@@ -76,12 +93,12 @@ export function useCheckout() {
         0,
       );
 
-      // Create single order (simplified - no seller splitting)
+      // Create single order
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .insert({
           user_id: user.id,
-          seller_id: "system", // Simplified - you can get from product if needed
+          seller_id: sellerId,
           status: "pending",
           total: orderTotal + shipping + tax,
           payment_status: "pending",

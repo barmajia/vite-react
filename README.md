@@ -3,8 +3,8 @@
 > A modern, production-ready full-stack B2B2C e-commerce platform built with React, Vite, TypeScript, Tailwind CSS, and Supabase. Features a minimalist, high-contrast luxury tech aesthetic with real-time messaging, factory management, services marketplace, geolocation capabilities, and multi-language support (i18n).
 
 **Version:** 2.5.0  
-**Status:** ✅ Production Ready (Phases 1-4 Complete + Factory Features + Services Marketplace + Services Messaging + Healthcare + i18n + Unified Messaging System)  
-**Last Updated:** March 21, 2026  
+**Status:** ✅ Production Ready (Phases 1-4 Complete + Factory Features + Services Marketplace + Services Messaging + Healthcare + i18n + Unified Messaging System + Middleman Features)  
+**Last Updated:** March 22, 2026  
 **Developer:** Youssef  
 **Overall Score:** 91/100 (See [Project Analysis Report](./PROJECT_ANALYSIS_REPORT.md))
 
@@ -12,19 +12,12 @@
 
 ## 📋 Table of Contents
 
-- [Overview](#overview)
+- [Overview](#-overview)
 - [Quick Start](#-quick-start)
 - [Features](#-features)
 - [Tech Stack](#-tech-stack)
 - [Project Structure](#-project-structure)
 - [Routes & Pages](#-routes--pages)
-  - [Public Routes](#public-routes)
-  - [🌟 Middleman Routes (Special Role)](#-middleman-routes-special-role)
-  - [Services Routes](#services-routes)
-  - [Factory Routes](#factory-routes)
-  - [Healthcare Routes](#healthcare-routes)
-  - [Protected User Routes](#protected-user-routes)
-  - [Auth Routes](#auth-routes)
 - [Database Schema](#-database-schema)
 - [Environment Variables](#-environment-variables)
 - [Development](#-development)
@@ -33,9 +26,10 @@
 - [Design System](#-design-system)
 - [API Reference](#-api-reference)
 - [Analytics & Performance](#-analytics--performance)
-- [TypeScript Implementation](#-complete-typescript-implementation)
+- [TypeScript Implementation](#-typescript-implementation)
 - [Documentation](#-documentation)
 - [Project Analysis](#-project-analysis)
+- [Troubleshooting](#-troubleshooting)
 - [Contributing](#-contributing)
 - [License](#-license)
 
@@ -45,26 +39,37 @@
 
 Aurora is a comprehensive e-commerce platform that supports multiple business models:
 
+### Business Models
+
 1. **B2C E-commerce** - Traditional retail with products, cart, checkout, and orders
 2. **B2B Factory** - Factory dashboard, production tracking, quote requests, and seller connections
 3. **Services Marketplace** - Service providers can list services, manage bookings, and connect with clients
 4. **Healthcare Module** - Doctor profiles, patient records, appointments, and telemedicine consultations
-5. **Multi-Language Support (i18n)** - 12+ languages with automatic geolocation-based detection and RTL support
+5. **Middleman Platform** - Deal management, commission tracking, and network building
+6. **Multi-Language Support (i18n)** - 12+ languages with automatic geolocation-based detection and RTL support
 
-The platform features real-time messaging between buyers and sellers, geolocation for finding nearby sellers, dark/light theme support, internationalization (i18n), and a production-ready deployment pipeline optimized for Vercel.
+### Key Capabilities
+
+- Real-time messaging between buyers and sellers (unified inbox)
+- Geolocation for finding nearby sellers
+- Dark/light theme support
+- Internationalization (i18n) with RTL support
+- Production-ready deployment pipeline optimized for Vercel
+- Row-Level Security (RLS) for data protection
+- Real-time updates via Supabase Realtime
 
 ### 📊 Key Metrics
 
-| Metric                  | Value                                                                             |
-| ----------------------- | --------------------------------------------------------------------------------- |
-| **Feature Modules**     | 15 (Auth, Cart, Products, Orders, Messaging, Factory, Services, Healthcare, etc.) |
-| **Database Tables**     | 20+ with Row Level Security                                                       |
-| **SQL Migrations**      | 40+ files                                                                         |
-| **Supported Languages** | 12 (with RTL for Arabic, Hebrew, Persian, Urdu)                                   |
-| **UI Components**       | 21 Shadcn/UI primitives + 30+ custom components                                   |
-| **Custom Hooks**        | 13 reusable hooks                                                                 |
-| **Documentation Files** | 30+ markdown files                                                                |
-| **Lines of Code**       | ~50,000+                                                                          |
+| Metric                  | Value                                                                                        |
+| ----------------------- | -------------------------------------------------------------------------------------------- |
+| **Feature Modules**     | 15 (Auth, Cart, Products, Orders, Messaging, Factory, Services, Healthcare, Middleman, etc.) |
+| **Database Tables**     | 40+ with Row Level Security                                                                  |
+| **SQL Migrations**      | 50+ files                                                                                    |
+| **Supported Languages** | 12 (with RTL for Arabic, Hebrew, Persian, Urdu)                                              |
+| **UI Components**       | 21 Shadcn/UI primitives + 50+ custom components                                              |
+| **Custom Hooks**        | 20+ reusable hooks                                                                           |
+| **Documentation Files** | 45+ markdown files                                                                           |
+| **Lines of Code**       | ~60,000+                                                                                     |
 
 ### 🏗️ Architecture Highlights
 
@@ -74,6 +79,7 @@ The platform features real-time messaging between buyers and sellers, geolocatio
 - **Real-time capabilities** via Supabase Realtime (messaging, notifications)
 - **API layer** using Supabase client with RPC functions
 - **Isolated messaging systems**: Product messaging & Services messaging (separate tables)
+- **Unified inbox** for all conversation types
 
 ---
 
@@ -83,7 +89,7 @@ The platform features real-time messaging between buyers and sellers, geolocatio
 
 - Node.js 18+ and npm
 - A Supabase project (PostgreSQL 17)
-- Modern web browser
+- Modern web browser (Chrome, Firefox, Safari, Edge)
 
 ### Installation
 
@@ -98,8 +104,8 @@ npm install
 cp .env.example .env
 
 # Update .env with your Supabase credentials
-# VITE_SUPABASE_URL=your_supabase_url
-# VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+# VITE_SUPABASE_URL=https://your-project.supabase.co
+# VITE_SUPABASE_ANON_KEY=your-anon-key
 # VITE_APP_URL=http://localhost:5173
 
 # Start development server
@@ -107,6 +113,36 @@ npm run dev
 ```
 
 The application will run at `http://localhost:5173`
+
+### Database Setup
+
+Run the following SQL files in Supabase SQL Editor in order:
+
+```sql
+-- 1. Core schema
+all.sql
+
+-- 2. Factory features
+factory-features-migration.sql
+
+-- 3. Factory chat
+factory-chat-deals-migration.sql
+
+-- 4. Services marketplace
+services-marketplace-migration.sql
+
+-- 5. Services messaging
+services-messaging-isolated.sql
+
+-- 6. Healthcare module
+healthcare-schema.sql
+
+-- 7. Middleman features
+middleman-signup-migration.sql
+
+-- 8. RLS fixes
+fix-conversations-rls-2026.sql
+```
 
 ---
 
@@ -118,8 +154,9 @@ The application will run at `http://localhost:5173`
 - Password reset flow with email recovery
 - Protected routes with authentication guards
 - Session management with auto-refresh
-- Role-based access (buyer, seller, factory, service provider)
+- Role-based access (buyer, seller, factory, service_provider, middleman, admin)
 - Onboarding wizard for new users
+- Multi-role signup (user can be buyer + seller + service provider simultaneously)
 
 ### 🌍 Multi-Language Support (i18n)
 
@@ -128,6 +165,7 @@ The application will run at `http://localhost:5173`
 - **RTL Support:** Full right-to-left layout for Arabic, Hebrew, Persian, Urdu
 - **Persistent Preference:** Language choice saved in localStorage
 - **Dynamic Language Switching:** Change language without page reload
+- **Category Translations:** Product categories translated to all languages
 
 ### 🛍️ Product Management
 
@@ -163,14 +201,20 @@ The application will run at `http://localhost:5173`
 
 ### 💬 Real-Time Messaging
 
-#### Product Messaging (B2C/B2B)
+#### Unified Inbox System
 
-- Buyer-seller conversation threads
+- **Single inbox** for all conversation types (product, services, factory)
 - Live message delivery via Supabase Realtime
 - Typing indicators and read receipts (✓✓)
 - Unread message count badges
 - Last message preview with timestamps
 - Conversation inbox with filtering
+- Routes: `/messages`, `/messages/:conversationId`
+
+#### Product Messaging (B2C/B2B)
+
+- Buyer-seller conversation threads
+- Tied to specific products
 - Route: `/messages`
 
 #### Services Messaging (Isolated System)
@@ -180,10 +224,8 @@ The application will run at `http://localhost:5173`
 - Tied to specific service listings
 - Provider ↔ Client communication only
 - Real-time message delivery with read receipts
-- Automatic get-or-create conversation logic via RPC
 - Full-text search on message content
 - Secure RLS policies ensuring participant-only access
-- Routes: `/services/messages`, `/services/messages/:conversationId`
 
 ### 🏭 Factory Features (B2B)
 
@@ -288,11 +330,34 @@ A complete **Healthcare Ecosystem** integrated within the services marketplace:
 - **Medicine Availability:** Check stock at local pharmacies
 - **Prescription Fulfillment:** Link prescriptions to pharmacy orders
 
-#### Admin Features
+### 🤵 Middleman Platform
 
-- **Doctor Verification:** Review and approve doctor license submissions
-- **Quality Assurance:** Monitor ratings and patient feedback
-- **System Oversight:** Manage healthcare module settings
+A comprehensive **Deal Management System** for intermediaries connecting buyers and sellers:
+
+#### Main Dashboard
+
+- Real-time KPI analytics (deals, commissions, connections)
+- Revenue and commission charts
+- Network overview (factories & sellers connected)
+
+#### Deal Management
+
+- Create and manage deals between parties
+- Track deal status and progress
+- Commission calculation and tracking
+- Deal history and analytics
+
+#### Order & Commission Tracking
+
+- Orders linked to deals
+- Commission reports and analytics
+- Performance metrics and charts
+
+#### Network Management
+
+- Factory & seller connections
+- Partnership requests and acceptances
+- Network growth tracking
 
 ### 🌍 Geolocation
 
@@ -302,6 +367,7 @@ A complete **Healthcare Ecosystem** integrated within the services marketplace:
 - Auto-save location to user profile
 - Manual coordinate input support
 - Location-based product filtering
+- Language detection based on location
 
 ### 👤 User Features
 
@@ -317,6 +383,8 @@ A complete **Healthcare Ecosystem** integrated within the services marketplace:
   - Privacy settings
   - Security settings (password change)
   - Location settings
+  - Language preferences
+  - Theme preferences
 
 ### 🎨 UI/UX Features
 
@@ -326,9 +394,11 @@ A complete **Healthcare Ecosystem** integrated within the services marketplace:
 - Toast notifications (Sonner)
 - Error boundaries for graceful failures
 - Accessible components (ARIA labels, keyboard navigation)
-- 19+ Shadcn/UI components
+- 21+ Shadcn/UI components
 - Custom layout components (Header, Footer, MobileNav)
 - 404 and error pages
+- Cookie consent banner (GDPR compliant)
+- User preferences system
 
 ---
 
@@ -336,27 +406,30 @@ A complete **Healthcare Ecosystem** integrated within the services marketplace:
 
 ### Frontend
 
-| Technology                   | Version | Purpose                              |
-| ---------------------------- | ------- | ------------------------------------ |
-| **React**                    | 18.3.1  | UI framework                         |
-| **TypeScript**               | 5.5.3   | Type safety                          |
-| **Vite**                     | 5.4.1   | Build tool & dev server              |
-| **Tailwind CSS**             | 3.4.1   | Utility-first CSS with CSS variables |
-| **Shadcn/UI**                | -       | 21 Radix UI primitives               |
-| **Zustand**                  | 5.0.11  | Client state management              |
-| **TanStack Query**           | 5.90.21 | Server state management & caching    |
-| **React Router DOM**         | 7.13.1  | Client-side routing                  |
-| **Sonner**                   | 2.0.7   | Toast notifications                  |
-| **Lucide React**             | 0.577.0 | Icon library                         |
-| **Recharts**                 | 3.8.0   | Data visualization                   |
-| **i18next**                  | 25.8.19 | Internationalization (i18n)          |
-| **react-i18next**            | 16.5.8  | React i18n integration               |
-| **date-fns**                 | 4.1.0   | Date formatting                      |
-| **Vercel Analytics**         | 1.6.1   | Performance monitoring               |
-| **Vercel Speed Insights**    | 1.3.1   | Core Web Vitals                      |
-| **class-variance-authority** | 0.7.1   | Component variants                   |
-| **clsx**                     | 2.1.1   | Conditional classes                  |
-| **tailwind-merge**           | 3.5.0   | Class merging                        |
+| Technology                           | Version | Purpose                              |
+| ------------------------------------ | ------- | ------------------------------------ |
+| **React**                            | 18.3.1  | UI framework                         |
+| **TypeScript**                       | 5.5.3   | Type safety                          |
+| **Vite**                             | 5.4.1   | Build tool & dev server              |
+| **Tailwind CSS**                     | 3.4.1   | Utility-first CSS with CSS variables |
+| **Shadcn/UI**                        | -       | 21 Radix UI primitives               |
+| **Zustand**                          | 5.0.11  | Client state management              |
+| **TanStack Query**                   | 5.90.21 | Server state management & caching    |
+| **React Router DOM**                 | 7.13.1  | Client-side routing                  |
+| **Sonner**                           | 2.0.7   | Toast notifications                  |
+| **Lucide React**                     | 0.577.0 | Icon library                         |
+| **Recharts**                         | 3.8.0   | Data visualization                   |
+| **i18next**                          | 25.8.19 | Internationalization (i18n)          |
+| **react-i18next**                    | 16.5.8  | React i18n integration               |
+| **i18next-browser-languagedetector** | 8.2.1   | Browser language detection           |
+| **i18next-http-backend**             | 3.0.2   | i18n HTTP backend                    |
+| **date-fns**                         | 4.1.0   | Date formatting                      |
+| **Vercel Analytics**                 | 1.6.1   | Performance monitoring               |
+| **Vercel Speed Insights**            | 1.3.1   | Core Web Vitals                      |
+| **class-variance-authority**         | 0.7.1   | Component variants                   |
+| **clsx**                             | 2.1.1   | Conditional classes                  |
+| **tailwind-merge**                   | 3.5.0   | Class merging                        |
+| **tailwindcss-animate**              | 1.0.7   | Tailwind animations                  |
 
 ### Backend (Supabase)
 
@@ -433,9 +506,12 @@ vite-react/
 │   │   │   ├── tabs.tsx
 │   │   │   ├── textarea.tsx
 │   │   │   └── toast.tsx
+│   │   ├── feed/                       # Social feed component
+│   │   │   └── FeedPage.tsx
 │   │   ├── ErrorBoundary.tsx           # React error boundary
 │   │   ├── ToastProvider.tsx           # Toast notification provider
-│   │   └── VercelAnalytics.tsx         # Vercel analytics component
+│   │   ├── VercelAnalytics.tsx         # Vercel analytics component
+│   │   └── CookieConsentBanner.tsx     # GDPR cookie consent
 │   │
 │   ├── features/                       # Feature-based modules
 │   │   ├── addresses/
@@ -460,9 +536,20 @@ vite-react/
 │   │   │   ├── hooks/
 │   │   │   ├── types/
 │   │   │   └── index.ts
+│   │   ├── health/                     # Healthcare Module
+│   │   │   ├── components/
+│   │   │   ├── layouts/
+│   │   │   ├── pages/
+│   │   │   ├── types/
+│   │   │   └── api/
 │   │   ├── messaging/
 │   │   │   ├── components/
-│   │   │   └── hooks/
+│   │   │   ├── hooks/
+│   │   │   ├── services/
+│   │   │   └── types/
+│   │   ├── middleman/                  # Middleman Platform
+│   │   │   ├── components/
+│   │   │   └── pages/
 │   │   ├── notifications/
 │   │   │   ├── components/
 │   │   │   └── hooks/
@@ -478,13 +565,17 @@ vite-react/
 │   │   ├── services/                   # Services Marketplace
 │   │   │   ├── components/
 │   │   │   ├── pages/
-│   │   │   └── hooks/
+│   │   │   ├── hooks/
+│   │   │   └── types/
 │   │   ├── settings/
 │   │   │   ├── components/
 │   │   │   └── pages/
 │   │   └── wishlist/
 │   │       ├── components/
 │   │       └── pages/
+│   │
+│   ├── context/                        # React Context providers
+│   │   └── PreferencesContext.tsx      # User preferences (location, theme)
 │   │
 │   ├── hooks/                          # Custom React hooks
 │   │   ├── useAuth.tsx                 # Authentication context
@@ -522,10 +613,16 @@ vite-react/
 │   │   │   ├── FactoryQuotesPage.tsx
 │   │   │   └── FactoryConnectionsPage.tsx
 │   │   ├── messaging/
-│   │   │   ├── Inbox.tsx               # Product messages inbox
-│   │   │   ├── Chat.tsx                # Product messages chat
-│   │   │   ├── ServicesInbox.tsx       # Services messages inbox
-│   │   │   └── ServicesChat.tsx        # Services messages chat
+│   │   │   ├── Inbox.tsx               # Product messages inbox (legacy)
+│   │   │   ├── Chat.tsx                # Product messages chat (legacy)
+│   │   │   ├── ServicesInbox.tsx       # Services messages inbox (legacy)
+│   │   │   └── ServicesChat.tsx        # Services messages chat (legacy)
+│   │   ├── middleman/                  # Middleman pages
+│   │   │   ├── MiddlemanSignup.tsx
+│   │   │   ├── MiddlemanDashboard.tsx
+│   │   │   ├── MiddlemanDeals.tsx
+│   │   │   ├── MiddlemanCreateDeal.tsx
+│   │   │   └── ...
 │   │   └── public/
 │   │       ├── Home.tsx
 │   │       ├── ProductList.tsx
@@ -550,6 +647,8 @@ vite-react/
 │   ├── assets/                         # Static assets
 │   │   └── images/
 │   │
+│   ├── config/                         # Configuration files
+│   │
 │   ├── App.tsx                         # Main app with routing
 │   ├── main.tsx                        # Entry point
 │   └── index.css                       # Tailwind + theme CSS
@@ -568,7 +667,8 @@ vite-react/
 │   ├── config.toml                     # Supabase local config
 │   └── snippets/                       # SQL snippets
 │
-├── *.sql                               # Database migrations
+├── *.sql                               # Database migrations (50+ files)
+├── *.md                                # Documentation (45+ files)
 ├── package.json
 ├── vite.config.ts                      # Vite configuration
 ├── tailwind.config.js                  # Tailwind configuration
@@ -577,7 +677,7 @@ vite-react/
 ├── vercel.json                         # Vercel SPA routing
 ├── .env.example                        # Environment variables template
 ├── .vercelignore                       # Vercel ignore file
-└── Documentation files (*.md)
+└── .gitignore
 ```
 
 ---
@@ -599,6 +699,9 @@ vite-react/
 | `/about`                 | `About`                | About page                              |
 | `/contact`               | `Contact`              | Contact page                            |
 | `/help`                  | `Help`                 | Help center                             |
+| `/feed`                  | `FeedPage`             | Social feed                             |
+| `/profiles`              | `ProfileDirectoryPage` | User profile directory                  |
+| `/profile/:userId`       | `PublicProfilePage`    | Public profile view                     |
 
 ---
 
@@ -643,17 +746,19 @@ vite-react/
 
 ### Services Routes
 
-| Path                                 | Component               | Description               |
-| ------------------------------------ | ----------------------- | ------------------------- |
-| `/services`                          | `ServicesHome`          | Services marketplace home |
-| `/services/:categorySlug`            | `ServiceCategoryPage`   | Services by category      |
-| `/services/listing/:listingSlug`     | `ServiceDetailPage`     | Service details           |
-| `/services/provider/:providerId`     | `ProviderProfilePage`   | Provider profile          |
-| `/services/dashboard`                | `ProviderDashboardPage` | Provider dashboard        |
-| `/services/dashboard/create-profile` | `CreateProviderProfile` | Create provider profile   |
-| `/services/dashboard/create-listing` | `CreateServiceListing`  | Create service listing    |
-| `/services/messages`                 | `ServicesInbox`         | Services messages inbox   |
-| `/services/messages/:conversationId` | `ServicesChat`          | Services chat             |
+| Path                                 | Component                 | Description                |
+| ------------------------------------ | ------------------------- | -------------------------- |
+| `/services`                          | `ServicesHome`            | Services marketplace home  |
+| `/services/:categorySlug`            | `ServiceCategoryPage`     | Services by category       |
+| `/services/listing/:listingSlug`     | `ServiceDetailPage`       | Service details            |
+| `/services/listing/:listingId/book`  | `ServiceBookingPage`      | Service booking            |
+| `/services/provider/:providerId`     | `ProviderProfilePage`     | Provider profile           |
+| `/services/dashboard`                | `DashboardLayout`         | Provider dashboard layout  |
+| `/services/dashboard/bookings`       | `BookingsPage`            | Bookings management        |
+| `/services/dashboard/create-profile` | `CreateProviderProfile`   | Create provider profile    |
+| `/services/dashboard/create-listing` | `CreateServiceListing`    | Create service listing     |
+| `/services/dashboard/onboard`        | `ServiceOnboardingWizard` | Service onboarding         |
+| `/services/onboarding`               | `ServiceOnboardingWizard` | Service onboarding (alias) |
 
 ### Factory Routes (Protected)
 
@@ -663,48 +768,52 @@ vite-react/
 | `/factory/production`  | `FactoryProductionPage`  | Production order tracking   |
 | `/factory/quotes`      | `FactoryQuotesPage`      | Quote request management    |
 | `/factory/connections` | `FactoryConnectionsPage` | Seller connections          |
+| `/factory/chat-test`   | `FactoryChatTestPage`    | Factory chat test           |
+| `/factory/start-chat`  | `FactoryChatStarter`     | Factory chat starter        |
 
 ### Healthcare Routes
 
-| Path                                 | Component           | Description                    |
-| ------------------------------------ | ------------------- | ------------------------------ |
-| `/services/health`                   | `HealthLanding`     | Healthcare landing page        |
-| `/services/health/doctors`           | `DoctorList`        | Doctor directory               |
-| `/services/health/doctor/signup`     | `DoctorSignup`      | Doctor registration            |
-| `/services/health/book/:id`          | `BookingPage`       | Appointment booking            |
-| `/services/health/patient/dashboard` | `PatientDashboard`  | Patient dashboard              |
-| `/services/health/doctor/dashboard`  | `DoctorDashboard`   | Doctor dashboard               |
-| `/services/health/admin/verify`      | `AdminVerification` | Admin license verification     |
-| `/services/health/consult/:id`       | `ConsultationRoom`  | Telemedicine consultation room |
-| `/services/health/pharmacies`        | `PharmacyList`      | Pharmacy directory             |
+| Path                                       | Component               | Description                    |
+| ------------------------------------------ | ----------------------- | ------------------------------ |
+| `/services/health`                         | `HealthLayout`          | Healthcare layout wrapper      |
+| `/services/health`                         | `HealthLanding`         | Healthcare landing page        |
+| `/services/health/doctors`                 | `DoctorList`            | Doctor directory               |
+| `/services/health/doctor/signup`           | `DoctorSignup`          | Doctor registration            |
+| `/services/health/doctor/pending-approval` | `DoctorPendingApproval` | Doctor pending approval        |
+| `/services/health/book/:id`                | `BookingPage`           | Appointment booking            |
+| `/services/health/patient/dashboard`       | `PatientDashboard`      | Patient dashboard              |
+| `/services/health/doctor/dashboard`        | `DoctorDashboard`       | Doctor dashboard               |
+| `/services/health/admin/verify`            | `AdminVerification`     | Admin license verification     |
+| `/services/health/consult/:id`             | `ConsultationRoom`      | Telemedicine consultation room |
+| `/services/health/pharmacies`              | `PharmacyList`          | Pharmacy directory             |
 
 ### Protected User Routes
 
-| Path                        | Component           | Description           |
-| --------------------------- | ------------------- | --------------------- |
-| `/cart`                     | `CartPage`          | Shopping cart         |
-| `/checkout`                 | `CheckoutPage`      | Checkout flow         |
-| `/order-success/:id`        | `OrderSuccessPage`  | Order confirmation    |
-| `/profile`                  | `ProfilePage`       | User profile          |
-| `/orders`                   | `OrdersListPage`    | Order history         |
-| `/orders/:id`               | `OrderDetailPage`   | Order details         |
-| `/wishlist`                 | `WishlistPage`      | Wishlist              |
-| `/addresses`                | `AddressesPage`     | Address management    |
-| `/reviews`                  | `Reviews`           | Reviews (placeholder) |
-| `/messages`                 | `Inbox`             | Message inbox         |
-| `/messages/:conversationId` | `Chat`              | Chat conversation     |
-| `/notifications`            | `NotificationsPage` | Notifications         |
-| `/settings`                 | `SettingsPage`      | User settings         |
+| Path                        | Component           | Description               |
+| --------------------------- | ------------------- | ------------------------- |
+| `/cart`                     | `CartPage`          | Shopping cart             |
+| `/checkout`                 | `CheckoutPage`      | Checkout flow             |
+| `/order-success/:id`        | `OrderSuccessPage`  | Order confirmation        |
+| `/profile`                  | `ProfilePage`       | User profile              |
+| `/orders`                   | `OrdersListPage`    | Order history             |
+| `/orders/:id`               | `OrderDetailPage`   | Order details             |
+| `/wishlist`                 | `WishlistPage`      | Wishlist                  |
+| `/addresses`                | `AddressesPage`     | Address management        |
+| `/reviews`                  | `Reviews`           | Reviews (placeholder)     |
+| `/messages`                 | `UnifiedInbox`      | Unified message inbox     |
+| `/messages/:conversationId` | `UnifiedChat`       | Unified chat conversation |
+| `/notifications`            | `NotificationsPage` | Notifications             |
+| `/settings`                 | `SettingsPage`      | User settings             |
 
-### Auth Routes (Full Page)
+### Auth Routes (Full Page - No Layout)
 
-| Path                   | Component          | Description         |
-| ---------------------- | ------------------ | ------------------- |
-| `/signup`              | `ServicesSignup`   | User registration   |
-| `/login`               | `Login`            | User login          |
-| `/services/onboarding` | `OnboardingWizard` | New user onboarding |
-| `/forgot-password`     | `ForgotPassword`   | Password recovery   |
-| `/reset-password`      | `ResetPassword`    | Password reset      |
+| Path                | Component         | Description            |
+| ------------------- | ----------------- | ---------------------- |
+| `/signup`           | `SignupPage`      | User registration      |
+| `/signup/middleman` | `MiddlemanSignup` | Middleman registration |
+| `/login`            | `Login`           | User login             |
+| `/forgot-password`  | `ForgotPassword`  | Password recovery      |
+| `/reset-password`   | `ResetPassword`   | Password reset         |
 
 ### Error Routes
 
@@ -717,47 +826,88 @@ vite-react/
 
 ## 🗄️ Database Schema
 
-### Core Tables (20+)
+### Core Tables (40+)
 
-| Table                         | Description               | Key Columns                                                                    |
-| ----------------------------- | ------------------------- | ------------------------------------------------------------------------------ |
-| `users`                       | User profiles             | `id`, `email`, `full_name`, `avatar`, `phone`, `latitude`, `longitude`, `role` |
-| `sellers`                     | Seller profiles           | `id`, `user_id`, `business_name`, `description`, `rating`                      |
-| `products`                    | Product catalog           | `id`, `seller_id`, `title`, `description`, `price`, `stock`, `search_vector`   |
-| `cart`                        | Shopping cart items       | `id`, `user_id`, `product_id`, `quantity`                                      |
-| `orders`                      | Order records             | `id`, `user_id`, `seller_id`, `status`, `payment_status`, `total`              |
-| `order_items`                 | Order line items          | `id`, `order_id`, `product_id`, `quantity`, `price`                            |
-| `shipping_addresses`          | User addresses            | `id`, `user_id`, `address_line1`, `city`, `is_default`                         |
-| `reviews`                     | Product reviews           | `id`, `product_id`, `user_id`, `rating`, `comment`                             |
-| `wishlist`                    | Wishlist items            | `id`, `user_id`, `product_id`                                                  |
-| `conversations`               | Message threads           | `id`, `buyer_id`, `seller_id`, `last_message`, `updated_at`                    |
-| `messages`                    | Chat messages             | `id`, `conversation_id`, `sender_id`, `content`, `is_read`                     |
-| `notifications`               | In-app notifications      | `id`, `user_id`, `title`, `message`, `is_read`, `type`                         |
-| `categories`                  | Product categories        | `id`, `name`, `slug`, `parent_id`, `icon`                                      |
-| `factory_production_logs`     | Production tracking       | `id`, `order_id`, `status`, `notes`, `created_by`                              |
-| `quote_requests`              | B2B quotes                | `id`, `factory_id`, `buyer_id`, `product_id`, `quantity`, `status`             |
-| `factory_analytics_snapshots` | Cached KPIs               | `id`, `seller_id`, `snapshot_date`, `metrics`                                  |
-| `factory_certifications`      | Factory certs             | `id`, `factory_id`, `certification_name`, `is_verified`                        |
-| `service_providers`           | Service provider profiles | `id`, `user_id`, `business_name`, `rating`, `phone`, `website`                 |
-| `service_listings`            | Service offerings         | `id`, `provider_id`, `title`, `price`, `category`, `slug`                      |
-| `service_bookings`            | Service appointments      | `id`, `listing_id`, `customer_id`, `date`, `status`                            |
-| `services_conversations`      | Services message threads  | `id`, `provider_id`, `customer_id`, `listing_id`, `last_message`               |
-| `services_messages`           | Services chat messages    | `id`, `conversation_id`, `sender_id`, `content`, `is_read`                     |
-| `health_doctor_profiles`      | Doctor profiles           | `id`, `user_id`, `specialization`, `license_number`, `is_verified`             |
-| `health_patient_profiles`     | Patient profiles          | `id`, `user_id`, `medical_history`, `emergency_contact`                        |
-| `health_appointments`         | Medical appointments      | `id`, `doctor_id`, `patient_id`, `appointment_type`, `status`                  |
-| `health_pharmacy_profiles`    | Pharmacy profiles         | `id`, `user_id`, `location`, `operating_hours`                                 |
+#### User & Authentication
+
+| Table               | Description               | Key Columns                                                                    |
+| ------------------- | ------------------------- | ------------------------------------------------------------------------------ |
+| `users`             | User profiles             | `id`, `email`, `full_name`, `avatar`, `phone`, `latitude`, `longitude`, `role` |
+| `sellers`           | Seller profiles           | `id`, `user_id`, `business_name`, `description`, `rating`                      |
+| `factories`         | Factory profiles          | `id`, `user_id`, `company_name`, `certifications`                              |
+| `service_providers` | Service provider profiles | `id`, `user_id`, `business_name`, `rating`, `phone`, `website`, `metadata`     |
+| `middlemen`         | Middleman profiles        | `id`, `user_id`, `company_name`, `specialization`                              |
+
+#### E-commerce
+
+| Table                | Description         | Key Columns                                                                  |
+| -------------------- | ------------------- | ---------------------------------------------------------------------------- |
+| `products`           | Product catalog     | `id`, `seller_id`, `title`, `description`, `price`, `stock`, `search_vector` |
+| `cart`               | Shopping cart items | `id`, `user_id`, `product_id`, `quantity`                                    |
+| `orders`             | Order records       | `id`, `user_id`, `seller_id`, `status`, `payment_status`, `total`            |
+| `order_items`        | Order line items    | `id`, `order_id`, `product_id`, `quantity`, `price`                          |
+| `shipping_addresses` | User addresses      | `id`, `user_id`, `address_line1`, `city`, `is_default`                       |
+| `reviews`            | Product reviews     | `id`, `product_id`, `user_id`, `rating`, `comment`                           |
+| `wishlist`           | Wishlist items      | `id`, `user_id`, `product_id`                                                |
+| `categories`         | Product categories  | `id`, `name`, `slug`, `parent_id`, `icon`                                    |
+
+#### Messaging
+
+| Table                       | Description               | Key Columns                                                         |
+| --------------------------- | ------------------------- | ------------------------------------------------------------------- |
+| `conversations`             | Product message threads   | `id`, `product_id`, `last_message`, `last_message_at`, `created_at` |
+| `messages`                  | Product chat messages     | `id`, `conversation_id`, `sender_id`, `content`, `message_type`     |
+| `conversation_participants` | Conversation participants | `id`, `conversation_id`, `user_id`, `role`                          |
+| `services_conversations`    | Services message threads  | `id`, `provider_id`, `customer_id`, `listing_id`, `last_message`    |
+| `services_messages`         | Services chat messages    | `id`, `conversation_id`, `sender_id`, `content`, `is_read`          |
+
+#### Factory (B2B)
+
+| Table                         | Description                | Key Columns                                                        |
+| ----------------------------- | -------------------------- | ------------------------------------------------------------------ |
+| `factory_production_logs`     | Production tracking        | `id`, `order_id`, `status`, `notes`, `created_by`                  |
+| `quote_requests`              | B2B quotes                 | `id`, `factory_id`, `buyer_id`, `product_id`, `quantity`, `status` |
+| `factory_analytics_snapshots` | Cached KPIs                | `id`, `seller_id`, `snapshot_date`, `metrics`                      |
+| `factory_certifications`      | Factory certs              | `id`, `factory_id`, `certification_name`, `is_verified`            |
+| `factory_connections`         | Factory-seller connections | `id`, `factory_id`, `seller_id`, `status`                          |
+
+#### Services Marketplace
+
+| Table              | Description          | Key Columns                                                           |
+| ------------------ | -------------------- | --------------------------------------------------------------------- |
+| `service_listings` | Service offerings    | `id`, `provider_id`, `title`, `price`, `category`, `slug`, `metadata` |
+| `service_bookings` | Service appointments | `id`, `listing_id`, `customer_id`, `date`, `status`, `booking_type`   |
+
+#### Healthcare
+
+| Table                      | Description            | Key Columns                                                        |
+| -------------------------- | ---------------------- | ------------------------------------------------------------------ |
+| `health_doctor_profiles`   | Doctor profiles        | `id`, `user_id`, `specialization`, `license_number`, `is_verified` |
+| `health_patient_profiles`  | Patient profiles       | `id`, `user_id`, `medical_history`, `emergency_contact`            |
+| `health_appointments`      | Medical appointments   | `id`, `doctor_id`, `patient_id`, `appointment_type`, `status`      |
+| `health_conversations`     | Health message threads | `id`, `appointment_id`, `created_at`                               |
+| `health_messages`          | Health chat messages   | `id`, `conversation_id`, `sender_id`, `content`                    |
+| `health_pharmacy_profiles` | Pharmacy profiles      | `id`, `user_id`, `location`, `operating_hours`                     |
+| `health_prescriptions`     | Prescriptions          | `id`, `appointment_id`, `medications`, `notes`                     |
+
+#### Notifications & Preferences
+
+| Table              | Description          | Key Columns                                                   |
+| ------------------ | -------------------- | ------------------------------------------------------------- |
+| `notifications`    | In-app notifications | `id`, `user_id`, `title`, `message`, `is_read`, `type`        |
+| `user_preferences` | User preferences     | `id`, `user_id`, `theme`, `language`, `notifications_enabled` |
 
 ### Database Functions
 
-| Function                                            | Purpose                           |
-| --------------------------------------------------- | --------------------------------- |
-| `get_seller_kpis(seller_id, period_days)`           | Comprehensive seller analytics    |
-| `get_production_orders(seller_id, status)`          | Fetch production orders by status |
-| `update_production_status(order_id, status, notes)` | Update order status with logging  |
-| `cleanup_expired_quotes()`                          | Auto-expire old quotes (pg_cron)  |
-| `calculate_distance(lat1, lon1, lat2, lon2)`        | Distance calculation (km)         |
-| `get_nearby_sellers(user_id, radius_km)`            | Find sellers within radius        |
+| Function                                                         | Purpose                           |
+| ---------------------------------------------------------------- | --------------------------------- |
+| `get_seller_kpis(seller_id, period_days)`                        | Comprehensive seller analytics    |
+| `get_production_orders(seller_id, status)`                       | Fetch production orders by status |
+| `update_production_status(order_id, status, notes)`              | Update order status with logging  |
+| `cleanup_expired_quotes()`                                       | Auto-expire old quotes (pg_cron)  |
+| `calculate_distance(lat1, lon1, lat2, lon2)`                     | Distance calculation (km)         |
+| `get_nearby_sellers(user_id, radius_km)`                         | Find sellers within radius        |
+| `get_or_create_conversation(user_id, other_user_id, product_id)` | Get or create conversation        |
 
 ### Database Types
 
@@ -788,86 +938,25 @@ type production_status =
 type quote_status = "pending" | "quoted" | "accepted" | "rejected" | "expired";
 
 // User Role
-type user_role = "buyer" | "seller" | "factory" | "service_provider" | "admin";
+type user_role =
+  | "buyer"
+  | "seller"
+  | "factory"
+  | "service_provider"
+  | "middleman"
+  | "admin";
+
+// Booking Type
+type booking_type = "appointment" | "project_contract";
+
+// Appointment Status
+type appointment_status =
+  | "pending"
+  | "confirmed"
+  | "completed"
+  | "cancelled"
+  | "no_show";
 ```
-
----
-
-## 📊 Project Analysis
-
-### Overall Health Score: 91/100 ✅
-
-| Category                 | Score   | Status       |
-| ------------------------ | ------- | ------------ |
-| **Code Quality**         | 95/100  | ✅ Excellent |
-| **Type Safety**          | 100/100 | ✅ Complete  |
-| **Architecture**         | 98/100  | ✅ Excellent |
-| **Security**             | 95/100  | ✅ Excellent |
-| **Performance**          | 88/100  | ✅ Good      |
-| **Documentation**        | 85/100  | ✅ Good      |
-| **Testing**              | 0/100   | ❌ Missing   |
-| **Feature Completeness** | 85/100  | ✅ Good      |
-
-### Build Metrics
-
-| Metric           | Value      | Status        |
-| ---------------- | ---------- | ------------- |
-| **Build Time**   | ~8 seconds | ✅ Good       |
-| **Total Bundle** | 1,427 KB   | ⚠️ Large      |
-| **Gzipped**      | 399 KB     | ✅ Acceptable |
-| **Modules**      | 3,138      | ⚠️ Many       |
-| **Chunks**       | 10         | ✅ Optimized  |
-
-### Code Quality
-
-| Metric              | Value | Target | Status        |
-| ------------------- | ----- | ------ | ------------- |
-| TypeScript Coverage | 100%  | 100%   | ✅ Pass       |
-| ESLint Errors       | 0     | 0      | ✅ Pass       |
-| ESLint Warnings     | 112   | <50    | ⚠️ Needs Work |
-| Build Success Rate  | 100%  | 100%   | ✅ Pass       |
-
-### Key Findings
-
-✅ **Strengths:**
-
-- Excellent feature-based architecture
-- Comprehensive feature set (B2C, B2B, Services)
-- Modern technology stack
-- Strong security foundation (RLS, JWT)
-- Professional code quality
-- Comprehensive documentation (37+ docs)
-
-⚠️ **Areas for Improvement:**
-
-- No test coverage (critical gap)
-- 67 `any` types in TypeScript
-- Large bundle size (862 KB main chunk)
-- 112 ESLint warnings (mostly `any` types)
-- Missing image optimization
-- No service worker for offline support
-
-### Recommended Next Steps
-
-1. **Critical (Week 1-2):**
-   - Replace `any` types with proper interfaces
-   - Fix useEffect dependency warnings
-   - Implement basic test coverage
-   - Conduct payment security audit
-
-2. **High Priority (Week 3-4):**
-   - Implement route lazy loading
-   - Add image optimization
-   - Set up E2E testing with Playwright
-   - Fix remaining ESLint warnings
-
-3. **Medium Priority (Week 5-6):**
-   - Add service worker for PWA support
-   - Implement virtual scrolling for long lists
-   - Set up Storybook for components
-   - Add API documentation (OpenAPI)
-
-📖 **For detailed analysis, see:** [PROJECT_ANALYSIS_REPORT.md](./PROJECT_ANALYSIS_REPORT.md)
 
 ---
 
@@ -912,6 +1001,9 @@ cp .env.example .env
 # - factory-chat-deals-migration.sql (factory chat)
 # - services-marketplace-migration.sql (services marketplace)
 # - services-messaging-isolated.sql (services messaging)
+# - healthcare-schema.sql (healthcare module)
+# - middleman-signup-migration.sql (middleman features)
+# - fix-conversations-rls-2026.sql (RLS fixes)
 
 # 4. Start development server
 npm run dev
@@ -936,7 +1028,7 @@ npm run dev
 
 The build is optimized with:
 
-- **Code Splitting**: 7 chunks (vendor, ui, query, supabase, utils, state, icons)
+- **Code Splitting**: 10 chunks (vendor, ui, query, supabase, utils, state, icons)
 - **ESBuild Minification**: Fastest minifier
 - **Console Removal**: `console.log` and `debugger` removed in production
 - **Tree Shaking**: Unused code eliminated
@@ -946,10 +1038,10 @@ The build is optimized with:
 
 | Metric       | Value      |
 | ------------ | ---------- |
-| Build Time   | ~4 seconds |
-| Total Bundle | ~242 KB    |
-| Gzipped      | ~56 KB     |
-| Chunks       | 7-10       |
+| Build Time   | ~8 seconds |
+| Total Bundle | ~1,427 KB  |
+| Gzipped      | ~399 KB    |
+| Chunks       | 10         |
 
 ### Vercel Deployment
 
@@ -1013,7 +1105,7 @@ npm run analyze
 - **JWT-based authentication** with auto-refresh tokens
 - **Row Level Security (RLS)** on all database tables
 - **Protected routes** require authentication
-- **Role-based permissions** (buyer, seller, factory, service_provider, admin)
+- **Role-based permissions** (buyer, seller, factory, service_provider, middleman, admin)
 - **Session management** with secure cookies
 
 ### Data Protection
@@ -1098,879 +1190,286 @@ All tables have RLS enabled with policies for:
 
 ---
 
-## 📚 API Reference
-
-### Supabase Client Usage
-
-```typescript
-import { supabase } from "@/lib/supabase";
-
-// Fetch products
-const { data: products, error } = await supabase
-  .from("products")
-  .select("*")
-  .eq("active", true)
-  .limit(10);
-
-// Call RPC function
-const { data: kpis } = await supabase.rpc("get_seller_kpis", {
-  p_seller_id: userId,
-  p_period_days: 30,
-});
-
-// Subscribe to realtime
-const channel = supabase
-  .channel("messages")
-  .on(
-    "postgres_changes",
-    {
-      event: "INSERT",
-      schema: "public",
-      table: "messages",
-    },
-    (payload) => {
-      console.log("New message:", payload);
-    },
-  )
-  .subscribe();
-```
-
-### Custom Hooks
-
-```typescript
-// Authentication
-import { useAuth } from "@/hooks/useAuth";
-const { user, isLoading, signIn, signUp, signOut } = useAuth();
-
-// Cart
-import { useCart } from "@/hooks/useCart";
-const { items, count, addToCart, removeFromCart, updateQuantity } = useCart();
-
-// Products
-import { useProducts } from "@/hooks/useProducts";
-const { products, isLoading, error, refetch } = useProducts(filters);
-
-// Theme
-import { useTheme } from "@/hooks/useTheme";
-const { theme, toggleTheme } = useTheme();
-
-// Geolocation
-import { useGeolocation } from "@/hooks/useGeolocation";
-const { location, isLoading, error, requestLocation } = useGeolocation();
-```
-
----
-
-## 📖 Documentation
-
-| Document                                                       | Description                                  |
-| -------------------------------------------------------------- | -------------------------------------------- |
-| [README.md](./README.md)                                       | **Complete project documentation**           |
-| [ROUTES.md](./ROUTES.md)                                       | **All routes and parameters reference**      |
-| [DEPLOYMENT.md](./DEPLOYMENT.md)                               | Detailed deployment guide with optimizations |
-| [FACTORY_IMPLEMENTATION.md](./FACTORY_IMPLEMENTATION.md)       | Factory features complete guide              |
-| [SIMPLE_SERVICES_SCHEMA.md](./SIMPLE_SERVICES_SCHEMA.md)       | Services marketplace schema guide            |
-| [SERVICES-MESSAGING.md](./SERVICES-MESSAGING.md)               | Services messaging system guide              |
-| [FAWRY_INTEGRATION.md](./FAWRY_INTEGRATION.md)                 | Fawry payment integration guide              |
-| [GEOLOCATION_COMPLETE.md](./GEOLOCATION_COMPLETE.md)           | Geolocation feature documentation            |
-| [LOCATION_FEATURE_COMPLETE.md](./LOCATION_FEATURE_COMPLETE.md) | Location settings guide                      |
-| [PHASE_1_COMPLETE.md](./PHASE_1_COMPLETE.md)                   | Phase 1 completion report                    |
-| [PHASE_4_COMPLETE.md](./PHASE_4_COMPLETE.md)                   | Phase 4 (Messaging) completion               |
-| [PROJECT_ANALYSIS.md](./PROJECT_ANALYSIS.md)                   | Comprehensive project analysis               |
-| [MESSAGING_FIX.md](./MESSAGING_FIX.md)                         | Messaging bug fix documentation              |
-| [FIX-SVC-PROVIDERS.md](./FIX-SVC-PROVIDERS.md)                 | Service providers table fix                  |
-| [SERVICES-ECOSYSTEM-PLAN.md](./SERVICES-ECOSYSTEM-PLAN.md)     | Services ecosystem planning                  |
-| [ONBOARDING-COMPLETE.md](./ONBOARDING-COMPLETE.md)             | Onboarding wizard completion                 |
-
----
-
-## 📈 Development Phases
-
-| Phase                      | Status      | Description                                                           |
-| -------------------------- | ----------- | --------------------------------------------------------------------- |
-| **Phase 1**                | ✅ Complete | Project Setup (Vite, TS, Tailwind, Supabase, base components)         |
-| **Phase 2**                | ✅ Complete | Authentication System (login, signup, reset, protected routes)        |
-| **Phase 3**                | ✅ Complete | Product Listing & Cart (products, categories, cart, checkout, orders) |
-| **Phase 4**                | ✅ Complete | Messaging (real-time chat, conversations, typing indicators)          |
-| **Geolocation**            | ✅ Complete | Browser geolocation for nearby sellers                                |
-| **Factory Features**       | ✅ Complete | Dashboard, production tracking, quotes, connections                   |
-| **Services Marketplace**   | ✅ Complete | Services gateway, provider profiles, listings                         |
-| **Services Messaging**     | ✅ Complete | Dedicated messaging for service providers & customers                 |
-| **Healthcare Module**      | ✅ Complete | Doctor profiles, patient records, appointments, telemedicine          |
-| **i18n Integration**       | ✅ Complete | Multi-language support with geolocation detection                     |
-| **Analytics Integration**  | ✅ Complete | Vercel Analytics & Speed Insights                                     |
-| **Phase 5**                | 🔮 Planned  | Reviews Management (review CRUD, seller responses)                    |
-| **Testing Infrastructure** | 🔮 Planned  | Unit tests (Vitest), Component tests (RTL), E2E tests (Playwright)    |
-| **Future**                 | 🔮 Planned  | Analytics Dashboard, Admin Panel, Mobile App, SEO Optimization        |
-
-### Testing Roadmap
-
-**Current Status:** ❌ No tests implemented
-
-**Planned Testing Stack:**
-
-- **Unit Tests:** Vitest + React Testing Library
-- **Component Tests:** React Testing Library
-- **E2E Tests:** Playwright
-- **Integration Tests:** Vitest + Supabase
-
-**Critical Files to Test:**
-
-1. Authentication hooks (`useAuth.tsx`)
-2. Cart state management (`useCart.ts`)
-3. Checkout flow (`useCheckout.ts`)
-4. Product fetching (`useProducts.ts`)
-5. Messaging components (`ChatWindow.tsx`, `ConversationList.tsx`)
-6. Service booking flow (`ServiceBookingPage.tsx`)
-
-**Critical E2E Flows:**
-
-1. User registration → onboarding → first purchase
-2. Product search → add to cart → checkout → order confirmation
-3. Service provider signup → create listing → receive booking
-4. Buyer-seller messaging flow
-5. Factory quote request workflow
-
----
-
 ## 📊 Analytics & Performance
 
-### Vercel Integration
+### Build Metrics
 
-The app is integrated with Vercel's analytics and performance monitoring tools:
+| Metric       | Value      | Status        |
+| ------------ | ---------- | ------------- |
+| Build Time   | ~8 seconds | ✅ Good       |
+| Total Bundle | 1,427 KB   | ⚠️ Large      |
+| Gzipped      | 399 KB     | ✅ Acceptable |
+| Modules      | 3,138      | ⚠️ Many       |
+| Chunks       | 10         | ✅ Optimized  |
 
-#### Vercel Analytics
+### Code Quality
 
-- **Package:** `@vercel/analytics`
-- **Implementation:** `src/components/VercelAnalytics.tsx`
-- **Features:**
-  - Page views tracking
-  - User engagement metrics
-  - Traffic sources
-  - Geographic data
+| Metric              | Value | Target | Status        |
+| ------------------- | ----- | ------ | ------------- |
+| TypeScript Coverage | 100%  | 100%   | ✅ Pass       |
+| ESLint Errors       | 0     | 0      | ✅ Pass       |
+| ESLint Warnings     | 112   | <50    | ⚠️ Needs Work |
+| Build Success Rate  | 100%  | 100%   | ✅ Pass       |
 
-#### Vercel Speed Insights
+### Key Findings
 
-- **Package:** `@vercel/speed-insights`
-- **Implementation:** `src/components/VercelAnalytics.tsx`
-- **Features:**
-  - Core Web Vitals monitoring
-  - Page load performance
-  - First Contentful Paint (FCP)
-  - Largest Contentful Paint (LCP)
-  - Cumulative Layout Shift (CLS)
-  - First Input Delay (FID)
+✅ **Strengths:**
 
-### Viewing Analytics
+- Excellent feature-based architecture
+- Comprehensive feature set (B2C, B2B, Services)
+- Modern technology stack
+- Strong security foundation (RLS, JWT)
+- Professional code quality
+- Comprehensive documentation (45+ docs)
 
-1. Deploy to Vercel
-2. Visit your Vercel dashboard
-3. Navigate to **Analytics** tab
-4. View **Speed Insights** for performance metrics
+⚠️ **Areas for Improvement:**
+
+- No test coverage (critical gap)
+- 67 `any` types in TypeScript
+- Large bundle size (862 KB main chunk)
+- 112 ESLint warnings (mostly `any` types)
+- Missing image optimization
+- No service worker for offline support
 
 ---
 
-## 💻 Complete TypeScript Implementation
+## 📘 TypeScript Implementation
 
-### Project Structure (TypeScript)
+### Type Coverage
 
-```
-src/
-├── components/
-│   ├── common/
-│   │   ├── CookieConsentBanner.tsx
-│   │   ├── Sidebar.tsx
-│   │   ├── Navbar.tsx
-│   │   ├── LoadingSpinner.tsx
-│   │   └── ErrorBoundary.tsx
-│   ├── auth/
-│   │   ├── LoginForm.tsx
-│   │   ├── SignUpForm.tsx
-│   │   └── ProtectedRoute.tsx
-│   ├── dashboard/
-│   │   ├── SellerDashboard.tsx
-│   │   ├── FactoryDashboard.tsx
-│   │   ├── MiddlemanDashboard.tsx
-│   │   ├── DeliveryDashboard.tsx
-│   │   └── CustomerDashboard.tsx
-│   ├── middleman/
-│   │   ├── DealCard.tsx
-│   │   ├── DealList.tsx
-│   │   ├── CreateDealForm.tsx
-│   │   ├── DealDetails.tsx
-│   │   ├── CommissionCalculator.tsx
-│   │   ├── FactoryConnections.tsx
-│   │   └── CommissionReports.tsx
-│   ├── products/
-│   │   ├── ProductList.tsx
-│   │   ├── ProductCard.tsx
-│   │   ├── ProductForm.tsx
-│   │   └── ProductDetails.tsx
-│   ├── orders/
-│   │   ├── OrderList.tsx
-│   │   ├── OrderDetails.tsx
-│   │   └── OrderStatus.tsx
-│   ├── chat/
-│   │   ├── ConversationList.tsx
-│   │   ├── ChatWindow.tsx
-│   │   └── MessageBubble.tsx
-│   ├── analytics/
-│   │   ├── SellerAnalytics.tsx
-│   │   ├── KPICards.tsx
-│   │   └── Charts.tsx
-│   └── settings/
-│       ├── PreferencesForm.tsx
-│       ├── ProfileSettings.tsx
-│       └── CookieSettings.tsx
-├── context/
-│   ├── AuthContext.tsx
-│   ├── PreferencesContext.tsx
-│   ├── RoleContext.tsx
-│   └── MiddlemanContext.tsx
-├── hooks/
-│   ├── useAuth.ts
-│   ├── usePreferences.ts
-│   ├── useRole.ts
-│   ├── useMiddleman.ts
-│   ├── useRealtime.ts
-│   └── useAnalytics.ts
-├── pages/
-│   ├── Home.tsx
-│   ├── Login.tsx
-│   ├── SignUp.tsx
-│   ├── Dashboard.tsx
-│   ├── middleman/
-│   │   ├── Dashboard.tsx
-│   │   ├── Deals.tsx
-│   │   ├── DealDetails.tsx
-│   │   ├── CreateDeal.tsx
-│   │   ├── Orders.tsx
-│   │   ├── Analytics.tsx
-│   │   ├── Connections.tsx
-│   │   ├── Messages.tsx
-│   │   ├── Profile.tsx
-│   │   ├── Settings.tsx
-│   │   └── Commission.tsx
-│   ├── Products.tsx
-│   ├── Orders.tsx
-│   ├── Messages.tsx
-│   ├── Analytics.tsx
-│   ├── Settings.tsx
-│   └── NotFound.tsx
-├── services/
-│   ├── supabaseClient.ts
-│   ├── authService.ts
-│   ├── productService.ts
-│   ├── orderService.ts
-│   ├── chatService.ts
-│   ├── analyticsService.ts
-│   └── middlemanService.ts
-├── types/
-│   ├── database.types.ts
-│   ├── auth.types.ts
-│   ├── user.types.ts
-│   ├── middleman.types.ts
-│   ├── preferences.types.ts
-│   └── api.types.ts
-├── utils/
-│   ├── rolePermissions.ts
-│   ├── formatters.ts
-│   └── validators.ts
-├── App.tsx
-└── main.tsx
-```
+- **100% TypeScript coverage** across all source files
+- Strict mode enabled in `tsconfig.json`
+- No implicit `any` types allowed
 
-### TypeScript Types (Based on Supabase Schema)
+### Type Definitions
 
 ```typescript
-// src/types/database.types.ts
-
-export type UserRole =
-  | "factory"
-  | "seller"
-  | "middleman"
-  | "customer"
-  | "delivery";
-
-export interface User {
-  id: string;
-  user_id: string;
-  email: string;
-  full_name: string | null;
-  phone: string | null;
-  avatar_url: string | null;
-  account_type: UserRole;
-  created_at: string;
-  updated_at: string;
+// Database types auto-generated from Supabase
+export type Database = {
+  public: {
+    Tables: {
+      users: { Row: {...}; Insert: {...}; Update: {...} }
+      products: { Row: {...}; Insert: {...}; Update: {...} }
+      // ... all tables
+    }
+    Views: {...}
+    Functions: {...}
+  }
 }
 
-export interface BusinessProfile {
-  user_id: string;
-  role: UserRole;
-  company_name: string | null;
-  location: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  currency: string;
-  is_verified: boolean;
-  store_name: string | null;
-  commission_rate: number | null;
-  created_at: string;
-  updated_at: string;
+// Feature-specific types
+export type ConversationWithDetails = conversations.Row & {
+  otherUser: users.Row | null
+  participants: conversation_participants.Row | null
+  unreadCount: number
 }
 
-export interface MiddlemanProfile {
-  user_id: string;
-  company_name: string | null;
-  location: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  currency: string;
-  commission_rate: number | null;
-  is_verified: boolean;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Deal {
-  id: string;
-  middleman_id: string;
-  party_a_id: string;
-  party_b_id: string;
-  product_id: string | null;
-  commission_rate: number | null;
-  status: "active" | "completed" | "cancelled";
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Order {
-  id: string;
-  user_id: string;
-  seller_id: string | null;
-  status:
-    | "pending"
-    | "confirmed"
-    | "processing"
-    | "shipped"
-    | "delivered"
-    | "cancelled";
-  subtotal: number;
-  discount: number;
-  tax: number;
-  shipping: number;
-  total: number;
-  payment_method: "cash" | "card" | "bank_transfer" | "digital_wallet" | "cod";
-  payment_status: "pending" | "completed" | "failed" | "refunded";
-  deal_id: string | null;
-  commission_rate: number | null;
-  commission_amount: number | null;
-  delivery_id: string | null;
-  delivery_status:
-    | "pending"
-    | "assigned"
-    | "picked_up"
-    | "in_transit"
-    | "delivered"
-    | "failed";
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Preference {
-  theme: "light" | "dark" | "system";
-  language: "en" | "es" | "fr" | "ar";
-  currency: "USD" | "EUR" | "EGP" | "GBP";
-  sidebar: "expanded" | "collapsed";
-  cookieConsent: "accepted" | "rejected" | null;
+export type ChatMessage = messages.Row & {
+  sender: users.Row | null
 }
 ```
 
-### Context Providers
+---
 
-#### AuthContext
+## 📚 Documentation
 
-Manages authentication state with cookie-based session storage:
+### Project Documentation (45+ files)
 
-- `user` - Current authenticated user
-- `session` - Supabase session
-- `signIn()` - Email/password login
-- `signUp()` - User registration with metadata
-- `signOut()` - Logout
+| File                                  | Description                    |
+| ------------------------------------- | ------------------------------ |
+| `README.md`                           | Main documentation (this file) |
+| `PROJECT_ANALYSIS_REPORT.md`          | Comprehensive project analysis |
+| `DEPLOYMENT.md`                       | Deployment optimization guide  |
+| `FACTORY_IMPLEMENTATION.md`           | Factory features documentation |
+| `HEALTHCARE_MODULE.md`                | Healthcare module guide        |
+| `SERVICES-ECOSYSTEM-PLAN.md`          | Services ecosystem roadmap     |
+| `SERVICES-MESSAGING.md`               | Services messaging guide       |
+| `FAWRI_INTEGRATION.md`                | Fawry payment integration      |
+| `GEOLOCATION_COMPLETE.md`             | Geolocation feature guide      |
+| `LOCATION_FEATURE_COMPLETE.md`        | Location features              |
+| `MESSAGING_FIX_COMPLETE.md`           | Messaging fixes documentation  |
+| `UNIFIED_MESSAGING_IMPLEMENTATION.md` | Unified messaging guide        |
+| `MIDDLEMAN_SIGNUP_GUIDE.md`           | Middleman signup guide         |
+| `MULTI_ROLE_SIGNUP_GUIDE.md`          | Multi-role signup guide        |
+| `ONBOARDING-COMPLETE.md`              | Onboarding wizard guide        |
+| `PREFERENCES_IMPLEMENTATION.md`       | User preferences guide         |
+| `COOKIE_AUTH_GUIDE.md`                | Cookie consent guide           |
+| `CATEGORY_I18N_UPDATE.md`             | Category i18n guide            |
+| `BOOKING_IMPLEMENTATION.md`           | Booking system guide           |
+| `FIX-SVC-PROVIDERS.md`                | Service providers fix guide    |
+| `SERVICES_FIX_COMPLETE.md`            | Services fix complete          |
+| `SERVICES_SCHEMA_FIX.md`              | Services schema fixes          |
+| `SERVICES-IMPLEMENTATION-ROADMAP.md`  | Services roadmap               |
+| `SERVICES-ONBOARDING-COMPLETE.md`     | Services onboarding            |
+| `PHASE_1_COMPLETE.md`                 | Phase 1 completion report      |
+| `PHASE_4_COMPLETE.md`                 | Phase 4 completion report      |
+| `EXECUTIVE_SUMMARY.md`                | Executive summary              |
+| `UI_UX_DESIGN_SYSTEM.md`              | UI/UX design system            |
+| `VERCEL-ANALYTICS.md`                 | Vercel analytics guide         |
+| `ROUTE-VISUALIZATION.md`              | Route visualization            |
+| `ROUTES_REFERENCE.md`                 | Routes reference               |
+| `ROUTES.md`                           | Routes documentation           |
+| `MESSAGING_400_FIX.md`                | Messaging 400 fix              |
+| `MESSAGING_FIX.md`                    | Messaging fixes                |
+| `notification.md`                     | Notifications guide            |
+| `TYPESCRIPT-FIXES.md`                 | TypeScript fixes               |
+| `UNIFIED_MESSAGING_ARCHITECTURE.md`   | Unified messaging architecture |
+| `UNIFIED_MESSAGING_SUMMARY.md`        | Unified messaging summary      |
+| `FEED_AND_FAB_COMPLETE.md`            | Feed and factory complete      |
+| `SERVICES_MESSAGING_FIX.md`           | Services messaging fix         |
+| `SUPABASE_400_FIX_GUIDE.md`           | Supabase 400 fix guide         |
+| `TODO.md`                             | TODO list                      |
+| `BOOKING_IMPLEMENTATION.md`           | Booking implementation         |
+| `fix-conversations-rls-2026.sql`      | RLS fixes SQL                  |
 
-#### RoleContext
+---
 
-Determines user role and permissions:
+## 📊 Project Analysis
 
-- `role` - Current user role (factory, seller, middleman, customer, delivery)
-- `businessProfile` - User's business profile
-- `hasPermission()` - Check role permissions
-- `isSeller()`, `isFactory()`, `isMiddleman()`, etc. - Role checks
+### Overall Health Score: 91/100 ✅
 
-#### PreferencesContext
+| Category                 | Score   | Status       |
+| ------------------------ | ------- | ------------ |
+| **Code Quality**         | 95/100  | ✅ Excellent |
+| **Type Safety**          | 100/100 | ✅ Complete  |
+| **Architecture**         | 98/100  | ✅ Excellent |
+| **Security**             | 95/100  | ✅ Excellent |
+| **Performance**          | 88/100  | ✅ Good      |
+| **Documentation**        | 85/100  | ✅ Good      |
+| **Testing**              | 0/100   | ❌ Missing   |
+| **Feature Completeness** | 85/100  | ✅ Good      |
 
-Manages user preferences with localStorage + database sync:
+### Recommended Next Steps
 
-- `theme` - Light/Dark/System
-- `language` - Preferred language
-- `currency` - Preferred currency
-- `sidebar` - Expanded/Collapsed
-- `cookieConsent` - Accepted/Rejected
+1. **Critical (Week 1-2):**
+   - Replace `any` types with proper interfaces
+   - Fix useEffect dependency warnings
+   - Implement basic test coverage
+   - Conduct payment security audit
 
-#### MiddlemanContext
+2. **High Priority (Week 3-4):**
+   - Implement route lazy loading
+   - Add image optimization
+   - Set up E2E testing with Playwright
+   - Fix remaining ESLint warnings
 
-Manages middleman-specific data and operations:
+3. **Medium Priority (Week 5-6):**
+   - Add service worker for PWA support
+   - Implement virtual scrolling for long lists
+   - Set up Storybook for components
+   - Add API documentation (OpenAPI)
 
-- `profile` - Middleman profile
-- `deals` - Active deals
-- `stats` - Commission and deal statistics
-- `createDeal()` - Create new deal
-- `updateDeal()` - Update deal
-- `deleteDeal()` - Delete deal
+📖 **For detailed analysis, see:** [PROJECT_ANALYSIS_REPORT.md](./PROJECT_ANALYSIS_REPORT.md)
 
-### Role-Based Routing
+---
 
-```typescript
-// Main App Router - Middleman routes placed right after public routes
-function App() {
-  return (
-    <BrowserRouter>
-      <AuthProvider>
-        <RoleProvider>
-          <PreferencesProvider>
-            <MiddlemanProvider>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<SignUp />} />
+## 🐛 Troubleshooting
 
-                {/* 🌟 Middleman Routes (Special Role - Right After Public) */}
-                <Route path="/middleman/*" element={
-                  <ProtectedRoute allowedRoles={[ROLE_TYPES.MIDDLEMAN]}>
-                    <MiddlemanLayout />
-                  </ProtectedRoute>
-                }>
-                  <Route index element={<MiddlemanDashboard />} />
-                  <Route path="dashboard" element={<MiddlemanDashboard />} />
-                  <Route path="deals" element={<MiddlemanDeals />} />
-                  <Route path="deals/new" element={<MiddlemanCreateDeal />} />
-                  <Route path="deals/:dealId" element={<MiddlemanDealDetails />} />
-                  <Route path="orders" element={<MiddlemanOrders />} />
-                  <Route path="analytics" element={<MiddlemanAnalytics />} />
-                  <Route path="connections" element={<MiddlemanConnections />} />
-                  <Route path="commission" element={<MiddlemanCommission />} />
-                  <Route path="profile" element={<MiddlemanProfile />} />
-                  <Route path="settings" element={<MiddlemanSettings />} />
-                </Route>
+### Common Issues
 
-                {/* Other Role Dashboards */}
-                <Route path="/dashboard/seller" element={
-                  <ProtectedRoute allowedRoles={[ROLE_TYPES.SELLER]}>
-                    <Dashboard role={ROLE_TYPES.SELLER} />
-                  </ProtectedRoute>
-                } />
+#### Issue: "Table does not exist"
 
-                <Route path="/dashboard/factory" element={
-                  <ProtectedRoute allowedRoles={[ROLE_TYPES.FACTORY]}>
-                    <Dashboard role={ROLE_TYPES.FACTORY} />
-                  </ProtectedRoute>
-                } />
+**Solution**: Run the SQL migration files in Supabase SQL Editor.
 
-                {/* More routes... */}
-              </Routes>
-            </MiddlemanProvider>
-          </PreferencesProvider>
-        </RoleProvider>
-      </AuthProvider>
-    </BrowserRouter>
-  )
-}
-```
+#### Issue: "Permission denied"
 
-### Role Permission Matrix
+**Solution**: Check RLS policies. Ensure the user has the correct role and the policies match your use case.
 
-| Feature              | Customer | Seller   | Factory | Middleman  | Delivery      |
-| -------------------- | -------- | -------- | ------- | ---------- | ------------- |
-| View Products        | ✅       | ✅       | ✅      | ✅         | ✅            |
-| Create Products      | ❌       | ✅       | ✅      | ❌         | ❌            |
-| View Orders          | ✅ (own) | ✅ (own) | ❌      | ✅ (deals) | ✅ (assigned) |
-| View Analytics       | ❌       | ✅       | ✅      | ✅         | ❌            |
-| Chat                 | ✅       | ✅       | ✅      | ✅         | ✅            |
-| Manage Deals         | ❌       | ✅       | ✅      | ✅         | ❌            |
-| Delivery Assignments | ❌       | ✅       | ❌      | ❌         | ✅            |
-| Cart/Wishlist        | ✅       | ❌       | ❌      | ❌         | ❌            |
+#### Issue: "Function does not exist"
 
-### Database Migration for Preferences
+**Solution**: Re-run the migration SQL in Supabase SQL Editor to create all functions.
 
-```sql
--- Add preference columns to users table
-ALTER TABLE "public"."users"
-ADD COLUMN IF NOT EXISTS "preferred_language" text DEFAULT 'en',
-ADD COLUMN IF NOT EXISTS "preferred_currency" text DEFAULT 'USD',
-ADD COLUMN IF NOT EXISTS "theme_preference" text DEFAULT 'system',
-ADD COLUMN IF NOT EXISTS "sidebar_state" text DEFAULT 'expanded';
+#### Issue: Build fails after changes
 
--- Add constraints
-ALTER TABLE "public"."users"
-ADD CONSTRAINT "check_theme_preference" CHECK ("theme_preference" IN ('light', 'dark', 'system')),
-ADD CONSTRAINT "check_sidebar_state" CHECK ("sidebar_state" IN ('expanded', 'collapsed'));
-
--- RLS Policy for preferences
-CREATE POLICY "users_update_own_preferences" ON "public"."users"
-FOR UPDATE TO "authenticated"
-USING ("auth"."uid"() = "user_id")
-WITH CHECK ("auth"."uid"() = "user_id");
-```
-
-### Installation Commands
+**Solution**:
 
 ```bash
-# Create React App with TypeScript
-npm create vite@latest my-app -- --template react-ts
-cd my-app
+# Clear cache and rebuild
+rm -rf node_modules dist
+npm install
+npm run build
+```
 
-# Install dependencies
-npm install @supabase/supabase-js react-router-dom
+#### Issue: Chunks still too large
 
-# Install TypeScript types
-npm install -D @types/react @types/react-router-dom
+**Solution**:
 
-# Install UI libraries
-npm install tailwindcss postcss autoprefixer
-npx tailwindcss init -p
+- Check `vite-bundle-visualizer` output
+- Identify which dependencies are largest
+- Consider alternatives (e.g., `dayjs` instead of `moment`)
 
-# Install additional utilities
-npm install date-fns recharts lucide-react
-npm install -D @types/date-fns
+#### Issue: Runtime errors after deploy
+
+**Solution**:
+
+- Check browser console for missing chunks
+- Verify Vercel environment variables match local `.env`
+- Ensure all imports use correct paths (`@/` alias)
+
+### RLS Troubleshooting
+
+```sql
+-- Check RLS policies
+SELECT * FROM pg_policies WHERE tablename = 'your_table';
+
+-- Check if RLS is enabled
+SELECT tablename, rowsecurity FROM pg_tables WHERE schemaname = 'public';
+
+-- Test as specific user
+SET LOCAL ROLE authenticated;
+SET LOCAL "request.jwt.claims" TO '{"sub": "user-id"}';
 ```
 
 ---
 
 ## 🤝 Contributing
 
-### Contribution Guidelines
+### Development Workflow
 
-We welcome contributions! Please follow these steps:
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-1. **Fork the repository**
+### Commit Message Format
 
-2. **Create a feature branch**
-
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-
-3. **Make your changes**
-   - Follow existing code style
-   - Add TypeScript types (no `any` types)
-   - Update documentation if needed
-   - Add tests for new features (coming soon)
-
-4. **Run linting**
-
-   ```bash
-   npm run lint
-   ```
-
-5. **Test your changes**
-   - Test in both light and dark modes
-   - Test on mobile and desktop
-   - Test with different user roles
-   - Verify responsive design
-
-6. **Commit your changes**
-
-   ```bash
-   git add .
-   git commit -m "feat: add your feature description"
-   ```
-
-7. **Push and create PR**
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-
-### Code Quality Standards
-
-**TypeScript:**
-
-- ❌ No `any` types - use proper interfaces
-- ✅ Strict mode enabled
-- ✅ Proper type definitions for all functions
-- ✅ Generic types for reusable utilities
-
-**React:**
-
-- ✅ Functional components with hooks
-- ✅ Proper useEffect dependencies
-- ✅ Memoization for expensive computations
-- ✅ Error boundaries for graceful failures
-
-**Styling:**
-
-- ✅ Tailwind CSS utility classes
-- ✅ Responsive design (mobile-first)
-- ✅ Dark mode support
-- ✅ Consistent spacing scale
-
-**Testing (Planned):**
-
-- Unit tests for hooks and utilities
-- Component tests for UI components
-- E2E tests for critical user flows
-- Integration tests for API calls
-
-### Commit Message Convention
-
-We follow [Conventional Commits](https://www.conventionalcommits.org/):
-
-- `feat:` - New features (e.g., `feat: add wishlist functionality`)
-- `fix:` - Bug fixes (e.g., `fix: resolve cart update issue`)
-- `docs:` - Documentation changes (e.g., `docs: update README installation`)
-- `style:` - Code style changes (formatting, semicolons, etc.)
-- `refactor:` - Code refactoring without changing functionality
-- `test:` - Test additions and updates
-- `chore:` - Build/config changes, dependency updates
-
-**Examples:**
-
-```bash
-feat: add product comparison feature
-fix: resolve messaging realtime subscription issue
-docs: update deployment guide with Vercel steps
-refactor: extract cart logic to custom hook
-chore: update Supabase client to latest version
+```
+feat: Add new feature
+fix: Fix bug
+docs: Update documentation
+style: Format code
+refactor: Refactor code
+test: Add tests
+chore: Update dependencies
 ```
 
-### Pull Request Guidelines
+### Code Review Guidelines
 
-**PR Title:** Use conventional commit format
-
-**PR Description Template:**
-
-```markdown
-## Description
-
-Brief description of changes
-
-## Type of Change
-
-- [ ] Bug fix
-- [ ] New feature
-- [ ] Breaking change
-- [ ] Documentation update
-
-## Testing
-
-- [ ] Tested locally
-- [ ] Added tests (if applicable)
-- [ ] Tested on mobile
-- [ ] Tested in dark mode
-
-## Checklist
-
-- [ ] Code follows project guidelines
-- [ ] No TypeScript errors
-- [ ] No ESLint warnings
-- [ ] Documentation updated
-```
-
-### Code Review Process
-
-1. **Automated Checks:**
-   - TypeScript compilation ✅
-   - ESLint validation ✅
-   - Build success ✅
-
-2. **Manual Review:**
-   - Code quality and readability
-   - Type safety
-   - Performance impact
-   - Security considerations
-   - Test coverage (when implemented)
-
-3. **Approval:**
-   - At least 1 approval required
-   - All automated checks must pass
-   - No unresolved comments
+- Follow existing code style
+- Add comments for complex logic
+- Update documentation for new features
+- Ensure all tests pass
+- Check for ESLint warnings
 
 ---
 
-## 📞 Project Info
+## 📄 License
 
-- **Project:** Aurora E-commerce Platform
-- **Version:** 2.4.0
-- **Developer:** Youssef
-- **License:** © 2026 Aurora E-commerce. All rights reserved.
-- **Contact:** support@aurora.com
-- **Documentation:** [View Full Documentation](./README.md)
-- **Analysis Report:** [Project Analysis](./PROJECT_ANALYSIS_REPORT.md)
-
-### 🎯 Key Features Summary
-
-| Category            | Features                                                  |
-| ------------------- | --------------------------------------------------------- |
-| **E-commerce**      | Products, Cart, Checkout, Orders, Wishlist, Reviews       |
-| **B2B Factory**     | Dashboard, Production Tracking, Quotes, Connections       |
-| **Services**        | Marketplace, Bookings, Provider Profiles, Messaging       |
-| **Healthcare**      | Doctors, Patients, Appointments, Telemedicine, Pharmacies |
-| **Communication**   | Real-time Messaging (2 systems), Notifications            |
-| **User Experience** | Multi-language (12), Dark/Light Theme, Geolocation        |
-| **Security**        | JWT Auth, RLS Policies, Role-based Access                 |
-
-### 📊 Project Statistics
-
-### 🌟 Middleman Role - Special Privileges
-
-The **Middleman** role is designed as a **premium power user** with:
-
-- ✅ **Dedicated Routes** - Placed right after public routes for easy access (`/middleman/*`)
-- ✅ **Custom Layout** - Special `MiddlemanLayout` component
-- ✅ **Deal Management** - Full CRUD operations for deals
-- ✅ **Commission Tracking** - Real-time commission reports and analytics
-- ✅ **Network Building** - Connect with factories and sellers
-- ✅ **Analytics Dashboard** - Performance metrics and insights
-- ✅ **Order Oversight** - View all orders linked to their deals
-
-**Route Priority:** Public → **Middleman** → Other Roles → Customer
+This project is proprietary software. All rights reserved.
 
 ---
 
-### 📊 Project Statistics
+## 📞 Support
 
-| Metric              | Count             |
-| ------------------- | ----------------- |
-| **Total Features**  | 15 modules        |
-| **Database Tables** | 26+ tables        |
-| **API Functions**   | 10+ RPC functions |
-| **UI Components**   | 50+ components    |
-| **Custom Hooks**    | 13 hooks          |
-| **Routes**          | 60+ routes        |
-| **Languages**       | 12 languages      |
-| **SQL Migrations**  | 40+ files         |
-| **Documentation**   | 37+ MD files      |
-
-### 🚀 Quick Links
-
-- 📊 [Project Analysis Report](./PROJECT_ANALYSIS_REPORT.md) - Comprehensive analysis with recommendations
-- 📖 [Project Analysis](./PROJECT_ANALYSIS.md) - Detailed project overview
-- 🚀 [Deployment Guide](./DEPLOYMENT.md) - Production deployment instructions
-- 🗺️ [Routes Reference](./ROUTES.md) - All routes and parameters
-- 🏭 [Factory Implementation](./FACTORY_IMPLEMENTATION.md) - B2B factory features
-- 💬 [Services Messaging](./SERVICES-MESSAGING.md) - Services messaging system
-- 💳 [Fawry Integration](./FAWRY_INTEGRATION.md) - Payment integration guide
-- 🌍 [Geolocation](./GEOLOCATION_COMPLETE.md) - Location features
-- 🏥 [Healthcare Schema](./healthcare-schema.sql) - Healthcare module SQL
-- 📨 [Unified Messaging](./UNIFIED_MESSAGING_SUMMARY.md) - Complete messaging system
-- 📦 [Phase Reports](./PHASE_1_COMPLETE.md) - Development phase completions
-
-### Support
-
-For issues, questions, or contributions:
-
-- 📧 Email: support@aurora.com
-- 📚 Documentation: See `/docs` folder and `.md` files
-- 🐛 Bug Reports: Create an issue with detailed steps
-- 💡 Feature Requests: Submit with use case description
+**Documentation:** This file + inline code comments + 45+ markdown files  
+**Issues:** Check browser console + Supabase logs  
+**Contact:** support@aurora.com
 
 ---
 
-## 🆘 Troubleshooting
+**Built with ❤️ for Aurora E-commerce Platform**
 
-### Common Issues
-
-**Issue: Build fails with "module not found"**
-
-```bash
-# Solution: Clear cache and reinstall
-rm -rf node_modules dist
-npm install
-npm run build
-```
-
-**Issue: Supabase functions not found**
-
-```sql
--- Solution: Re-run migrations in Supabase SQL Editor
--- Check functions exist:
-SELECT routine_name FROM information_schema.routines
-WHERE routine_schema = 'public';
-```
-
-**Issue: RLS permission denied**
-
-```sql
--- Solution: Verify RLS policies
-SELECT * FROM pg_policies WHERE tablename = 'your_table';
--- Re-run migration if policies missing
-```
-
-**Issue: Realtime not working**
-
-```typescript
-// Solution: Check Supabase Realtime is enabled
-// Verify subscription in browser console
-```
-
-**Issue: Geolocation not working**
-
-- Ensure browser has location permission
-- Test on HTTPS (required for geolocation API)
-- Check browser console for permission errors
-
-**Issue: Service Provider 400 Bad Request (svc_providers)**
-
-If you get a 400 error when creating a service provider profile:
-
-```sql
--- Solution: Run the fix migration in Supabase SQL Editor
--- File: fix-svc-providers-all-columns.sql
-
--- Add missing columns to svc_providers table
-ALTER TABLE public.svc_providers
-ADD COLUMN IF NOT EXISTS phone VARCHAR(20);
-
-ALTER TABLE public.svc_providers
-ADD COLUMN IF NOT EXISTS website VARCHAR(200);
-
--- Update status constraint to include 'pending_review'
-ALTER TABLE public.svc_providers
-DROP CONSTRAINT IF EXISTS svc_providers_status_check;
-
-ALTER TABLE public.svc_providers
-ADD CONSTRAINT svc_providers_status_check
-CHECK (status IN ('active', 'inactive', 'suspended', 'pending_review'));
-```
-
-See [FIX-SVC-PROVIDERS.md](./FIX-SVC-PROVIDERS.md) for complete details.
-
----
-
-## 🙏 Acknowledgments
-
-- [Vite](https://vitejs.dev/) - Next generation frontend tooling
-- [React](https://react.dev/) - The library for web and native user interfaces
-- [TypeScript](https://www.typescriptlang.org/) - JavaScript with syntax for types
-- [Tailwind CSS](https://tailwindcss.com/) - A utility-first CSS framework
-- [Shadcn/UI](https://ui.shadcn.com/) - Beautifully designed components
-- [Supabase](https://supabase.com/) - The open source Firebase alternative
-- [TanStack Query](https://tanstack.com/query) - Powerful asynchronous state management
-- [Zustand](https://zustand-demo.pmnd.rs/) - Bear necessities for state management
-- [Lucide Icons](https://lucide.dev/) - Beautiful & consistent icons
-- [Vercel](https://vercel.com/) - Develop. Preview. Ship.
-- [i18next](https://www.i18next.com/) - Internationalization framework
-
----
-
-**Built with ❤️ using React, Vite, TypeScript, Tailwind CSS, Supabase, and i18next**
-
----
-
-_Built with ❤️ by Youssef | Last Updated: March 21, 2026 | Version 2.5.0_
-
-**📊 Project Status:** ✅ Production Ready (91/100 Score)
-
-**🚀 Next Steps:** See [PROJECT_ANALYSIS_REPORT.md](./PROJECT_ANALYSIS_REPORT.md) for recommended improvements and testing roadmap.
-
-**📨 New:** Check out the [Unified Messaging System](./UNIFIED_MESSAGING_SUMMARY.md) to consolidate all chat systems!
+**Last Updated:** March 22, 2026  
+**Version:** 2.5.0  
+**Status:** ✅ Production Ready

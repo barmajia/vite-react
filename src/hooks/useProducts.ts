@@ -118,7 +118,7 @@ export function useProduct(asin: string) {
   return useQuery({
     queryKey: ["product", asin],
     queryFn: async () => {
-      // First fetch the product
+      // First fetch the product by ASIN
       const { data: product, error: productError } = await supabase
         .from("products")
         .select(
@@ -136,7 +136,7 @@ export function useProduct(asin: string) {
           review_count
         `,
         )
-        .eq("id", asin)
+        .eq("asin", asin)
         .single();
 
       if (productError) throw productError;
@@ -242,7 +242,7 @@ export function useRelatedProducts(
       let query = supabase
         .from("products")
         .select("*")
-        .neq("id", excludeAsin)
+        .neq("asin", excludeAsin)
         .eq("status", "active")
         .order("created_at", { ascending: false })
         .limit(limit);

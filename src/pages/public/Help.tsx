@@ -1,11 +1,5 @@
 import { Link } from "react-router-dom";
-import {
-  HelpCircle,
-  Package,
-  CreditCard,
-  RotateCcw,
-  MessageSquare,
-} from "lucide-react";
+import { HelpCircle, Package, CreditCard, RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ROUTES } from "@/lib/constants";
@@ -39,15 +33,6 @@ export function Help() {
         { q: t("help.returnPolicy"), a: t("help.returnPolicyA") },
         { q: t("help.howReturn"), a: t("help.howReturnA") },
         { q: t("help.refundTime"), a: t("help.refundTimeA") },
-      ],
-    },
-    {
-      icon: <MessageSquare className="h-6 w-6" />,
-      title: t("help.accountSupport"),
-      questions: [
-        { q: t("help.contactSupport"), a: t("help.contactSupportA") },
-        { q: t("help.changeEmail"), a: t("help.changeEmailA") },
-        { q: t("help.deleteAccount"), a: t("help.deleteAccountA") },
       ],
     },
   ];
@@ -95,7 +80,6 @@ export function Help() {
           to={`${ROUTES.CONTACT}`}
           className="p-4 border rounded-lg hover:bg-accent transition-colors"
         >
-          <MessageSquare className="h-6 w-6 text-primary mb-2" />
           <h3 className="font-semibold">{t("nav.contact")}</h3>
           <p className="text-sm text-muted-foreground">
             {t("help.getInTouch")}
@@ -129,7 +113,6 @@ export function Help() {
         <p className="text-muted-foreground mb-6">{t("help.ourTeamHelp")}</p>
         <div className="flex justify-center gap-4">
           <Link to={ROUTES.CONTACT}>{t("help.contactSupportBtn")}</Link>
-          <Link to={`${ROUTES.MESSAGES}`}>{t("help.startChat")}</Link>
         </div>
       </div>
     </div>

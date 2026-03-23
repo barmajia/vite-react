@@ -3,6 +3,8 @@
  * Helper functions for managing cookies in the application
  */
 
+import { escapeRegExp } from "@/utils/sanitize";
+
 export interface CookieOptions {
   days?: number;
   path?: string;
@@ -24,7 +26,7 @@ export function setCookie(
     path = "/",
     domain,
     secure = window.location.protocol === "https:",
-    sameSite = "Lax",
+    sameSite = "Strict",
   } = options;
 
   let expires = "";
@@ -42,10 +44,11 @@ export function setCookie(
 }
 
 /**
- * Get a cookie by name
+ * Get a cookie by name (regex-safe)
  */
 export function getCookie(name: string): string | null {
-  const match = document.cookie.match(new RegExp(`(^| )${name}=([^;]+)`));
+  const escaped = escapeRegExp(name);
+  const match = document.cookie.match(new RegExp(`(^| )${escaped}=([^;]+)`));
   return match ? match[2] : null;
 }
 

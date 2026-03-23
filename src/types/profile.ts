@@ -1,12 +1,22 @@
 // src/types/profile.ts
+// Updated to match actual database schema
 
-export type AccountType = 'factory' | 'seller' | 'middleman' | 'customer' | 'delivery';
+// Existing Profile Types (for backward compatibility with existing components)
+// Updated to match the unified AccountType from chat.ts
+export type AccountType =
+  | "user"
+  | "customer"
+  | "seller"
+  | "admin"
+  | "factory"
+  | "middleman"
+  | "freelancer"
+  | "service_provider"
+  | "delivery_driver"
+  | "doctor"
+  | "patient"
+  | "pharmacy";
 
-export type VehicleType = 'motorcycle' | 'car' | 'bicycle' | 'van' | 'truck';
-
-export type AgeRange = 'teens' | '20s' | '30s' | '40s' | '50s' | '60s' | '70s+';
-
-// Core user profile
 export interface UserProfile {
   id: string;
   user_id: string;
@@ -17,166 +27,187 @@ export interface UserProfile {
   account_type: AccountType;
   created_at: string;
   updated_at: string;
+  // Additional fields from sellers/factories tables
+  location?: string | null;
+  currency?: string;
+  is_verified?: boolean;
+  is_factory?: boolean;
+  production_capacity?: string;
+  min_order_quantity?: number;
+  wholesale_discount?: number;
+  accepts_returns?: boolean;
+  factory_license_url?: string;
+  verified_at?: string;
+  // Delivery fields
+  service_areas?: string[];
+  delivery_fee?: number;
+  free_delivery_threshold?: number;
+  vehicle_type?: string;
+  vehicle_number?: string;
+  driver_license_url?: string;
+  commission_rate?: number;
+  rating?: number;
+  total_deliveries?: number;
+  completed_deliveries?: number;
+  cancelled_deliveries?: number;
+  is_active?: boolean;
+  latitude?: number;
+  longitude?: number;
 }
 
-// Seller/Factory profile
+export interface CustomerProfile {
+  id: string;
+  user_id: string;
+  name: string;
+  phone: string;
+  age_range?: string;
+  email?: string;
+  notes?: string;
+  total_orders: number;
+  total_spent: number;
+  last_purchase_date?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DeliveryProfile {
+  id: string;
+  user_id: string;
+  service_areas?: string[];
+  delivery_fee?: number;
+  free_delivery_threshold?: number;
+  vehicle_type?: string;
+  vehicle_number?: string;
+  driver_license_url?: string;
+  commission_rate?: number;
+  rating?: number;
+  total_deliveries?: number;
+  completed_deliveries?: number;
+  cancelled_deliveries?: number;
+  is_active?: boolean;
+  is_verified?: boolean;
+  latitude?: number;
+  longitude?: number;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface SellerProfile {
+  id: string;
   user_id: string;
   email: string;
   full_name: string;
-  firstname: string | null;
-  second_name: string | null;
-  thirdname: string | null;
-  fourth_name: string | null;
+  firstname?: string | null;
+  second_name?: string | null;
+  thirdname?: string | null;
+  fourth_name?: string | null;
   phone: string | null;
   location: string | null;
   currency: string;
   account_type: string;
   is_verified: boolean;
-  latitude: number | null;
-  longitude: number | null;
   is_factory: boolean;
-  factory_license_url: string | null;
+  factory_license_url?: string;
   min_order_quantity: number;
-  wholesale_discount: number | null;
+  wholesale_discount: number;
   accepts_returns: boolean;
-  production_capacity: string | null;
-  verified_at: string | null;
+  production_capacity?: string;
+  verified_at?: string;
+  allow_product_chats: boolean;
+  allow_custom_requests: boolean;
+  latitude?: number;
+  longitude?: number;
   created_at: string;
   updated_at: string;
 }
 
-// Middleman profile
-export interface MiddlemanProfile {
-  user_id: string;
-  company_name: string | null;
-  location: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  currency: string;
-  commission_rate: number | null;
-  is_verified: boolean;
-  created_at: string;
-  updated_at: string;
+export interface FullUserProfile {
+  core: UserProfile;
+  seller?: SellerProfile;
+  middleman?: any;
+  customer?: CustomerProfile;
+  delivery?: DeliveryProfile;
+  business?: any;
+  addresses?: any[];
+  stats?: {
+    orders: {
+      totalOrders: number;
+      pendingOrders: number;
+      completedOrders: number;
+      totalSpent: number;
+      totalEarned: number;
+    };
+    notifications: {
+      total: number;
+      unread: number;
+    };
+    wishlist: {
+      totalItems: number;
+    };
+    conversations: {
+      total: number;
+      unread: number;
+    };
+    analytics: any;
+  };
 }
 
-// Customer profile
-export interface CustomerProfile {
-  id: string;
-  user_id: string | null;
-  name: string;
-  phone: string;
-  age_range: AgeRange | null;
-  email: string | null;
-  notes: string | null;
-  total_orders: number;
-  total_spent: number;
-  last_purchase_date: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-// Delivery profile
-export interface DeliveryProfile {
-  user_id: string;
-  vehicle_type: VehicleType | null;
-  vehicle_number: string | null;
-  driver_license_url: string | null;
-  is_verified: boolean;
-  is_active: boolean;
-  latitude: number | null;
-  longitude: number | null;
-  rating: number | null;
-  total_deliveries: number;
-  completed_deliveries: number;
-  cancelled_deliveries: number;
-  commission_rate: number | null;
-  created_at: string;
-  updated_at: string;
-}
-
-// Business profile (generic)
-export interface BusinessProfile {
-  user_id: string;
-  role: AccountType;
-  company_name: string | null;
-  location: string | null;
-  latitude: number | null;
-  longitude: number | null;
-  currency: string;
-  is_verified: boolean;
-  store_name: string | null;
-  commission_rate: number | null;
-  created_at: string;
-  updated_at: string;
-}
-
-// Shipping address
 export interface ShippingAddress {
   id: string;
   user_id: string;
   full_name: string;
   address_line1: string;
-  address_line2: string | null;
+  address_line2?: string;
   city: string;
   state: string;
   postal_code: string;
   country: string;
   phone: string;
   is_default: boolean;
-  is_verified: boolean;
   created_at: string;
   updated_at: string;
 }
 
-// Order summary
-export interface OrderSummary {
-  totalOrders: number;
-  pendingOrders: number;
-  completedOrders: number;
-  totalSpent: number;
-  totalEarned: number;
+// Public Profile Types (for the new public profile system)
+export interface PublicProfile {
+  user_id: string;
+  email: string;
+  full_name: string | null;
+  phone: string | null;
+  avatar_url: string | null;
+  account_type: AccountType;
+  location: string | null;
+  currency: string;
+  is_verified: boolean;
+  created_at: string;
+  product_count: number;
+  total_sales: number;
+  total_revenue: number;
+  average_rating: number;
+  review_count: number;
+  store_name: string | null;
+  is_factory: boolean;
+  is_middle_man: boolean;
+  is_seller: boolean;
 }
 
-// Notification summary
-export interface NotificationSummary {
-  total: number;
-  unread: number;
+export interface ProfileSearchResult {
+  user_id: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  account_type: string;
+  location: string | null;
+  is_verified: boolean;
+  product_count: number;
+  total_revenue: number;
+  average_rating: number;
+  store_name: string | null;
 }
 
-// Wishlist summary
-export interface WishlistSummary {
-  count: number;
-}
-
-// Conversation summary
-export interface ConversationSummary {
-  activeChats: number;
-  unreadMessages: number;
-}
-
-// Analytics summary (for sellers)
-export interface AnalyticsSummary {
-  totalRevenue: number;
-  totalSales: number;
-  totalCustomers: number;
-  averageOrderValue: number;
-}
-
-// Unified profile type
-export interface FullUserProfile {
-  core: UserProfile;
-  seller?: SellerProfile | null;
-  middleman?: MiddlemanProfile | null;
-  customer?: CustomerProfile | null;
-  delivery?: DeliveryProfile | null;
-  business?: BusinessProfile | null;
-  addresses: ShippingAddress[];
-  stats: {
-    orders: OrderSummary;
-    notifications: NotificationSummary;
-    wishlist: WishlistSummary;
-    conversations: ConversationSummary;
-    analytics?: AnalyticsSummary | null;
-  };
+export interface ProfileSearchParams {
+  search_term?: string;
+  account_type?: "user" | "seller" | "factory" | "middle_man";
+  location?: string;
+  limit?: number;
+  offset?: number;
 }

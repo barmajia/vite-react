@@ -37,8 +37,9 @@ export class ErrorBoundary extends Component<Props, State> {
             <p className="text-muted-foreground mb-6">
               Something went wrong. Please try refreshing the page.
             </p>
-            {this.state.error && (
-              <pre className="text-sm text-destructive bg-muted p-4 rounded-md overflow-auto">
+            {/* Only show error details in development — never leak stack traces to production */}
+            {import.meta.env.DEV && this.state.error && (
+              <pre className="text-sm text-destructive bg-muted p-4 rounded-md overflow-auto mb-4">
                 {this.state.error.message}
               </pre>
             )}

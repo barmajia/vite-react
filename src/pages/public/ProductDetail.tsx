@@ -8,7 +8,6 @@ import {
   Truck,
   Shield,
   RotateCcw,
-  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +23,6 @@ import {
 } from "@/hooks/useProducts";
 import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
-import { useConversationCreate } from "@/features/messaging";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
@@ -47,7 +45,6 @@ export function ProductDetail() {
   const { user } = useAuth();
   const { addItem } = useCart();
   const addReview = useAddReview();
-  const { createConversation, isCreating } = useConversationCreate();
 
   const [quantity, setQuantity] = useState(1);
   const [isWishlisted, setIsWishlisted] = useState(false);
@@ -87,34 +84,6 @@ export function ProductDetail() {
       toast.success(t("productDetail.addedToCart"));
     } catch (_err) {
       toast.error(t("productDetail.failedAddToCart"));
-    }
-  };
-
-  const handleChatWithSeller = async () => {
-    if (!user) {
-      toast.error(t("productDetail.signInToChat"));
-      navigate(ROUTES.LOGIN, {
-        state: { from: { pathname: window.location.pathname } },
-      });
-      return;
-    }
-
-    if (!product?.seller_id) {
-      toast.error(t("productDetail.sellerInfoUnavailable"));
-      return;
-    }
-
-    if (user.id === product.seller_id) {
-      toast.error(t("productDetail.cannotChatSelf"));
-      return;
-    }
-
-    const conversationId = await createConversation(
-      product.seller_id,
-      product.id,
-    );
-    if (conversationId) {
-      navigate(`/messages/${conversationId}`);
     }
   };
 
@@ -331,18 +300,6 @@ export function ProductDetail() {
                 {t("productDetail.buyNow")}
               </Button>
             </div>
-            <Button
-              size="lg"
-              variant="secondary"
-              onClick={handleChatWithSeller}
-              disabled={isCreating || user?.id === product.seller_id}
-              className="w-full"
-            >
-              <MessageSquare className="mr-2 h-4 w-4" />
-              {isCreating
-                ? t("productDetail.startingChat")
-                : t("productDetail.askSeller")}
-            </Button>
           </div>
 
           {/* Features */}
@@ -373,15 +330,6 @@ export function ProductDetail() {
                 <p className="font-medium">{t("productDetail.easyReturns")}</p>
                 <p className="text-muted-foreground">
                   {t("productDetail.easyReturnsDesc")}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <MessageSquare className="h-5 w-5 text-primary" />
-              <div>
-                <p className="font-medium">{t("productDetail.support247")}</p>
-                <p className="text-muted-foreground">
-                  {t("productDetail.supportDesc")}
                 </p>
               </div>
             </div>

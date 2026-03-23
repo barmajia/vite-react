@@ -1,13 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import {
-  MessageCircle,
-  ShoppingCart,
-  Loader2,
-  AlertCircle,
-  ImageOff,
-} from "lucide-react";
+import { ShoppingCart, Loader2, AlertCircle, ImageOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
@@ -25,7 +19,6 @@ const ProductDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [addingToCart, setAddingToCart] = useState(false);
-  const [chatLoading, setChatLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
   const [thumbnailErrors, setThumbnailErrors] = useState<boolean[]>([]);
 
@@ -109,82 +102,6 @@ const ProductDetailsPage = () => {
       toast.error("Failed to add to cart");
     } finally {
       setAddingToCart(false);
-    }
-  };
-
-  // Open/Create Chat Logic
-  const handleOpenChat = async () => {
-    if (!user) {
-      toast.error("Please log in to start a chat");
-      navigate(ROUTES.LOGIN, {
-        state: { from: { pathname: window.location.pathname } },
-      });
-      return;
-    }
-
-    if (!product) return;
-
-    if (user.id === product.seller_id) {
-      toast.error("You can't chat with yourself as the seller");
-      return;
-    }
-
-    setChatLoading(true);
-    try {
-      // Check if conversation already exists for this product
-      const { data: existingConv } = await supabase
-        .from("conversations")
-        .select("id")
-        .eq("product_id", product.id)
-        .limit(1);
-
-      let conversationId: string;
-
-      if (existingConv && existingConv.length > 0) {
-        conversationId = existingConv[0].id;
-      } else {
-        // Create new conversation
-        const { data: newConv, error: convError } = await supabase
-          .from("conversations")
-          .insert({
-            product_id: product.id,
-            last_message: null,
-          })
-          .select()
-          .single();
-
-        if (convError) throw convError;
-        conversationId = newConv.id;
-
-        // Add participants (buyer and seller)
-        const participants = [
-          {
-            conversation_id: conversationId,
-            user_id: user.id,
-            role: "customer" as const,
-          },
-          {
-            conversation_id: conversationId,
-            user_id: product.seller_id,
-            role: "seller" as const,
-          },
-        ];
-
-        const { error: partError } = await supabase
-          .from("conversation_participants")
-          .insert(participants);
-
-        if (partError) throw partError;
-      }
-
-      // Navigate to Chat
-      navigate(`/messages/${conversationId}`);
-      toast.success("Chat started successfully!");
-    } catch (err: any) {
-      console.error("Chat error:", err);
-      toast.error("Failed to start chat");
-    } finally {
-      setChatLoading(false);
     }
   };
 
@@ -337,21 +254,6 @@ const ProductDetailsPage = () => {
                 <ShoppingCart className="mr-2 h-5 w-5" />
               )}
               {product.quantity === 0 ? "Sold Out" : "Add to Cart"}
-            </Button>
-
-            <Button
-              onClick={handleOpenChat}
-              disabled={chatLoading || user?.id === product.seller_id}
-              variant="outline"
-              size="lg"
-              className="flex-1"
-            >
-              {chatLoading ? (
-                <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              ) : (
-                <MessageCircle className="mr-2 h-5 w-5" />
-              )}
-              Ask Seller
             </Button>
           </div>
 

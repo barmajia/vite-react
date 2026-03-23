@@ -74,7 +74,7 @@ export function useFullProfile(userId?: string) {
         }
       }
 
-      if (userProfile.account_type === "middleman") {
+      if ((userProfile.account_type as string) === "middleman") {
         const [{ data: middleman, error: middlemanError }, { data: business }] =
           await Promise.all([
             supabase
@@ -98,7 +98,7 @@ export function useFullProfile(userId?: string) {
         }
       }
 
-      if (userProfile.account_type === "customer") {
+      if ((userProfile.account_type as string) === "user") {
         const { data: customer, error: customerError } = await supabase
           .from("customers")
           .select("*")
@@ -110,7 +110,7 @@ export function useFullProfile(userId?: string) {
         }
       }
 
-      if (userProfile.account_type === "delivery") {
+      if ((userProfile.account_type as string) === "delivery_driver") {
         const { data: delivery, error: deliveryError } = await supabase
           .from("delivery_profiles")
           .select("*")
@@ -179,9 +179,12 @@ export function useFullProfile(userId?: string) {
               notificationsRes.data?.filter((n: any) => !n.is_read).length || 0,
           },
           wishlist: {
+            totalItems: wishlistRes.data?.length || 0,
             count: wishlistRes.data?.length || 0,
           },
           conversations: {
+            total: 0,
+            unread: 0,
             activeChats: 0,
             unreadMessages: 0,
           },

@@ -51,6 +51,9 @@
   }
 }
 
+.dark body {
+  background: #111827;
+}
 @layer utilities {
   @keyframes slide-in-right {
     from {

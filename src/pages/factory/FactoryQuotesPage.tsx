@@ -1,7 +1,13 @@
-import { QuoteRequestsList } from '@/features/factory/components/QuoteRequestsList';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { MessageSquare, Clock, CheckCircle } from 'lucide-react';
+import { QuoteRequestsList } from "@/features/factory/components/QuoteRequestsList";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Package, Clock, CheckCircle } from "lucide-react";
 
 export const FactoryQuotesPage = () => {
   return (
@@ -9,7 +15,7 @@ export const FactoryQuotesPage = () => {
       {/* Header */}
       <div className="flex items-center gap-4">
         <div className="p-3 bg-primary rounded-lg">
-          <MessageSquare className="h-8 w-8 text-primary-foreground" />
+          <Package className="h-8 w-8 text-primary-foreground" />
         </div>
         <div>
           <h1 className="text-3xl font-bold">Quote Requests</h1>
@@ -27,7 +33,7 @@ export const FactoryQuotesPage = () => {
             Received
           </TabsTrigger>
           <TabsTrigger value="quoted">
-            <MessageSquare className="h-4 w-4 mr-1" />
+            <Package className="h-4 w-4 mr-1" />
             Quoted
           </TabsTrigger>
           <TabsTrigger value="completed">
@@ -68,9 +74,7 @@ export const FactoryQuotesPage = () => {
           <Card>
             <CardHeader>
               <CardTitle>Completed Quotes</CardTitle>
-              <CardDescription>
-                Accepted and rejected quotes
-              </CardDescription>
+              <CardDescription>Accepted and rejected quotes</CardDescription>
             </CardHeader>
             <CardContent>
               <CompletedQuotesList />
@@ -85,7 +89,7 @@ export const FactoryQuotesPage = () => {
 const QuotedOrdersList = () => {
   return (
     <div className="text-center py-12 text-muted-foreground">
-      <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
+      <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
       <p>No quoted orders yet</p>
     </div>
   );

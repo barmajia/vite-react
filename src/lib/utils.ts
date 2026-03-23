@@ -11,11 +11,27 @@ export function cn(...inputs: ClassValue[]) {
 
 /**
  * Format a price value to a readable string
+ * @param price - The price value to format
+ * @param currency - Currency code (default: EGP for Egyptian Pound)
  */
-export function formatPrice(price: number, currency: string = "USD"): string {
+export function formatPrice(price: number, currency: string = "EGP"): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
+  }).format(price);
+}
+
+/**
+ * Format price with Arabic locale for RTL languages
+ */
+export function formatPriceArabic(
+  price: number,
+  currency: string = "EGP",
+): string {
+  return new Intl.NumberFormat("ar-EG", {
+    style: "currency",
+    currency,
+    minimumFractionDigits: 2,
   }).format(price);
 }
 

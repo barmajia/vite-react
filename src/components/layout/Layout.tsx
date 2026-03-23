@@ -3,7 +3,6 @@ import { Outlet, useLocation } from "react-router-dom";
 import { Header } from "@/components/layout/Header";
 import { ServicesHeader } from "@/components/layout/ServicesHeader";
 import { Footer } from "@/components/layout/Footer";
-import { FloatingActionButton } from "@/components/shared/FloatingActionButton";
 import { useAuth } from "@/hooks/useAuth";
 
 const noLayoutRoutes = [
@@ -16,7 +15,7 @@ const servicesRoutes = ["/services"];
 
 export function Layout() {
   const location = useLocation();
-  const { user } = useAuth();
+  useAuth();
 
   const showLayout = !noLayoutRoutes.some((route) =>
     location.pathname.startsWith(route),
@@ -39,7 +38,6 @@ export function Layout() {
         </div>
       </main>
       {showLayout && <Footer />}
-      {showLayout && user && <FloatingActionButton />}
     </div>
   );
 }

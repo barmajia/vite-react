@@ -36,11 +36,11 @@ export function ServicesGateway() {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto mb-16">
           <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg">
-              <Briefcase className="h-10 w-10 text-primary-foreground" />
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#0f172a] to-[#1e293b] dark:from-blue-600 dark:to-blue-800 flex items-center justify-center shadow-lg shadow-slate-900/30 dark:shadow-blue-500/50">
+              <Briefcase className="h-10 w-10 text-white" />
             </div>
           </div>
-          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-[#0f172a] to-[#1e293b] dark:from-blue-600 dark:to-blue-800 bg-clip-text text-transparent">
             {t("gateway.welcomeTitle")}
           </h1>
           <p className="text-xl text-muted-foreground mb-8">
@@ -50,7 +50,7 @@ export function ServicesGateway() {
             <Button
               size="lg"
               onClick={() => navigate("/services")}
-              className="text-lg px-8"
+              className="text-lg px-8 bg-gradient-to-r from-[#0f172a] to-[#1e293b] dark:from-blue-600 dark:to-blue-800 hover:from-[#0f172a]/90 hover:to-[#1e293b]/90 dark:hover:from-blue-700 dark:hover:to-blue-900 text-white shadow-lg shadow-slate-900/30 dark:shadow-blue-500/50"
             >
               {t("gateway.findServices")}
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -59,7 +59,7 @@ export function ServicesGateway() {
               size="lg"
               variant="outline"
               onClick={() => navigate("/products")}
-              className="text-lg px-8"
+              className="text-lg px-8 border-2 border-[#0f172a] dark:border-blue-600 text-[#0f172a] dark:text-blue-600 hover:bg-gray-100 dark:hover:bg-blue-50"
             >
               <ShoppingBag className="mr-2 h-5 w-5" />
               {t("gateway.shopProducts")}
@@ -69,74 +69,97 @@ export function ServicesGateway() {
 
         <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto mb-16">
           <Card
-            className="group cursor-pointer hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary overflow-hidden"
+            className="group cursor-pointer hover:shadow-2xl transition-all duration-300 border-2 hover:border-[#0f172a] dark:hover:border-blue-500 overflow-hidden"
             onClick={() => navigate("/services")}
           >
             <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-primary to-primary/80 p-8 text-primary-foreground">
-                <Briefcase className="h-16 w-16 mb-6" />
-                <h2 className="text-3xl font-bold mb-4">
-                  {t("gateway.hireExperts")}
-                </h2>
-                <p className="text-primary-foreground/90 mb-6">
-                  {t("gateway.hireExpertsDesc")}
-                </p>
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-2">
-                    <Star className="h-5 w-5" />
-                    <span>{t("gateway.devDesigners")}</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    <span>{t("gateway.medicalConsult")}</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Zap className="h-5 w-5" />
-                    <span>{t("gateway.quickTurnaround")}</span>
-                  </li>
-                </ul>
+              <div className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] dark:from-blue-600 dark:to-blue-800 p-8 text-white relative">
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:20px_20px] [mask-image:linear-gradient(to_bottom_right,transparent,black_30%,black_70%,transparent)] pointer-events-none" />
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 shadow-lg">
+                    <Briefcase className="h-10 w-10" />
+                  </div>
+                  <h2 className="text-3xl font-bold mb-4">
+                    {t("gateway.hireExperts")}
+                  </h2>
+                  <p className="text-white/90 mb-6">
+                    {t("gateway.hireExpertsDesc")}
+                  </p>
+                  <ul className="space-y-3">
+                    <li className="flex items-center gap-2">
+                      <Star className="h-5 w-5 text-yellow-300" />
+                      <span>{t("gateway.devDesigners")}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Users className="h-5 w-5 text-blue-300" />
+                      <span>{t("gateway.medicalConsult")}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Zap className="h-5 w-5 text-amber-300" />
+                      <span>{t("gateway.quickTurnaround")}</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
               <div className="p-6 bg-background">
-                <Button className="w-full" size="lg">
-                  {t("gateway.exploreServices")}
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                <Button
+                  className="w-full bg-gradient-to-br from-[#0f172a] to-[#1e293b] dark:from-blue-600 dark:to-blue-800 hover:from-[#0f172a]/90 hover:to-[#1e293b]/90 dark:hover:from-blue-700 dark:hover:to-blue-900 text-white font-semibold shadow-lg shadow-slate-900/30 dark:shadow-blue-500/50 relative overflow-hidden"
+                  size="lg"
+                >
+                  <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.15)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.15)_1px,transparent_1px)] bg-[size:16px_16px] [mask-image:linear-gradient(to_bottom_right,transparent,black_40%,black)] pointer-events-none" />
+                  <span className="relative">
+                    {t("gateway.exploreServices")}
+                  </span>
+                  <ArrowRight className="ml-2 h-5 w-5 relative" />
                 </Button>
               </div>
             </CardContent>
           </Card>
 
           <Card
-            className="group cursor-pointer hover:shadow-2xl transition-all duration-300 border-2 hover:border-accent overflow-hidden"
+            className="group cursor-pointer hover:shadow-2xl transition-all duration-300 border-2 hover:border-[#0f172a] dark:hover:border-blue-500 overflow-hidden"
             onClick={() => navigate("/products")}
           >
             <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-accent to-accent/80 p-8 text-accent-foreground">
-                <ShoppingBag className="h-16 w-16 mb-6" />
-                <h2 className="text-3xl font-bold mb-4">
-                  {t("gateway.shopProductsCard")}
-                </h2>
-                <p className="text-accent-foreground/90 mb-6">
-                  {t("gateway.shopProductsDesc")}
-                </p>
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-2">
-                    <Star className="h-5 w-5" />
-                    <span>{t("gateway.electronicsMore")}</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Users className="h-5 w-5" />
-                    <span>{t("gateway.trustedSellers")}</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Zap className="h-5 w-5" />
-                    <span>{t("gateway.fastShipping")}</span>
-                  </li>
-                </ul>
+              <div className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] dark:from-blue-600 dark:to-blue-800 p-8 text-white relative">
+                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:20px_20px] [mask-image:linear-gradient(to_bottom_right,transparent,black_30%,black_70%,transparent)] pointer-events-none" />
+                <div className="relative">
+                  <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 shadow-lg">
+                    <ShoppingBag className="h-10 w-10" />
+                  </div>
+                  <h2 className="text-3xl font-bold mb-4">
+                    {t("gateway.shopProductsCard")}
+                  </h2>
+                  <p className="text-white/90 mb-6">
+                    {t("gateway.shopProductsDesc")}
+                  </p>
+                  <ul className="space-y-3">
+                    <li className="flex items-center gap-2">
+                      <Star className="h-5 w-5 text-yellow-300" />
+                      <span>{t("gateway.electronicsMore")}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Users className="h-5 w-5 text-blue-300" />
+                      <span>{t("gateway.trustedSellers")}</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <Zap className="h-5 w-5 text-amber-300" />
+                      <span>{t("gateway.fastShipping")}</span>
+                    </li>
+                  </ul>
+                </div>
               </div>
               <div className="p-6 bg-background">
-                <Button className="w-full" size="lg" variant="outline">
-                  {t("gateway.browseProducts")}
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                <Button
+                  className="w-full bg-gradient-to-br from-[#0f172a] to-[#1e293b] dark:from-blue-600 dark:to-blue-800 hover:from-[#0f172a]/90 hover:to-[#1e293b]/90 dark:hover:from-blue-700 dark:hover:to-blue-900 text-white font-semibold shadow-lg shadow-slate-900/30 dark:shadow-blue-500/50 relative overflow-hidden"
+                  size="lg"
+                  variant="outline"
+                >
+                  <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.15)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.15)_1px,transparent_1px)] bg-[size:16px_16px] [mask-image:linear-gradient(to_bottom_right,transparent,black_40%,black)] pointer-events-none" />
+                  <span className="relative">
+                    {t("gateway.browseProducts")}
+                  </span>
+                  <ArrowRight className="ml-2 h-5 w-5 relative" />
                 </Button>
               </div>
             </CardContent>
@@ -167,7 +190,7 @@ export function ServicesGateway() {
             {t("gateway.alreadyHaveAccount")}{" "}
             <Link
               to="/login"
-              className="text-primary hover:underline font-medium"
+              className="text-[#0f172a] dark:text-blue-600 hover:underline font-medium"
             >
               {t("gateway.signIn")}
             </Link>

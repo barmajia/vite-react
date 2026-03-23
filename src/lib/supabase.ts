@@ -1,38 +1,32 @@
 import { createClient, Session } from "@supabase/supabase-js";
+import { escapeRegExp } from "@/utils/sanitize";
 
-const supabaseUrl =
-  import.meta.env.VITE_SUPABASE_URL ||
-  "https://ofovfxsfazlwvcakpuer.supabase.co";
-const supabaseAnonKey =
-  import.meta.env.VITE_SUPABASE_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9mb3ZmeHNmYXpsd3ZjYWtwdWVyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIxMjY0MDcsImV4cCI6MjA4NzcwMjQwN30.QYx8-c9IiSMpuHeikKz25MKO5o6g112AKj4Tnr4aWzI";
+// ── Supabase Credentials ──────────────────────────────────────
+// NEVER hardcode credentials — they must come from environment variables.
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-// Check if credentials are placeholders
-const isPlaceholder =
-  supabaseUrl.includes("placeholder") || supabaseAnonKey === "placeholder-key";
-
-if (isPlaceholder) {
-  console.warn(
-    "⚠️ Supabase credentials not configured. Please update .env file with your Supabase credentials.",
-  );
-  console.warn(
-    "Get them from: https://app.supabase.com/project/_/settings/api",
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error(
+    "⚠️ Missing Supabase credentials. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your .env file.\n" +
+      "Get them from: https://app.supabase.com/project/_/settings/api",
   );
 }
 
-// Cookie-based storage for auth session
+// Cookie-based storage for auth session (regex-safe)
 const cookieStorage = {
   getItem: (key: string) => {
-    const match = document.cookie.match(new RegExp(`(^| )${key}=([^;]+)`));
+    const escaped = escapeRegExp(key);
+    const match = document.cookie.match(new RegExp(`(^| )${escaped}=([^;]+)`));
     return match ? match[2] : null;
   },
   setItem: (key: string, value: string) => {
-    // Set cookie with 30 days expiry, secure in production
+    // Set cookie with 30 days expiry, Secure + HttpOnly flags in production
     const isProduction = window.location.protocol === "https:";
-    document.cookie = `${key}=${value}; path=/; max-age=2592000; SameSite=Lax${isProduction ? "; Secure" : ""}`;
+    document.cookie = `${key}=${value}; path=/; max-age=2592000; SameSite=Strict${isProduction ? "; Secure" : ""}`;
   },
   removeItem: (key: string) => {
-    document.cookie = `${key}=; path=/; max-age=0`;
+    document.cookie = `${key}=; path=/; max-age=0; SameSite=Strict`;
   },
 };
 
@@ -53,7 +47,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
 
 // Helper function to get the current session
 export const getSession = async () => {
-  if (isPlaceholder) return null;
+
   const {
     data: { session },
     error,
@@ -67,7 +61,7 @@ export const getSession = async () => {
 
 // Helper function to get the current user
 export const getUser = async () => {
-  if (isPlaceholder) return null;
+
   const {
     data: { user },
     error,
