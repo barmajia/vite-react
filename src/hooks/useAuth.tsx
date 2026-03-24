@@ -22,7 +22,7 @@ type AuthContextType = {
     email: string,
     password: string,
     fullName?: string,
-    accountType?: "buyer" | "seller" | "provider",
+    accountType?: "buyer" | "seller" | "provider" | "factory" | "delivery_driver",
   ) => Promise<{ error: Error | null }>;
   signUpWithRole: (
     email: string,
@@ -160,7 +160,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     email: string,
     password: string,
     fullName?: string,
-    accountType: "buyer" | "seller" | "provider" = "buyer",
+    accountType: "buyer" | "seller" | "provider" | "factory" | "delivery_driver" = "buyer",
   ) => {
     const passwordCheck = validatePassword(password);
     if (!passwordCheck.isValid) {
