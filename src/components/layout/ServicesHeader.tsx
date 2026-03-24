@@ -35,6 +35,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ROUTES } from "@/lib/constants";
 
 export function ServicesHeader() {
   const { t } = useTranslation();
@@ -132,17 +133,14 @@ export function ServicesHeader() {
     {
       label: t("services.findTalent"),
       href: "/services/programming",
-      icon: "",
     },
     {
       label: t("services.healthcare"),
       href: "/services/health",
-      icon: "",
     },
     {
       label: t("services.allServices"),
       href: "/services",
-      icon: "",
     },
   ];
 
@@ -164,7 +162,7 @@ export function ServicesHeader() {
               className="flex items-center gap-3 group hover:opacity-90 transition-opacity"
             >
               <div className="relative">
-                <div className="bg-gradient-to-br from-blue-600 to-blue-600 text-white p-2.5 rounded-xl shadow-lg shadow-blue-500/30 group-hover:shadow-violet-500/50 transition-all duration-300 group-hover:scale-105">
+                <div className="bg-gradient-to-br from-violet-600 to-violet-600 text-white p-2.5 rounded-xl shadow-lg shadow-violet-500/30 group-hover:shadow-violet-500/50 transition-all duration-300 group-hover:scale-105">
                   <Briefcase size={22} strokeWidth={2.5} />
                 </div>
                 <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-gray-950 shadow-sm" />
@@ -173,7 +171,7 @@ export function ServicesHeader() {
                 <span className="text-xl font-bold text-gray-900 dark:text-white leading-none">
                   AURORA
                 </span>
-                <span className="text-[9px] font-semibold text-blue-600 dark:text-blue-400 tracking-[0.25em] uppercase">
+                <span className="text-[9px] font-semibold text-violet-600 dark:text-violet-400 tracking-[0.25em] uppercase">
                   {t("      services      ")}
                 </span>
               </div>
@@ -188,11 +186,10 @@ export function ServicesHeader() {
                   className={cn(
                     "relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
                     isActive(item.href)
-                      ? "text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                      ? "text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20"
                       : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
                   )}
                 >
-                  <span className="mr-2">{item.icon}</span>
                   {item.label}
                   {isActive(item.href) && (
                     <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-violet-600 dark:bg-violet-400 rounded-full" />
@@ -326,7 +323,7 @@ export function ServicesHeader() {
                         className="cursor-pointer text-gray-700 dark:text-gray-200 dark:focus:bg-gray-700"
                       >
                         <Link
-                          to="/services/dashboard"
+                          to={ROUTES.SERVICES}
                           className="flex items-center"
                         >
                           <LayoutDashboard className="mr-2 h-4 w-4" />
@@ -350,7 +347,7 @@ export function ServicesHeader() {
                             className="cursor-pointer text-violet-600 dark:text-violet-400 dark:focus:bg-gray-700"
                           >
                             <Link
-                              to="/services/onboarding"
+                              to={"/services/onboarding"}
                               className="flex items-center font-medium"
                             >
                               <Briefcase className="mr-2 h-4 w-4" />
@@ -380,7 +377,7 @@ export function ServicesHeader() {
                     {t("auth.signIn")}
                   </Button>
                   <Button
-                    onClick={() => navigate("/signup")}
+                    onClick={() => navigate("/services/onboarding")}
                     className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:from-violet-700 hover:to-indigo-700 transition-all shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50"
                   >
                     {t("auth.joinNow")}
@@ -479,7 +476,6 @@ export function ServicesHeader() {
                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800",
                     )}
                   >
-                    <span>{item.icon}</span>
                     {item.label}
                   </Link>
                 ))}
@@ -560,7 +556,7 @@ export function ServicesHeader() {
                   </Button>
                   <Button
                     onClick={() => {
-                      navigate("/signup");
+                      navigate("/services/onboarding");
                       setIsMobileMenuOpen(false);
                     }}
                     className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white"

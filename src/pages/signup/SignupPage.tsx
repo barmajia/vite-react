@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { UserRole } from "@/types/signup";
 import { CustomerSignupForm } from "@/components/signup/CustomerSignupForm";
 import { SellerSignupForm } from "@/components/signup/SellerSignupForm";
@@ -22,6 +22,12 @@ import {
   ArrowRight,
   Moon,
   Sun,
+  Sparkles,
+  Users,
+  Store,
+  Building2,
+  Truck,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/useTheme";
@@ -50,9 +56,7 @@ export function SignupPage() {
   };
 
   const handleSignupComplete = (email?: string) => {
-    if (email) {
-      setCreatedEmail(email);
-    }
+    if (email) setCreatedEmail(email);
     setSuccess(true);
   };
 
@@ -65,9 +69,7 @@ export function SignupPage() {
       if (error) {
         toast.error(error.message || "Failed to resend verification email");
       } else {
-        toast.success(
-          "Verification email sent! Please check your inbox and spam folder.",
-        );
+        toast.success("Verification email sent! Check your inbox.");
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to resend verification email");
@@ -76,16 +78,31 @@ export function SignupPage() {
     }
   };
 
+  const roleIcons: Record<UserRole | "admin", React.ElementType> = {
+    customer: Users,
+    seller: Store,
+    factory: Building2,
+    delivery: Truck,
+    middleman: Sparkles,
+    admin: Users,
+  };
+
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[hsl(226.15deg_68.42%_3.73%)] p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-white to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-violet-950 p-4 relative overflow-hidden">
+        {/* Animated Background Blobs */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-violet-400/20 dark:bg-violet-600/20 rounded-full blur-3xl animate-pulse" />
+          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-indigo-400/20 dark:bg-indigo-600/20 rounded-full blur-3xl animate-pulse delay-700" />
+        </div>
+
         {/* Theme Toggle */}
-        <div className="fixed top-4 right-4 flex gap-2 z-10">
+        <div className="fixed top-4 right-4 flex gap-2 z-20">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => navigate(-1)}
-            className="rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-sm border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800"
+            className="rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 transition-all"
           >
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back
@@ -94,61 +111,60 @@ export function SignupPage() {
             variant="ghost"
             size="sm"
             onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-sm border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-yellow-400 hover:bg-white dark:hover:bg-gray-800"
+            className="rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-yellow-400 hover:bg-white dark:hover:bg-slate-800 transition-all"
           >
             {theme === "light" ? (
-              <Moon className="h-4 w-4 text-indigo-600" />
+              <Moon className="h-4 w-4 text-violet-600" />
             ) : (
-              <Sun className="h-4 w-4 text-amber-500" />
+              <Sun className="h-4 w-4 text-amber-400" />
             )}
           </Button>
         </div>
 
-        <Card className="max-w-md w-full bg-white dark:bg-gray-900/90 border-gray-200 dark:border-gray-800 shadow-2xl">
-          <CardHeader className="text-center pb-2">
-            <div className="mx-auto w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-4">
-              <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
+        {/* Success Card */}
+        <Card className="max-w-lg w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-slate-200 dark:border-slate-800 shadow-2xl shadow-violet-500/10 dark:shadow-violet-900/20 rounded-3xl overflow-hidden relative z-10">
+          {/* Animated Checkmark Header */}
+          <div className="relative bg-gradient-to-r from-violet-600 to-indigo-600 p-8 text-center">
+            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:20px_20px] opacity-30" />
+            <div className="relative">
+              <div className="mx-auto w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 animate-[bounce_2s_infinite]">
+                <CheckCircle className="w-10 h-10 text-white" />
+              </div>
+              <CardTitle className="text-2xl font-bold text-white">
+                Account Created! 🎉
+              </CardTitle>
+              <CardDescription className="text-violet-100 mt-2">
+                One last step to activate your account
+              </CardDescription>
             </div>
-            <CardTitle className="text-2xl text-gray-900 dark:text-white">
-              Account Created!
-            </CardTitle>
-            <CardDescription className="text-gray-600 dark:text-gray-300 mt-2">
-              Verify your email to activate your account
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6 pt-6">
+          </div>
+
+          <CardContent className="space-y-6 p-8">
             {createdEmail && (
-              <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-                <p className="text-sm text-blue-900 dark:text-blue-300 text-center">
-                  We've sent a verification email to{" "}
-                  <strong className="text-blue-900 dark:text-blue-200">
-                    {createdEmail}
-                  </strong>
+              <div className="p-4 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl">
+                <p className="text-sm text-violet-900 dark:text-violet-200 text-center">
+                  Verification sent to{" "}
+                  <strong className="font-semibold">{createdEmail}</strong>
                 </p>
               </div>
             )}
 
-            <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl">
               <div className="flex items-start gap-3">
-                <Mail className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5" />
+                <Mail className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <p className="text-sm text-yellow-900 dark:text-yellow-300 font-medium">
-                    Check your spam folder
-                  </p>
-                  <p className="text-sm text-yellow-800 dark:text-yellow-400 mt-1">
-                    If you don't see the email within 5 minutes, check your
-                    spam/junk folder. Business accounts may also require admin
-                    approval after verification.
+                  <p className="text-sm text-amber-900 dark:text-amber-200 font-medium">
+                    Can't find the email?
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4 pt-4">
               <Button
                 onClick={handleResendVerification}
                 disabled={resending}
-                className="w-full bg-indigo-600 hover:bg-indigo-700 text-white transition-colors"
+                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-semibold py-6 rounded-xl shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all border-0"
               >
                 {resending ? (
                   <>
@@ -166,7 +182,7 @@ export function SignupPage() {
               <Button
                 onClick={() => navigate("/login")}
                 variant="outline"
-                className="w-full border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="w-full border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 py-6 rounded-xl transition-all"
               >
                 Go to Login
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -179,255 +195,268 @@ export function SignupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-[hsl(226.15deg_66.42%_4.73%)] py-12 px-4 sm:px-6 lg:px-8">
-      {/* Theme Toggle & Back Button */}
-      <div className="fixed top-4 right-4 flex gap-2 z-10">
-        {selectedRole && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBack}
-            className="rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-sm border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back
-          </Button>
-        )}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-          className="rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-sm border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-yellow-400 hover:bg-white dark:hover:bg-gray-800"
-        >
-          {theme === "light" ? (
-            <Moon className="h-4 w-4 text-indigo-600" />
-          ) : (
-            <Sun className="h-4 w-4 text-amber-500" />
-          )}
-        </Button>
+    <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-violet-50 via-white to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-violet-950 relative overflow-hidden">
+      
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-violet-400/10 dark:bg-violet-600/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-400/10 dark:bg-indigo-600/10 rounded-full blur-3xl" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(139,92,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,0.03)_1px,transparent_1px)] bg-[size:64px_64px]" />
       </div>
 
-      <div className="max-w-3xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-8 pt-12">
-          <h1 className="text-4 font-bold text-dark dark-white text-xl">
-            A U R O R A
-          </h1>
-          <div className="pt-5"></div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            {selectedRole
-              ? `Sign Up as ${selectedRole.charAt(0).toUpperCase() + selectedRole.slice(1)}`
-              : "Create Your Account"}
-          </h1>
-          <p className="mt-2 text-gray-600 dark:text-gray-300">
-            {selectedRole
-              ? "Complete your profile to get started"
-              : "Choose your account type to begin"}
-          </p>
-        </div>
+      {/* Left Panel - Visual Area (Desktop) */}
+      <div className="hidden lg:flex lg:w-[45%] xl:w-[40%] relative bg-gradient-to-br from-violet-600 via-indigo-600 to-violet-800 dark:from-violet-900 dark:via-indigo-900 dark:to-slate-900 overflow-hidden shadow-2xl z-10">
+        <div className="absolute inset-0 opacity-20 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay"></div>
+        <div className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl animate-pulse delay-1000" />
 
-        {/* Error Message */}
-        {error && (
-          <Alert
-            variant="destructive"
-            className="mb-6 bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800"
-          >
-            <AlertCircle className="h-4 w-4 text-red-600 dark:text-red-400" />
-            <AlertDescription className="text-red-600 dark:text-red-400">
-              {error}
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Content */}
-        {!selectedRole ? (
-          <RoleSelection onSelect={handleRoleSelect} />
-        ) : selectedRole === "middleman" ? (
-          // Redirect to dedicated middleman signup
-          <Card className="bg-white dark:bg-gray-900/90 border-gray-200 dark:border-gray-800">
-            <CardContent className="text-center py-8">
-              <p className="text-gray-600 dark:text-gray-300 mb-4">
-                Middleman signup has a dedicated multi-step form.
-              </p>
-              <div className="flex gap-2 justify-center">
-                <button
-                  onClick={handleBack}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                >
-                  Back
-                </button>
-                <button
-                  onClick={() => navigate("/signup/middleman")}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-                >
-                  Go to Middleman Signup
-                </button>
-              </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="bg-white dark:bg-gray-900/90 border-gray-200 dark:border-gray-800">
-            <CardHeader>
-              <CardTitle className="capitalize text-gray-900 dark:text-white">
-                {selectedRole} Registration
-              </CardTitle>
-              <CardDescription className="text-gray-600 dark:text-gray-300">
-                Fill in the form below to create your {selectedRole} account
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {selectedRole === "customer" && (
-                <CustomerSignupForm
-                  onSubmit={async (formData: any) => {
-                    setLoading(true);
-                    try {
-                      const { error } = await signUp(
-                        formData.email,
-                        formData.password,
-                        formData.full_name,
-                        "buyer",
-                      );
-                      if (error) {
-                        setError(error.message);
-                      } else {
-                        handleSignupComplete(formData.email);
-                      }
-                    } catch (err: any) {
-                      setError(err.message);
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  onBack={handleBack}
-                  loading={loading}
-                />
-              )}
-              {selectedRole === "seller" && (
-                <SellerSignupForm
-                  onSubmit={async (formData: any) => {
-                    setLoading(true);
-                    try {
-                      const { error } = await signUp(
-                        formData.email,
-                        formData.password,
-                        formData.full_name,
-                        "seller",
-                      );
-                      if (error) {
-                        setError(error.message);
-                      } else {
-                        handleSignupComplete(formData.email);
-                      }
-                    } catch (err: any) {
-                      setError(err.message);
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  onBack={handleBack}
-                  loading={loading}
-                />
-              )}
-              {selectedRole === "factory" && (
-                <FactorySignupForm
-                  onSubmit={async (formData: any) => {
-                    setLoading(true);
-                    try {
-                      const { error } = await signUp(
-                        formData.email,
-                        formData.password,
-                        formData.full_name,
-                        "seller",
-                      );
-                      if (error) {
-                        setError(error.message);
-                      } else {
-                        handleSignupComplete(formData.email);
-                      }
-                    } catch (err: any) {
-                      setError(err.message);
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  onBack={handleBack}
-                  loading={loading}
-                />
-              )}
-              {selectedRole === "delivery" && (
-                <DeliverySignupForm
-                  onSubmit={async (formData: any) => {
-                    setLoading(true);
-                    try {
-                      const { error } = await signUp(
-                        formData.email,
-                        formData.password,
-                        formData.full_name,
-                        "seller",
-                      );
-                      if (error) {
-                        setError(error.message);
-                      } else {
-                        handleSignupComplete(formData.email);
-                      }
-                    } catch (err: any) {
-                      setError(err.message);
-                    } finally {
-                      setLoading(false);
-                    }
-                  }}
-                  onBack={handleBack}
-                  loading={loading}
-                />
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Footer */}
-        <div className="mt-8 text-center">
-          <p className="text-gray-600 dark:text-gray-300">
-            Already have an account?{" "}
-            <a
-              href="/login"
-              className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
-            >
-              Sign In
-            </a>
-          </p>
-        </div>
-
-        {/* Info Boxes */}
-        {!selectedRole && (
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Card className="bg-white dark:bg-gray-900/90 border-gray-200 dark:border-gray-800">
-              <CardHeader>
-                <CardTitle className="text-lg text-gray-900 dark:text-white">
-                  ✓ Instant Access
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Create your account in minutes and get instant access to the
-                  platform.
-                </p>
-              </CardContent>
-            </Card>
-            <Card className="bg-white dark:bg-gray-900/90 border-gray-200 dark:border-gray-800">
-              <CardHeader>
-                <CardTitle className="text-lg text-gray-900 dark:text-white">
-                  🔒 Secure & Private
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
-                  Your data is protected with enterprise-grade security and
-                  encryption.
-                </p>
-              </CardContent>
-            </Card>
+        <div className="relative z-10 flex flex-col justify-center px-12 xl:px-16 text-white w-full h-full">
+          {/* Logo */}
+          <div className="flex items-center gap-3 mb-12">
+            <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-xl">
+              <Sparkles className="h-7 w-7 text-indigo-100" />
+            </div>
+            <span className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-100">AURORA</span>
           </div>
-        )}
+
+          <h1 className="text-4xl xl:text-5xl font-extrabold leading-[1.15] mb-12">
+            Join the future of{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-violet-200 drop-shadow-sm">
+              commerce
+            </span>
+          </h1>
+
+          {/* Role Preview Cards */}
+          <div className="space-y-4 max-w-sm">
+            {[
+              { role: "customer" as UserRole, label: "Shop & Discover", icon: Users },
+              { role: "seller" as UserRole, label: "Sell Products", icon: Store },
+              { role: "factory" as UserRole, label: "Manufacturing", icon: Building2 },
+              { role: "delivery" as UserRole, label: "Logistics", icon: Truck },
+            ].map((item, i) => (
+              <div 
+                key={i}
+                className={`flex items-center gap-4 p-4 rounded-2xl border backdrop-blur-md transition-all duration-300 ${
+                  selectedRole === item.role 
+                    ? "bg-white/20 border-white/40 scale-[1.02] shadow-lg shadow-black/10" 
+                    : "bg-white/5 border-white/10 hover:bg-white/10"
+                }`}
+              >
+                <div className={`p-2.5 rounded-xl transition-colors ${selectedRole === item.role ? 'bg-white/20' : 'bg-white/10'}`}>
+                  <item.icon className="h-5 w-5 text-indigo-50" />
+                </div>
+                <span className="font-semibold text-indigo-50 text-base">{item.label}</span>
+                {selectedRole === item.role && (
+                  <CheckCircle className="ml-auto h-5 w-5 text-emerald-400" />
+                )}
+              </div>
+            ))}
+          </div>
+
+          <div className="absolute bottom-8 left-12 xl:left-16 flex items-center gap-4 text-sm text-indigo-200/60 font-medium">
+            <span>© {new Date().getFullYear()} Aurora</span>
+            <div className="w-1 h-1 rounded-full bg-indigo-200/40" />
+            <a href="#" className="hover:text-indigo-100 transition-colors">Privacy</a>
+            <div className="w-1 h-1 rounded-full bg-indigo-200/40" />
+            <a href="#" className="hover:text-indigo-100 transition-colors">Terms</a>
+          </div>
+        </div>
+      </div>
+
+      {/* Right Panel - Form Area */}
+      <div className="flex-1 flex flex-col px-6 py-8 lg:px-12 xl:px-20 relative z-10 overflow-y-auto">
+        
+        {/* Top Bar Navigation */}
+        <div className="flex justify-between items-center w-full mb-8 lg:mb-12">
+          {/* Mobile Logo */}
+          <div className="lg:hidden flex items-center gap-2">
+            <div className="p-2 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl shadow-lg">
+              <Sparkles className="h-5 w-5 text-white" />
+            </div>
+            <span className="font-bold text-xl tracking-tight text-slate-800 dark:text-white">AURORA</span>
+          </div>
+
+          {/* Empty div for spacing on desktop when no back button */}
+          <div className="hidden lg:block">
+            {selectedRole && (
+              <Button
+                variant="ghost"
+                onClick={handleBack}
+                className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Change Role
+              </Button>
+            )}
+          </div>
+
+          {/* Login Link & Theme Toggle */}
+          <div className="flex items-center gap-4 ml-auto">
+            <span className="text-sm font-medium text-slate-500 dark:text-slate-400 hidden sm:block">
+              Already have an account?
+            </span>
+            <Link to="/login">
+              <Button variant="outline" size="sm" className="rounded-full border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all font-semibold">
+                Sign in
+              </Button>
+            </Link>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+              className="rounded-full bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all shadow-sm"
+            >
+              {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+            </Button>
+          </div>
+        </div>
+
+        {/* Form Container */}
+        <div className="max-w-xl mx-auto w-full my-auto pb-12">
+          
+          <div className="mb-10 lg:text-left text-center">
+            {!selectedRole ? (
+              <>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-violet-100 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-800/50 rounded-full mb-4 lg:mb-6">
+                  <span className="flex h-2 w-2 rounded-full bg-violet-600 dark:bg-violet-400 animate-pulse"></span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-violet-700 dark:text-violet-300">Get Started</span>
+                </div>
+                <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight">
+                  Choose your path
+                </h2>
+                <p className="text-slate-500 dark:text-slate-400 text-base lg:text-lg">
+                  Select how you want to use Aurora to begin.
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800/50 rounded-full mb-4 lg:mb-6">
+                  {(() => {
+                    const Icon = roleIcons[selectedRole];
+                    return Icon ? <Icon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> : null;
+                  })()}
+                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
+                    {selectedRole} Account
+                  </span>
+                </div>
+                <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                  Complete your profile
+                </h2>
+              </>
+            )}
+          </div>
+
+          {error && (
+            <Alert variant="destructive" className="mb-8 bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800/50 rounded-2xl shadow-sm">
+              <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
+              <AlertDescription className="text-rose-700 dark:text-rose-300 font-medium">
+                {error}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+            {!selectedRole ? (
+              <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-black/20 p-2 sm:p-4">
+                <RoleSelection onSelect={handleRoleSelect} />
+              </div>
+            ) : selectedRole === "middleman" ? (
+              <Card className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-xl overflow-hidden">
+                <div className="h-2 bg-gradient-to-r from-violet-500 to-indigo-500 w-full" />
+                <CardContent className="text-center py-12 px-6">
+                  <div className="inline-flex items-center justify-center w-20 h-20 bg-violet-100 dark:bg-violet-900/30 rounded-full mb-6 shadow-inner">
+                    <Sparkles className="h-10 w-10 text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">Middleman Program</h3>
+                  
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={handleBack}
+                      className="border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl h-12 px-6 font-semibold text-slate-600 dark:text-slate-300"
+                    >
+                      <ArrowLeft className="mr-2 h-4 w-4" />
+                      Back
+                    </Button>
+                    <Button
+                      onClick={() => navigate("/signup/middleman")}
+                      className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 rounded-xl h-12 px-6 font-semibold shadow-lg shadow-slate-900/20 dark:shadow-white/20 transition-all"
+                    >
+                      Start Application
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-xl shadow-slate-200/50 dark:shadow-black/20 overflow-hidden">
+                <div className="p-6 sm:p-8">
+                  {selectedRole === "customer" && (
+                    <CustomerSignupForm
+                      onSubmit={async (formData: any) => {
+                        setLoading(true);
+                        try {
+                          const { error } = await signUp(formData.email, formData.password, formData.full_name, "buyer");
+                          if (error) setError(error.message);
+                          else handleSignupComplete(formData.email);
+                        } catch (err: any) { setError(err.message); }
+                        finally { setLoading(false); }
+                      }}
+                      onBack={handleBack}
+                      loading={loading}
+                    />
+                  )}
+                  {selectedRole === "seller" && (
+                    <SellerSignupForm
+                      onSubmit={async (formData: any) => {
+                        setLoading(true);
+                        try {
+                          const { error } = await signUp(formData.email, formData.password, formData.full_name, "seller");
+                          if (error) setError(error.message);
+                          else handleSignupComplete(formData.email);
+                        } catch (err: any) { setError(err.message); }
+                        finally { setLoading(false); }
+                      }}
+                      onBack={handleBack}
+                      loading={loading}
+                    />
+                  )}
+                  {selectedRole === "factory" && (
+                    <FactorySignupForm
+                      onSubmit={async (formData: any) => {
+                        setLoading(true);
+                        try {
+                          const { error } = await signUp(formData.email, formData.password, formData.full_name, "factory");
+                          if (error) setError(error.message);
+                          else handleSignupComplete(formData.email);
+                        } catch (err: any) { setError(err.message); }
+                        finally { setLoading(false); }
+                      }}
+                      onBack={handleBack}
+                      loading={loading}
+                    />
+                  )}
+                  {selectedRole === "delivery" && (
+                    <DeliverySignupForm
+                      onSubmit={async (formData: any) => {
+                        setLoading(true);
+                        try {
+                          const { error } = await signUp(formData.email, formData.password, formData.full_name, "delivery_driver");
+                          if (error) setError(error.message);
+                          else handleSignupComplete(formData.email);
+                        } catch (err: any) { setError(err.message); }
+                        finally { setLoading(false); }
+                      }}
+                      onBack={handleBack}
+                      loading={loading}
+                    />
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+          
+        </div>
       </div>
     </div>
   );
