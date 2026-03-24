@@ -12,6 +12,8 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
+import { Logo } from "@/components/shared/Logo";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 export function ServicesGateway() {
   const { t } = useTranslation();
@@ -26,7 +28,7 @@ export function ServicesGateway() {
   if (!mounted) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
+        <LoadingSpinner size="lg" showLogo text="Loading Aurora..." />
       </div>
     );
   }
@@ -36,11 +38,13 @@ export function ServicesGateway() {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center max-w-4xl mx-auto mb-16">
           <div className="flex justify-center mb-6">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#0f172a] to-[#1e293b] dark:from-blue-600 dark:to-blue-800 flex items-center justify-center shadow-lg shadow-slate-900/30 dark:shadow-blue-500/50">
-              <Briefcase className="h-10 w-10 text-white" />
-            </div>
+            <Logo
+              size="xl"
+              showText={false}
+              className="hover:scale-105 transition-transform duration-300"
+            />
           </div>
-          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-[#0f172a] to-[#1e293b] dark:from-blue-600 dark:to-blue-800 bg-clip-text text-transparent">
+          <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-gray-200 bg-clip-text text-transparent">
             {t("gateway.welcomeTitle")}
           </h1>
           <p className="text-xl text-muted-foreground mb-8">
@@ -50,7 +54,7 @@ export function ServicesGateway() {
             <Button
               size="lg"
               onClick={() => navigate("/services")}
-              className="text-lg px-8 bg-gradient-to-r from-[#0f172a] to-[#1e293b] dark:from-blue-600 dark:to-blue-800 hover:from-[#0f172a]/90 hover:to-[#1e293b]/90 dark:hover:from-blue-700 dark:hover:to-blue-900 text-white shadow-lg shadow-slate-900/30 dark:shadow-blue-500/50"
+              className="text-lg px-8 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50"
             >
               {t("gateway.findServices")}
               <ArrowRight className="ml-2 h-5 w-5" />
@@ -59,7 +63,7 @@ export function ServicesGateway() {
               size="lg"
               variant="outline"
               onClick={() => navigate("/products")}
-              className="text-lg px-8 border-2 border-[#0f172a] dark:border-blue-600 text-[#0f172a] dark:text-blue-600 hover:bg-gray-100 dark:hover:bg-blue-50"
+              className="text-lg px-8 border-2 border-blue-600 dark:border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20"
             >
               <ShoppingBag className="mr-2 h-5 w-5" />
               {t("gateway.shopProducts")}
@@ -69,11 +73,11 @@ export function ServicesGateway() {
 
         <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto mb-16">
           <Card
-            className="group cursor-pointer hover:shadow-2xl transition-all duration-300 border-2 hover:border-[#0f172a] dark:hover:border-blue-500 overflow-hidden"
+            className="group cursor-pointer hover:shadow-2xl transition-all duration-300 border-2 hover:border-blue-500 dark:hover:border-blue-400 overflow-hidden"
             onClick={() => navigate("/services")}
           >
             <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] dark:from-blue-600 dark:to-blue-800 p-8 text-white relative">
+              <div className="bg-gradient-to-br from-blue-600 to-indigo-600 p-8 text-white relative">
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:20px_20px] [mask-image:linear-gradient(to_bottom_right,transparent,black_30%,black_70%,transparent)] pointer-events-none" />
                 <div className="relative">
                   <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 shadow-lg">
@@ -103,25 +107,22 @@ export function ServicesGateway() {
               </div>
               <div className="p-6 bg-background">
                 <Button
-                  className="w-full bg-gradient-to-br from-[#0f172a] to-[#1e293b] dark:from-blue-600 dark:to-blue-800 hover:from-[#0f172a]/90 hover:to-[#1e293b]/90 dark:hover:from-blue-700 dark:hover:to-blue-900 text-white font-semibold shadow-lg shadow-slate-900/30 dark:shadow-blue-500/50 relative overflow-hidden"
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50"
                   size="lg"
                 >
-                  <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.15)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.15)_1px,transparent_1px)] bg-[size:16px_16px] [mask-image:linear-gradient(to_bottom_right,transparent,black_40%,black)] pointer-events-none" />
-                  <span className="relative">
-                    {t("gateway.exploreServices")}
-                  </span>
-                  <ArrowRight className="ml-2 h-5 w-5 relative" />
+                  {t("gateway.exploreServices")}
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </div>
             </CardContent>
           </Card>
 
           <Card
-            className="group cursor-pointer hover:shadow-2xl transition-all duration-300 border-2 hover:border-[#0f172a] dark:hover:border-blue-500 overflow-hidden"
+            className="group cursor-pointer hover:shadow-2xl transition-all duration-300 border-2 hover:border-blue-500 dark:hover:border-blue-400 overflow-hidden"
             onClick={() => navigate("/products")}
           >
             <CardContent className="p-0">
-              <div className="bg-gradient-to-br from-[#0f172a] to-[#1e293b] dark:from-blue-600 dark:to-blue-800 p-8 text-white relative">
+              <div className="bg-gradient-to-br from-blue-600 to-indigo-600 p-8 text-white relative">
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:20px_20px] [mask-image:linear-gradient(to_bottom_right,transparent,black_30%,black_70%,transparent)] pointer-events-none" />
                 <div className="relative">
                   <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-6 shadow-lg">
@@ -151,15 +152,12 @@ export function ServicesGateway() {
               </div>
               <div className="p-6 bg-background">
                 <Button
-                  className="w-full bg-gradient-to-br from-[#0f172a] to-[#1e293b] dark:from-blue-600 dark:to-blue-800 hover:from-[#0f172a]/90 hover:to-[#1e293b]/90 dark:hover:from-blue-700 dark:hover:to-blue-900 text-white font-semibold shadow-lg shadow-slate-900/30 dark:shadow-blue-500/50 relative overflow-hidden"
+                  className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50"
                   size="lg"
                   variant="outline"
                 >
-                  <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.15)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.15)_1px,transparent_1px)] bg-[size:16px_16px] [mask-image:linear-gradient(to_bottom_right,transparent,black_40%,black)] pointer-events-none" />
-                  <span className="relative">
-                    {t("gateway.browseProducts")}
-                  </span>
-                  <ArrowRight className="ml-2 h-5 w-5 relative" />
+                  {t("gateway.browseProducts")}
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </div>
             </CardContent>
@@ -168,15 +166,19 @@ export function ServicesGateway() {
 
         {!user && (
           <div className="text-center max-w-2xl mx-auto">
-            <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20">
+            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border-blue-200 dark:border-blue-800">
               <CardContent className="p-8">
-                <h3 className="text-2xl font-bold mb-4">
+                <h3 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">
                   {t("gateway.serviceProvider")}
                 </h3>
                 <p className="text-muted-foreground mb-6">
                   {t("gateway.serviceProviderDesc")}
                 </p>
-                <Button size="lg" onClick={() => navigate("/signup")}>
+                <Button
+                  size="lg"
+                  onClick={() => navigate("/signup")}
+                  className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/30"
+                >
                   {t("gateway.becomeProvider")}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
@@ -190,7 +192,7 @@ export function ServicesGateway() {
             {t("gateway.alreadyHaveAccount")}{" "}
             <Link
               to="/login"
-              className="text-[#0f172a] dark:text-blue-600 hover:underline font-medium"
+              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
             >
               {t("gateway.signIn")}
             </Link>

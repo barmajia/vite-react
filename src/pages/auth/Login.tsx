@@ -6,7 +6,6 @@ import {
   Eye,
   EyeOff,
   Loader2,
-  Briefcase,
   Sun,
   Moon,
   ArrowLeft,
@@ -21,6 +20,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { supabase } from "@/lib/supabase";
 import { isValidEmail } from "@/lib/utils";
 import { toast } from "sonner";
+import { Logo } from "@/components/shared/Logo";
 
 export function Login() {
   const { t } = useTranslation();
@@ -140,9 +140,7 @@ export function Login() {
 
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <div className="flex justify-center">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-            <Briefcase className="h-8 w-8 text-primary-foreground" />
-          </div>
+          <Logo size="lg" showText={false} />
         </div>
         <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
           {t("auth.signInToAurora")}
@@ -151,7 +149,7 @@ export function Login() {
           {t("auth.orText")}{" "}
           <Link
             to="/signup"
-            className="font-medium text-primary-600 hover:text-primary-500 dark:text-brand-blue-400 dark:hover:text-brand-blue-300"
+            className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
           >
             {t("auth.createAccount")}
           </Link>

@@ -4,55 +4,55 @@
 
 @layer base {
   :root {
-    /* Light Mode - Monochrome */
-    --background: 0 0% 100%; /* #FFFFFF */
-    --foreground: 0 0% 5%; /* #0D0D0D */
-    --card: 0 0% 98%; /* #FAFAFA */
-    --card-foreground: 0 0% 5%;
+    /* Light Mode - Aurora Blue Theme */
+    --background: 0 0% 100%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 5%;
-    --primary: 0 0% 5%; /* #0D0D0D - Black */
+    --popover-foreground: 222 47% 11%;
+    --primary: 217 91% 60%; /* Aurora Blue */
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 96%;
-    --secondary-foreground: 0 0% 5%;
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
-    --accent: 0 0% 10%; /* #1A1A1A - Dark Gray */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --accent: 217 91% 60%; /* Aurora Blue */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 90%;
-    --input: 0 0% 90%;
-    --ring: 0 0% 5%; /* Black ring */
-    --radius: 0.5rem;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 217 91% 60%; /* Aurora Blue */
+    --radius: 0.75rem;
   }
 
   .dark {
-    /* Dark Mode - Pure Black & White */
-    --background: 0 0% 0%; /* #000000 - Pure Black */
-    --foreground: 0 0% 100%; /* #FFFFFF */
-    --card: 0 0% 5%; /* #0D0D0D - Surface */
-    --card-foreground: 0 0% 100%;
-    --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 100%;
-    --primary: 0 0% 100%; /* #FFFFFF - White */
-    --primary-foreground: 0 0% 0%;
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
-    --accent: 0 0% 20%; /* #333333 - Gray */
+    /* Dark Mode - Deep Space with Aurora Blue */
+    --background: 222 47% 5%;
+    --foreground: 210 40% 98%;
+    --card: 222 47% 7%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222 47% 7%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217 91% 60%; /* Aurora Blue */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 91% 60%; /* Aurora Blue */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 63% 31%;
-    --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 0 0% 100%; /* White ring */
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 17%;
+    --input: 217 33% 17%;
+    --ring: 217 91% 60%; /* Aurora Blue */
   }
 }
 
 .dark body {
-  background: #111827;
+  background: #0b1120;
 }
 @layer utilities {
   @keyframes slide-in-right {

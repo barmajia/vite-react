@@ -11,6 +11,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { ROUTES } from "@/lib/constants";
 import { Separator } from "@/components/ui/separator";
+import { Logo } from "@/components/shared/Logo";
 
 export function Footer() {
   const { t } = useTranslation();
@@ -22,11 +23,8 @@ export function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <Link to={ROUTES.HOME} className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
-                <span className="text-white font-bold text-lg">A</span>
-              </div>
-              <span className="text-xl font-bold">AURORA</span>
+            <Link to={ROUTES.HOME} className="inline-block">
+              <Logo size="md" showText={true} />
             </Link>
             <p className="text-sm text-muted-foreground">
               {t("footer.tagline")}

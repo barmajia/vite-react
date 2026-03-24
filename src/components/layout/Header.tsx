@@ -35,6 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { ROUTES } from "@/lib/constants";
 import { MobileNav } from "./MobileNav";
 import { NotificationBell } from "./NotificationBell";
+import { Logo } from "@/components/shared/Logo";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
@@ -107,22 +108,9 @@ export function Header() {
             {/* Logo Section */}
             <Link
               to={ROUTES.HOME}
-              className="flex items-center gap-3 group hover:opacity-90 transition-opacity"
+              className="hover:opacity-90 transition-opacity"
             >
-              <div className="relative">
-                <div className="bg-gradient-to-br from-blue-600 to-blue-600 text-white p-2.5 rounded-xl shadow-lg shadow-blue-500/30 group-hover:shadow-blue-500/50 transition-all duration-300 group-hover:scale-105">
-                  <ShoppingBag size={22} strokeWidth={2.5} />
-                </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white shadow-sm" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-gray-200 bg-clip-text text-transparent leading-none">
-                  AURORA
-                </span>
-                <span className="text-[9px] font-semibold text-blue-600 dark:text-blue-400 tracking-[0.25em] uppercase">
-                  {t("s h o p")}
-                </span>
-              </div>
+              <Logo size="md" showText={true} />
             </Link>
 
             {/* Center Navigation - Desktop */}
