@@ -4,6 +4,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { Toaster } from "sonner";
 import { Layout } from "@/components/layout/Layout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { VercelAnalytics } from "@/components/VercelAnalytics";
 import { ServicesGateway } from "@/pages/public/ServicesGateway";
 import { ProductList } from "@/pages/public/ProductList";
 import { ProductDetail } from "@/pages/public/ProductDetail";
@@ -243,6 +244,7 @@ function App() {
             </Route>
           </Routes>
         </ErrorBoundary>
+        <VercelAnalytics />
       </AuthProvider>
     </ThemeProvider>
   );
