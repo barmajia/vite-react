@@ -1,11 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Logo } from "@/components/shared/Logo";
 import {
   Search,
   MessageSquare,
   Menu,
   X,
-  Briefcase,
   ChevronDown,
   LogOut,
   ShoppingBag,
@@ -16,6 +16,7 @@ import {
   Moon,
   LayoutDashboard,
   UserPlus,
+  Briefcase,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
@@ -161,20 +162,7 @@ export function ServicesHeader() {
               to="/services"
               className="flex items-center gap-3 group hover:opacity-90 transition-opacity"
             >
-              <div className="relative">
-                <div className="bg-gradient-to-br from-violet-600 to-violet-600 text-white p-2.5 rounded-xl shadow-lg shadow-violet-500/30 group-hover:shadow-violet-500/50 transition-all duration-300 group-hover:scale-105">
-                  <Briefcase size={22} strokeWidth={2.5} />
-                </div>
-                <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-white dark:border-gray-950 shadow-sm" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-xl font-bold text-gray-900 dark:text-white leading-none">
-                  AURORA
-                </span>
-                <span className="text-[9px] font-semibold text-violet-600 dark:text-violet-400 tracking-[0.25em] uppercase">
-                  {t("      services      ")}
-                </span>
-              </div>
+              <Logo size="xl" showText={true} />
             </Link>
 
             {/* Center Navigation - Desktop */}
