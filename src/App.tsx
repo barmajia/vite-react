@@ -35,6 +35,7 @@ import { ServicesInbox } from "@/features/services/components/ServicesInbox";
 import { ServicesChat } from "@/features/services/components/ServicesChat";
 import { ServicesMessagingLayout } from "@/features/services/components/ServicesMessagingLayout";
 import { useTranslation } from "react-i18next";
+import { Analytics } from "@vercel/analytics/react";
 
 // Services Module
 import { ServicesHome } from "@/features/services/pages/ServicesHome";
@@ -244,6 +245,7 @@ function App() {
           </Routes>
         </ErrorBoundary>
       </AuthProvider>
+      <Analytics />
     </ThemeProvider>
   );
 }
