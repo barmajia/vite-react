@@ -6,14 +6,16 @@ interface VercelAnalyticsProps {
 }
 
 export function VercelAnalytics({ disabled = false }: VercelAnalyticsProps) {
-  // Don't render analytics if disabled or no Vercel environment
-  if (disabled || !import.meta.env.VITE_VERCEL_ANALYTICS_ID) {
+  // Don't render if explicitly disabled
+  if (disabled) {
     return null;
   }
 
   return (
     <>
-      <Analytics />
+      {/* Analytics requires VITE_VERCEL_ANALYTICS_ID env variable */}
+      {import.meta.env.VITE_VERCEL_ANALYTICS_ID && <Analytics />}
+      {/* SpeedInsights works automatically on Vercel without env variables */}
       <SpeedInsights />
     </>
   );
