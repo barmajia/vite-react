@@ -56,7 +56,6 @@ export function useProducts(options: UseProductsOptions = {}) {
           title,
           description,
           price,
-          currency
           quantity,
           images,
           category,
