@@ -59,7 +59,7 @@ export function useProducts(options: UseProductsOptions = {}) {
           quantity,
           images,
           category,
-          currency
+          currency,
           seller_id,
           created_at,
           average_rating,
