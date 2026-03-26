@@ -137,7 +137,7 @@ export function useProduct(asin: string) {
           quantity,
           images,
           category,
-          currency
+          currency,
           seller_id,
           created_at,
           average_rating,
