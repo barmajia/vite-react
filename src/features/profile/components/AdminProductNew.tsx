@@ -9,12 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -22,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Save, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -70,12 +64,13 @@ export function AdminProductNew() {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
+      [name]:
+        type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
     }));
   };
 
@@ -88,7 +83,7 @@ export function AdminProductNew() {
 
   const handleNumberChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    field: keyof ProductFormData
+    field: keyof ProductFormData,
   ) => {
     const value = parseFloat(e.target.value) || 0;
     setFormData((prev) => ({
@@ -99,7 +94,7 @@ export function AdminProductNew() {
 
   const handleJsonChange = (
     e: React.ChangeEvent<HTMLTextAreaElement>,
-    field: keyof ProductFormData
+    field: keyof ProductFormData,
   ) => {
     try {
       const parsed = JSON.parse(e.target.value);
@@ -206,10 +201,7 @@ export function AdminProductNew() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            onClick={() => navigate("/admin/products")}
-          >
+          <Button variant="outline" onClick={() => navigate("/admin/products")}>
             <X className="h-4 w-4 mr-2" />
             Cancel
           </Button>
@@ -309,9 +301,7 @@ export function AdminProductNew() {
               <Label htmlFor="currency">Currency</Label>
               <Select
                 value={formData.currency}
-                onValueChange={(value) =>
-                  handleSelectChange("currency", value)
-                }
+                onValueChange={(value) => handleSelectChange("currency", value)}
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -382,7 +372,10 @@ export function AdminProductNew() {
               <Select
                 value={formData.status}
                 onValueChange={(value) =>
-                  handleSelectChange("status", value as "draft" | "active" | "inactive")
+                  handleSelectChange(
+                    "status",
+                    value as "draft" | "active" | "inactive",
+                  )
                 }
               >
                 <SelectTrigger>
@@ -412,7 +405,8 @@ export function AdminProductNew() {
               placeholder='{"color": "Black", "size": "Medium"}'
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Example: {`{"color": "Black", "size": "Medium", "material": "Cotton"}`}
+              Example:{" "}
+              {`{"color": "Black", "size": "Medium", "material": "Cotton"}`}
             </p>
           </CardContent>
         </Card>
@@ -431,13 +425,15 @@ export function AdminProductNew() {
               placeholder='[{"url": "https://...", "alt": "Product image"}]'
             />
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Example: {`[{"url": "https://example.com/image.jpg", "alt": "Front view"}]`}
+              Example:{" "}
+              {`[{"url": "https://example.com/image.jpg", "alt": "Front view"}]`}
             </p>
             {formData.images && formData.images.length > 0 && (
               <div className="flex gap-2 mt-4 flex-wrap">
                 {formData.images.map((img, idx) => {
                   const imageUrl = typeof img === "string" ? img : img.url;
-                  const imageAlt = typeof img === "string" ? "Product" : img.alt || "Product";
+                  const imageAlt =
+                    typeof img === "string" ? "Product" : img.alt || "Product";
 
                   return (
                     <div
@@ -481,7 +477,10 @@ export function AdminProductNew() {
                   type="color"
                   value={formData.color_hex || "#000000"}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, color_hex: e.target.value }))
+                    setFormData((prev) => ({
+                      ...prev,
+                      color_hex: e.target.value,
+                    }))
                   }
                   className="w-16 h-10"
                 />
@@ -489,7 +488,10 @@ export function AdminProductNew() {
                   type="text"
                   value={formData.color_hex || ""}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, color_hex: e.target.value }))
+                    setFormData((prev) => ({
+                      ...prev,
+                      color_hex: e.target.value,
+                    }))
                   }
                   placeholder="#RRGGBB"
                   className="flex-1"
