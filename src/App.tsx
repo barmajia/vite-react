@@ -35,6 +35,7 @@ import { ServicesInbox } from "@/features/services/components/ServicesInbox";
 import { ServicesChat } from "@/features/services/components/ServicesChat";
 import { ServicesMessagingLayout } from "@/features/services/components/ServicesMessagingLayout";
 import { useTranslation } from "react-i18next";
+import { VercelAnalytics } from "@/components/VercelAnalytics";
 
 // Services Module
 import { ServicesHome } from "@/features/services/pages/ServicesHome";
@@ -89,6 +90,7 @@ function App() {
     <ThemeProvider>
       <AuthProvider>
         <Toaster position="top-right" richColors />
+        <VercelAnalytics />
         <ErrorBoundary
           fallback={
             <div className="min-h-screen flex items-center justify-center">
