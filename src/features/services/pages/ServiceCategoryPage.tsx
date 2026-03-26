@@ -133,22 +133,28 @@ export function ServiceCategoryPage() {
         </Button>
         <h1 className="text-4xl font-bold mb-2">{category.name}</h1>
 
-        {/* DEBUG BANNER */}
+        {/* DEBUG BANNER - REMOVE IN PRODUCTION */}
         <div className="bg-green-200 dark:bg-green-800 text-black p-6 rounded-2xl mb-8 shadow-lg border-4 border-green-400 font-bold text-lg flex items-center gap-3">
           🔍 DEBUG: ServiceCategoryPage (/services/{categorySlug})
-          <div className="ml-auto">
-            Slug:{" "}
-            <span className="font-mono bg-white px-2 py-1 rounded text-sm">
-              {categorySlug}
-            </span>{" "}
-            | Category:{" "}
-            <span className="font-mono bg-white px-2 py-1 rounded text-sm">
-              {category?.name || "Loading..."}
-            </span>{" "}
-            | Listings:{" "}
-            <span className="font-mono bg-white px-2 py-1 rounded text-sm">
-              {listings.length}
-            </span>
+          <div className="ml-auto flex flex-col items-end gap-1">
+            <div>
+              Slug:{" "}
+              <span className="font-mono bg-white px-2 py-1 rounded text-sm">
+                {categorySlug}
+              </span>
+            </div>
+            <div>
+              Category:{" "}
+              <span className="font-mono bg-white px-2 py-1 rounded text-sm">
+                {category?.name || "Loading..."}
+              </span>
+            </div>
+            <div>
+              Listings:{" "}
+              <span className="font-mono bg-white px-2 py-1 rounded text-sm">
+                {listings.length}
+              </span>
+            </div>
           </div>
         </div>
         {category.description && (

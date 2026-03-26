@@ -202,21 +202,21 @@ export function ServicesHome() {
                 Become a Provider
               </Button>
             </div>
+          </div>
 
-            {/* Trust Indicators */}
-            <div className="flex flex-wrap items-center justify-center gap-6 md:gap-12 text-sm font-medium text-slate-500 dark:text-slate-400">
-              <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-emerald-500" />
-                <span>Secure Payments</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-blue-500" />
-                <span>Verified Professionals</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Zap className="h-5 w-5 text-amber-500" />
-                <span>Fast Delivery</span>
-              </div>
+          {/* Trust Indicators */}
+          <div className="flex flex-wrap items-center justify-center gap-6 md:gap-12 text-sm font-medium text-slate-500 dark:text-slate-400 mt-8">
+            <div className="flex items-center gap-2">
+              <Shield className="h-5 w-5 text-emerald-500" />
+              <span>Secure Payments</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-blue-500" />
+              <span>Verified Professionals</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-amber-500" />
+              <span>Fast Delivery</span>
             </div>
           </div>
         </div>
