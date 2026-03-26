@@ -30,8 +30,9 @@ export const useCreateConversation = () => {
 
       if (err) throw err;
       return data; // Returns conversation_id
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMessage);
       return null;
     } finally {
       setLoading(false);

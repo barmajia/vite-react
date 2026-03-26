@@ -11,7 +11,9 @@
   "auth": {
     "signIn": "تسجيل الدخول",
     "signOut": "تسجيل الخروج",
-    "joinNow": "انضم الآن"
+    "joinNow": "انضم الآن",
+    "signupForProducts": "التسجيل للمنتجات",
+    "signupForServices": "التسجيل للخدمات"
   },
   "common": {
     "dashboard": "لوحة التحكم",

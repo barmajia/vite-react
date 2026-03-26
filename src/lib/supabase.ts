@@ -139,11 +139,11 @@ export const getSession = async (): Promise<Session | null> => {
     }
 
     return session;
-  } catch (error: any) {
+  } catch (error) {
     // Handle network errors gracefully
     if (
-      error.message?.includes("fetch") ||
-      error.message?.includes("network")
+      error instanceof Error &&
+      (error.message?.includes("fetch") || error.message?.includes("network"))
     ) {
       console.warn("Network error while getting session");
       return null;
@@ -172,10 +172,10 @@ export const getUser = async () => {
     }
 
     return user;
-  } catch (error: any) {
+  } catch (error) {
     if (
-      error.message?.includes("fetch") ||
-      error.message?.includes("network")
+      error instanceof Error &&
+      (error.message?.includes("fetch") || error.message?.includes("network"))
     ) {
       console.warn("Network error while getting user");
       return null;

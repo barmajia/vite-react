@@ -1,4 +1,12 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 interface SalesChartProps {
   data: Array<{
@@ -21,17 +29,17 @@ export const SalesChart = ({ data }: SalesChartProps) => {
             return `${date.getMonth() + 1}/${date.getDate()}`;
           }}
         />
-        <YAxis
-          className="text-xs"
-          tickFormatter={(value) => `$${value}`}
-        />
+        <YAxis className="text-xs" tickFormatter={(value) => `$${value}`} />
         <Tooltip
           contentStyle={{
-            backgroundColor: 'hsl(var(--background))',
-            border: '1px solid hsl(var(--border))',
-            borderRadius: '8px',
+            backgroundColor: "hsl(var(--background))",
+            border: "1px solid hsl(var(--border))",
+            borderRadius: "8px",
           }}
-          formatter={(value: any) => [`$${Number(value).toLocaleString()}`, 'Revenue']}
+          formatter={(value: number) => [
+            `$${Number(value).toLocaleString()}`,
+            "Revenue",
+          ]}
         />
         <Line
           type="monotone"

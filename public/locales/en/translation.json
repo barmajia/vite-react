@@ -34,7 +34,9 @@
     "fullName": "Full Name",
     "confirmPassword": "Confirm Password",
     "agreeToTerms": "I agree to the Terms of Service and Privacy Policy",
-    "joinNow": "Join Now"
+    "joinNow": "Join Now",
+    "signupForProducts": "Sign up for Products",
+    "signupForServices": "Sign up for Services"
   },
   "home": {
     "newArrivals": "New Season Arrivals",

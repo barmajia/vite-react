@@ -46,6 +46,7 @@ import { WishlistPage } from "@/features/wishlist/pages/WishlistPage";
 // ==================== User Profile & Settings ====================
 import { ProfilePage } from "@/features/profile/pages/ProfilePage";
 import { PublicProfilePage } from "@/pages/profile/PublicProfilePage";
+import { EditProfile } from "@/pages/profile/EditProfile";
 import { ProfileDirectoryPage } from "@/pages/profile/ProfileDirectoryPage";
 import { SettingsPage } from "@/features/settings/pages/SettingsPage";
 import { NotificationsPage } from "@/features/notifications/pages/NotificationsPage";
@@ -54,6 +55,7 @@ import { FeedPage } from "@/components/feed/FeedPage";
 // ==================== Messages ====================
 import { Inbox } from "@/features/messages/pages/InboxPage";
 import { ChatPage } from "@/features/messages/pages/ChatPage";
+import { ChatLayout } from "@/pages/chat/ChatLayout";
 
 // ==================== Services ====================
 import { ServicesHome } from "@/features/services/pages/ServicesHome";
@@ -87,6 +89,23 @@ import { FactoryDashboardPage } from "@/pages/factory/FactoryDashboardPage";
 import { FactoryProductionPage } from "@/pages/factory/FactoryProductionPage";
 import { FactoryQuotesPage } from "@/pages/factory/FactoryQuotesPage";
 import { FactoryConnectionsPage } from "@/pages/factory/FactoryConnectionsPage";
+import { FactoryStartChat } from "@/pages/factory/FactoryStartChat";
+
+// ==================== Admin ====================
+import { AdminLayout } from "@/pages/admin/AdminLayout";
+import { AdminProfileEditor } from "@/pages/admin/AdminProfileEditor";
+import { AdminUsersDashboard } from "@/pages/admin/AdminUsersDashboard";
+import { AdminUserDetail } from "@/pages/admin/AdminUserDetail";
+import { AdminDashboard } from "@/pages/admin/AdminDashboard";
+import { AdminProducts } from "@/pages/admin/AdminProducts";
+import { AdminProductEdit } from "@/features/profile/components/adminproductedit";
+import { AdminProductNew } from "@/features/profile/components/AdminProductNew";
+import { AdminOrders } from "@/pages/admin/AdminOrders";
+import { AdminFactories } from "@/pages/admin/AdminFactories";
+import { AdminMiddlemen } from "@/pages/admin/AdminMiddlemen";
+import { AdminConversations } from "@/pages/admin/AdminConversations";
+import { AdminDelivery } from "@/pages/admin/AdminDelivery";
+import { AdminSettings } from "@/pages/admin/AdminSettings";
 
 // ==================== Middleman ====================
 import { MiddlemanDashboard } from "@/pages/middleman/MiddlemanDashboard";
@@ -208,15 +227,54 @@ function App() {
 
                   {/* Shopping Flow */}
                   <Route path="cart" element={<CartPage />} />
-                  <Route path="checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+                  <Route
+                    path="checkout"
+                    element={
+                      <ProtectedRoute>
+                        <CheckoutPage />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route
                     path="order-success/:id"
-                    element={<ProtectedRoute><OrderSuccessPage /></ProtectedRoute>}
+                    element={
+                      <ProtectedRoute>
+                        <OrderSuccessPage />
+                      </ProtectedRoute>
+                    }
                   />
-                  <Route path="orders" element={<ProtectedRoute><OrdersListPage /></ProtectedRoute>} />
-                  <Route path="orders/:id" element={<ProtectedRoute><OrderDetailPage /></ProtectedRoute>} />
-                  <Route path="wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
-                  <Route path="addresses" element={<ProtectedRoute><AddressesPage /></ProtectedRoute>} />
+                  <Route
+                    path="orders"
+                    element={
+                      <ProtectedRoute>
+                        <OrdersListPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="orders/:id"
+                    element={
+                      <ProtectedRoute>
+                        <OrderDetailPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="wishlist"
+                    element={
+                      <ProtectedRoute>
+                        <WishlistPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="addresses"
+                    element={
+                      <ProtectedRoute>
+                        <AddressesPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
                   {/* ==================== SERVICES VERTICAL ==================== */}
                   <Route path="services">
@@ -239,7 +297,14 @@ function App() {
                     />
 
                     {/* Services Dashboard */}
-                    <Route path="dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                    <Route
+                      path="dashboard"
+                      element={
+                        <ProtectedRoute>
+                          <DashboardLayout />
+                        </ProtectedRoute>
+                      }
+                    >
                       <Route index element={<DashboardHome />} />
                       <Route path="bookings" element={<BookingsPage />} />
                       <Route
@@ -357,6 +422,14 @@ function App() {
                       path="connections"
                       element={<FactoryConnectionsPage />}
                     />
+                    <Route
+                      path="start-chat"
+                      element={
+                        <ProtectedRoute>
+                          <FactoryStartChat />
+                        </ProtectedRoute>
+                      }
+                    />
                   </Route>
 
                   {/* ==================== MESSAGES (Cross-Vertical) ==================== */}
@@ -365,28 +438,107 @@ function App() {
                     <Route path=":conversationId" element={<ChatPage />} />
                   </Route>
 
+                  {/* ==================== CHAT SYSTEM (New Unified Chat) ==================== */}
+                  <Route
+                    path="chat"
+                    element={
+                      <ProtectedRoute>
+                        <ChatLayout />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="chat/:conversationId"
+                    element={
+                      <ProtectedRoute>
+                        <ChatLayout />
+                      </ProtectedRoute>
+                    }
+                  />
+
                   {/* ==================== PROFILE & SOCIAL (Cross-Vertical) ==================== */}
                   <Route path="profile">
                     <Route index element={<ProfilePage />} />
                     <Route path=":userId" element={<PublicProfilePage />} />
+                    <Route path=":userId/edit" element={<EditProfile />} />
                   </Route>
                   <Route path="profiles" element={<ProfileDirectoryPage />} />
                   <Route path="feed" element={<FeedPage />} />
                   <Route path="reviews" element={<Reviews />} />
 
                   {/* ==================== SETTINGS & NOTIFICATIONS ==================== */}
-                  <Route path="settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-                  <Route path="notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
+                  <Route
+                    path="settings"
+                    element={
+                      <ProtectedRoute>
+                        <SettingsPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="notifications"
+                    element={
+                      <ProtectedRoute>
+                        <NotificationsPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
                   {/* ==================== INFO PAGES ==================== */}
                   <Route path="about" element={<About />} />
                   <Route path="contact" element={<Contact />} />
                   <Route path="help" element={<Help />} />
-
-                  {/* ==================== ERROR ROUTES ==================== */}
-                  <Route path="error" element={<ServerError />} />
-                  <Route path="*" element={<NotFound />} />
                 </Route>
+
+                {/* ==================== ADMIN ROUTES (No Layout - Full Screen) ==================== */}
+                <Route path="admin" element={<AdminLayout />}>
+                  <Route index element={<AdminDashboard />} />
+                  <Route path="users" element={<AdminUsersDashboard />} />
+                  <Route path="users/:userId" element={<AdminUserDetail />} />
+                  <Route
+                    path="users/:userId/edit"
+                    element={<AdminProfileEditor />}
+                  />
+                  <Route path="products" element={<AdminProducts />} />
+                  <Route
+                    path="products/:id/edit"
+                    element={<AdminProductEdit />}
+                  />
+                  <Route path="products/new" element={<AdminProductNew />} />
+                  <Route path="orders" element={<AdminOrders />} />
+                  <Route path="factories" element={<AdminFactories />} />
+                  <Route path="middlemen" element={<AdminMiddlemen />} />
+                  <Route
+                    path="conversations"
+                    element={<AdminConversations />}
+                  />
+                  <Route path="delivery" element={<AdminDelivery />} />
+                  <Route path="settings" element={<AdminSettings />} />
+                  <Route
+                    path="health"
+                    element={<ComingSoon title="Health Management" />}
+                  />
+                  <Route
+                    path="pharmacy"
+                    element={<ComingSoon title="Pharmacy Management" />}
+                  />
+                  <Route
+                    path="payments"
+                    element={<ComingSoon title="Payment Management" />}
+                  />
+                  <Route
+                    path="analytics"
+                    element={<ComingSoon title="Analytics" />}
+                  />
+                  <Route
+                    path="settings"
+                    element={<ComingSoon title="Admin Settings" />}
+                  />
+                </Route>
+
+                {/* ==================== ERROR ROUTES ==================== */}
+                <Route path="error" element={<ServerError />} />
+                <Route path="*" element={<NotFound />} />
               </Routes>
             </ErrorBoundary>
             <CookieConsentBanner />

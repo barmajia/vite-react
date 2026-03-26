@@ -25,7 +25,7 @@ export const useConversationList = (currentUserId: string) => {
         participantData?.map((p) => p.conversation_id) || [];
 
       // Fetch general conversations
-      let generalConversations: any[] = [];
+      let generalConversations: ConversationListItem[] = [];
       if (conversationIds.length > 0) {
         const { data: general, error: generalError } = await supabase
           .from("conversations")
@@ -37,6 +37,7 @@ export const useConversationList = (currentUserId: string) => {
             is_archived,
             product_id,
             participants:conversation_participants!inner(
+              conversation_id,
               user_id,
               role,
               user:users(
@@ -59,17 +60,21 @@ export const useConversationList = (currentUserId: string) => {
         if (generalError) throw generalError;
 
         // Transform general conversations
-        generalConversations = (general || []).map((conv: any) => ({
-          id: conv.id,
-          context: "general" as ChatContext,
-          last_message: conv.last_message,
-          last_message_at: conv.last_message_at,
-          unread_count: 0,
-          other_user: conv.participants?.find(
-            (p: any) => p.user_id !== currentUserId,
-          )?.user as ChatUser | undefined,
-          product: conv.products?.[0] || null,
-        }));
+        generalConversations = (general || []).map((conv) => {
+          const otherParticipant = conv.participants?.find(
+            (p) => p.user_id !== currentUserId,
+          );
+
+          return {
+            id: conv.id,
+            context: "general" as ChatContext,
+            last_message: conv.last_message,
+            last_message_at: conv.last_message_at,
+            unread_count: 0,
+            other_user: otherParticipant?.user as ChatUser | undefined,
+            product: conv.products?.[0] || null,
+          };
+        });
       }
 
       // Fetch trading conversations
@@ -101,7 +106,7 @@ export const useConversationList = (currentUserId: string) => {
       if (tradingError) throw tradingError;
 
       // Transform trading conversations
-      const tradingConversations = (trading || []).map((conv: any) => {
+      const tradingConversations = (trading || []).map((conv) => {
         const isInitiator = conv.initiator_id === currentUserId;
         const otherUserId = isInitiator ? conv.receiver_id : conv.initiator_id;
         const otherUserRole = isInitiator
@@ -135,7 +140,7 @@ export const useConversationList = (currentUserId: string) => {
 
       const appointmentIds = healthData?.map((a) => a.id) || [];
 
-      let healthConversations: any[] = [];
+      let healthConversations: ConversationListItem[] = [];
       if (appointmentIds.length > 0) {
         const { data: health, error: healthError } = await supabase
           .from("health_conversations")
@@ -169,7 +174,7 @@ export const useConversationList = (currentUserId: string) => {
         if (healthError) throw healthError;
 
         // Transform health conversations
-        healthConversations = (health || []).map((conv: any) => {
+        healthConversations = (health || []).map((conv) => {
           const appointment = conv.health_appointments;
           const isDoctor = appointment?.doctor_id === currentUserId;
           const otherUser = isDoctor
@@ -226,7 +231,7 @@ export const useConversationList = (currentUserId: string) => {
       if (servicesError) throw servicesError;
 
       // Transform services conversations
-      const servicesConversations = (services || []).map((conv: any) => {
+      const servicesConversations = (services || []).map((conv) => {
         const isProvider = conv.provider_id === currentUserId;
         const otherUserId = isProvider ? conv.client_id : conv.provider_id;
 
@@ -268,8 +273,9 @@ export const useConversationList = (currentUserId: string) => {
       });
 
       setConversations(allConversations);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMessage);
       console.error("Error fetching conversations:", err);
     } finally {
       setLoading(false);

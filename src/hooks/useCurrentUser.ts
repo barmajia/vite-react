@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { ChatUser } from '../types/chat';
+import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabase";
+import { ChatUser } from "../types/chat";
 
 export const useCurrentUser = () => {
   const [user, setUser] = useState<ChatUser | null>(null);
@@ -10,8 +10,10 @@ export const useCurrentUser = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const { data: { user: authUser } } = await supabase.auth.getUser();
-        
+        const {
+          data: { user: authUser },
+        } = await supabase.auth.getUser();
+
         if (!authUser) {
           setUser(null);
           setLoading(false);
@@ -19,9 +21,9 @@ export const useCurrentUser = () => {
         }
 
         const { data, error: err } = await supabase
-          .from('users')
-          .select('*')
-          .eq('user_id', authUser.id)
+          .from("users")
+          .select("*")
+          .eq("user_id", authUser.id)
           .single();
 
         if (err) throw err;
@@ -37,8 +39,10 @@ export const useCurrentUser = () => {
           is_online: true,
           is_verified: false,
         });
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }

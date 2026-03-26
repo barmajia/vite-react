@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { UserRole } from "@/types/signup";
 import { CustomerSignupForm } from "@/components/signup/CustomerSignupForm";
 import { SellerSignupForm } from "@/components/signup/SellerSignupForm";
@@ -37,12 +37,25 @@ export function SignupPage() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
   const { signUp, resendVerification } = useAuth();
+  const [searchParams] = useSearchParams();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [createdEmail, setCreatedEmail] = useState<string>("");
   const [resending, setResending] = useState(false);
+
+  // Handle tab query parameter from login page
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (tab === "products") {
+      // Products = Seller role
+      setSelectedRole("seller");
+    } else if (tab === "services") {
+      // Services = Customer role (or create a service provider role)
+      setSelectedRole("customer");
+    }
+  }, [searchParams]);
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
@@ -70,8 +83,9 @@ export function SignupPage() {
       } else {
         toast.success("Verification email sent! Check your inbox.");
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to resend verification email");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      toast.error(errorMessage || "Failed to resend verification email");
     } finally {
       setResending(false);
     }
@@ -195,7 +209,6 @@ export function SignupPage() {
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-violet-50 via-white to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-violet-950 relative overflow-hidden">
-      
       {/* Animated Background Elements */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-96 h-96 bg-violet-400/10 dark:bg-violet-600/10 rounded-full blur-3xl" />
@@ -205,7 +218,7 @@ export function SignupPage() {
 
       {/* Left Panel - Visual Area (Desktop) */}
       <div className="hidden lg:flex lg:w-[45%] xl:w-[40%] relative bg-gradient-to-br from-violet-600 via-indigo-600 to-violet-800 dark:from-violet-900 dark:via-indigo-900 dark:to-slate-900 overflow-hidden shadow-2xl z-10">
-        <div className="absolute inset-0 opacity-20 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay"></div>
+        <div className="absolute inset-0 opacity-20 bg-[url('/noise.svg')] mix-blend-overlay"></div>
         <div className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl animate-pulse delay-1000" />
 
@@ -215,7 +228,9 @@ export function SignupPage() {
             <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-xl">
               <Sparkles className="h-7 w-7 text-indigo-100" />
             </div>
-            <span className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-100">AURORA</span>
+            <span className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-100">
+              AURORA
+            </span>
           </div>
 
           <h1 className="text-4xl xl:text-5xl font-extrabold leading-[1.15] mb-12">
@@ -228,23 +243,39 @@ export function SignupPage() {
           {/* Role Preview Cards */}
           <div className="space-y-4 max-w-sm">
             {[
-              { role: "customer" as UserRole, label: "Shop & Discover", icon: Users },
-              { role: "seller" as UserRole, label: "Sell Products", icon: Store },
-              { role: "factory" as UserRole, label: "Manufacturing", icon: Building2 },
+              {
+                role: "customer" as UserRole,
+                label: "Shop & Discover",
+                icon: Users,
+              },
+              {
+                role: "seller" as UserRole,
+                label: "Sell Products",
+                icon: Store,
+              },
+              {
+                role: "factory" as UserRole,
+                label: "Manufacturing",
+                icon: Building2,
+              },
               { role: "delivery" as UserRole, label: "Logistics", icon: Truck },
             ].map((item, i) => (
-              <div 
+              <div
                 key={i}
                 className={`flex items-center gap-4 p-4 rounded-2xl border backdrop-blur-md transition-all duration-300 ${
-                  selectedRole === item.role 
-                    ? "bg-white/20 border-white/40 scale-[1.02] shadow-lg shadow-black/10" 
+                  selectedRole === item.role
+                    ? "bg-white/20 border-white/40 scale-[1.02] shadow-lg shadow-black/10"
                     : "bg-white/5 border-white/10 hover:bg-white/10"
                 }`}
               >
-                <div className={`p-2.5 rounded-xl transition-colors ${selectedRole === item.role ? 'bg-white/20' : 'bg-white/10'}`}>
+                <div
+                  className={`p-2.5 rounded-xl transition-colors ${selectedRole === item.role ? "bg-white/20" : "bg-white/10"}`}
+                >
                   <item.icon className="h-5 w-5 text-indigo-50" />
                 </div>
-                <span className="font-semibold text-indigo-50 text-base">{item.label}</span>
+                <span className="font-semibold text-indigo-50 text-base">
+                  {item.label}
+                </span>
                 {selectedRole === item.role && (
                   <CheckCircle className="ml-auto h-5 w-5 text-emerald-400" />
                 )}
@@ -255,16 +286,19 @@ export function SignupPage() {
           <div className="absolute bottom-8 left-12 xl:left-16 flex items-center gap-4 text-sm text-indigo-200/60 font-medium">
             <span>© {new Date().getFullYear()} Aurora</span>
             <div className="w-1 h-1 rounded-full bg-indigo-200/40" />
-            <a href="#" className="hover:text-indigo-100 transition-colors">Privacy</a>
+            <a href="#" className="hover:text-indigo-100 transition-colors">
+              Privacy
+            </a>
             <div className="w-1 h-1 rounded-full bg-indigo-200/40" />
-            <a href="#" className="hover:text-indigo-100 transition-colors">Terms</a>
+            <a href="#" className="hover:text-indigo-100 transition-colors">
+              Terms
+            </a>
           </div>
         </div>
       </div>
 
       {/* Right Panel - Form Area */}
       <div className="flex-1 flex flex-col px-6 py-8 lg:px-12 xl:px-20 relative z-10 overflow-y-auto">
-        
         {/* Top Bar Navigation */}
         <div className="flex justify-between items-center w-full mb-8 lg:mb-12">
           {/* Mobile Logo */}
@@ -272,7 +306,9 @@ export function SignupPage() {
             <div className="p-2 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl shadow-lg">
               <Sparkles className="h-5 w-5 text-white" />
             </div>
-            <span className="font-bold text-xl tracking-tight text-slate-800 dark:text-white">AURORA</span>
+            <span className="font-bold text-xl tracking-tight text-slate-800 dark:text-white">
+              AURORA
+            </span>
           </div>
 
           {/* Empty div for spacing on desktop when no back button */}
@@ -295,7 +331,11 @@ export function SignupPage() {
               Already have an account?
             </span>
             <Link to="/login">
-              <Button variant="outline" size="sm" className="rounded-full border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all font-semibold">
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all font-semibold"
+              >
                 Sign in
               </Button>
             </Link>
@@ -305,20 +345,25 @@ export function SignupPage() {
               onClick={() => setTheme(theme === "light" ? "dark" : "light")}
               className="rounded-full bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all shadow-sm"
             >
-              {theme === "light" ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}
+              {theme === "light" ? (
+                <Moon className="h-4 w-4" />
+              ) : (
+                <Sun className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </div>
 
         {/* Form Container */}
         <div className="max-w-xl mx-auto w-full my-auto pb-12">
-          
           <div className="mb-10 lg:text-left text-center">
             {!selectedRole ? (
               <>
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-violet-100 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-800/50 rounded-full mb-4 lg:mb-6">
                   <span className="flex h-2 w-2 rounded-full bg-violet-600 dark:bg-violet-400 animate-pulse"></span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-violet-700 dark:text-violet-300">Get Started</span>
+                  <span className="text-xs font-bold uppercase tracking-wider text-violet-700 dark:text-violet-300">
+                    Get Started
+                  </span>
                 </div>
                 <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight">
                   Choose your path
@@ -332,7 +377,9 @@ export function SignupPage() {
                 <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800/50 rounded-full mb-4 lg:mb-6">
                   {(() => {
                     const Icon = roleIcons[selectedRole];
-                    return Icon ? <Icon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" /> : null;
+                    return Icon ? (
+                      <Icon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    ) : null;
                   })()}
                   <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
                     {selectedRole} Account
@@ -346,7 +393,10 @@ export function SignupPage() {
           </div>
 
           {error && (
-            <Alert variant="destructive" className="mb-8 bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800/50 rounded-2xl shadow-sm">
+            <Alert
+              variant="destructive"
+              className="mb-8 bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800/50 rounded-2xl shadow-sm"
+            >
               <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
               <AlertDescription className="text-rose-700 dark:text-rose-300 font-medium">
                 {error}
@@ -366,8 +416,10 @@ export function SignupPage() {
                   <div className="inline-flex items-center justify-center w-20 h-20 bg-violet-100 dark:bg-violet-900/30 rounded-full mb-6 shadow-inner">
                     <Sparkles className="h-10 w-10 text-violet-600 dark:text-violet-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">Middleman Program</h3>
-                  
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">
+                    Middleman Program
+                  </h3>
+
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Button
                       variant="outline"
@@ -392,14 +444,30 @@ export function SignupPage() {
                 <div className="p-6 sm:p-8">
                   {selectedRole === "customer" && (
                     <CustomerSignupForm
-                      onSubmit={async (formData: any) => {
+                      onSubmit={async (formData: {
+                        email: string;
+                        password: string;
+                        full_name: string;
+                      }) => {
                         setLoading(true);
                         try {
-                          const { error } = await signUp(formData.email, formData.password, formData.full_name, "buyer");
+                          const { error } = await signUp(
+                            formData.email,
+                            formData.password,
+                            formData.full_name,
+                            "buyer",
+                          );
                           if (error) setError(error.message);
                           else handleSignupComplete(formData.email);
-                        } catch (err: any) { setError(err.message); }
-                        finally { setLoading(false); }
+                        } catch (err) {
+                          const errorMessage =
+                            err instanceof Error
+                              ? err.message
+                              : "Unknown error";
+                          setError(errorMessage);
+                        } finally {
+                          setLoading(false);
+                        }
                       }}
                       onBack={handleBack}
                       loading={loading}
@@ -407,14 +475,30 @@ export function SignupPage() {
                   )}
                   {selectedRole === "seller" && (
                     <SellerSignupForm
-                      onSubmit={async (formData: any) => {
+                      onSubmit={async (formData: {
+                        email: string;
+                        password: string;
+                        full_name: string;
+                      }) => {
                         setLoading(true);
                         try {
-                          const { error } = await signUp(formData.email, formData.password, formData.full_name, "seller");
+                          const { error } = await signUp(
+                            formData.email,
+                            formData.password,
+                            formData.full_name,
+                            "seller",
+                          );
                           if (error) setError(error.message);
                           else handleSignupComplete(formData.email);
-                        } catch (err: any) { setError(err.message); }
-                        finally { setLoading(false); }
+                        } catch (err) {
+                          const errorMessage =
+                            err instanceof Error
+                              ? err.message
+                              : "Unknown error";
+                          setError(errorMessage);
+                        } finally {
+                          setLoading(false);
+                        }
                       }}
                       onBack={handleBack}
                       loading={loading}
@@ -422,14 +506,30 @@ export function SignupPage() {
                   )}
                   {selectedRole === "factory" && (
                     <FactorySignupForm
-                      onSubmit={async (formData: any) => {
+                      onSubmit={async (formData: {
+                        email: string;
+                        password: string;
+                        full_name: string;
+                      }) => {
                         setLoading(true);
                         try {
-                          const { error } = await signUp(formData.email, formData.password, formData.full_name, "factory");
+                          const { error } = await signUp(
+                            formData.email,
+                            formData.password,
+                            formData.full_name,
+                            "factory",
+                          );
                           if (error) setError(error.message);
                           else handleSignupComplete(formData.email);
-                        } catch (err: any) { setError(err.message); }
-                        finally { setLoading(false); }
+                        } catch (err) {
+                          const errorMessage =
+                            err instanceof Error
+                              ? err.message
+                              : "Unknown error";
+                          setError(errorMessage);
+                        } finally {
+                          setLoading(false);
+                        }
                       }}
                       onBack={handleBack}
                       loading={loading}
@@ -437,14 +537,30 @@ export function SignupPage() {
                   )}
                   {selectedRole === "delivery" && (
                     <DeliverySignupForm
-                      onSubmit={async (formData: any) => {
+                      onSubmit={async (formData: {
+                        email: string;
+                        password: string;
+                        full_name: string;
+                      }) => {
                         setLoading(true);
                         try {
-                          const { error } = await signUp(formData.email, formData.password, formData.full_name, "delivery_driver");
+                          const { error } = await signUp(
+                            formData.email,
+                            formData.password,
+                            formData.full_name,
+                            "delivery_driver",
+                          );
                           if (error) setError(error.message);
                           else handleSignupComplete(formData.email);
-                        } catch (err: any) { setError(err.message); }
-                        finally { setLoading(false); }
+                        } catch (err) {
+                          const errorMessage =
+                            err instanceof Error
+                              ? err.message
+                              : "Unknown error";
+                          setError(errorMessage);
+                        } finally {
+                          setLoading(false);
+                        }
                       }}
                       onBack={handleBack}
                       loading={loading}
@@ -454,7 +570,6 @@ export function SignupPage() {
               </div>
             )}
           </div>
-          
         </div>
       </div>
     </div>

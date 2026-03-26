@@ -24,8 +24,10 @@ export const FeedPage = () => {
         postType: filter === "all" ? undefined : filter,
       });
       setPosts(data);
-    } catch (error: any) {
-      console.error("Failed to load posts:", error);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.error("Failed to load posts:", errorMessage);
     } finally {
       setLoading(false);
     }

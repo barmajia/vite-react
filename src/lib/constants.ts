@@ -12,7 +12,7 @@ export const ROUTES = {
   // Public
   HOME: "/",
   PRODUCTS: "/products",
-  PRODUCT_DETAIL: "/product/:asin",
+  PRODUCT_DETAIL: "/products/:asin",
   CATEGORIES: "/categories",
   CATEGORY_PRODUCTS: "/category/:id",
   BRANDS: "/brands",

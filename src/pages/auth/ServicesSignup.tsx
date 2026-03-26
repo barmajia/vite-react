@@ -64,9 +64,10 @@ export function ServicesSignup() {
       } else {
         navigate("/services");
       }
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create account");
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      toast.error(errorMessage || "Failed to create account");
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

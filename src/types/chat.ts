@@ -76,6 +76,22 @@ export interface Conversation {
   unread_count?: number;
 }
 
+export interface CustomRequestDetails {
+  product_type?: string;
+  specifications?: {
+    material?: string;
+    color?: string;
+    size?: string;
+    quantity?: number;
+    custom_features?: string[];
+  };
+  target_price?: number;
+  deadline?: string;
+  description?: string;
+  reference_images?: string[];
+  notes?: string;
+}
+
 // Trading Conversation
 export interface TradingConversation {
   id: string;
@@ -91,7 +107,7 @@ export interface TradingConversation {
   initiator_role: AccountType;
   receiver_role: AccountType;
   is_custom_request: boolean;
-  custom_request_details?: any;
+  custom_request_details?: CustomRequestDetails;
   factory_id?: string;
   middleman_id?: string;
   last_message?: string;

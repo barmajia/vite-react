@@ -1,31 +1,38 @@
+import { CustomRequestDetails } from "./chat";
+
 // Core trading account types
-export type TradingAccountType = 'user' | 'customer' | 'seller' | 'factory' | 'middleman';
+export type TradingAccountType =
+  | "user"
+  | "customer"
+  | "seller"
+  | "factory"
+  | "middleman";
 
 // Chat context for trading vertical
-export type TradingChatContext = 
-  | 'product_inquiry'
-  | 'custom_request'
-  | 'wholesale'
-  | 'manufacturing'
-  | 'brokerage'
-  | 'general';
+export type TradingChatContext =
+  | "product_inquiry"
+  | "custom_request"
+  | "wholesale"
+  | "manufacturing"
+  | "brokerage"
+  | "general";
 
 // Conversation type (from trading_conversations table)
-export type TradingConversationType = 
-  | 'product_inquiry'
-  | 'custom_request'
-  | 'deal_negotiation'
-  | 'factory_order';
+export type TradingConversationType =
+  | "product_inquiry"
+  | "custom_request"
+  | "deal_negotiation"
+  | "factory_order";
 
 // Message types
-export type TradingMessageType = 
-  | 'text'
-  | 'image'
-  | 'file'
-  | 'product_share'
-  | 'deal_offer'
-  | 'quote_request'
-  | 'call_invite';
+export type TradingMessageType =
+  | "text"
+  | "image"
+  | "file"
+  | "product_share"
+  | "deal_offer"
+  | "quote_request"
+  | "call_invite";
 
 // Trading User Profile
 export interface TradingUser {
@@ -37,17 +44,17 @@ export interface TradingUser {
   avatar_url?: string;
   account_type: TradingAccountType;
   is_verified?: boolean;
-  
+
   // Seller-specific
   store_name?: string;
   location?: string;
   allow_product_chats?: boolean;
-  
+
   // Factory-specific
   company_name?: string;
   production_capacity?: string;
   specialization?: string;
-  
+
   // Middle Man-specific
   commission_rate?: number;
   total_earnings?: number;
@@ -94,7 +101,7 @@ export interface TradingConversation {
   initiator_role: TradingAccountType;
   receiver_role: TradingAccountType;
   is_custom_request: boolean;
-  custom_request_details?: any;
+  custom_request_details?: CustomRequestDetails;
   last_message?: string;
   last_message_at?: string;
   is_archived: boolean;

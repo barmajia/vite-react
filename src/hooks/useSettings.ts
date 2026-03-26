@@ -110,14 +110,27 @@ export function useSettings() {
       queryClient.invalidateQueries({ queryKey: ["settings", "profile"] });
       toast.success("Profile updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to update profile: ${error.message}`);
     },
   });
 
   // Update seller settings mutation
   const updateSellerMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: {
+      store_name?: string;
+      location?: string;
+      currency?: string;
+      is_verified?: boolean;
+      is_factory?: boolean;
+      production_capacity?: string;
+      min_order_quantity?: number;
+      wholesale_discount?: number;
+      accepts_returns?: boolean;
+      allow_product_chats?: boolean;
+      allow_custom_requests?: boolean;
+      [key: string]: unknown;
+    }) => {
       if (!user) throw new Error("Not authenticated");
 
       const { error } = await supabase
@@ -134,7 +147,7 @@ export function useSettings() {
       queryClient.invalidateQueries({ queryKey: ["settings", "role"] });
       toast.success("Business settings updated");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to update settings: ${error.message}`);
     },
   });
@@ -151,7 +164,7 @@ export function useSettings() {
     onSuccess: () => {
       toast.success("Password updated successfully");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to update password: ${error.message}`);
     },
   });
@@ -168,7 +181,7 @@ export function useSettings() {
     onSuccess: () => {
       toast.success("Confirmation email sent. Please check your inbox.");
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast.error(`Failed to update email: ${error.message}`);
     },
   });

@@ -106,9 +106,9 @@ export function getCookieJSON<T>(name: string): T | null {
 /**
  * Set a JSON value as a cookie
  */
-export function setCookieJSON(
+export function setCookieJSON<T>(
   name: string,
-  value: any,
+  value: T,
   options?: CookieOptions,
 ): void {
   setCookie(name, encodeURIComponent(JSON.stringify(value)), options);

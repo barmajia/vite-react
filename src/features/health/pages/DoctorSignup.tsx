@@ -125,8 +125,9 @@ const DoctorSignup: React.FC = () => {
       navigate("/services/health/doctor/pending-approval", {
         state: { email: formData.email },
       });
-    } catch (err: any) {
-      setError(err.message || "Signup failed");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMessage || "Signup failed");
     } finally {
       setLoading(false);
     }

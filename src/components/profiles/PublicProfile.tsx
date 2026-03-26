@@ -30,6 +30,7 @@ import {
   FileText,
   Briefcase as PortfolioIcon,
   Share2,
+  Edit,
   Globe,
   DollarSign,
   TrendingUp,
@@ -131,7 +132,30 @@ export const PublicProfile: React.FC<PublicProfileProps> = ({
 
   const renderActionButtons = () => {
     const isOwnProfile = currentUserId === userId;
-    if (isOwnProfile) return null;
+
+    // Show edit button for own profile
+    if (isOwnProfile) {
+      return (
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => (window.location.href = `/profile/${userId}/edit`)}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          >
+            <Edit size={18} />
+            <span>Edit Profile</span>
+          </button>
+          <button
+            className="p-2 border rounded-lg hover:bg-gray-100 transition-colors"
+            title="Share"
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.href);
+            }}
+          >
+            <Share2 size={18} className="text-gray-600" />
+          </button>
+        </div>
+      );
+    }
 
     return (
       <div className="flex flex-wrap gap-2">

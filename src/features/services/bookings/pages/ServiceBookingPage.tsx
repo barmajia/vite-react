@@ -65,25 +65,22 @@ export const ServiceBookingPage = () => {
       const { error } = await supabase.from("svc_orders").insert({
         listing_id: listingId,
         provider_id: listing.provider?.id,
-        customer_id: user.id,
+        user_id: user.id,
         order_type: "booking",
         status: "pending",
         agreed_price: listing?.price_min || 0,
         currency: listing?.currency || "EGP",
-        customer_name: customerName,
-        customer_phone: customerPhone,
-        customer_email: customerEmail || null,
-        customer_notes: notes || null,
-        booking_date: selectedDate.toISOString(),
-        booking_time: selectedTime,
+        client_message: notes || null,
       });
 
       if (error) throw error;
 
       toast.success("Booking request sent successfully!");
       navigate("/services");
-    } catch (error: any) {
-      toast.error("Failed to create booking: " + error.message);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      toast.error(`Failed to create booking: ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }

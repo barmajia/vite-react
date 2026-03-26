@@ -216,9 +216,11 @@ export function useCheckout() {
             `Please pay at any Fawry kiosk using Reference: ${fawryData.referenceNumber}`,
           );
         }
-      } catch (error: any) {
-        console.error("Fawry payment error:", error);
-        toast.error(error.message || "Failed to initialize Fawry payment");
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+        console.error("Fawry payment error:", errorMessage);
+        toast.error(errorMessage || "Failed to initialize Fawry payment");
         // Still navigate to success page as order is created
         navigate(`/order-success/${orderData.orderId}`);
       }

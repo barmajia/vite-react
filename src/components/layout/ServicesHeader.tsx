@@ -155,7 +155,7 @@ export function ServicesHeader() {
             : "bg-white/90 backdrop-blur-md dark:bg-gray-950/90 dark:border-gray-800",
         )}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Logo Section */}
             <Link
@@ -311,7 +311,7 @@ export function ServicesHeader() {
                         className="cursor-pointer text-gray-700 dark:text-gray-200 dark:focus:bg-gray-700"
                       >
                         <Link
-                          to={ROUTES.SERVICES}
+                          to="/services/dashboard"
                           className="flex items-center"
                         >
                           <LayoutDashboard className="mr-2 h-4 w-4" />

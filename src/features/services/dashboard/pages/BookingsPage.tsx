@@ -41,10 +41,10 @@ import { cn } from "@/lib/utils";
 interface Booking {
   id: string;
   created_at: string;
+  ordered_at: string;
   listing_id: string;
   customer_id: string;
   provider_id: string;
-  start_date: string;
   status: "pending" | "confirmed" | "completed" | "cancelled" | "disputed";
   agreed_price: number;
   booking_type: string;
@@ -75,7 +75,7 @@ export const BookingsPage = () => {
         .select(
           `
           id,
-          start_date,
+          ordered_at,
           status,
           agreed_price,
           *,
@@ -131,8 +131,10 @@ export const BookingsPage = () => {
 
       toast.success(`Booking ${newStatus} successfully`);
       refetch();
-    } catch (error: any) {
-      toast.error(`Failed to update booking: ${error.message}`);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      toast.error(`Failed to update booking: ${errorMessage}`);
     }
   };
 
@@ -220,7 +222,7 @@ export const BookingsPage = () => {
       title: "This Month",
       value: `${bookings
         ?.filter((b) => {
-          const bookingDate = new Date(b.start_date);
+          const bookingDate = new Date(b.ordered_at || b.created_at);
           const now = new Date();
           return (
             bookingDate.getMonth() === now.getMonth() &&
@@ -335,19 +337,21 @@ export const BookingsPage = () => {
                       <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                         <Calendar size={14} />
                         <span>
-                          {format(new Date(booking.start_date), "MMM dd, yyyy")}
+                          {format(
+                            new Date(booking.ordered_at || booking.created_at),
+                            "MMM dd, yyyy",
+                          )}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
                         <Clock size={14} />
                         <span>
-                          {new Date(booking.start_date).toLocaleTimeString(
-                            "en-US",
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            },
-                          )}
+                          {new Date(
+                            booking.ordered_at || booking.created_at,
+                          ).toLocaleTimeString("en-US", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </span>
                       </div>
                       <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">

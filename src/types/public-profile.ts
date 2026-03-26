@@ -1,6 +1,8 @@
 // src/types/public-profile.ts
 // Comprehensive Public Profile System Types for Aurora E-commerce
 
+import { AvailabilitySchedule, MedicalHistory } from "@/features/health/types";
+
 // All account types from schema
 export type AccountType =
   | "user"
@@ -60,7 +62,15 @@ export interface FactoryProfile extends SellerProfile {
   production_capacity?: string;
   specialization?: string;
   business_license_url?: string;
-  capacity_info?: any;
+  capacity_info?: {
+    monthly_output?: number;
+    output_unit?: "units" | "kg" | "meters" | "liters";
+    lead_time_days?: number;
+    min_order_quantity?: number;
+    max_order_quantity?: number;
+    production_lines?: number;
+    workers_count?: number;
+  };
   factory_connections?: number;
 }
 
@@ -76,6 +86,18 @@ export interface MiddleManProfile extends BaseProfile {
   successful_deals?: number;
   average_rating?: number;
   review_count?: number;
+}
+
+export interface PortfolioItem {
+  id?: string;
+  title: string;
+  description?: string;
+  image_url?: string;
+  images?: string[];
+  project_url?: string;
+  completed_date?: string;
+  category?: string;
+  tags?: string[];
 }
 
 // Freelancer Profile
@@ -98,7 +120,7 @@ export interface FreelancerProfile extends BaseProfile {
   is_verified?: boolean;
   is_available?: boolean;
   response_time_hours?: number;
-  portfolio_items?: any[];
+  portfolio_items?: PortfolioItem[];
 }
 
 // Service Provider Profile
@@ -135,7 +157,7 @@ export interface DoctorProfile extends BaseProfile {
   specialization: string;
   license_number: string;
   consultation_fee: number;
-  availability_schedule?: any[];
+  availability_schedule?: AvailabilitySchedule[];
   is_verified?: boolean;
   bio?: string;
   hospital_affiliation?: string;
@@ -152,9 +174,21 @@ export interface PatientProfile extends BaseProfile {
   account_type: "patient";
   date_of_birth?: string;
   blood_type?: string;
-  medical_history?: any[];
+  medical_history?: MedicalHistory;
   age?: number;
   gender?: string;
+}
+
+export interface OperatingHours {
+  monday?: { open: string; close: string; is_open: boolean };
+  tuesday?: { open: string; close: string; is_open: boolean };
+  wednesday?: { open: string; close: string; is_open: boolean };
+  thursday?: { open: string; close: string; is_open: boolean };
+  friday?: { open: string; close: string; is_open: boolean };
+  saturday?: { open: string; close: string; is_open: boolean };
+  sunday?: { open: string; close: string; is_open: boolean };
+  timezone?: string;
+  notes?: string;
 }
 
 // Pharmacy Profile
@@ -170,7 +204,7 @@ export interface PharmacyProfile extends BaseProfile {
   state?: string;
   postal_code?: string;
   country?: string;
-  operating_hours?: any;
+  operating_hours?: OperatingHours;
   is_verified?: boolean;
   delivery_available?: boolean;
   delivery_fee?: number;

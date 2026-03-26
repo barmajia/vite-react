@@ -52,12 +52,14 @@ export function useProducts(options: UseProductsOptions = {}) {
         .select(
           `
           id,
+          asin,
           title,
           description,
           price,
           quantity,
           images,
           category,
+          currency
           seller_id,
           created_at,
           average_rating,
@@ -120,28 +122,35 @@ export function useProduct(asin: string) {
   return useQuery({
     queryKey: ["product", asin],
     queryFn: async () => {
-      // First fetch the product by ASIN
+      if (!asin) return null;
+
+      // First fetch the product by ASIN using filter syntax
       const { data: product, error: productError } = await supabase
         .from("products")
         .select(
           `
           id,
+          asin,
           title,
           description,
           price,
           quantity,
           images,
           category,
+          currency
           seller_id,
           created_at,
           average_rating,
           review_count
         `,
         )
-        .eq("asin", asin)
-        .single();
+        .filter("asin", "eq", asin)
+        .maybeSingle();
 
-      if (productError) throw productError;
+      if (productError) {
+        console.error("Error fetching product:", productError);
+        throw productError;
+      }
       if (!product) return null;
 
       // Then fetch reviews separately
@@ -156,7 +165,7 @@ export function useProduct(asin: string) {
           user_id
         `,
         )
-        .eq("asin", asin)
+        .filter("asin", "eq", asin)
         .order("created_at", { ascending: false });
 
       if (reviewsError) throw reviewsError;

@@ -60,9 +60,11 @@ const ProductDetailsPage = () => {
         }
 
         setProduct(data);
-      } catch (err: any) {
-        console.error("Error fetching product:", err);
-        setError(err.message);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
+        console.error("Error fetching product:", errorMessage);
+        setError(errorMessage);
       } finally {
         setLoading(false);
       }
@@ -97,8 +99,9 @@ const ProductDetailsPage = () => {
         stock_quantity: product.quantity,
       });
       toast.success("Added to cart successfully!");
-    } catch (err: any) {
-      console.error("Cart error:", err);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      console.error("Cart error:", errorMessage);
       toast.error("Failed to add to cart");
     } finally {
       setAddingToCart(false);

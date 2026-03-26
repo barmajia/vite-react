@@ -152,7 +152,7 @@ export function ProductDetail() {
   }
 
   const averageRating = product.reviews?.length
-    ? product.reviews.reduce((sum: number, r: any) => sum + r.rating, 0) /
+    ? product.reviews.reduce((sum, r) => sum + (r.rating || 0), 0) /
       product.reviews.length
     : 0;
 
@@ -409,7 +409,7 @@ export function ProductDetail() {
 
         {product.reviews && product.reviews.length > 0 ? (
           <div className="space-y-4">
-            {product.reviews.map((review: any) => {
+            {product.reviews.map((review) => {
               const userName =
                 typeof review === "object" &&
                 review !== null &&

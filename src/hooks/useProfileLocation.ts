@@ -80,9 +80,10 @@ export const useProfileLocation = (): UseProfileLocationReturn => {
       setLatitude(lat);
       setLongitude(lng);
       toast.success("Location updated successfully");
-    } catch (err: any) {
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
       console.error("Error updating location:", err);
-      toast.error(err.message || "Failed to update location");
+      toast.error(errorMessage || "Failed to update location");
       throw err;
     }
   }, []);
@@ -137,9 +138,10 @@ export const useProfileLocation = (): UseProfileLocationReturn => {
       setLatitude(null);
       setLongitude(null);
       toast.success("Location cleared");
-    } catch (err: any) {
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
       console.error("Error clearing location:", err);
-      toast.error(err.message || "Failed to clear location");
+      toast.error(errorMessage || "Failed to clear location");
     } finally {
       setUpdating(false);
     }

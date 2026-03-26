@@ -121,14 +121,46 @@ export interface SellerProfile {
   updated_at: string;
 }
 
+export interface MiddlemanProfile {
+  id: string;
+  user_id: string;
+  company_name?: string;
+  commission_rate?: number;
+  total_earnings?: number;
+  pending_earnings?: number;
+  is_verified?: boolean;
+  total_deals?: number;
+  successful_deals?: number;
+  average_rating?: number;
+  review_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BusinessProfile {
+  id: string;
+  user_id: string;
+  business_name: string;
+  business_type: string;
+  registration_number?: string;
+  tax_id?: string;
+  address?: string;
+  phone?: string;
+  email?: string;
+  website?: string;
+  logo_url?: string;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface FullUserProfile {
   core: UserProfile;
   seller?: SellerProfile;
-  middleman?: any;
+  middleman?: MiddlemanProfile;
   customer?: CustomerProfile;
   delivery?: DeliveryProfile;
-  business?: any;
-  addresses?: any[];
+  business?: BusinessProfile;
+  addresses?: ShippingAddress[];
   stats?: {
     orders: {
       totalOrders: number;
@@ -143,12 +175,15 @@ export interface FullUserProfile {
     };
     wishlist: {
       totalItems: number;
+      count?: number;
     };
     conversations: {
       total: number;
       unread: number;
+      activeChats?: number;
+      unreadMessages?: number;
     };
-    analytics: any;
+    analytics: any | null;
   };
 }
 

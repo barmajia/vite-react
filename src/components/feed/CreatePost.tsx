@@ -39,9 +39,11 @@ export const CreatePost = ({ onPostCreated }: CreatePostProps) => {
       setContent("");
       toast.success("Post created successfully!");
       onPostCreated();
-    } catch (error: any) {
-      console.error("Failed to create post:", error);
-      toast.error(error.message || "Could not create post");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.error("Failed to create post:", errorMessage);
+      toast.error(errorMessage || "Could not create post");
     } finally {
       setLoading(false);
     }
@@ -53,9 +55,7 @@ export const CreatePost = ({ onPostCreated }: CreatePostProps) => {
         <form onSubmit={handleSubmit}>
           <div className="flex gap-3 mb-3">
             <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-              <span className="text-primary-foreground font-semibold">
-                👤
-              </span>
+              <span className="text-primary-foreground font-semibold">👤</span>
             </div>
             <Textarea
               value={content}
@@ -67,7 +67,10 @@ export const CreatePost = ({ onPostCreated }: CreatePostProps) => {
           </div>
 
           <div className="flex items-center justify-between">
-            <Select value={postType} onValueChange={(v) => setPostType(v as any)}>
+            <Select
+              value={postType}
+              onValueChange={(v) => setPostType(v as any)}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue />
               </SelectTrigger>

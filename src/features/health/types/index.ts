@@ -3,6 +3,16 @@
  * Strictly typed interfaces for all health-related data structures
  */
 
+export interface AvailabilitySchedule {
+  day_of_week: number; // 0-6 (Sunday-Saturday)
+  start_time: string; // HH:mm format
+  end_time: string; // HH:mm format
+  is_available: boolean;
+  slot_duration_minutes?: number;
+  break_start?: string; // HH:mm format
+  break_end?: string; // HH:mm format
+}
+
 export interface HealthDoctorProfile {
   id: string;
   user_id: string;
@@ -11,12 +21,43 @@ export interface HealthDoctorProfile {
   license_document_url?: string | null;
   consultation_fee: number;
   emergency_fee: number;
-  availability_schedule: any[];
+  availability_schedule: AvailabilitySchedule[];
   is_verified: boolean;
-  verification_status: 'pending' | 'verified' | 'rejected';
+  verification_status: "pending" | "verified" | "rejected";
   bio?: string | null;
   created_at: string;
   updated_at: string;
+}
+
+export interface MedicalCondition {
+  name: string;
+  diagnosed_date?: string;
+  status: "active" | "resolved" | "chronic";
+  notes?: string;
+}
+
+export interface Medication {
+  name: string;
+  dosage: string;
+  frequency: string;
+  start_date?: string;
+  end_date?: string;
+  prescribed_by?: string;
+}
+
+export interface Allergy {
+  name: string;
+  type: "food" | "medication" | "environmental" | "other";
+  severity: "mild" | "moderate" | "severe";
+  reaction?: string;
+}
+
+export interface MedicalHistory {
+  conditions?: MedicalCondition[];
+  medications?: Medication[];
+  allergies?: Allergy[];
+  surgeries?: { name: string; date: string; notes?: string }[];
+  family_history?: { condition: string; relation: string }[];
 }
 
 export interface HealthPatientProfile {
@@ -24,18 +65,28 @@ export interface HealthPatientProfile {
   user_id: string;
   date_of_birth?: string | null;
   blood_type?: string | null;
-  medical_history: any[];
+  medical_history: MedicalHistory;
   total_visits: number;
   last_visit_date?: string | null;
   created_at: string;
   updated_at: string;
 }
 
+export interface PharmacyAddress {
+  street: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country: string;
+  latitude?: number;
+  longitude?: number;
+}
+
 export interface HealthPharmacyProfile {
   id: string;
   user_id: string;
   license_number: string;
-  location_address: any;
+  location_address: PharmacyAddress;
   is_verified: boolean;
   created_at: string;
   updated_at: string;
@@ -47,9 +98,15 @@ export interface HealthAppointment {
   patient_id: string;
   scheduled_at: string;
   duration_minutes: number;
-  slot_type: 'regular' | 'emergency';
-  status: 'pending' | 'confirmed' | 'active' | 'completed' | 'cancelled' | 'no_show';
-  payment_status: 'pending' | 'paid' | 'refunded';
+  slot_type: "regular" | "emergency";
+  status:
+    | "pending"
+    | "confirmed"
+    | "active"
+    | "completed"
+    | "cancelled"
+    | "no_show";
+  payment_status: "pending" | "paid" | "refunded";
   payment_amount?: number | null;
   payment_intent_id?: string | null;
   notes?: string | null;
@@ -72,7 +129,7 @@ export interface HealthMessage {
   conversation_id: string;
   sender_id: string;
   content: string;
-  message_type: 'text' | 'image' | 'file';
+  message_type: "text" | "image" | "file";
   attachment_url?: string | null;
   created_at: string;
 }
@@ -87,7 +144,7 @@ export interface HealthPrescription {
   created_at: string;
 }
 
-export type UserRole = 'patient' | 'doctor' | 'admin';
+export type UserRole = "patient" | "doctor" | "admin";
 
 export interface HealthDashboardStats {
   totalAppointments: number;

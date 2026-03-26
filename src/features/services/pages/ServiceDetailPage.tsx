@@ -95,8 +95,9 @@ export function ServiceDetailPage() {
 
       toast.success("Opening conversation...");
       navigate(`/services/messages/${conversationId}`);
-    } catch (err: any) {
-      console.error("Error creating conversation:", err);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      console.error("Error creating conversation:", errorMessage);
       toast.error("Failed to start conversation. Please try again.");
     }
   };

@@ -13,7 +13,9 @@ export const useProviderAnalytics = () => {
       // 1. Get Provider Profile to determine type
       const { data: profile } = await supabase
         .from("svc_providers")
-        .select("provider_type, rating_avg, total_jobs")
+        .select(
+          "provider_type, average_rating, total_jobs_completed, total_earnings",
+        )
         .eq("user_id", user.id)
         .single();
 
@@ -22,28 +24,30 @@ export const useProviderAnalytics = () => {
       // 2. Fetch Bookings Stats
       const { data: bookingsStats } = await supabase
         .from("svc_orders")
-        .select("id, start_date, status, agreed_price", {
-          count: "exact",
-        })
+        .select("id, ordered_at, status, agreed_price")
         .eq("provider_id", user.id);
 
       // 3. Calculate Revenue (Sum of completed bookings)
       const revenueData = bookingsStats
-        ?.filter((b: any) => b.status === "completed")
-        .reduce((sum: number, b: any) => sum + (b.agreed_price || 0), 0);
+        ?.filter((b) => b.status === "completed")
+        .reduce((sum, b) => sum + (b.agreed_price || 0), 0);
 
       const pendingCount =
-        bookingsStats?.filter((b: any) => b.status === "pending").length || 0;
+        bookingsStats?.filter((b) => b.status === "pending").length || 0;
       const completedCount =
-        bookingsStats?.filter((b: any) => b.status === "completed").length || 0;
+        bookingsStats?.filter((b) => b.status === "completed").length || 0;
 
       return {
-        profile,
+        profile: {
+          provider_type: profile.provider_type,
+          rating_avg: profile.average_rating,
+          total_jobs: profile.total_jobs_completed,
+        },
         stats: {
           pendingBookings: pendingCount,
           completedJobs: completedCount,
           totalRevenue: revenueData || 0,
-          rating: profile.rating_avg || 0,
+          rating: profile.average_rating || 0,
         },
       };
     },

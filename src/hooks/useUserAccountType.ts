@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
-import { TradingAccountType } from '../types/trading-chat';
+import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabase";
+import { TradingAccountType } from "../types/trading-chat";
 
 export const useUserAccountType = (userId: string | null) => {
-  const [accountType, setAccountType] = useState<TradingAccountType | null>(null);
+  const [accountType, setAccountType] = useState<TradingAccountType | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -16,17 +18,26 @@ export const useUserAccountType = (userId: string | null) => {
 
       try {
         const { data, error } = await supabase
-          .from('users')
-          .select('account_type')
-          .eq('user_id', userId)
-          .single();
+          .from("users")
+          .select("account_type")
+          .eq("user_id", userId)
+          .maybeSingle(); // Use maybeSingle to handle no rows gracefully
 
-        if (error) throw error;
-
-        setAccountType(data?.account_type as TradingAccountType || 'user');
-      } catch (err: any) {
-        setError(err.message);
-        setAccountType('user'); // Default to user
+        if (error) {
+          // Log but don't fail - default to 'user'
+          console.debug(
+            "Account type fetch error, using default:",
+            error.message,
+          );
+          setAccountType("user");
+        } else {
+          setAccountType((data?.account_type as TradingAccountType) || "user");
+        }
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
+        console.debug("Account type error:", errorMessage);
+        setAccountType("user"); // Default to user
       } finally {
         setLoading(false);
       }

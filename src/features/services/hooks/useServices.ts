@@ -35,8 +35,9 @@ export const useServices = () => {
 
       if (error) throw error;
       return data || [];
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMessage);
       return [];
     }
   }, []);
@@ -52,8 +53,9 @@ export const useServices = () => {
 
       if (error) throw error;
       return data || [];
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMessage);
       return [];
     } finally {
       setLoading(false);
@@ -74,8 +76,10 @@ export const useServices = () => {
 
         if (error) throw error;
         return data || [];
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
+        setError(errorMessage);
         return [];
       } finally {
         setLoading(false);
@@ -96,8 +100,10 @@ export const useServices = () => {
 
         if (error) throw error;
         return data;
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
+        setError(errorMessage);
         return null;
       }
     },
@@ -149,8 +155,10 @@ export const useServices = () => {
 
         if (error) throw error;
         return data;
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
+        setError(errorMessage);
         return null;
       }
     },
@@ -177,8 +185,10 @@ export const useServices = () => {
 
         if (error) throw error;
         return data;
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
+        setError(errorMessage);
         return null;
       }
     },
@@ -195,8 +205,9 @@ export const useServices = () => {
 
       if (error) throw error;
       return true;
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMessage);
       return false;
     }
   }, []);

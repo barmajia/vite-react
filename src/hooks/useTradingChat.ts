@@ -87,8 +87,9 @@ export const useTradingChat = (
       if (data?.product) {
         setProduct(data.product as ProductWithChatPermission);
       }
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -133,8 +134,9 @@ export const useTradingChat = (
 
       if (error) throw error;
       setParticipants(data || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMessage);
     }
   }, [conversationId]);
 
@@ -161,8 +163,9 @@ export const useTradingChat = (
 
       if (error) throw error;
       setMessages(data || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMessage);
     }
   }, [conversationId]);
 
@@ -178,8 +181,10 @@ export const useTradingChat = (
           message_type: messageType,
         });
         if (error) throw error;
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
+        setError(errorMessage);
       }
     },
     [conversationId, currentUserId],

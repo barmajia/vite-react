@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@/types/database";
 import { formatPrice, getProductImage } from "@/lib/utils";
-import { ROUTES } from "@/lib/constants";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -47,7 +46,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
         {/* Clickable overlay linking to product detail */}
         <Link
-          to={`${ROUTES.PRODUCT_DETAIL.replace(":asin", product.id)}`}
+          to={`/products/${product.asin}`}
           className="absolute inset-0 z-10"
           onClick={(e) => e.stopPropagation()}
         />

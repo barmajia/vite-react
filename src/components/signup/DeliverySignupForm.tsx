@@ -135,7 +135,7 @@ export function DeliverySignupForm({
           </Label>
           <Select
             value={formData.vehicle_type}
-            onValueChange={(v: any) =>
+            onValueChange={(v: string) =>
               setFormData({ ...formData, vehicle_type: v })
             }
           >

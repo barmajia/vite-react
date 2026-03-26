@@ -154,6 +154,26 @@ export function Login() {
             {t("auth.createAccount")}
           </Link>
         </p>
+
+        {/* Quick Signup Links */}
+        <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/signup?tab=products")}
+            className="text-sm border-2 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+          >
+            🛍️ {t("auth.signupForProducts")}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/signup?tab=services")}
+            className="text-sm border-2 hover:bg-purple-50 dark:hover:bg-purple-900/20"
+          >
+            🤝 {t("auth.signupForServices")}
+          </Button>
+        </div>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">

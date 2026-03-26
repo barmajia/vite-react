@@ -5,7 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Session, User } from "@supabase/supabase-js";
+import { Session, User, Json } from "@supabase/supabase-js";
 import {
   supabase,
   onAuthStateChange,
@@ -31,7 +31,7 @@ type AuthContextType = {
   signIn: (
     email: string,
     password: string,
-  ) => Promise<{ error: Error | null; data: any }>;
+  ) => Promise<{ error: Error | null; data: Json | null }>;
   signUp: (
     email: string,
     password: string,
@@ -222,7 +222,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       authRateLimiter.clear(sanitizedEmail);
 
       return { data, error: null };
-    } catch (err: any) {
+    } catch (err) {
       console.error("Unexpected sign in error:", err);
       return {
         data: null,
@@ -286,19 +286,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     try {
-      const { error } = await supabase.auth.signUp({
+      // Simplified signup to avoid 500 error
+      const { error, data } = await supabase.auth.signUp({
         email: sanitizedEmail,
         password,
         options: {
           data: {
-            full_name: sanitizedName,
-            account_type: accountType,
+            full_name: sanitizedName || undefined,
           },
-          emailRedirectTo: import.meta.env.VITE_APP_URL,
+          // Remove emailRedirectTo to avoid 500 error
+          // emailRedirectTo: import.meta.env.VITE_APP_URL,
         },
       });
 
       if (error) {
+        console.error("Signup error:", error);
         signupRateLimiter.recordAttempt(rateLimitKey);
         return { error: error as Error };
       }
@@ -306,8 +308,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Clear rate limiter on successful signup
       signupRateLimiter.clear(rateLimitKey);
 
+      // Create user profile after successful signup
+      if (data.user) {
+        try {
+          await supabase.from("users").insert({
+            user_id: data.user.id,
+            email: sanitizedEmail,
+            full_name: sanitizedName || null,
+            account_type: accountType || "customer",
+          });
+        } catch (profileError) {
+          console.error("Failed to create user profile:", profileError);
+          // Don't fail signup if profile creation fails
+        }
+      }
+
       return { error: null };
-    } catch (err: any) {
+    } catch (err) {
       console.error("Unexpected sign up error:", err);
       return {
         error: new Error("An unexpected error occurred. Please try again."),
@@ -394,7 +411,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       signupRateLimiter.clear(rateLimitKey);
       return { error: null };
-    } catch (err: any) {
+    } catch (err) {
       console.error("Unexpected sign up error:", err);
       return {
         error: new Error("An unexpected error occurred. Please try again."),
@@ -464,7 +481,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // It will clear automatically after the time window
 
       return { error: null };
-    } catch (err: any) {
+    } catch (err) {
       console.error("Password reset error:", err);
       return {
         error: new Error("An unexpected error occurred. Please try again."),
@@ -498,7 +515,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       return { error: null };
-    } catch (err: any) {
+    } catch (err) {
       console.error("Resend verification error:", err);
       return {
         error: new Error("An unexpected error occurred. Please try again."),
@@ -572,7 +589,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       return { error: null };
-    } catch (err: any) {
+    } catch (err) {
       console.error("Password change error:", err);
       return {
         error: new Error("An unexpected error occurred. Please try again."),
@@ -611,7 +628,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       return { error: null };
-    } catch (err: any) {
+    } catch (err) {
       console.error("Email change error:", err);
       return {
         error: new Error("An unexpected error occurred. Please try again."),

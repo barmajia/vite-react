@@ -405,7 +405,9 @@ export function validateInput(
 /**
  * Create a debounced version of a function for rate limiting UI interactions
  */
-export function createDebouncedValidator<T extends (...args: any[]) => any>(
+export function createDebouncedValidator<
+  T extends (...args: unknown[]) => unknown,
+>(
   func: T,
   delay: number = 300,
 ): (...args: Parameters<T>) => Promise<ReturnType<T>> {

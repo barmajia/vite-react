@@ -12,11 +12,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, AlertCircle } from "lucide-react";
 
-type SignupStep = 'account' | 'personal' | 'business' | 'verification' | 'preferences';
+type SignupStep =
+  | "account"
+  | "personal"
+  | "business"
+  | "verification"
+  | "preferences";
 
 interface FormData {
   email: string;
@@ -38,36 +49,44 @@ interface FormData {
 
 export function MiddlemanSignup() {
   const navigate = useNavigate();
-  const [currentStep, setCurrentStep] = useState<SignupStep>('account');
+  const [currentStep, setCurrentStep] = useState<SignupStep>("account");
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const [formData, setFormData] = useState<FormData>({
-    email: '',
-    password: '',
-    full_name: '',
-    phone: '',
-    company_name: '',
-    location: '',
-    currency: 'USD',
+    email: "",
+    password: "",
+    full_name: "",
+    phone: "",
+    company_name: "",
+    location: "",
+    currency: "USD",
     commission_rate: 5,
-    specialization: '',
-    website_url: '',
-    description: '',
-    tax_id: '',
-    years_of_experience: '',
-    preferred_language: 'en',
-    theme_preference: 'system',
+    specialization: "",
+    website_url: "",
+    description: "",
+    tax_id: "",
+    years_of_experience: "",
+    preferred_language: "en",
+    theme_preference: "system",
   });
 
-  const [businessLicenseUrl, setBusinessLicenseUrl] = useState<string | null>(null);
+  const [businessLicenseUrl, setBusinessLicenseUrl] = useState<string | null>(
+    null,
+  );
 
-  const steps: SignupStep[] = ['account', 'personal', 'business', 'verification', 'preferences'];
+  const steps: SignupStep[] = [
+    "account",
+    "personal",
+    "business",
+    "verification",
+    "preferences",
+  ];
   const currentStepIndex = steps.indexOf(currentStep);
 
   const updateFormData = (data: Partial<FormData>) => {
-    setFormData(prev => ({ ...prev, ...data }));
+    setFormData((prev) => ({ ...prev, ...data }));
   };
 
   const handleNext = () => {
@@ -89,29 +108,32 @@ export function MiddlemanSignup() {
     if (!file) return;
 
     if (file.size > 10 * 1024 * 1024) {
-      toast.error('File size must be less than 10MB');
+      toast.error("File size must be less than 10MB");
       return;
     }
 
     setUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
+      const fileExt = file.name.split(".").pop();
       const fileName = `license-${Date.now()}.${fileExt}`;
-      
+
       const { error: uploadError } = await supabase.storage
-        .from('documents')
+        .from("documents")
         .upload(`business-licenses/${fileName}`, file);
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('documents')
+      const {
+        data: { publicUrl },
+      } = supabase.storage
+        .from("documents")
         .getPublicUrl(`business-licenses/${fileName}`);
 
       setBusinessLicenseUrl(publicUrl);
-      toast.success('License uploaded successfully');
-    } catch (err: any) {
-      toast.error(err.message || 'Upload failed');
+      toast.success("License uploaded successfully");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      toast.error(errorMessage || "Upload failed");
     } finally {
       setUploading(false);
     }
@@ -128,22 +150,22 @@ export function MiddlemanSignup() {
         password: formData.password,
         options: {
           data: {
-            account_type: 'middleman',
+            account_type: "middleman",
             full_name: formData.full_name,
           },
         },
       });
 
       if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create account');
+      if (!authData.user) throw new Error("Failed to create account");
 
       // Step 2: Insert into users table
-      const { error: userError } = await supabase.from('users').insert({
+      const { error: userError } = await supabase.from("users").insert({
         user_id: authData.user.id,
         email: formData.email,
         full_name: formData.full_name,
         phone: formData.phone,
-        account_type: 'middleman',
+        account_type: "middleman",
         preferred_language: formData.preferred_language,
         theme_preference: formData.theme_preference,
       });
@@ -151,42 +173,51 @@ export function MiddlemanSignup() {
       if (userError) throw userError;
 
       // Step 3: Insert into business_profiles
-      const { error: businessError } = await supabase.from('business_profiles').insert({
-        user_id: authData.user.id,
-        role: 'middleman',
-        company_name: formData.company_name,
-        location: formData.location,
-        currency: formData.currency,
-        commission_rate: formData.commission_rate,
-        is_verified: false,
-      });
+      const { error: businessError } = await supabase
+        .from("business_profiles")
+        .insert({
+          user_id: authData.user.id,
+          role: "middleman",
+          company_name: formData.company_name,
+          location: formData.location,
+          currency: formData.currency,
+          commission_rate: formData.commission_rate,
+          is_verified: false,
+        });
 
       if (businessError) throw businessError;
 
       // Step 4: Insert into middleman_profiles
-      const { error: middlemanError } = await supabase.from('middleman_profiles').insert({
-        user_id: authData.user.id,
-        company_name: formData.company_name,
-        location: formData.location,
-        currency: formData.currency,
-        commission_rate: formData.commission_rate,
-        is_verified: false,
-        specialization: formData.specialization,
-        website_url: formData.website_url,
-        description: formData.description,
-        tax_id: formData.tax_id,
-        business_license_url: businessLicenseUrl,
-        years_of_experience: formData.years_of_experience ? parseInt(formData.years_of_experience) : null,
-      });
+      const { error: middlemanError } = await supabase
+        .from("middleman_profiles")
+        .insert({
+          user_id: authData.user.id,
+          company_name: formData.company_name,
+          location: formData.location,
+          currency: formData.currency,
+          commission_rate: formData.commission_rate,
+          is_verified: false,
+          specialization: formData.specialization,
+          website_url: formData.website_url,
+          description: formData.description,
+          tax_id: formData.tax_id,
+          business_license_url: businessLicenseUrl,
+          years_of_experience: formData.years_of_experience
+            ? parseInt(formData.years_of_experience)
+            : null,
+        });
 
       if (middlemanError) throw middlemanError;
 
-      toast.success('Account created successfully! Please check your email to verify.');
-      navigate('/login');
-    } catch (err: any) {
-      console.error('Signup error:', err);
-      setError(err.message || 'Signup failed. Please try again.');
-      toast.error(err.message || 'Signup failed');
+      toast.success(
+        "Account created successfully! Please check your email to verify.",
+      );
+      navigate("/login");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      console.error("Signup error:", errorMessage);
+      setError(errorMessage || "Signup failed. Please try again.");
+      toast.error(errorMessage || "Signup failed");
     } finally {
       setLoading(false);
     }
@@ -194,7 +225,7 @@ export function MiddlemanSignup() {
 
   const renderStep = () => {
     switch (currentStep) {
-      case 'account':
+      case "account":
         return (
           <div className="space-y-4">
             <div>
@@ -218,11 +249,13 @@ export function MiddlemanSignup() {
                 minLength={8}
               />
             </div>
-            <Button onClick={handleNext} className="w-full">Next</Button>
+            <Button onClick={handleNext} className="w-full">
+              Next
+            </Button>
           </div>
         );
 
-      case 'personal':
+      case "personal":
         return (
           <div className="space-y-4">
             <div>
@@ -244,13 +277,17 @@ export function MiddlemanSignup() {
               />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleBack}>Back</Button>
-              <Button onClick={handleNext} className="flex-1">Next</Button>
+              <Button variant="outline" onClick={handleBack}>
+                Back
+              </Button>
+              <Button onClick={handleNext} className="flex-1">
+                Next
+              </Button>
             </div>
           </div>
         );
 
-      case 'business':
+      case "business":
         return (
           <div className="space-y-4">
             <div>
@@ -258,7 +295,9 @@ export function MiddlemanSignup() {
               <Input
                 id="company_name"
                 value={formData.company_name}
-                onChange={(e) => updateFormData({ company_name: e.target.value })}
+                onChange={(e) =>
+                  updateFormData({ company_name: e.target.value })
+                }
                 placeholder="Your Company Ltd."
               />
             </div>
@@ -274,7 +313,10 @@ export function MiddlemanSignup() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="currency">Currency</Label>
-                <Select value={formData.currency} onValueChange={(v) => updateFormData({ currency: v })}>
+                <Select
+                  value={formData.currency}
+                  onValueChange={(v) => updateFormData({ currency: v })}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -292,7 +334,11 @@ export function MiddlemanSignup() {
                   id="commission_rate"
                   type="number"
                   value={formData.commission_rate}
-                  onChange={(e) => updateFormData({ commission_rate: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    updateFormData({
+                      commission_rate: parseFloat(e.target.value) || 0,
+                    })
+                  }
                   min="0"
                   max="100"
                   step="0.1"
@@ -304,7 +350,9 @@ export function MiddlemanSignup() {
               <Input
                 id="specialization"
                 value={formData.specialization}
-                onChange={(e) => updateFormData({ specialization: e.target.value })}
+                onChange={(e) =>
+                  updateFormData({ specialization: e.target.value })
+                }
                 placeholder="e.g., Electronics, Textiles"
               />
             </div>
@@ -313,23 +361,30 @@ export function MiddlemanSignup() {
               <Input
                 id="description"
                 value={formData.description}
-                onChange={(e) => updateFormData({ description: e.target.value })}
+                onChange={(e) =>
+                  updateFormData({ description: e.target.value })
+                }
                 placeholder="Brief description of your business"
               />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleBack}>Back</Button>
-              <Button onClick={handleNext} className="flex-1">Next</Button>
+              <Button variant="outline" onClick={handleBack}>
+                Back
+              </Button>
+              <Button onClick={handleNext} className="flex-1">
+                Next
+              </Button>
             </div>
           </div>
         );
 
-      case 'verification':
+      case "verification":
         return (
           <div className="space-y-4">
             <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <p className="text-sm text-yellow-800">
-                ⚠️ Your account will be <strong>pending verification</strong> until admin approves your documents (1-3 business days).
+                ⚠️ Your account will be <strong>pending verification</strong>{" "}
+                until admin approves your documents (1-3 business days).
               </p>
             </div>
             <div>
@@ -347,7 +402,9 @@ export function MiddlemanSignup() {
                 id="years_of_experience"
                 type="number"
                 value={formData.years_of_experience}
-                onChange={(e) => updateFormData({ years_of_experience: e.target.value })}
+                onChange={(e) =>
+                  updateFormData({ years_of_experience: e.target.value })
+                }
                 min="0"
                 max="50"
               />
@@ -375,26 +432,37 @@ export function MiddlemanSignup() {
                           />
                         </label>
                       </div>
-                      <p className="text-xs text-gray-500">PDF, PNG, JPG up to 10MB</p>
-                      {uploading && <p className="text-sm text-blue-600">Uploading...</p>}
+                      <p className="text-xs text-gray-500">
+                        PDF, PNG, JPG up to 10MB
+                      </p>
+                      {uploading && (
+                        <p className="text-sm text-blue-600">Uploading...</p>
+                      )}
                     </>
                   )}
                 </div>
               </div>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleBack}>Back</Button>
-              <Button onClick={handleNext} className="flex-1">Next</Button>
+              <Button variant="outline" onClick={handleBack}>
+                Back
+              </Button>
+              <Button onClick={handleNext} className="flex-1">
+                Next
+              </Button>
             </div>
           </div>
         );
 
-      case 'preferences':
+      case "preferences":
         return (
           <div className="space-y-4">
             <div>
               <Label htmlFor="preferred_language">Preferred Language</Label>
-              <Select value={formData.preferred_language} onValueChange={(v) => updateFormData({ preferred_language: v })}>
+              <Select
+                value={formData.preferred_language}
+                onValueChange={(v) => updateFormData({ preferred_language: v })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -408,7 +476,10 @@ export function MiddlemanSignup() {
             </div>
             <div>
               <Label htmlFor="theme_preference">Theme Preference</Label>
-              <Select value={formData.theme_preference} onValueChange={(v) => updateFormData({ theme_preference: v })}>
+              <Select
+                value={formData.theme_preference}
+                onValueChange={(v) => updateFormData({ theme_preference: v })}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -420,9 +491,15 @@ export function MiddlemanSignup() {
               </Select>
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={handleBack}>Back</Button>
-              <Button onClick={handleSubmit} className="flex-1" disabled={loading}>
-                {loading ? 'Creating Account...' : 'Complete Signup'}
+              <Button variant="outline" onClick={handleBack}>
+                Back
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                className="flex-1"
+                disabled={loading}
+              >
+                {loading ? "Creating Account..." : "Complete Signup"}
               </Button>
             </div>
           </div>
@@ -435,15 +512,21 @@ export function MiddlemanSignup() {
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Become a Middleman</h1>
-          <p className="mt-2 text-gray-600">Connect factories with sellers and earn commissions</p>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Become a Middleman
+          </h1>
+          <p className="mt-2 text-gray-600">
+            Connect factories with sellers and earn commissions
+          </p>
         </div>
 
         {/* Progress Bar */}
         <Card className="mb-8">
           <CardHeader>
             <CardTitle>Signup Progress</CardTitle>
-            <CardDescription>Step {currentStepIndex + 1} of {steps.length}</CardDescription>
+            <CardDescription>
+              Step {currentStepIndex + 1} of {steps.length}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex justify-between mb-2">
@@ -451,14 +534,16 @@ export function MiddlemanSignup() {
                 <div
                   key={step}
                   className={`flex items-center ${
-                    index <= currentStepIndex ? 'text-blue-600' : 'text-gray-400'
+                    index <= currentStepIndex
+                      ? "text-blue-600"
+                      : "text-gray-400"
                   }`}
                 >
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center ${
                       index <= currentStepIndex
-                        ? 'bg-blue-600 text-white'
-                        : 'bg-gray-200 text-gray-500'
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-200 text-gray-500"
                     }`}
                   >
                     {index + 1}
@@ -466,7 +551,10 @@ export function MiddlemanSignup() {
                 </div>
               ))}
             </div>
-            <Progress value={((currentStepIndex + 1) / steps.length) * 100} className="h-2" />
+            <Progress
+              value={((currentStepIndex + 1) / steps.length) * 100}
+              className="h-2"
+            />
           </CardContent>
         </Card>
 
@@ -481,16 +569,18 @@ export function MiddlemanSignup() {
         {/* Step Content */}
         <Card>
           <CardHeader>
-            <CardTitle className="capitalize">{currentStep} Information</CardTitle>
+            <CardTitle className="capitalize">
+              {currentStep} Information
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            {renderStep()}
-          </CardContent>
+          <CardContent>{renderStep()}</CardContent>
         </Card>
 
         {/* Info Box */}
         <div className="mt-8 p-6 bg-blue-50 rounded-lg">
-          <h3 className="font-semibold text-blue-900 mb-2">What happens next?</h3>
+          <h3 className="font-semibold text-blue-900 mb-2">
+            What happens next?
+          </h3>
           <ul className="text-sm text-blue-800 space-y-1">
             <li>✓ Your account will be created instantly</li>
             <li>✓ Profile will be pending verification (1-3 business days)</li>

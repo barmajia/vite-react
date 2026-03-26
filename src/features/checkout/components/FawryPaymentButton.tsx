@@ -49,7 +49,7 @@ export const FawryPaymentButton = ({
           headers: {
             Authorization: `Bearer ${session.access_token}`,
           },
-        }
+        },
       );
 
       if (error) throw new Error(error.message);
@@ -69,9 +69,10 @@ export const FawryPaymentButton = ({
       }
 
       onSuccess?.();
-    } catch (err: any) {
-      console.error("Fawry payment error:", err);
-      toast.error(err.message || "Failed to connect to Fawry");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      console.error("Fawry payment error:", errorMessage);
+      toast.error(errorMessage || "Failed to connect to Fawry");
     } finally {
       setLoading(false);
     }

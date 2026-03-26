@@ -100,9 +100,11 @@ export const ContactFactoryButton = ({
 
       toast.success("Conversation started!");
       navigate(`/messages/${conversation.id}`);
-    } catch (error: any) {
-      console.error("Error contacting factory:", error);
-      toast.error(error.message || "Failed to start conversation");
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.error("Error contacting factory:", errorMessage);
+      toast.error(errorMessage || "Failed to start conversation");
     } finally {
       setIsLoading(false);
     }

@@ -6,7 +6,63 @@
  * 2. Never trust client-side validation for security-critical operations
  * 3. Always validate and sanitize data on both client and server
  * 4. Use RLS (Row Level Security) policies for all database operations
+ * 5. Implement defense in depth with multiple security layers
+ * 6. Log all security-relevant events for audit and monitoring
+ *
+ * @see {@link ./security-utils.ts} For advanced security utilities
+ * @see {@link ./security-constants.ts} For security configuration
+ * @see {@link ../../SECURITY_IMPLEMENTATION.md} For complete security documentation
  */
+
+// Re-export security constants from dedicated file
+export {
+  SECURITY_CONSTANTS,
+  type SecurityEventType,
+  type SecurityLevel,
+  type SecurityContext,
+  type AuditLogEntry,
+  type SanitizationOptions,
+  type RateLimitState,
+} from "./security-constants";
+
+// Re-export security utilities
+export {
+  generateSecureToken,
+  generateCSRFToken,
+  validateCSRFToken,
+  detectXSS,
+  sanitizeXSS,
+  encodeHTML,
+  detectSQLInjection,
+  detectPathTraversal,
+  sanitizeFileName,
+  validateFileType,
+  RateLimiter,
+  rateLimiters,
+  AuditLogger,
+  auditLogger,
+  getSecurityHeaders,
+  validateEmail,
+  validatePassword,
+  maskSensitiveData,
+  secureRandom,
+  debounceSecurity,
+} from "./security-utils";
+
+// Re-export security constants
+export { SECURITY_CONSTANTS as SecurityConfig } from "./security-constants";
+
+// Re-export security hooks
+export {
+  useSecurityInput,
+  useSecureFileUpload,
+} from "@/hooks/useSecurityInput";
+
+// Re-export security components
+export {
+  SecurityBoundary,
+  useSecurityMonitor,
+} from "@/components/SecurityBoundary";
 
 // ========== Rate Limiter ==========
 
@@ -245,10 +301,12 @@ export function validateFileUpload(file: File): {
   return { valid: true };
 }
 
+// Note: generateSecureToken is now exported from security-utils.ts
+// This function is kept for backward compatibility but deprecated
 /**
- * Generate a secure random string for tokens
+ * @deprecated Use generateSecureToken from security-utils.ts instead
  */
-export function generateSecureToken(length: number = 32): string {
+export function generateSecureTokenLegacy(length: number = 32): string {
   const array = new Uint8Array(length);
   crypto.getRandomValues(array);
   return Array.from(array)
@@ -259,7 +317,7 @@ export function generateSecureToken(length: number = 32): string {
 /**
  * Debounce function to prevent rapid-fire API calls
  */
-export function debounce<T extends (...args: any[]) => any>(
+export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number,
 ): (...args: Parameters<T>) => void {
@@ -281,7 +339,7 @@ export function debounce<T extends (...args: any[]) => any>(
 /**
  * Throttle function to limit execution frequency
  */
-export function throttle<T extends (...args: any[]) => any>(
+export function throttle<T extends (...args: unknown[]) => unknown>(
   func: T,
   limit: number,
 ): (...args: Parameters<T>) => void {

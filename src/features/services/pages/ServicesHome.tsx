@@ -63,7 +63,9 @@ export function ServicesHome() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
-  const [featuredListings, setFeaturedListings] = useState<ServiceListing[]>([]);
+  const [featuredListings, setFeaturedListings] = useState<ServiceListing[]>(
+    [],
+  );
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -145,7 +147,7 @@ export function ServicesHome() {
           <div className="absolute top-40 -left-40 w-[500px] h-[500px] bg-violet-500/10 dark:bg-violet-500/20 rounded-full blur-[100px]" />
         </div>
 
-        <div className="max-w-7xl mx-auto relative z-10">
+        <div className="max-w-xl mx-auto relative z-10">
           <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-100 dark:bg-indigo-900/40 border border-indigo-200 dark:border-indigo-800 rounded-full mb-8 shadow-sm">
               <Sparkles className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
@@ -153,21 +155,25 @@ export function ServicesHome() {
                 The Premier Services Marketplace
               </span>
             </div>
-            
+
             <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight leading-tight">
               Connect with Top <br className="hidden md:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-violet-600 dark:from-indigo-400 dark:to-violet-400">
                 Industry Experts
               </span>
             </h1>
-            
+
             <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-400 mb-10 max-w-3xl mx-auto font-medium">
-              Whether you're looking to hire top talent or offering your own professional services, Aurora is your growth engine.
+              Whether you're looking to hire top talent or offering your own
+              professional services, Aurora is your growth engine.
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12 max-w-3xl mx-auto">
               {/* Search Bar */}
-              <form onSubmit={handleSearch} className="w-full sm:flex-1 relative">
+              <form
+                onSubmit={handleSearch}
+                className="w-full sm:flex-1 relative"
+              >
                 <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                 <Input
                   type="text"
@@ -186,10 +192,12 @@ export function ServicesHome() {
               </form>
 
               {/* Provider CTA */}
-              <Button 
-                onClick={() => navigate(user ? '/services/onboarding' : '/signup')}
-                size="lg" 
-                className="w-full sm:w-auto h-14 px-8 rounded-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 hover:border-indigo-600 dark:hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-lg shadow-slate-200/50 dark:shadow-none transition-all font-bold"
+              <Button
+                onClick={() =>
+                  navigate(user ? "/services/onboarding" : "/signup")
+                }
+                size="lg"
+                className="w-full sm:w-auto h-10 px-6 rounded-full bg-white dark:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 hover:border-indigo-600 dark:hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 shadow-lg shadow-slate-200/50 dark:shadow-none transition-all font-bold"
               >
                 Become a Provider
               </Button>
@@ -218,7 +226,6 @@ export function ServicesHome() {
       <div className="py-24 px-4 bg-slate-900 dark:bg-slate-900 relative overflow-hidden">
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
-            
             <div className="text-white space-y-8 text-center lg:text-left">
               <Badge className="bg-indigo-500/20 text-indigo-300 hover:bg-indigo-500/30 border-indigo-500/30 text-sm px-4 py-1.5 rounded-full mb-4">
                 For Freelancers & Agencies
@@ -227,9 +234,11 @@ export function ServicesHome() {
                 Turn your expertise into a thriving business.
               </h2>
               <p className="text-lg text-slate-400 max-w-xl mx-auto lg:mx-0">
-                Join our elite community of service providers. Get instant access to thousands of buyers worldwide, secure your payments, and grow your freelance career on Aurora.
+                Join our elite community of service providers. Get instant
+                access to thousands of buyers worldwide, secure your payments,
+                and grow your freelance career on Aurora.
               </p>
-              
+
               <ul className="space-y-4 max-w-lg text-left mx-auto lg:mx-0">
                 {[
                   "Global reach to millions of active buyers",
@@ -237,7 +246,10 @@ export function ServicesHome() {
                   "Advanced analytics and growth tools",
                   "Dedicated support for top-rated sellers",
                 ].map((item, i) => (
-                  <li key={i} className="flex items-center gap-3 text-slate-300">
+                  <li
+                    key={i}
+                    className="flex items-center gap-3 text-slate-300"
+                  >
                     <CheckCircle2 className="h-6 w-6 text-emerald-400 flex-shrink-0" />
                     <span className="font-medium">{item}</span>
                   </li>
@@ -245,9 +257,11 @@ export function ServicesHome() {
               </ul>
 
               <div className="pt-4 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Button 
-                  size="lg" 
-                  onClick={() => navigate(user ? '/services/onboarding' : '/signup')}
+                <Button
+                  size="lg"
+                  onClick={() =>
+                    navigate(user ? "/services/onboarding" : "/signup")
+                  }
                   className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold h-14 px-8 rounded-full shadow-lg shadow-indigo-600/20"
                 >
                   Start Selling Now
@@ -263,8 +277,12 @@ export function ServicesHome() {
                   <div className="w-14 h-14 rounded-2xl bg-blue-500/20 flex items-center justify-center mb-6">
                     <Globe className="h-7 w-7 text-blue-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Global Audience</h3>
-                  <p className="text-slate-400">Present your portfolio to clients from over 150 countries.</p>
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    Global Audience
+                  </h3>
+                  <p className="text-slate-400">
+                    Present your portfolio to clients from over 150 countries.
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-slate-800/80 border-slate-700 backdrop-blur-xl relative z-10 hover:-translate-y-2 transition-transform duration-300 sm:translate-y-8">
@@ -272,8 +290,13 @@ export function ServicesHome() {
                   <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 flex items-center justify-center mb-6">
                     <Wallet className="h-7 w-7 text-emerald-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Secure Earnings</h3>
-                  <p className="text-slate-400">Get paid on time, every time with our protected escrow system.</p>
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    Secure Earnings
+                  </h3>
+                  <p className="text-slate-400">
+                    Get paid on time, every time with our protected escrow
+                    system.
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-slate-800/80 border-slate-700 backdrop-blur-xl relative z-10 hover:-translate-y-2 transition-transform duration-300">
@@ -281,8 +304,12 @@ export function ServicesHome() {
                   <div className="w-14 h-14 rounded-2xl bg-violet-500/20 flex items-center justify-center mb-6">
                     <TrendingUp className="h-7 w-7 text-violet-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Scale Up</h3>
-                  <p className="text-slate-400">Build your agency and brand with premium seller features.</p>
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    Scale Up
+                  </h3>
+                  <p className="text-slate-400">
+                    Build your agency and brand with premium seller features.
+                  </p>
                 </CardContent>
               </Card>
               <Card className="bg-slate-800/80 border-slate-700 backdrop-blur-xl relative z-10 hover:-translate-y-2 transition-transform duration-300 sm:translate-y-8">
@@ -290,12 +317,15 @@ export function ServicesHome() {
                   <div className="w-14 h-14 rounded-2xl bg-rose-500/20 flex items-center justify-center mb-6">
                     <Briefcase className="h-7 w-7 text-rose-400" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Work Your Way</h3>
-                  <p className="text-slate-400">Offer custom packages and set your own terms and pricing.</p>
+                  <h3 className="text-xl font-bold text-white mb-2">
+                    Work Your Way
+                  </h3>
+                  <p className="text-slate-400">
+                    Offer custom packages and set your own terms and pricing.
+                  </p>
                 </CardContent>
               </Card>
             </div>
-            
           </div>
         </div>
       </div>
@@ -308,7 +338,8 @@ export function ServicesHome() {
               Explore capabilities
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto font-medium">
-              Find precisely the skills you need across our diverse network of professionals.
+              Find precisely the skills you need across our diverse network of
+              professionals.
             </p>
           </div>
 
@@ -424,7 +455,9 @@ export function ServicesHome() {
                           {listing.rating && (
                             <div className="flex items-center gap-1.5 text-amber-500">
                               <Star className="h-4 w-4 fill-current" />
-                              <span className="font-bold">{listing.rating}</span>
+                              <span className="font-bold">
+                                {listing.rating}
+                              </span>
                               {listing.reviews_count && (
                                 <span className="text-slate-500 dark:text-slate-400 text-sm font-medium">
                                   ({listing.reviews_count})
@@ -452,15 +485,20 @@ export function ServicesHome() {
                               </div>
                             )}
                             <div className="text-right">
-                              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">Starting At</span>
+                              <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider block mb-1">
+                                Starting At
+                              </span>
                               {listing.price ? (
                                 <div className="flex items-baseline gap-1">
                                   <span className="text-xl font-extrabold text-slate-900 dark:text-white">
-                                    {listing.currency || "$"}{listing.price}
+                                    {listing.currency || "$"}
+                                    {listing.price}
                                   </span>
                                 </div>
                               ) : (
-                                <span className="text-sm font-semibold text-indigo-600">Contact</span>
+                                <span className="text-sm font-semibold text-indigo-600">
+                                  Contact
+                                </span>
                               )}
                             </div>
                           </div>
@@ -478,7 +516,8 @@ export function ServicesHome() {
                 No Services Available Yet
               </h3>
               <p className="text-lg text-slate-500 dark:text-slate-400 mb-8 max-w-md mx-auto">
-                Be the very first professional to list your services and start earning immediately.
+                Be the very first professional to list your services and start
+                earning immediately.
               </p>
               {!user && (
                 <Button

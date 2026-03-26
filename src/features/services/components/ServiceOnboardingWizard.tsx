@@ -62,7 +62,7 @@ export const ServiceOnboardingWizard = () => {
   const handleNext = () => setStep((prev) => prev + 1);
   const handleBack = () => setStep((prev) => prev - 1);
 
-  const updateFormData = (field: keyof FormData, value: any) => {
+  const updateFormData = (field: keyof FormData, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -75,48 +75,72 @@ export const ServiceOnboardingWizard = () => {
     setIsLoading(true);
 
     try {
-      // Prepare metadata based on provider type
-      const metadata: any = {};
-
-      if (providerType === "health_provider" || providerType === "hospital") {
-        metadata.license_number = formData.license_number;
-        metadata.specialization = formData.specialization;
-      } else if (providerType === "company") {
-        metadata.tax_id = formData.tax_id;
-      } else if (providerType === "individual") {
-        metadata.skills = formData.skills?.split(",").map((s) => s.trim());
-        metadata.hourly_rate = formData.hourly_rate;
-      }
-
-      // 1. Create Service Provider Profile
-      const { error: providerError } = await supabase
+      // 1. Check if provider profile already exists
+      const { data: existingProvider } = await supabase
         .from("svc_providers")
-        .insert({
-          user_id: user.id,
-          provider_type: providerType,
-          business_name: formData.business_name,
-          tagline: formData.tagline,
-          description: formData.description,
-          license_number: formData.license_number || null,
-          tax_id: formData.tax_id || null,
-          specialization: formData.specialization || null,
-          phone: formData.phone,
-          website: formData.website,
-          city: formData.city,
-          status: "pending",
-          is_verified: false,
-          metadata,
-        });
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
 
-      if (providerError) throw providerError;
+      if (existingProvider) {
+        // Provider already exists, update instead
+        const { error: updateError } = await supabase
+          .from("svc_providers")
+          .update({
+            provider_name: formData.business_name,
+            provider_type: providerType,
+            tagline: formData.tagline || null,
+            description: formData.description,
+            phone: formData.phone || null,
+            website: formData.website || null,
+            location_city: formData.city || null,
+            specialties: formData.skills
+              ? formData.skills.split(",").map((s) => s.trim())
+              : null,
+            status: "pending_review",
+            is_verified: false,
+          })
+          .eq("user_id", user.id);
+
+        if (updateError) {
+          console.error("Provider update error:", updateError);
+          throw updateError;
+        }
+      } else {
+        // 2. Create Service Provider Profile (only if doesn't exist)
+        const { error: providerError } = await supabase
+          .from("svc_providers")
+          .insert({
+            user_id: user.id,
+            provider_name: formData.business_name,
+            provider_type: providerType,
+            tagline: formData.tagline || null,
+            description: formData.description,
+            phone: formData.phone || null,
+            website: formData.website || null,
+            location_city: formData.city || null,
+            specialties: formData.skills
+              ? formData.skills.split(",").map((s) => s.trim())
+              : null,
+            status: "pending_review",
+            is_verified: false,
+          });
+
+        if (providerError) {
+          console.error("Provider insert error:", providerError);
+          throw providerError;
+        }
+      }
 
       toast.success("Profile created successfully!");
 
       // Redirect to create first listing
       navigate("/services/dashboard/create-listing");
-    } catch (error: any) {
-      console.error(error);
-      toast.error("Failed to create profile: " + error.message);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.error(errorMessage);
+      toast.error(`Failed to create profile: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -124,12 +148,6 @@ export const ServiceOnboardingWizard = () => {
 
   const isStep2Valid = () => {
     if (!formData.business_name || !formData.description) return false;
-    if (providerType === "health_provider" || providerType === "hospital") {
-      return !!formData.license_number && !!formData.specialization;
-    }
-    if (providerType === "company") {
-      return !!formData.tax_id;
-    }
     return true;
   };
 
@@ -385,13 +403,14 @@ export const ServiceOnboardingWizard = () => {
                     <Input
                       id="hourly_rate"
                       type="number"
-                      value={formData.hourly_rate}
-                      onChange={(e) =>
+                      value={formData.hourly_rate || ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
                         updateFormData(
                           "hourly_rate",
-                          parseFloat(e.target.value),
-                        )
-                      }
+                          value === "" ? 0 : parseFloat(value),
+                        );
+                      }}
                       placeholder="e.g. 200"
                     />
                   </div>

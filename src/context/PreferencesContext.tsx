@@ -113,21 +113,22 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
 
   const fetchUserPreferences = async () => {
     try {
+      // Try to fetch from database with simplified query
       const { data, error } = await supabase
         .from("users")
         .select(
           "preferred_language, preferred_currency, theme_preference, sidebar_state",
         )
         .eq("user_id", user!.id)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to handle no rows gracefully
 
       if (error) {
-        // Silently fail and use localStorage preferences
-        // This handles cases where columns don't exist yet
-        console.warn(
-          "Could not fetch database preferences, using local storage:",
-          error.message,
-        );
+        // 406 means columns don't exist - silently use localStorage
+        if (error.code === "406" || error.message.includes("Cannot coerce")) {
+          console.log("Database preferences not available, using localStorage");
+        } else {
+          console.warn("Database preference error:", error.message);
+        }
         return;
       }
 
@@ -144,12 +145,11 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
         setPreferences(dbPrefs);
         localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(dbPrefs));
       }
-    } catch (error: any) {
+    } catch (error) {
       // Silently fail - localStorage preferences will be used
-      console.warn(
-        "Error fetching user preferences from database:",
-        error?.message || error,
-      );
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.debug("Using localStorage preferences:", errorMessage);
     }
   };
 
@@ -184,12 +184,11 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
               error.message,
             );
           }
-        } catch (error: any) {
+        } catch (error) {
           // Silently fail - preference is saved in localStorage
-          console.warn(
-            "Error syncing preference to database:",
-            error?.message || error,
-          );
+          const errorMessage =
+            error instanceof Error ? error.message : "Unknown error";
+          console.warn("Error syncing preference to database:", errorMessage);
         }
       }
     }

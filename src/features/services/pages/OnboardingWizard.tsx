@@ -190,7 +190,7 @@ export function OnboardingWizard() {
     setLoading(true);
     try {
       // Prepare metadata based on provider type
-      const metadata: any = {};
+      const metadata: Record<string, unknown> = {};
 
       if (formData.provider_type === "health") {
         metadata.license_number = formData.license_number;
@@ -223,8 +223,9 @@ export function OnboardingWizard() {
 
       toast.success("Profile created successfully!");
       navigate(`/services/provider/${data.id}`);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create profile");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      toast.error(errorMessage || "Failed to create profile");
     } finally {
       setLoading(false);
     }

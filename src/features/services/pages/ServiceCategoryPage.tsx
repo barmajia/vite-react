@@ -65,9 +65,7 @@ export function ServiceCategoryPage() {
           setCategory(categoryData);
 
           // Fetch listings from all subcategories in this category
-          const subcategoryIds = categoryData.subcategories.map(
-            (s: any) => s.id,
-          );
+          const subcategoryIds = categoryData.subcategories.map((s) => s.id);
 
           if (subcategoryIds.length > 0) {
             const { data: listingsData } = await supabase

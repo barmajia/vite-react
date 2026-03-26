@@ -37,6 +37,7 @@ export interface UserProfile {
 // ==================== Product Types ====================
 export interface Product {
   id: string;
+  asin: string;
   title: string;
   description: string | null;
   price: number;
@@ -72,28 +73,24 @@ export interface CartItemWithProduct extends CartItem {
 
 // ==================== Order Types ====================
 export type OrderStatus =
-  | 'pending'
-  | 'confirmed'
-  | 'processing'
-  | 'shipped'
-  | 'delivered'
-  | 'cancelled'
-  | 'refunded';
+  | "pending"
+  | "confirmed"
+  | "processing"
+  | "shipped"
+  | "delivered"
+  | "cancelled"
+  | "refunded";
 
 export type ProductionStatus =
-  | 'pending'
-  | 'in_production'
-  | 'quality_check'
-  | 'ready_to_ship'
-  | 'shipped'
-  | 'delivered'
-  | 'cancelled';
+  | "pending"
+  | "in_production"
+  | "quality_check"
+  | "ready_to_ship"
+  | "shipped"
+  | "delivered"
+  | "cancelled";
 
-export type PaymentStatus =
-  | 'pending'
-  | 'paid'
-  | 'failed'
-  | 'refunded';
+export type PaymentStatus = "pending" | "paid" | "failed" | "refunded";
 
 export interface Order {
   id: string;
@@ -159,7 +156,7 @@ export interface Review {
 }
 
 // ==================== Conversation & Message Types ====================
-export type ConversationType = 'general' | 'deal_negotiation' | 'order_support';
+export type ConversationType = "general" | "deal_negotiation" | "order_support";
 
 export interface Conversation {
   id: string;
@@ -176,8 +173,15 @@ export interface Conversation {
   seller?: UserProfile;
 }
 
-export type MessageType = 'text' | 'image' | 'file';
-export type MessageSubtype = 'text' | 'deal_proposal' | 'deal_counter' | 'deal_accepted' | 'deal_rejected' | 'file' | 'image';
+export type MessageType = "text" | "image" | "file";
+export type MessageSubtype =
+  | "text"
+  | "deal_proposal"
+  | "deal_counter"
+  | "deal_accepted"
+  | "deal_rejected"
+  | "file"
+  | "image";
 
 export interface Message {
   id: string;
@@ -200,7 +204,7 @@ export interface ConversationDeal {
   proposer_id: string;
   recipient_id: string;
   proposal_data: Json;
-  status: 'pending' | 'accepted' | 'rejected' | 'expired' | 'cancelled';
+  status: "pending" | "accepted" | "rejected" | "expired" | "cancelled";
   expires_at: string | null;
   created_at: string;
   updated_at: string;
@@ -210,7 +214,7 @@ export interface FactoryConnection {
   id: string;
   factory_id: string | null;
   seller_id: string | null;
-  status: 'pending' | 'accepted' | 'rejected' | 'blocked';
+  status: "pending" | "accepted" | "rejected" | "blocked";
   requested_at: string;
   accepted_at: string | null;
   rejected_at: string | null;
@@ -238,7 +242,7 @@ export interface Deal {
   party_b_id: string;
   product_id: string | null;
   commission_rate: number | null;
-  status: 'active' | 'pending' | 'cancelled';
+  status: "active" | "pending" | "cancelled";
   created_at: string;
   updated_at: string;
 }
@@ -262,7 +266,12 @@ export interface CategoryWithProducts extends Category {
 }
 
 // ==================== Notification Types ====================
-export type NotificationType = 'order_update' | 'message' | 'promotion' | 'review' | 'system';
+export type NotificationType =
+  | "order_update"
+  | "message"
+  | "promotion"
+  | "review"
+  | "system";
 
 export interface Notification {
   id: string;
@@ -287,78 +296,84 @@ export interface Database {
     Tables: {
       users: {
         Row: User;
-        Insert: Omit<User, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<User, 'id' | 'created_at'>>;
+        Insert: Omit<User, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<User, "id" | "created_at">>;
       };
       categories: {
         Row: Category;
-        Insert: Omit<Category, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Category, 'id' | 'created_at' | 'updated_at'>>;
+        Insert: Omit<Category, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<Category, "id" | "created_at" | "updated_at">>;
       };
       products: {
         Row: Product;
-        Insert: Omit<Product, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Product, 'id' | 'created_at' | 'updated_at'>>;
+        Insert: Omit<Product, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<Product, "id" | "created_at" | "updated_at">>;
       };
       cart: {
         Row: CartItem;
-        Insert: Omit<CartItem, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<CartItem, 'id' | 'created_at' | 'updated_at'>>;
+        Insert: Omit<CartItem, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<CartItem, "id" | "created_at" | "updated_at">>;
       };
       orders: {
         Row: Order;
-        Insert: Omit<Order, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Order, 'id' | 'created_at' | 'updated_at'>>;
+        Insert: Omit<Order, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<Order, "id" | "created_at" | "updated_at">>;
       };
       order_items: {
         Row: OrderItem;
-        Insert: Omit<OrderItem, 'id' | 'created_at'>;
-        Update: Partial<Omit<OrderItem, 'id' | 'created_at'>>;
+        Insert: Omit<OrderItem, "id" | "created_at">;
+        Update: Partial<Omit<OrderItem, "id" | "created_at">>;
       };
       shipping_addresses: {
         Row: ShippingAddress;
-        Insert: Omit<ShippingAddress, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<ShippingAddress, 'id' | 'created_at' | 'updated_at'>>;
+        Insert: Omit<ShippingAddress, "id" | "created_at" | "updated_at">;
+        Update: Partial<
+          Omit<ShippingAddress, "id" | "created_at" | "updated_at">
+        >;
       };
       reviews: {
         Row: Review;
-        Insert: Omit<Review, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Review, 'id' | 'created_at' | 'updated_at'>>;
+        Insert: Omit<Review, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<Review, "id" | "created_at" | "updated_at">>;
       };
       conversations: {
         Row: Conversation;
-        Insert: Omit<Conversation, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Conversation, 'id' | 'created_at' | 'updated_at'>>;
+        Insert: Omit<Conversation, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<Conversation, "id" | "created_at" | "updated_at">>;
       };
       messages: {
         Row: Message;
-        Insert: Omit<Message, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Message, 'id' | 'created_at' | 'updated_at'>>;
+        Insert: Omit<Message, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<Message, "id" | "created_at" | "updated_at">>;
       };
       conversation_deals: {
         Row: ConversationDeal;
-        Insert: Omit<ConversationDeal, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<ConversationDeal, 'id' | 'created_at' | 'updated_at'>>;
+        Insert: Omit<ConversationDeal, "id" | "created_at" | "updated_at">;
+        Update: Partial<
+          Omit<ConversationDeal, "id" | "created_at" | "updated_at">
+        >;
       };
       factory_connections: {
         Row: FactoryConnection;
-        Insert: Omit<FactoryConnection, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<FactoryConnection, 'id' | 'created_at' | 'updated_at'>>;
+        Insert: Omit<FactoryConnection, "id" | "created_at" | "updated_at">;
+        Update: Partial<
+          Omit<FactoryConnection, "id" | "created_at" | "updated_at">
+        >;
       };
       factory_ratings: {
         Row: FactoryRating;
-        Insert: Omit<FactoryRating, 'id' | 'created_at'>;
-        Update: Partial<Omit<FactoryRating, 'id' | 'created_at'>>;
+        Insert: Omit<FactoryRating, "id" | "created_at">;
+        Update: Partial<Omit<FactoryRating, "id" | "created_at">>;
       };
       deals: {
         Row: Deal;
-        Insert: Omit<Deal, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Deal, 'id' | 'created_at' | 'updated_at'>>;
+        Insert: Omit<Deal, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<Deal, "id" | "created_at" | "updated_at">>;
       };
       notifications: {
         Row: Notification;
-        Insert: Omit<Notification, 'id' | 'created_at'>;
-        Update: Partial<Omit<Notification, 'id' | 'created_at'>>;
+        Insert: Omit<Notification, "id" | "created_at">;
+        Update: Partial<Omit<Notification, "id" | "created_at">>;
       };
       wishlists: {
         Row: {
@@ -367,8 +382,26 @@ export interface Database {
           product_id: string;
           created_at: string;
         };
-        Insert: Omit<{ id: string; user_id: string; product_id: string; created_at: string }, 'id' | 'created_at'>;
-        Update: Partial<Omit<{ id: string; user_id: string; product_id: string; created_at: string }, 'id' | 'created_at'>>;
+        Insert: Omit<
+          {
+            id: string;
+            user_id: string;
+            product_id: string;
+            created_at: string;
+          },
+          "id" | "created_at"
+        >;
+        Update: Partial<
+          Omit<
+            {
+              id: string;
+              user_id: string;
+              product_id: string;
+              created_at: string;
+            },
+            "id" | "created_at"
+          >
+        >;
       };
     };
     Views: Record<string, never>;

@@ -152,7 +152,7 @@ export const DashboardHome = () => {
           <CardContent>
             <div className="space-y-4">
               {recentBookings && recentBookings.length > 0 ? (
-                recentBookings.map((booking: any) => (
+                recentBookings.map((booking) => (
                   <div
                     key={booking.id}
                     className="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-4 last:border-0 last:pb-0"
@@ -163,7 +163,10 @@ export const DashboardHome = () => {
                       </p>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         {booking.customer_name || "Unknown Customer"} •{" "}
-                        {format(new Date(booking.booking_date), "MMM dd, yyyy")}
+                        {format(
+                          new Date(booking.ordered_at || booking.created_at),
+                          "MMM dd, yyyy",
+                        )}
                       </p>
                     </div>
                     <Badge

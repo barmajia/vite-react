@@ -52,6 +52,19 @@ export function CreateServiceListing() {
 
     setLoading(true);
     try {
+      // First, get the provider_id from svc_providers table
+      const { data: providerData, error: providerError } = await supabase
+        .from("svc_providers")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+
+      if (providerError || !providerData) {
+        toast.error("Please create a service provider profile first");
+        navigate("/services/onboarding");
+        return;
+      }
+
       // Generate slug from title
       const slug = formData.title
         .toLowerCase()
@@ -61,7 +74,7 @@ export function CreateServiceListing() {
       const { data, error } = await supabase
         .from("svc_listings")
         .insert({
-          provider_id: user.id,
+          provider_id: providerData.id, // Use the provider ID, not user ID
           title: formData.title,
           slug,
           category_id: formData.category_id || null,
@@ -69,6 +82,7 @@ export function CreateServiceListing() {
           description: formData.description,
           listing_type: formData.listing_type,
           currency: formData.currency,
+          is_active: true,
           status: "active",
         })
         .select()
@@ -78,8 +92,10 @@ export function CreateServiceListing() {
 
       toast.success("Service listing created successfully!");
       navigate(`/services/listing/${data.slug}`);
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create listing");
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      console.error("Create listing error:", err);
+      toast.error(errorMessage || "Failed to create listing");
     } finally {
       setLoading(false);
     }

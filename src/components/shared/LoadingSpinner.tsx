@@ -1,6 +1,5 @@
-import { Loader2 } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import auroraLogo from "/aurora.jpg";
 
 interface LoadingSpinnerProps {
   size?: "sm" | "md" | "lg";
@@ -24,12 +23,8 @@ export function LoadingSpinner({
         )}
       >
         <div className="relative">
-          <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-xl animate-pulse">
-            <img
-              src={auroraLogo}
-              alt="Aurora"
-              className="w-full h-full object-cover"
-            />
+          <div className="w-20 h-20 rounded-2xl overflow-hidden shadow-xl bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500 animate-pulse flex items-center justify-center">
+            <Sparkles className="h-10 w-10 text-white" />
           </div>
           <div className="absolute inset-0 flex items-center justify-center">
             <Loader2 className="h-8 w-8 text-white animate-spin drop-shadow-lg" />

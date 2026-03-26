@@ -19,20 +19,48 @@ export const useChat = (
     if (!conversationId) return;
     setLoading(true);
     try {
+      // First, verify the user is a participant in this conversation
+      const { data: participantData, error: participantErr } = await supabase
+        .from("conversation_participants")
+        .select("conversation_id")
+        .eq("conversation_id", conversationId)
+        .eq("user_id", currentUserId)
+        .single();
+
+      if (participantErr) throw participantErr;
+      if (!participantData) {
+        throw new Error(
+          "Unauthorized: You are not a participant in this conversation",
+        );
+      }
+
+      // Then fetch the conversation details
       const { data, error: err } = await supabase
         .from("conversations")
-        .select("*")
+        .select(
+          `
+          id,
+          product_id,
+          last_message,
+          last_message_at,
+          is_archived,
+          created_at,
+          updated_at,
+          context
+        `,
+        )
         .eq("id", conversationId)
         .single();
 
       if (err) throw err;
       setConversation(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
-  }, [conversationId]);
+  }, [conversationId, currentUserId]);
 
   // Fetch participants
   const fetchParticipants = useCallback(async () => {
@@ -57,8 +85,9 @@ export const useChat = (
 
       if (err) throw err;
       setParticipants(data || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMessage);
     }
   }, [conversationId]);
 
@@ -85,8 +114,9 @@ export const useChat = (
 
       if (err) throw err;
       setMessages(data || []);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMessage);
     }
   }, [conversationId]);
 
@@ -105,8 +135,10 @@ export const useChat = (
           message_type: messageType,
         });
         if (err) throw err;
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
+        setError(errorMessage);
       }
     },
     [conversationId, currentUserId],
@@ -121,8 +153,10 @@ export const useChat = (
           .update({ read_at: new Date().toISOString() })
           .eq("id", messageId)
           .eq("sender_id", currentUserId);
-      } catch (err: any) {
-        console.error("Mark read error:", err);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Unknown error";
+        console.error("Mark read error:", errorMessage);
       }
     },
     [currentUserId],

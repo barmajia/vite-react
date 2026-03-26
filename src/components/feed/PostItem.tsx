@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { feedService } from "@/services/feedService";
-import type { Post } from "@/types/feed";
+import type { Post, PostComment } from "@/types/feed";
 import { Avatar } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +19,7 @@ export const PostItem = ({ post, onLike }: PostItemProps) => {
   const navigate = useNavigate();
   const [commentText, setCommentText] = useState("");
   const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState<any[]>([]);
+  const [comments, setComments] = useState<PostComment[]>([]);
   const [isLiking, setIsLiking] = useState(false);
 
   const handleLike = async () => {
@@ -28,8 +28,11 @@ export const PostItem = ({ post, onLike }: PostItemProps) => {
     try {
       await feedService.toggleLike(post.id);
       onLike();
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       toast.error("Failed to like post");
+      console.error(errorMessage);
     } finally {
       setIsLiking(false);
     }
@@ -43,8 +46,11 @@ export const PostItem = ({ post, onLike }: PostItemProps) => {
       setCommentText("");
       onLike(); // Refresh post stats
       toast.success("Comment added");
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       toast.error("Failed to add comment");
+      console.error(errorMessage);
     }
   };
 
@@ -53,8 +59,11 @@ export const PostItem = ({ post, onLike }: PostItemProps) => {
       const data = await feedService.getPostComments(post.id);
       setComments(data);
       setShowComments(!showComments);
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       toast.error("Failed to load comments");
+      console.error(errorMessage);
     }
   };
 
@@ -73,7 +82,10 @@ export const PostItem = ({ post, onLike }: PostItemProps) => {
     try {
       navigate(`/factory/start-chat`);
       toast.info("Navigate to chat and select this user");
-    } catch (error: any) {
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.error(errorMessage);
       toast.error("Failed to start chat");
     }
   };

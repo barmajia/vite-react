@@ -105,10 +105,10 @@ export const ServicesInbox = () => {
       if (error) throw error;
 
       // Map conversations with other user info
-      const conversationsWithUsers = (convos || []).map((conv: any) => {
+      const conversationsWithUsers = (convos || []).map((conv) => {
         // Find the other participant (not the current user)
         const otherParticipant = conv.participants?.find(
-          (p: any) => p.user_id !== user.id,
+          (p) => p.user_id !== user.id,
         );
 
         return {
@@ -124,8 +124,10 @@ export const ServicesInbox = () => {
       });
 
       setConversations(conversationsWithUsers);
-    } catch (error: any) {
-      console.error("Error fetching conversations:", error);
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
+      console.error("Error fetching conversations:", errorMessage);
       toast.error("Failed to load messages");
     } finally {
       setLoading(false);
