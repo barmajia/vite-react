@@ -1,22 +1,29 @@
-import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { supabase } from "@/lib/supabase";
-import { Badge } from "@/components/ui/badge";
-import { useTranslation } from "react-i18next";
+/**
+ * Service Category Page
+ *
+ * Displays all services in a specific category
+ * Route: /services/:categorySlug
+ */
 
-interface ServiceCategoryWithSubcategories {
-  id: string;
-  name: string;
-  slug: string;
-  description: string | null;
-  subcategories: {
-    id: string;
-    name: string;
-    slug: string;
-  }[];
-}
+import { useState, useEffect } from "react";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { Search, Filter, Star, MapPin, CheckCircle2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/useAuth";
+import { ServicesHeader } from "@/components/layout/ServicesHeader";
+import { Avatar } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ServiceListing {
   id: string;
@@ -26,217 +33,295 @@ interface ServiceListing {
   price: number | null;
   price_type: string | null;
   currency: string | null;
+  image_url: string | null;
+  rating?: number;
+  reviews_count?: number;
+  is_verified?: boolean;
+  location?: string;
   provider: {
     provider_name: string;
+    logo_url?: string;
+    is_verified?: boolean;
   } | null;
 }
 
 export function ServiceCategoryPage() {
-  const { categorySlug } = useParams<{ categorySlug: string }>();
   const { t } = useTranslation();
-  const [category, setCategory] =
-    useState<ServiceCategoryWithSubcategories | null>(null);
+  const { categorySlug } = useParams<{ categorySlug: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [listings, setListings] = useState<ServiceListing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("rating");
 
   useEffect(() => {
-    const fetchData = async () => {
-      if (!categorySlug) return;
+    fetchListings();
+  }, [categorySlug, sortBy]);
 
-      setLoading(true);
-      try {
-        // Fetch category with subcategories
-        const { data: categoryData } = await supabase
-          .from("svc_categories")
-          .select(
-            `
-            *,
-            subcategories:svc_subcategories (
-              id,
-              name,
-              slug
-            )
-          `,
+  const fetchListings = async () => {
+    setLoading(true);
+    try {
+      let query = supabase
+        .from("svc_listings")
+        .select(
+          `
+          *,
+          provider:svc_providers (
+            provider_name,
+            logo_url,
+            is_verified
+          ),
+          category:svc_categories (
+            name
           )
-          .eq("slug", categorySlug)
-          .single();
+        `,
+        )
+        .eq("is_active", true);
 
-        if (categoryData) {
-          setCategory(categoryData);
-
-          // Fetch listings from all subcategories in this category
-          const subcategoryIds = categoryData.subcategories.map((s) => s.id);
-
-          if (subcategoryIds.length > 0) {
-            const { data: listingsData } = await supabase
-              .from("svc_listings")
-              .select(
-                `
-                *,
-                provider:svc_providers (
-                  provider_name
-                )
-              `,
-              )
-              .in("subcategory_id", subcategoryIds)
-              .eq("is_active", true)
-              .order("created_at", { ascending: false });
-
-            setListings(listingsData || []);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching category:", error);
-      } finally {
-        setLoading(false);
+      if (categorySlug) {
+        query = query.eq("category_slug", categorySlug);
       }
-    };
 
-    fetchData();
-  }, [categorySlug]);
+      const { data, error } = await query.order("rating", { ascending: false });
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4" />
-          <p className="text-muted-foreground">{t("services.loading")}</p>
-        </div>
-      </div>
-    );
-  }
+      if (error) throw error;
+      if (data) setListings(data);
+    } catch (error) {
+      console.error("Error fetching listings:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  if (!category) {
-    return (
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-bold mb-4">
-            {t("services.categoryNotFound")}
-          </h2>
-          <Button asChild>
-            <Link to="/services">{t("services.browseAll")}</Link>
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/services?search=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <Button variant="ghost" asChild className="mb-4">
-          <Link to="/services">
-            <ArrowLeft size={16} className="mr-2" />
-            {t("services.backToServices")}
-          </Link>
-        </Button>
-        <h1 className="text-4xl font-bold mb-2">{category.name}</h1>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <ServicesHeader />
 
-        {/* DEBUG BANNER - REMOVE IN PRODUCTION */}
-        <div className="bg-green-200 dark:bg-green-800 text-black p-6 rounded-2xl mb-8 shadow-lg border-4 border-green-400 font-bold text-lg flex items-center gap-3">
-          🔍 DEBUG: ServiceCategoryPage (/services/{categorySlug})
-          <div className="ml-auto flex flex-col items-end gap-1">
-            <div>
-              Slug:{" "}
-              <span className="font-mono bg-white px-2 py-1 rounded text-sm">
-                {categorySlug}
+      {/* Hero Section */}
+      <div className="bg-gradient-to-br from-indigo-600 to-violet-600 dark:from-indigo-900 dark:to-violet-900 text-white py-16 px-4">
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-4xl md:text-5xl font-extrabold mb-4">
+            {categorySlug ? (
+              <span className="capitalize">
+                {categorySlug.replace("-", " ")} Services
               </span>
+            ) : (
+              t("services.allServices")
+            )}
+          </h1>
+          <p className="text-xl text-indigo-100 mb-8 max-w-2xl">
+            {t("services.categoryDescription")}
+          </p>
+
+          {/* Search Bar */}
+          <form onSubmit={handleSearch} className="max-w-2xl">
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+                <Input
+                  type="text"
+                  placeholder={t("services.searchServices")}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-12 h-14 rounded-full bg-white text-slate-900 border-0 focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <Button
+                type="submit"
+                size="lg"
+                className="h-14 px-8 rounded-full bg-white text-indigo-600 hover:bg-indigo-50 font-semibold"
+              >
+                {t("common.search")}
+              </Button>
             </div>
-            <div>
-              Category:{" "}
-              <span className="font-mono bg-white px-2 py-1 rounded text-sm">
-                {category?.name || "Loading..."}
-              </span>
-            </div>
-            <div>
-              Listings:{" "}
-              <span className="font-mono bg-white px-2 py-1 rounded text-sm">
-                {listings.length}
-              </span>
-            </div>
-          </div>
+          </form>
         </div>
-        {category.description && (
-          <p className="text-muted-foreground">{category.description}</p>
-        )}
       </div>
 
-      {/* Subcategories */}
-      {category.subcategories.length > 0 && (
-        <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-3">
-            {t("services.subcategories")}
-          </h3>
-          <div className="flex flex-wrap gap-2">
-            {category.subcategories.map((sub) => (
-              <Badge key={sub.id} variant="secondary" className="text-sm">
-                {sub.name}
-              </Badge>
-            ))}
+      {/* Filters & Sort */}
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+          <div className="flex items-center gap-2">
+            <Filter className="h-5 w-5 text-slate-500" />
+            <span className="text-slate-700 dark:text-slate-300 font-medium">
+              {listings.length} {t("services.servicesFound")}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder={t("services.sortBy")} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="rating">{t("services.topRated")}</SelectItem>
+                <SelectItem value="price_low">
+                  {t("services.priceLowHigh")}
+                </SelectItem>
+                <SelectItem value="price_high">
+                  {t("services.priceHighLow")}
+                </SelectItem>
+                <SelectItem value="newest">{t("services.newest")}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
-      )}
 
-      {/* Listings Grid */}
-      {listings.length > 0 ? (
-        <>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-semibold">
-              {t("services.listingsFound", { count: listings.length })}
-            </h2>
+        {/* Listings Grid */}
+        {loading ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i} className="border-slate-200 dark:border-slate-800">
+                <CardContent className="p-0">
+                  <div className="animate-pulse">
+                    <div className="h-48 bg-slate-200 dark:bg-slate-800" />
+                    <div className="p-6 space-y-3">
+                      <div className="h-6 bg-slate-200 dark:bg-slate-800 rounded w-3/4" />
+                      <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/2" />
+                      <div className="h-10 bg-slate-200 dark:bg-slate-800 rounded w-full mt-4" />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        ) : listings.length > 0 ? (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {listings.map((listing) => (
               <Link
                 key={listing.id}
                 to={`/services/listing/${listing.slug}`}
-                className="p-6 bg-card border rounded-xl hover:shadow-lg hover:border-primary transition-all"
+                className="group block"
               >
-                <h3 className="font-semibold text-lg mb-2">{listing.title}</h3>
-                {listing.price && (
-                  <p className="text-primary font-bold mb-2">
-                    {listing.currency === "EGP" ? "EGP" : "$"}
-                    {listing.price.toFixed(2)}
-                    {listing.price_type && (
-                      <span className="text-sm text-muted-foreground">
-                        /{listing.price_type}
-                      </span>
+                <Card className="h-full border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-indigo-400 dark:hover:border-indigo-500/50 transition-all duration-300 hover:shadow-xl hover:shadow-indigo-500/10 hover:-translate-y-1 overflow-hidden">
+                  <CardContent className="p-0 flex flex-col h-full">
+                    {listing.image_url ? (
+                      <div className="relative h-48 overflow-hidden">
+                        <img
+                          src={listing.image_url}
+                          alt={listing.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        {listing.provider?.is_verified && (
+                          <Badge className="absolute top-3 right-3 bg-emerald-500 text-white border-0">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            {t("services.verified")}
+                          </Badge>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="relative h-48 bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                        <span className="text-6xl text-slate-300 dark:text-slate-600">
+                          🎨
+                        </span>
+                      </div>
                     )}
-                  </p>
-                )}
-                {listing.description && (
-                  <p className="text-muted-foreground text-sm line-clamp-2 mb-4">
-                    {listing.description}
-                  </p>
-                )}
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>
-                    {t("services.provider")}{" "}
-                    {listing.provider?.provider_name?.slice(0, 20) ||
-                      t("services.unknown")}
-                  </span>
-                  <span className="text-primary">
-                    {t("services.viewDetails")}
-                  </span>
-                </div>
+
+                    <div className="p-5 flex flex-col flex-grow">
+                      <div className="flex items-center justify-between mb-3">
+                        <Badge
+                          variant="secondary"
+                          className="bg-slate-100 dark:bg-slate-800"
+                        >
+                          {listing.category?.name || t("services.service")}
+                        </Badge>
+                        {listing.rating && (
+                          <div className="flex items-center gap-1 text-amber-500">
+                            <Star className="h-4 w-4 fill-current" />
+                            <span className="font-bold text-sm">
+                              {listing.rating}
+                            </span>
+                            {listing.reviews_count && (
+                              <span className="text-slate-500 text-xs">
+                                ({listing.reviews_count})
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2 line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        {listing.title}
+                      </h3>
+
+                      <p className="text-slate-500 dark:text-slate-400 text-sm mb-4 line-clamp-2">
+                        {listing.description || t("services.noDescription")}
+                      </p>
+
+                      {listing.provider && (
+                        <div className="flex items-center gap-3 mb-4">
+                          <Avatar
+                            name={listing.provider.provider_name}
+                            src={listing.provider.logo_url}
+                            className="h-8 w-8"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-slate-700 dark:text-slate-300 truncate">
+                              {listing.provider.provider_name}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="mt-auto pt-4 border-t border-slate-100 dark:border-slate-800">
+                        <div className="flex items-center justify-between">
+                          {listing.price ? (
+                            <div>
+                              <span className="text-xs text-slate-500 uppercase">
+                                {t("services.startingAt")}
+                              </span>
+                              <p className="text-xl font-extrabold text-slate-900 dark:text-white">
+                                {listing.currency || "$"}
+                                {listing.price}
+                              </p>
+                            </div>
+                          ) : (
+                            <span className="text-sm font-semibold text-indigo-600">
+                              {t("services.contactForPrice")}
+                            </span>
+                          )}
+                          <Button
+                            size="sm"
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full"
+                          >
+                            {t("services.viewDetails")}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </Link>
             ))}
           </div>
-        </>
-      ) : (
-        <div className="text-center py-12 bg-muted rounded-xl">
-          <h3 className="text-xl font-semibold mb-2">
-            {t("services.noListings")}
-          </h3>
-          <p className="text-muted-foreground mb-6">
-            {t("services.checkBack")}
-          </p>
-          <Button asChild>
-            <Link to="/services">{t("services.browseAll")}</Link>
-          </Button>
-        </div>
-      )}
+        ) : (
+          <div className="text-center py-20">
+            <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-6">
+              <Search className="h-10 w-10 text-slate-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
+              {t("services.noServicesFound")}
+            </h3>
+            <p className="text-slate-500 dark:text-slate-400 mb-6">
+              {t("services.tryDifferentCategory")}
+            </p>
+            <Button
+              onClick={() => navigate("/services")}
+              className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full"
+            >
+              {t("services.browseAllServices")}
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

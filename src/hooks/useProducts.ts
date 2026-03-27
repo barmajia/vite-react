@@ -106,7 +106,7 @@ export function useProducts(options: UseProductsOptions = {}) {
       if (error) throw error;
 
       return {
-        products: data as ProductWithDetails[],
+        products: data as unknown as ProductWithDetails[],
         totalCount: count || 0,
         totalPages: Math.ceil((count || 0) / limit),
         currentPage: page,

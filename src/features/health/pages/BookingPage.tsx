@@ -1,191 +1,402 @@
-import React, { useEffect, useState } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
-import {
-  getDoctorById,
-  createAppointment,
-  getPatientProfile,
-} from "../api/supabaseHealth";
-import type { HealthDoctorProfile } from "../types";
+/**
+ * Appointment Booking Page
+ *
+ * Schedule appointment with doctor
+ * Route: /services/health/book/:doctorId
+ */
 
-const BookingPage: React.FC = () => {
-  const { id } = useParams();
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  Calendar,
+  Clock,
+  User,
+  Mail,
+  Phone,
+  FileText,
+  CheckCircle,
+  AlertCircle,
+} from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { ServicesHeader } from "@/components/layout/ServicesHeader";
+
+export default function BookingPage() {
+  const { t } = useTranslation();
+  const { doctorId } = useParams<{ doctorId: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [doctor, setDoctor] = useState<HealthDoctorProfile | null>(null);
-  const [slotType, setSlotType] = useState<"regular" | "emergency">("regular");
-  const [dateTime, setDateTime] = useState("");
-  const [notes, setNotes] = useState("");
+  const { user } = useAuth();
+
   const [loading, setLoading] = useState(false);
-  const isEmergency = searchParams.get("emergency") === "true";
+  const [doctor, setDoctor] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    patient_name: "",
+    patient_email: "",
+    patient_phone: "",
+    appointment_date: "",
+    appointment_time: "",
+    reason: "",
+    notes: "",
+  });
 
   useEffect(() => {
-    if (isEmergency) setSlotType("emergency");
-  }, [isEmergency]);
-
-  useEffect(() => {
-    if (id) {
-      getDoctorById(id)
-        .then(setDoctor)
-        .catch((error) => console.error("Error loading doctor:", error));
-    }
-  }, [id]);
-
-  const handleBook = async () => {
-    if (!id || !dateTime) {
-      alert("Please select a date and time");
+    if (!user) {
+      toast.error(t("auth.pleaseLogin"));
+      navigate("/login");
       return;
     }
 
+    // Pre-fill user data
+    setFormData((prev) => ({
+      ...prev,
+      patient_name: user.user_metadata?.full_name || "",
+      patient_email: user.email || "",
+      patient_phone: user.user_metadata?.phone || "",
+      appointment_time: searchParams.get("slot") || "",
+    }));
+
+    fetchDoctor();
+  }, [doctorId, user]);
+
+  const fetchDoctor = async () => {
     try {
-      setLoading(true);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) {
-        alert("Login required");
-        navigate("/login");
-        return;
-      }
+      const { data, error } = await supabase
+        .from("health_doctor_profiles")
+        .select(
+          `
+          *,
+          users:user_id (full_name, specialization)
+        `,
+        )
+        .eq("id", doctorId)
+        .single();
 
-      let patientProfile = await getPatientProfile(user.id);
-      if (!patientProfile) {
-        patientProfile = await supabase
+      if (error) throw error;
+      if (data) setDoctor(data);
+    } catch (error) {
+      console.error("Error fetching doctor:", error);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      // Get patient profile
+      const { data: patientData } = await supabase
+        .from("health_patient_profiles")
+        .select("id")
+        .eq("user_id", user!.id)
+        .single();
+
+      let patientId = patientData?.id;
+
+      // Create patient profile if doesn't exist
+      if (!patientId) {
+        const { data: newPatient } = await supabase
           .from("health_patient_profiles")
-          .insert({ user_id: user.id, medical_history: [], total_visits: 0 })
-          .select()
-          .single()
-          .then((res) => res.data);
+          .insert({
+            user_id: user!.id,
+          })
+          .select("id")
+          .single();
+
+        patientId = newPatient?.id;
       }
 
-      if (!patientProfile) {
-        alert("Unable to create patient profile. Please try again.");
-        return;
-      }
-
-      const selectedDate = new Date(dateTime);
-      if (selectedDate <= new Date()) {
-        alert("Please select a future date and time");
-        return;
-      }
-
-      const amount =
-        slotType === "emergency"
-          ? doctor!.emergency_fee
-          : doctor!.consultation_fee;
-
-      await createAppointment({
-        doctor_id: id,
-        patient_id: patientProfile.id,
-        scheduled_at: selectedDate.toISOString(),
-        slot_type: slotType,
-        payment_amount: amount,
+      // Create appointment
+      const { error } = await supabase.from("health_appointments").insert({
+        doctor_id: doctorId,
+        patient_id: patientId,
+        scheduled_at: `${formData.appointment_date}T${formData.appointment_time}`,
         status: "pending",
         payment_status: "pending",
-        notes: notes || null,
+        notes: formData.reason,
+        metadata: {
+          patient_name: formData.patient_name,
+          patient_email: formData.patient_email,
+          patient_phone: formData.patient_phone,
+        },
       });
 
-      alert("Booking created successfully! Redirecting to your dashboard...");
+      if (error) throw error;
+
+      toast.success(t("health.appointmentBooked"));
       navigate("/services/health/patient/dashboard");
     } catch (error) {
       console.error("Booking error:", error);
-      alert("Booking failed: " + (error as Error).message);
+      toast.error(t("health.bookingFailed"));
     } finally {
       setLoading(false);
     }
   };
 
-  if (!doctor) {
-    return (
-      <div className="text-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600 dark:text-gray-400">
-          Loading doctor details...
-        </p>
-      </div>
-    );
-  }
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
 
-  const amount =
-    slotType === "emergency" ? doctor.emergency_fee : doctor.consultation_fee;
-  const minDateTime = new Date().toISOString().slice(0, 16);
+  // Get tomorrow's date (minimum date for booking)
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const minDate = tomorrow.toISOString().split("T")[0];
 
   return (
-    <div className="max-w-md mx-auto">
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-md border border-gray-200 dark:border-gray-700">
-        <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">
-          Book Appointment
-        </h2>
-        <p className="text-gray-600 dark:text-gray-400 mb-6">
-          with Dr. {doctor.specialization}
-        </p>
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
+      <ServicesHeader />
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Appointment Type
-            </label>
-            <select
-              value={slotType}
-              onChange={(e) =>
-                setSlotType(e.target.value as "regular" | "emergency")
-              }
-              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-2 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-gray-900 dark:text-white"
-              disabled={isEmergency}
-            >
-              <option value="regular">Regular Consultation</option>
-              <option value="emergency">Emergency (2x Fee)</option>
-            </select>
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">
+            {t("health.bookAppointment")}
+          </h1>
+          <p className="text-slate-500 dark:text-slate-400">
+            {t("health.bookAppointmentDesc")}
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {/* Booking Form */}
+          <div className="md:col-span-2">
+            <Card className="border-slate-200 dark:border-slate-800">
+              <CardHeader>
+                <CardTitle>{t("health.appointmentDetails")}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Patient Info */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                      <User className="h-5 w-5 text-emerald-500" />
+                      {t("health.patientInformation")}
+                    </h3>
+
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="patient_name">
+                          {t("health.fullName")} *
+                        </Label>
+                        <Input
+                          id="patient_name"
+                          name="patient_name"
+                          value={formData.patient_name}
+                          onChange={handleChange}
+                          required
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="patient_email">
+                          {t("health.email")} *
+                        </Label>
+                        <Input
+                          id="patient_email"
+                          name="patient_email"
+                          type="email"
+                          value={formData.patient_email}
+                          onChange={handleChange}
+                          required
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="patient_phone">
+                          {t("health.phone")} *
+                        </Label>
+                        <Input
+                          id="patient_phone"
+                          name="patient_phone"
+                          value={formData.patient_phone}
+                          onChange={handleChange}
+                          required
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Appointment Details */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                      <Calendar className="h-5 w-5 text-blue-500" />
+                      {t("health.appointmentDateTime")}
+                    </h3>
+
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="appointment_date">
+                          {t("health.date")} *
+                        </Label>
+                        <Input
+                          id="appointment_date"
+                          name="appointment_date"
+                          type="date"
+                          value={formData.appointment_date}
+                          onChange={handleChange}
+                          min={minDate}
+                          required
+                          className="mt-1"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="appointment_time">
+                          {t("health.time")} *
+                        </Label>
+                        <Input
+                          id="appointment_time"
+                          name="appointment_time"
+                          value={formData.appointment_time}
+                          onChange={handleChange}
+                          placeholder="e.g., 10:00 AM"
+                          required
+                          className="mt-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Reason & Notes */}
+                  <div className="space-y-4">
+                    <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-purple-500" />
+                      {t("health.reasonForVisit")}
+                    </h3>
+
+                    <div>
+                      <Label htmlFor="reason">{t("health.mainReason")} *</Label>
+                      <Textarea
+                        id="reason"
+                        name="reason"
+                        value={formData.reason}
+                        onChange={handleChange}
+                        rows={3}
+                        placeholder={t("health.describeSymptoms")}
+                        required
+                        className="mt-1"
+                      />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="notes">
+                        {t("health.additionalNotes")}
+                      </Label>
+                      <Textarea
+                        id="notes"
+                        name="notes"
+                        value={formData.notes}
+                        onChange={handleChange}
+                        rows={2}
+                        placeholder={t("health.anyAdditionalInfo")}
+                        className="mt-1"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Consent */}
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5" />
+                      <div className="text-sm text-blue-700 dark:text-blue-300">
+                        <p className="font-semibold mb-1">
+                          {t("health.importantNotice")}
+                        </p>
+                        <p>{t("health.appointmentNotice")}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Submit Button */}
+                  <Button
+                    type="submit"
+                    className="w-full h-12 text-lg bg-emerald-600 hover:bg-emerald-700"
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      t("health.bookingAppointment")
+                    ) : (
+                      <>
+                        <CheckCircle className="h-5 w-5 mr-2" />
+                        {t("health.confirmBooking")}
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Date & Time
-            </label>
-            <input
-              type="datetime-local"
-              value={dateTime}
-              onChange={(e) => setDateTime(e.target.value)}
-              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-2 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-gray-900 dark:text-white"
-              min={minDateTime}
-            />
-          </div>
+          {/* Summary Sidebar */}
+          <div className="md:col-span-1">
+            <Card className="border-slate-200 dark:border-slate-800 sticky top-24">
+              <CardHeader>
+                <CardTitle>{t("health.bookingSummary")}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {doctor && (
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">
+                      {t("health.doctor")}
+                    </p>
+                    <p className="font-semibold text-slate-900 dark:text-white">
+                      {doctor.users?.full_name}
+                    </p>
+                    <p className="text-sm text-emerald-600">
+                      {doctor.users?.specialization}
+                    </p>
+                  </div>
+                )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Notes (Optional)
-            </label>
-            <textarea
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 p-2 rounded-lg focus:ring-2 focus:ring-violet-500 focus:border-violet-500 text-gray-900 dark:text-white"
-              rows={3}
-              placeholder="Describe your symptoms or reason for visit..."
-            />
-          </div>
+                {formData.appointment_date && (
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">
+                      {t("health.date")}
+                    </p>
+                    <p className="font-semibold text-slate-900 dark:text-white">
+                      {new Date(formData.appointment_date).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
 
-          <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-            <div className="flex justify-between items-center">
-              <span className="text-gray-600 dark:text-gray-400">
-                Consultation Fee:
-              </span>
-              <span className="text-xl font-bold text-violet-600 dark:text-violet-400">
-                ${amount}
-              </span>
-            </div>
-          </div>
+                {formData.appointment_time && (
+                  <div>
+                    <p className="text-sm text-slate-500 mb-1">
+                      {t("health.time")}
+                    </p>
+                    <p className="font-semibold text-slate-900 dark:text-white">
+                      {formData.appointment_time}
+                    </p>
+                  </div>
+                )}
 
-          <button
-            onClick={handleBook}
-            disabled={loading || !dateTime}
-            className="w-full bg-violet-600 text-white py-3 rounded-lg font-bold hover:bg-violet-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Processing..." : "Confirm Booking"}
-          </button>
+                <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
+                  <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <CheckCircle className="h-4 w-4 text-emerald-500" />
+                    {t("health.freeCancellation")}
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-slate-500 mt-2">
+                    <CheckCircle className="h-4 w-4 text-emerald-500" />
+                    {t("health.secureBooking")}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
   );
-};
-
-export default BookingPage;
+}

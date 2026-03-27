@@ -119,6 +119,21 @@ import { MiddlemanCommission } from "@/pages/middleman/MiddlemanCommission";
 import { MiddlemanProfile } from "@/pages/middleman/MiddlemanProfile";
 import { MiddlemanSettings } from "@/pages/middleman/MiddlemanSettings";
 
+// ==================== Wallet ====================
+import { WalletDashboard } from "@/pages/wallet/WalletDashboard";
+import { TransactionHistory } from "@/pages/wallet/TransactionHistory";
+import { PayoutRequest } from "@/pages/wallet/PayoutRequest";
+import { PayoutHistory } from "@/pages/wallet/PayoutHistory";
+
+// ==================== Delivery ====================
+import { DeliveryDashboard } from "@/pages/delivery/DeliveryDashboard";
+
+// ==================== Customer ====================
+import { OrderTracking } from "@/pages/customer/OrderTracking";
+
+// ==================== Seller ====================
+import { CommissionReport } from "@/pages/seller/CommissionReport";
+
 // ==================== Error Pages ====================
 import { NotFound } from "@/pages/errors/NotFound";
 import { ServerError } from "@/pages/errors/ServerError";
@@ -408,6 +423,62 @@ function App() {
                     />
                     <Route path="profile" element={<MiddlemanProfile />} />
                     <Route path="settings" element={<MiddlemanSettings />} />
+                  </Route>
+
+                  {/* ==================== WALLET VERTICAL ==================== */}
+                  <Route
+                    path="wallet"
+                    element={
+                      <ProtectedRoute>
+                        <WalletDashboard />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<WalletDashboard />} />
+                    <Route
+                      path="transactions"
+                      element={<TransactionHistory />}
+                    />
+                    <Route path="payouts" element={<PayoutRequest />} />
+                    <Route path="payout-history" element={<PayoutHistory />} />
+                  </Route>
+
+                  {/* ==================== DELIVERY VERTICAL ==================== */}
+                  <Route path="delivery">
+                    <Route
+                      index
+                      element={
+                        <ProtectedRoute
+                          allowedAccountTypes={["delivery_driver"]}
+                        >
+                          <DeliveryDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Route>
+
+                  {/* ==================== CUSTOMER VERTICAL ==================== */}
+                  <Route path="customer">
+                    <Route
+                      path="orders/tracking"
+                      element={
+                        <ProtectedRoute>
+                          <OrderTracking />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Route>
+
+                  {/* ==================== SELLER VERTICAL ==================== */}
+                  <Route path="seller">
+                    <Route
+                      path="commission"
+                      element={
+                        <ProtectedRoute allowedAccountTypes={["seller"]}>
+                          <CommissionReport />
+                        </ProtectedRoute>
+                      }
+                    />
                   </Route>
 
                   {/* ==================== FACTORY VERTICAL ==================== */}

@@ -14,6 +14,14 @@ import {
   ShoppingBag,
   Briefcase,
   Globe,
+  Code,
+  Stethoscope,
+  Home as HomeIcon,
+  Camera,
+  MessageSquare,
+  LayoutDashboard,
+  UserPlus,
+  Heart,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -29,6 +37,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -115,27 +126,120 @@ export function Header() {
 
             {/* Center Navigation - Desktop */}
             <nav className="hidden lg:flex items-center gap-1">
-              {[
-                { label: t("nav.products"), href: ROUTES.PRODUCTS },
-                { label: t("nav.about"), href: ROUTES.ABOUT },
-                { label: t("nav.contact"), href: ROUTES.CONTACT },
-              ].map((item) => (
-                <Link
-                  key={item.label}
-                  to={item.href}
-                  className={cn(
-                    "relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
-                    location.pathname === item.href
-                      ? "text-violet-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
-                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
-                  )}
-                >
-                  {item.label}
-                  {location.pathname === item.href && (
-                    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full" />
-                  )}
-                </Link>
-              ))}
+              {/* Products */}
+              <Link
+                to={ROUTES.PRODUCTS}
+                className={cn(
+                  "relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
+                  location.pathname.startsWith(ROUTES.PRODUCTS)
+                    ? "text-violet-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
+                )}
+              >
+                {t("nav.products")}
+                {location.pathname.startsWith(ROUTES.PRODUCTS) && (
+                  <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full" />
+                )}
+              </Link>
+
+              {/* Services Dropdown */}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className={cn(
+                      "px-4 py-2 text-sm font-medium rounded-lg gap-2",
+                      location.pathname.startsWith("/services")
+                        ? "text-violet-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                        : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
+                    )}
+                  >
+                    {t("nav.services")}
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="w-[500px] p-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      {
+                        title: t("services.tech"),
+                        href: "/services/tech",
+                        icon: Code,
+                        desc: t("services.techDesc"),
+                      },
+                      {
+                        title: t("services.healthcare"),
+                        href: "/services/health",
+                        icon: Stethoscope,
+                        desc: t("services.healthcareDesc"),
+                      },
+                      {
+                        title: t("services.home"),
+                        href: "/services/home",
+                        icon: HomeIcon,
+                        desc: t("services.homeDesc"),
+                      },
+                      {
+                        title: t("services.custom"),
+                        href: "/services/custom",
+                        icon: Camera,
+                        desc: t("services.customDesc"),
+                      },
+                    ].map((item) => (
+                      <DropdownMenuItem key={item.href} asChild className="p-0">
+                        <Link
+                          to={item.href}
+                          className="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors w-full"
+                        >
+                          <div className="p-2 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex-shrink-0">
+                            <item.icon className="h-5 w-5 text-violet-600 dark:text-violet-400" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                              {item.title}
+                            </p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                              {item.desc}
+                            </p>
+                          </div>
+                        </Link>
+                      </DropdownMenuItem>
+                    ))}
+                  </div>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {/* Factory */}
+              <Link
+                to={ROUTES.FACTORY}
+                className={cn(
+                  "relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
+                  location.pathname.startsWith(ROUTES.FACTORY)
+                    ? "text-violet-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
+                )}
+              >
+                {t("nav.factory")}
+                {location.pathname.startsWith(ROUTES.FACTORY) && (
+                  <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full" />
+                )}
+              </Link>
+
+              {/* Middleman */}
+              <Link
+                to={ROUTES.MIDDLEMAN}
+                className={cn(
+                  "relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
+                  location.pathname.startsWith(ROUTES.MIDDLEMAN)
+                    ? "text-violet-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
+                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
+                )}
+              >
+                {t("nav.middleman")}
+                {location.pathname.startsWith(ROUTES.MIDDLEMAN) && (
+                  <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full" />
+                )}
+              </Link>
             </nav>
 
             {/* Right Actions - Desktop */}

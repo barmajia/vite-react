@@ -130,7 +130,6 @@ export const TradingChatWidget: React.FC<TradingChatWidgetProps> = ({
         <ChatComponent
           currentUserId={currentUserId}
           conversationId={conversationId}
-          targetUserId={targetUserId}
           context={context}
           onClose={() => setIsOpen(false)}
           className="w-full"

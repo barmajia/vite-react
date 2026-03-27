@@ -1,15 +1,18 @@
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Label } from '@/components/ui/label';
-import { Banknote, CreditCard, Wallet, Shield, Truck } from 'lucide-react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Banknote, CreditCard, Wallet, Shield, Truck } from "lucide-react";
 
 interface PaymentMethodProps {
-  selectedMethod: 'cod' | 'card' | 'wallet';
+  selectedMethod: "stripe" | "fawry" | "cod";
   onSubmit: () => void;
   onBack: () => void;
   loading: boolean;
   total: number;
+  onPaymentMethodChange?: (method: "stripe" | "fawry" | "cod") => void;
+  onCustomerEmailChange?: (email: string) => void;
 }
 
 export default function PaymentMethod({
@@ -17,49 +20,72 @@ export default function PaymentMethod({
   onSubmit,
   onBack,
   loading,
-  total
+  total,
+  onPaymentMethodChange,
+  onCustomerEmailChange,
 }: PaymentMethodProps) {
   const paymentMethods = [
     {
-      id: 'cod',
-      label: 'Cash on Delivery',
-      description: 'Pay with cash when you receive your order',
+      id: "cod" as const,
+      label: "Cash on Delivery",
+      description: "Pay with cash when you receive your order",
       icon: Banknote,
       available: true,
     },
     {
-      id: 'card',
-      label: 'Credit/Debit Card',
-      description: 'Pay securely with your card',
+      id: "stripe" as const,
+      label: "Credit/Debit Card",
+      description: "Pay securely with your card (Stripe)",
       icon: CreditCard,
-      available: false,
-      comingSoon: true,
+      available: true,
     },
     {
-      id: 'wallet',
-      label: 'Digital Wallet',
-      description: 'Pay using your wallet balance',
+      id: "fawry" as const,
+      label: "Fawry (Egypt)",
+      description: "Pay at any Fawry kiosk",
       icon: Wallet,
-      available: false,
-      comingSoon: true,
+      available: true,
     },
   ];
 
   return (
     <div className="space-y-6">
+      {/* Email Input for Order */}
+      <div>
+        <Label htmlFor="email">Email Address</Label>
+        <Input
+          id="email"
+          type="email"
+          placeholder="your@email.com"
+          className="mt-2"
+          onChange={(e) => onCustomerEmailChange?.(e.target.value)}
+          required
+        />
+        <p className="text-xs text-gray-500 mt-1">
+          We'll send order confirmation and tracking details to this email
+        </p>
+      </div>
+
       {/* Payment Method Selection */}
       <div>
         <Label className="text-base font-semibold">Select Payment Method</Label>
-        <RadioGroup value={selectedMethod} className="mt-3 space-y-3">
+        <RadioGroup
+          value={selectedMethod}
+          onValueChange={(value) => {
+            const method = value as "stripe" | "fawry" | "cod";
+            onPaymentMethodChange?.(method);
+          }}
+          className="mt-3 space-y-3"
+        >
           {paymentMethods.map((method) => (
             <Card
               key={method.id}
               className={`cursor-pointer transition-all ${
-                !method.available ? 'opacity-60' : ''
+                !method.available ? "opacity-60" : ""
               } ${
                 selectedMethod === method.id
-                  ? 'border-blue-500 bg-blue-50'
-                  : 'hover:bg-gray-50'
+                  ? "border-blue-500 bg-blue-50"
+                  : "hover:bg-gray-50"
               }`}
             >
               <CardContent className="p-4">
@@ -73,11 +99,6 @@ export default function PaymentMethod({
                     <div className="flex items-center gap-2">
                       <method.icon className="h-5 w-5 text-blue-600" />
                       <span className="font-medium">{method.label}</span>
-                      {method.comingSoon && (
-                        <span className="text-xs bg-gray-200 text-gray-600 px-2 py-0.5 rounded">
-                          Coming Soon
-                        </span>
-                      )}
                     </div>
                     <p className="text-sm text-gray-500 mt-1">
                       {method.description}
@@ -91,7 +112,7 @@ export default function PaymentMethod({
       </div>
 
       {/* COD Information Box */}
-      {selectedMethod === 'cod' && (
+      {selectedMethod === "cod" && (
         <div className="space-y-4">
           <Card className="bg-green-50 border-green-200">
             <CardContent className="p-4 space-y-3">
@@ -170,7 +191,9 @@ export default function PaymentMethod({
           className="flex-1"
           disabled={loading}
         >
-          {loading ? 'Creating Order...' : `Place Order - ${total.toFixed(2)} EGP`}
+          {loading
+            ? "Creating Order..."
+            : `Place Order - ${total.toFixed(2)} EGP`}
         </Button>
       </div>
     </div>

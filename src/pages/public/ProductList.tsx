@@ -74,57 +74,44 @@ export function ProductList() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50 dark:from-[#0f172a] dark:via-[#1e293b] dark:to-[#0f172a] pt-20 pb-16">
-      {/* Hero Header */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#0f172a] to-[#1e293b] dark:from-blue-900 dark:to-blue-800 text-white py-12 px-6 mb-8">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-white/5 rounded-full blur-3xl" />
-        <div className="relative max-w-7xl mx-auto">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#0b1120] pt-16 pb-16">
+      {/* Simplified Modern Header */}
+      <div className="bg-white dark:bg-[#0f172a] border-b border-gray-200 dark:border-[#1e293b] sticky top-16 z-30 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">
+            <div className="flex items-center gap-3">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                   {searchQuery
                     ? t("productList.searchResults", { query: searchQuery })
                     : t("productList.allProducts")}
                 </h1>
-                {activeFiltersCount > 0 && (
-                  <Badge className="bg-blue-500 text-white">
-                    {activeFiltersCount} filter
-                    {activeFiltersCount > 1 ? "s" : ""}
-                  </Badge>
+                {data && (
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {t("productList.productsFound", { count: data.totalCount })}
+                  </p>
                 )}
               </div>
-              {data && (
-                <p className="text-blue-100 text-lg">
-                  {t("productList.productsFound", { count: data.totalCount })}
-                </p>
+              {activeFiltersCount > 0 && (
+                <Badge
+                  variant="default"
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {activeFiltersCount}
+                </Badge>
               )}
             </div>
 
-            {/* Sort & View Controls */}
+            {/* Controls */}
             <div className="flex items-center gap-3 flex-wrap">
               {/* Mobile Filter Toggle */}
               <Button
                 variant="outline"
-                className="lg:hidden border-white/20 text-white hover:bg-white/10"
+                className="lg:hidden border-gray-200 dark:border-[#1e293b]"
                 onClick={() => setShowFilters(!showFilters)}
               >
-                {showFilters ? (
-                  <X className="h-4 w-4 mr-2" />
-                ) : (
-                  <SlidersHorizontal className="h-4 w-4 mr-2" />
-                )}
+                <SlidersHorizontal className="h-4 w-4 mr-2" />
                 {t("common.filters")}
-                {activeFiltersCount > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs"
-                  >
-                    {activeFiltersCount}
-                  </Badge>
-                )}
               </Button>
 
               {/* Sort Dropdown */}
@@ -132,7 +119,7 @@ export function ProductList() {
                 value={`${sortBy}-${sortOrder}`}
                 onValueChange={handleSortChange}
               >
-                <SelectTrigger className="w-[160px] sm:w-[180px] border-white/20 bg-white/10 text-white hover:bg-white/20">
+                <SelectTrigger className="w-[160px] border-gray-200 dark:border-[#1e293b]">
                   <SelectValue placeholder={t("productList.sortBy")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -158,14 +145,14 @@ export function ProductList() {
               </Select>
 
               {/* View Mode Toggle */}
-              <div className="flex border border-white/20 rounded-lg overflow-hidden bg-white/10">
+              <div className="flex border border-gray-200 dark:border-[#1e293b] rounded-lg overflow-hidden bg-white dark:bg-[#0f172a]">
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => setViewMode("grid")}
                   className={cn(
-                    "rounded-r-none text-white hover:bg-white/20",
-                    viewMode === "grid" && "bg-white/20",
+                    "rounded-r-none h-9 w-9",
+                    viewMode === "grid" && "bg-gray-100 dark:bg-[#1e293b]",
                   )}
                 >
                   <Grid className="h-4 w-4" />
@@ -175,8 +162,8 @@ export function ProductList() {
                   size="icon"
                   onClick={() => setViewMode("list")}
                   className={cn(
-                    "rounded-l-none text-white hover:bg-white/20",
-                    viewMode === "list" && "bg-white/20",
+                    "rounded-l-none h-9 w-9",
+                    viewMode === "list" && "bg-gray-100 dark:bg-[#1e293b]",
                   )}
                 >
                   <List className="h-4 w-4" />
@@ -188,11 +175,25 @@ export function ProductList() {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex gap-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex gap-8">
           {/* Sidebar - Desktop */}
           <aside className="hidden lg:block w-64 shrink-0">
-            <div className="sticky top-24">
+            <div className="sticky top-24 space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="font-semibold text-gray-900 dark:text-white">
+                  {t("common.filters")}
+                </h2>
+                {activeFiltersCount > 0 && (
+                  <Button
+                    variant="link"
+                    className="h-auto p-0 text-xs text-muted-foreground"
+                    onClick={() => setSearchParams(new URLSearchParams())}
+                  >
+                    {t("common.clearAll")}
+                  </Button>
+                )}
+              </div>
               <FilterSidebar />
             </div>
           </aside>
@@ -201,13 +202,13 @@ export function ProductList() {
           {showFilters && (
             <>
               <div
-                className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
                 onClick={() => setShowFilters(false)}
               />
-              <aside className="fixed left-0 top-0 bottom-0 w-80 bg-background z-50 overflow-y-auto lg:hidden pt-20">
+              <aside className="fixed left-0 top-0 bottom-0 w-80 bg-white dark:bg-[#0f172a] z-50 overflow-y-auto lg:hidden shadow-2xl">
                 <div className="p-4">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-semibold">
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                       {t("common.filters")}
                     </h2>
                     <Button
@@ -219,16 +220,24 @@ export function ProductList() {
                     </Button>
                   </div>
                   <FilterSidebar />
+                  <div className="mt-6 sticky bottom-0 bg-white dark:bg-[#0f172a] pt-4 border-t dark:border-[#1e293b]">
+                    <Button
+                      className="w-full"
+                      onClick={() => setShowFilters(false)}
+                    >
+                      {t("common.showResults")}
+                    </Button>
+                  </div>
                 </div>
               </aside>
             </>
           )}
 
-          {/* Products */}
+          {/* Products Grid */}
           <div className="flex-1 min-w-0">
             {error ? (
-              <div className="text-center py-16 bg-white dark:bg-[#1e293b] rounded-2xl shadow-lg border border-gray-200 dark:border-[#0f172a]">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
+              <div className="text-center py-20 bg-white dark:bg-[#1e293b] rounded-2xl border border-gray-200 dark:border-[#0f172a]">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 dark:bg-red-900/20 mb-4">
                   <X className="h-8 w-8 text-red-600 dark:text-red-400" />
                 </div>
                 <p className="text-destructive text-lg font-semibold">
@@ -238,11 +247,11 @@ export function ProductList() {
             ) : isLoading ? (
               <ProductGrid isLoading={true} />
             ) : data && data.products.length === 0 ? (
-              <div className="text-center py-16 bg-white dark:bg-[#1e293b] rounded-2xl shadow-lg border border-gray-200 dark:border-[#0f172a]">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/20 mb-4">
+              <div className="text-center py-20 bg-white dark:bg-[#1e293b] rounded-2xl border border-gray-200 dark:border-[#0f172a]">
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-900/20 mb-4">
                   <Grid className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                 </div>
-                <h2 className="text-2xl font-bold mb-2">
+                <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">
                   {t("productList.noProductsFound")}
                 </h2>
                 <p className="text-muted-foreground mb-6">
@@ -253,7 +262,7 @@ export function ProductList() {
                     setSearchParams(new URLSearchParams());
                     setCurrentPage(1);
                   }}
-                  className="bg-gradient-to-r from-[#0f172a] to-[#1e293b] dark:from-blue-600 dark:to-blue-700 text-white"
+                  className="bg-[#0f172a] dark:bg-blue-600 text-white hover:bg-[#0f172a]/90"
                 >
                   {t("productList.clearFilters")}
                 </Button>
@@ -261,9 +270,8 @@ export function ProductList() {
             ) : (
               <>
                 <ProductGrid products={data?.products || []} />
-
                 {data && data.totalPages > 1 && (
-                  <div className="mt-8">
+                  <div className="mt-12">
                     <Pagination
                       currentPage={currentPage}
                       totalPages={data.totalPages}

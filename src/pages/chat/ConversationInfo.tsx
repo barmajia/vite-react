@@ -12,11 +12,15 @@ import {
   Calendar,
   Shield,
   AlertCircle,
-  Block,
+  Blocks,
   MessageSquareOff,
 } from "lucide-react";
 import type { ConversationListItem } from "@/lib/chat-types";
-import { formatMessageTime, getContextBadgeColor, getContextLabel } from "@/lib/chat-utils";
+import {
+  formatMessageTime,
+  getContextBadgeColor,
+  getContextLabel,
+} from "@/lib/chat-utils";
 
 interface ConversationInfoProps {
   conversation: ConversationListItem;
@@ -159,7 +163,7 @@ export function ConversationInfo({
                   <Calendar className="h-4 w-4 text-green-600 dark:text-green-400" />
                   <p className="text-sm font-medium text-green-900 dark:text-green-100">
                     {new Date(
-                      conversation.appointment.scheduled_at
+                      conversation.appointment.scheduled_at,
                     ).toLocaleDateString()}
                   </p>
                 </div>
@@ -201,11 +205,7 @@ export function ConversationInfo({
               Actions
             </h4>
 
-            <Button
-              variant="outline"
-              className="w-full justify-start"
-              disabled
-            >
+            <Button variant="outline" className="w-full justify-start" disabled>
               <User className="h-4 w-4 mr-2" />
               View Profile
             </Button>
@@ -224,7 +224,7 @@ export function ConversationInfo({
               className="w-full justify-start text-destructive hover:text-destructive"
               onClick={handleBlockUser}
             >
-              <Block className="h-4 w-4 mr-2" />
+              <Blocks className="h-4 w-4 mr-2" />
               Block User
             </Button>
 

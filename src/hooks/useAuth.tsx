@@ -5,7 +5,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { Session, User, Json } from "@supabase/supabase-js";
+import { Session, User } from "@supabase/supabase-js";
 import {
   supabase,
   onAuthStateChange,
@@ -24,6 +24,15 @@ import {
   signupRateLimiter,
 } from "@/lib/security";
 
+// Json type for Supabase responses
+type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[];
+
 type AuthContextType = {
   session: Session | null;
   user: User | null;
@@ -31,7 +40,7 @@ type AuthContextType = {
   signIn: (
     email: string,
     password: string,
-  ) => Promise<{ error: Error | null; data: Json | null }>;
+  ) => Promise<{ error: Error | null; data: any }>;
   signUp: (
     email: string,
     password: string,

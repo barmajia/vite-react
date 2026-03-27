@@ -136,7 +136,15 @@ export function DeliverySignupForm({
           <Select
             value={formData.vehicle_type}
             onValueChange={(v: string) =>
-              setFormData({ ...formData, vehicle_type: v })
+              setFormData({
+                ...formData,
+                vehicle_type: v as
+                  | "motorcycle"
+                  | "car"
+                  | "bicycle"
+                  | "van"
+                  | "truck",
+              })
             }
           >
             <SelectTrigger className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white">
