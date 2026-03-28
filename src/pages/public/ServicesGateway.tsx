@@ -12,7 +12,6 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
-import { Logo } from "@/components/shared/Logo";
 import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
 export function ServicesGateway() {
@@ -38,11 +37,7 @@ export function ServicesGateway() {
       <div className="container mx-auto px-4 py-16">
         <div className="text-center max-w-5xl mx-auto mb-16">
           <div className="flex justify-center mb-6 w-22 h-22">
-            <Logo
-              size="xl"
-              showText={false}
-              className="hover:scale-150 transition-transform duration-300 w-24 h-24"
-            />
+            <div className="hover:scale-150 transition-transform duration-300 w-24 h-24" />
           </div>
           <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 dark:from-white dark:via-gray-100 dark:to-gray-200 bg-clip-text text-transparent">
             {t("gateway.welcomeTitle")}

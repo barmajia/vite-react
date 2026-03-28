@@ -284,15 +284,14 @@ const PharmacyList: React.FC = () => {
           <div className="text-center mb-8">
             <Badge className="bg-emerald-500/20 text-emerald-200 border-emerald-400/30 text-sm px-4 py-1.5 rounded-full mb-4">
               <Pill className="w-4 h-4 mr-2 inline" />
-              Pharmacy Network
+              {t("pharmacy.pharmacyNetwork")}
             </Badge>
 
             <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 tracking-tight">
-              Find Nearby Pharmacies
+              {t("pharmacy.findNearbyPharmacies")}
             </h1>
             <p className="text-xl text-emerald-100 max-w-3xl mx-auto">
-              Get your prescriptions filled at verified pharmacies near you.
-              Home delivery available.
+              {t("pharmacy.getPrescriptionsFilled")}
             </p>
           </div>
 
@@ -303,7 +302,7 @@ const PharmacyList: React.FC = () => {
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
                 <Input
                   type="text"
-                  placeholder="Search pharmacies by name or location..."
+                  placeholder={t("pharmacy.searchPharmaciesPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-12 h-14 rounded-full bg-white text-slate-900 border-0 focus:ring-2 focus:ring-emerald-500"
@@ -316,7 +315,7 @@ const PharmacyList: React.FC = () => {
                 className="h-14 px-6 rounded-full bg-white/10 border-white/20 text-white hover:bg-white/20"
               >
                 <Filter className="h-5 w-5 mr-2" />
-                Filters
+                {t("pharmacy.filters")}
                 {activeFiltersCount > 0 && (
                   <Badge className="ml-2 bg-emerald-500 text-white">
                     {activeFiltersCount}
@@ -335,7 +334,7 @@ const PharmacyList: React.FC = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                  Filters
+                  {t("pharmacy.filters")}
                 </h3>
                 <Button
                   variant="ghost"
@@ -350,7 +349,7 @@ const PharmacyList: React.FC = () => {
                   }
                   className="text-slate-500"
                 >
-                  Clear All
+                  {t("pharmacy.clearAll")}
                 </Button>
               </div>
 
@@ -371,7 +370,7 @@ const PharmacyList: React.FC = () => {
                     className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2"
                   >
                     <Truck className="h-4 w-4" />
-                    Delivery Available
+                    {t("pharmacy.deliveryAvailable")}
                   </label>
                 </div>
 
@@ -391,7 +390,7 @@ const PharmacyList: React.FC = () => {
                     className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2"
                   >
                     <Pill className="h-4 w-4" />
-                    Accepts Prescriptions
+                    {t("pharmacy.acceptsPrescriptions")}
                   </label>
                 </div>
 
@@ -411,7 +410,7 @@ const PharmacyList: React.FC = () => {
                     className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2"
                   >
                     <CheckCircle2 className="h-4 w-4" />
-                    Verified Only
+                    {t("pharmacy.verifiedOnly")}
                   </label>
                 </div>
 
@@ -428,7 +427,7 @@ const PharmacyList: React.FC = () => {
                     className="text-sm font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2"
                   >
                     <Clock className="h-4 w-4" />
-                    Open Now
+                    {t("pharmacy.openNow")}
                   </label>
                 </div>
               </div>
@@ -444,26 +443,28 @@ const PharmacyList: React.FC = () => {
             <span className="font-bold text-slate-900 dark:text-white">
               {filteredPharmacies.length}
             </span>{" "}
-            pharmacies found
+            {t("pharmacy.pharmaciesFound")}
           </p>
 
           <div className="flex items-center gap-4">
             {userLocation && (
               <Badge variant="secondary" className="bg-blue-100 text-blue-700">
                 <Navigation className="h-3 w-3 mr-1" />
-                Using your location
+                {t("pharmacy.usingYourLocation")}
               </Badge>
             )}
 
             <Select value={sortBy} onValueChange={(v) => setSortBy(v as any)}>
               <SelectTrigger className="w-48">
-                <SelectValue placeholder="Sort by" />
+                <SelectValue placeholder={t("pharmacy.sortBy")} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="rating">Top Rated</SelectItem>
-                <SelectItem value="name">Name (A-Z)</SelectItem>
+                <SelectItem value="rating">{t("pharmacy.topRated")}</SelectItem>
+                <SelectItem value="name">{t("pharmacy.nameAZ")}</SelectItem>
                 {userLocation && (
-                  <SelectItem value="distance">Distance (Nearest)</SelectItem>
+                  <SelectItem value="distance">
+                    {t("pharmacy.distanceNearest")}
+                  </SelectItem>
                 )}
               </SelectContent>
             </Select>
@@ -480,11 +481,10 @@ const PharmacyList: React.FC = () => {
                 <Pill className="h-10 w-10 text-slate-400" />
               </div>
               <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
-                No Pharmacies Found
+                {t("pharmacy.noPharmaciesFound")}
               </h3>
               <p className="text-slate-600 dark:text-slate-400 mb-6">
-                Try adjusting your search or filters to find what you're looking
-                for.
+                {t("pharmacy.tryAdjustingSearch")}
               </p>
               <Button
                 onClick={() => {
@@ -498,7 +498,7 @@ const PharmacyList: React.FC = () => {
                 }}
                 variant="outline"
               >
-                Clear All Filters
+                {t("pharmacy.clearAllFilters")}
               </Button>
             </CardContent>
           </Card>
@@ -536,13 +536,13 @@ const PharmacyList: React.FC = () => {
                         {pharmacy.is_verified && (
                           <Badge className="bg-emerald-500/90 text-white border-0 backdrop-blur-md">
                             <CheckCircle2 className="h-3 w-3 mr-1" />
-                            Verified
+                            {t("pharmacy.verified")}
                           </Badge>
                         )}
                         {pharmacy.delivery_available && (
                           <Badge className="bg-blue-500/90 text-white border-0 backdrop-blur-md">
                             <Truck className="h-3 w-3 mr-1" />
-                            Delivery
+                            {t("pharmacy.delivery")}
                           </Badge>
                         )}
                       </div>
@@ -555,7 +555,7 @@ const PharmacyList: React.FC = () => {
                           }
                         >
                           <Clock className="h-3 w-3 mr-1" />
-                          {isOpen ? "Open Now" : "Closed"}
+                          {isOpen ? t("pharmacy.open") : t("pharmacy.closed")}
                         </Badge>
                       </div>
                     </div>
@@ -605,7 +605,7 @@ const PharmacyList: React.FC = () => {
                         {pharmacy.prescription_acceptance && (
                           <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
                             <Pill className="h-4 w-4" />
-                            Accepts Prescriptions
+                            {t("pharmacy.acceptsPrescriptions")}
                           </div>
                         )}
                         {pharmacy.delivery_available && (

@@ -88,11 +88,7 @@ export function ServiceDetailPage() {
             id,
             provider_name,
             logo_url,
-            is_verified,
-            location,
-            bio,
-            rating_avg,
-            total_bookings
+            is_verified
           ),
           category:svc_categories (
             name,
@@ -331,14 +327,6 @@ export function ServiceDetailPage() {
                       )}
                     </div>
                   )}
-                  {service.total_bookings && (
-                    <div className="flex items-center gap-2 text-slate-500">
-                      <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-                      <span>
-                        {service.total_bookings} {t("services.completedOrders")}
-                      </span>
-                    </div>
-                  )}
                   {service.provider?.is_verified && (
                     <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                       <CheckCircle2 className="h-3 w-3 mr-1" />
@@ -420,41 +408,6 @@ export function ServiceDetailPage() {
                             <CheckCircle2 className="h-3 w-3 mr-1" />
                             {t("services.verified")}
                           </Badge>
-                        )}
-                      </div>
-                      {service.provider.location && (
-                        <div className="flex items-center gap-2 text-slate-500 mb-3">
-                          <MapPin className="h-4 w-4" />
-                          {service.provider.location}
-                        </div>
-                      )}
-                      {service.provider.bio && (
-                        <p className="text-slate-600 dark:text-slate-400 mb-4">
-                          {service.provider.bio}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-6 text-sm">
-                        {service.provider.rating_avg && (
-                          <div className="flex items-center gap-2">
-                            <Star className="h-4 w-4 text-amber-500 fill-current" />
-                            <span className="font-medium">
-                              {service.provider.rating_avg}
-                            </span>
-                            <span className="text-slate-500">
-                              {t("services.rating")}
-                            </span>
-                          </div>
-                        )}
-                        {service.provider.total_bookings && (
-                          <div className="flex items-center gap-2">
-                            <Users className="h-4 w-4 text-indigo-500" />
-                            <span className="font-medium">
-                              {service.provider.total_bookings}
-                            </span>
-                            <span className="text-slate-500">
-                              {t("services.orders")}
-                            </span>
-                          </div>
                         )}
                       </div>
                       <Button

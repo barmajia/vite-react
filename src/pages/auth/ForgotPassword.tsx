@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Mail, Loader2, ArrowLeft, Sun, Moon } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { Mail, Loader2, ArrowLeft, Sun, Moon, Sparkles, CheckCircle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ import { toast } from "sonner";
 
 export function ForgotPassword() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { resetPassword } = useAuth();
   const { theme, setTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
@@ -61,127 +62,150 @@ export function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-blue-50 via-white to-brand-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex items-center justify-center px-4 py-12 relative">
-      {/* Theme Toggle */}
-      <div className="absolute top-6 right-6 flex items-center gap-3">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-white to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-violet-950 p-4 relative overflow-hidden">
+      {/* Animated Background Blobs */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-72 h-72 bg-violet-400/20 dark:bg-violet-600/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-400/20 dark:bg-indigo-600/20 rounded-full blur-3xl animate-pulse delay-700" />
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(139,92,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,0.03)_1px,transparent_1px)] bg-[size:64px_64px]" />
+      </div>
+
+      {/* Theme Toggle & Back Button */}
+      <div className="fixed top-6 right-6 flex items-center gap-3 z-50">
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => window.history.back()}
-          className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+          onClick={() => navigate(-1)}
+          className="rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 transition-all font-medium"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
 
         <Button
-          variant="outline"
-          size="sm"
+          variant="ghost"
+          size="icon"
           onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-          className="border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm"
-          title={
-            theme === "light"
-              ? "Switch to Dark Mode 🌙"
-              : "Switch to Light Mode ☀️"
-          }
+          className="rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 transition-all shadow-sm"
+          title={theme === "light" ? "Switch to Dark Mode 🌙" : "Switch to Light Mode ☀️"}
         >
           {theme === "light" ? (
-            <Moon className="h-4 w-4 text-indigo-600" />
+            <Moon className="h-4 w-4 text-violet-600" />
           ) : (
-            <Sun className="h-4 w-4 text-amber-500" />
+            <Sun className="h-4 w-4 text-amber-400" />
           )}
-          <span className="ml-2 text-xs font-medium hidden sm:inline">
-            {theme === "light" ? "Dark" : "Light"}
-          </span>
         </Button>
       </div>
 
-      <Card className="w-full max-w-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl">
-        <CardHeader className="space-y-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-fit -ml-2 mb-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-            onClick={() => window.history.back()}
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t("forgotPassword.back")}
-          </Button>
-          <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-            {t("forgotPassword.title")}
-          </CardTitle>
-          <CardDescription className="dark:text-gray-400">
-            {t("forgotPassword.subtitle")}
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {isSubmitted ? (
-              <div className="text-center space-y-4">
-                <div className="w-16 h-16 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto">
-                  <Mail className="h-8 w-8 text-green-600 dark:text-green-400" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-lg text-gray-900 dark:text-white">
-                    {t("forgotPassword.checkEmail")}
-                  </h3>
-                  <p className="text-muted-foreground text-sm mt-1">
-                    {t("forgotPassword.sentResetLink")} <strong>{email}</strong>
-                  </p>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsSubmitted(false)}
-                  className="w-full border-gray-200 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700"
-                >
-                  {t("forgotPassword.tryAnotherEmail")}
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Label
-                  htmlFor="email"
-                  className="text-gray-700 dark:text-gray-200"
-                >
-                  {t("auth.email")}
-                </Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder={t("auth.emailPlaceholder")}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className={`pl-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 dark:text-white ${error ? "border-destructive" : ""}`}
-                    disabled={isLoading}
-                  />
-                </div>
-                {error && <p className="text-sm text-destructive">{error}</p>}
-              </div>
-            )}
-          </CardContent>
+      <div className="w-full max-w-md relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        {/* Logo/Icon Area */}
+        <div className="flex justify-center mb-8">
+          <div className="p-4 bg-white/50 dark:bg-slate-900/50 backdrop-blur-xl rounded-2xl border border-white/20 dark:border-slate-700 shadow-xl shadow-slate-200/50 dark:shadow-black/20">
+            <Sparkles className="h-8 w-8 text-violet-600 dark:text-violet-400" />
+          </div>
+        </div>
 
-          {!isSubmitted && (
-            <CardFooter className="flex flex-col space-y-4">
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {t("forgotPassword.sendResetLink")}
-              </Button>
-              <p className="text-center text-sm text-muted-foreground dark:text-gray-400">
-                {t("forgotPassword.rememberPassword")}{" "}
-                <Link
-                  to={ROUTES.LOGIN}
-                  className="text-primary hover:underline font-medium dark:text-brand-blue-400 dark:hover:text-brand-blue-300"
+        <Card className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200 dark:border-slate-800 shadow-2xl shadow-violet-500/10 dark:shadow-violet-900/20 rounded-3xl overflow-hidden">
+          <CardHeader className="space-y-3 pb-6 text-center">
+            <CardTitle className="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+              {t("forgotPassword.title", "Reset Password")}
+            </CardTitle>
+            <CardDescription className="text-slate-500 dark:text-slate-400 text-base">
+              {t("forgotPassword.subtitle", "Enter your email address and we'll send you a link to reset your password.")}
+            </CardDescription>
+          </CardHeader>
+          
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-6">
+              {isSubmitted ? (
+                <div className="text-center space-y-6 py-4 animate-in zoom-in duration-500">
+                  <div className="w-20 h-20 bg-emerald-100/50 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto ring-8 ring-emerald-50 dark:ring-emerald-900/10">
+                    <CheckCircle className="h-10 w-10 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-xl text-slate-900 dark:text-white mb-2">
+                      {t("forgotPassword.checkEmail", "Check your email")}
+                    </h3>
+                    <p className="text-slate-500 dark:text-slate-400 text-sm leading-relaxed">
+                      {t("forgotPassword.sentResetLink", "We've sent a password reset link to")} <br />
+                      <strong className="text-slate-900 dark:text-white font-semibold">{email}</strong>
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsSubmitted(false)}
+                    className="w-full border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 py-6 rounded-xl transition-all text-slate-600 dark:text-slate-300 font-medium"
+                  >
+                    {t("forgotPassword.tryAnotherEmail", "Try another email")}
+                  </Button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="space-y-2 text-left">
+                    <Label
+                      htmlFor="email"
+                      className="text-sm font-semibold text-slate-700 dark:text-slate-300"
+                    >
+                      {t("auth.email", "Email address")}
+                    </Label>
+                    <div className="relative group">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-violet-500 transition-colors" />
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder={t("auth.emailPlaceholder", "name@example.com")}
+                        value={email}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                          setError("");
+                        }}
+                        className={`pl-11 py-6 bg-white/50 dark:bg-slate-950/50 border-slate-200 dark:border-slate-700 focus:ring-violet-500 focus:border-violet-500 rounded-xl transition-all ${
+                          error ? "border-rose-500 focus:ring-rose-500" : ""
+                        }`}
+                        disabled={isLoading}
+                      />
+                    </div>
+                    {error && (
+                      <p className="text-sm font-medium text-rose-500 animate-in slide-in-from-top-1">
+                        {error}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+
+            {!isSubmitted && (
+              <CardFooter className="flex flex-col space-y-6 pt-2 pb-8">
+                <Button 
+                  type="submit" 
+                  className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-semibold py-6 rounded-xl shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all border-0" 
+                  disabled={isLoading}
                 >
-                  {t("auth.signIn")}
-                </Link>
-              </p>
-            </CardFooter>
-          )}
-        </form>
-      </Card>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    t("forgotPassword.sendResetLink", "Send Reset Link")
+                  )}
+                </Button>
+                <p className="text-center text-sm font-medium text-slate-500 dark:text-slate-400">
+                  {t("forgotPassword.rememberPassword", "Remember your password?")}{" "}
+                  <Link
+                    to={ROUTES.LOGIN}
+                    className="text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 rounded-sm"
+                  >
+                    {t("auth.signIn", "Sign in")}
+                  </Link>
+                </p>
+              </CardFooter>
+            )}
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }

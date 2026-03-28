@@ -74,10 +74,10 @@ export function ProductList() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#0b1120] pt-16 pb-16">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-16 pb-16">
       {/* Simplified Modern Header */}
-      <div className="bg-white dark:bg-[#0f172a] border-b border-gray-200 dark:border-[#1e293b] sticky top-16 z-30 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800/60 sticky top-16 z-30 shadow-sm shadow-slate-200/20 dark:shadow-none transition-all">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div>

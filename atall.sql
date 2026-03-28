@@ -184,6 +184,47 @@ $$;
 ALTER FUNCTION "public"."add_seller_to_conversation"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."archive_old_messages"() RETURNS "void"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  -- Archive messages older than 2 years
+  INSERT INTO message_archives (conversation_id, message_data, archived_at)
+  SELECT 
+    conversation_id,
+    jsonb_agg(to_jsonb(messages)),
+    NOW()
+  FROM messages
+  WHERE created_at < NOW() - INTERVAL '2 years'
+  AND id NOT IN (SELECT message_id FROM message_archives)
+  GROUP BY conversation_id;
+  
+  -- Delete archived messages
+  DELETE FROM messages
+  WHERE created_at < NOW() - INTERVAL '2 years'
+  AND id IN (SELECT message_id FROM message_archives);
+END;
+$$;
+
+
+ALTER FUNCTION "public"."archive_old_messages"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."archive_old_notifications"() RETURNS "void"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  -- Delete read notifications older than 90 days
+  DELETE FROM notifications
+  WHERE is_read = true
+  AND created_at < NOW() - INTERVAL '90 days';
+END;
+$$;
+
+
+ALTER FUNCTION "public"."archive_old_notifications"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."archive_patient_data"("p_doctor_id" "uuid", "p_patient_id" "uuid", "p_archive_type" "text" DEFAULT 'full'::"text") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -272,6 +313,73 @@ $$;
 
 
 ALTER FUNCTION "public"."assign_delivery_to_driver"("p_order_id" "uuid", "p_seller_latitude" numeric, "p_seller_longitude" numeric) OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."audit_sensitive_data_changes"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+DECLARE
+  changes JSONB;
+BEGIN
+  changes := jsonb_build_object();
+  
+  -- Track specific sensitive field changes
+  IF OLD.email IS DISTINCT FROM NEW.email THEN
+    changes := jsonb_set(changes, '{email}', jsonb_build_object('old', OLD.email, 'new', NEW.email));
+  END IF;
+  
+  IF OLD.phone IS DISTINCT FROM NEW.phone THEN
+    changes := jsonb_set(changes, '{phone}', jsonb_build_object('old', OLD.phone, 'new', NEW.phone));
+  END IF;
+  
+  IF jsonb_typeof(changes) = 'object' AND jsonb_array_length(changes) > 0 THEN
+    INSERT INTO audit_logs (event, severity, description, metadata, user_id)
+    VALUES (
+      'SENSITIVE_DATA_CHANGE',
+      'medium',
+      'User sensitive data was modified',
+      jsonb_build_object('changes', changes),
+      NEW.id
+    );
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."audit_sensitive_data_changes"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."auto_create_user_wallet"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  INSERT INTO public.user_wallets (user_id, balance, currency)
+  VALUES (NEW.user_id, 0, 'USD')
+  ON CONFLICT (user_id) DO NOTHING;
+
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."auto_create_user_wallet"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."auto_generate_product_description"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  IF NEW.description IS NULL OR NEW.description = '' THEN
+    NEW.description := 'High-quality ' || NEW.title || '. Available now.';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."auto_generate_product_description"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."bulk_upload_medicines"("p_pharmacy_id" "uuid", "p_medicines" "jsonb") RETURNS integer
@@ -771,6 +879,36 @@ $$;
 ALTER FUNCTION "public"."can_start_conversation"("from_user_id" "uuid", "to_user_id" "uuid", "product_id" "uuid", "conversation_type" "text") OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."check_low_stock_and_notify"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  -- Only trigger if quantity is low and wasn't low before (or is new)
+  IF NEW.quantity <= 10 AND (TG_OP = 'INSERT' OR OLD.quantity > 10) THEN
+    -- Notify seller
+    INSERT INTO notifications (user_id, type, title, message, metadata)
+    SELECT 
+      seller_id,
+      'inventory_alert',
+      'Low Stock Alert: ' || LEFT(title, 50),
+      'Product "' || LEFT(title, 50) || '" has only ' || NEW.quantity || ' items left in stock.',
+      jsonb_build_object(
+        'product_id', NEW.id,
+        'current_quantity', NEW.quantity,
+        'threshold', 10
+      )
+    FROM products
+    WHERE id = NEW.id;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."check_low_stock_and_notify"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."check_product_chat_permission"("p_user_id" "uuid", "p_product_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -819,6 +957,29 @@ $$;
 
 
 ALTER FUNCTION "public"."cleanup_expired_idempotency_keys"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."cleanup_expired_sessions"() RETURNS "void"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  -- Delete expired refresh tokens (handled by Supabase auth)
+  -- Delete expired password reset tokens
+  DELETE FROM password_reset_tokens
+  WHERE expires_at < NOW();
+  
+  -- Delete expired verification codes
+  DELETE FROM verification_codes
+  WHERE expires_at < NOW();
+  
+  -- Clean up abandoned carts (older than 30 days)
+  DELETE FROM cart_items
+  WHERE created_at < NOW() - INTERVAL '30 days';
+END;
+$$;
+
+
+ALTER FUNCTION "public"."cleanup_expired_sessions"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."cleanup_product_images"() RETURNS "trigger"
@@ -898,6 +1059,23 @@ $$;
 
 
 ALTER FUNCTION "public"."create_analytics_snapshot"("p_seller_id" "uuid", "p_period_type" "text", "p_start_date" "date", "p_end_date" "date") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."create_cod_verification_on_order"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  IF NEW.payment_method = 'cod' THEN
+    -- Generate verification key automatically
+    PERFORM public.generate_cod_verification_key(NEW.id, 6, 24);
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."create_cod_verification_on_order"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."create_direct_conversation"("p_target_user_id" "uuid", "p_context" "text" DEFAULT 'general'::"text", "p_product_id" "uuid" DEFAULT NULL::"uuid", "p_appointment_id" "uuid" DEFAULT NULL::"uuid", "p_listing_id" "uuid" DEFAULT NULL::"uuid") RETURNS "uuid"
@@ -1135,6 +1313,166 @@ $$;
 ALTER FUNCTION "public"."create_order_notification"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."create_user_wallet_on_signup"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  INSERT INTO public.user_wallets (user_id, currency)
+  VALUES (NEW.id, 'EGP')
+  ON CONFLICT (user_id) DO NOTHING;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."create_user_wallet_on_signup"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."credit_wallet"("p_user_id" "uuid", "p_amount" numeric, "p_reference_type" "text", "p_reference_id" "uuid", "p_description" "text", "p_idempotency_key" "text" DEFAULT NULL::"text", "p_metadata" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "uuid"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_wallet_id UUID;
+  v_transaction_id UUID;
+  v_balance_before NUMERIC;
+  v_balance_after NUMERIC;
+BEGIN
+  -- Check idempotency key (PREVENT DUPLICATE TRANSACTIONS)
+  IF p_idempotency_key IS NOT NULL THEN
+    SELECT id INTO v_transaction_id
+    FROM public.wallet_transactions
+    WHERE idempotency_key = p_idempotency_key;
+    
+    IF v_transaction_id IS NOT NULL THEN
+      -- Return existing transaction (already processed)
+      RETURN v_transaction_id;
+    END IF;
+  END IF;
+  
+  -- Get or create wallet
+  SELECT id INTO v_wallet_id
+  FROM public.user_wallets
+  WHERE user_id = p_user_id;
+  
+  IF v_wallet_id IS NULL THEN
+    INSERT INTO public.user_wallets (user_id, currency)
+    VALUES (p_user_id, 'EGP')
+    RETURNING id INTO v_wallet_id;
+  END IF;
+  
+  -- Lock wallet row (PREVENT RACE CONDITIONS)
+  SELECT balance INTO v_balance_before
+  FROM public.user_wallets
+  WHERE id = v_wallet_id
+  FOR UPDATE;
+  
+  -- Calculate new balance
+  v_balance_after := v_balance_before + p_amount;
+  
+  -- Create transaction record
+  INSERT INTO public.wallet_transactions (
+    wallet_id, user_id, transaction_type, amount,
+    balance_before, balance_after, reference_type,
+    reference_id, description, idempotency_key, metadata
+  ) VALUES (
+    v_wallet_id, p_user_id, 'credit', p_amount,
+    v_balance_before, v_balance_after, p_reference_type,
+    p_reference_id, p_description, p_idempotency_key, p_metadata
+  )
+  RETURNING id INTO v_transaction_id;
+  
+  -- Update wallet balance
+  UPDATE public.user_wallets
+  SET 
+    balance = v_balance_after,
+    total_earned = total_earned + p_amount,
+    last_transaction_at = NOW(),
+    updated_at = NOW()
+  WHERE id = v_wallet_id;
+  
+  RETURN v_transaction_id;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."credit_wallet"("p_user_id" "uuid", "p_amount" numeric, "p_reference_type" "text", "p_reference_id" "uuid", "p_description" "text", "p_idempotency_key" "text", "p_metadata" "jsonb") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."debit_wallet"("p_user_id" "uuid", "p_amount" numeric, "p_reference_type" "text", "p_reference_id" "uuid", "p_description" "text", "p_idempotency_key" "text" DEFAULT NULL::"text", "p_metadata" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "uuid"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_wallet_id UUID;
+  v_transaction_id UUID;
+  v_balance_before NUMERIC;
+  v_balance_after NUMERIC;
+BEGIN
+  -- Check idempotency key
+  IF p_idempotency_key IS NOT NULL THEN
+    SELECT id INTO v_transaction_id
+    FROM public.wallet_transactions
+    WHERE idempotency_key = p_idempotency_key;
+    
+    IF v_transaction_id IS NOT NULL THEN
+      RETURN v_transaction_id;
+    END IF;
+  END IF;
+  
+  -- Get wallet with lock
+  SELECT id, balance INTO v_wallet_id, v_balance_before
+  FROM public.user_wallets
+  WHERE user_id = p_user_id
+  FOR UPDATE;
+  
+  IF v_wallet_id IS NULL THEN
+    RAISE EXCEPTION 'Wallet not found for user %', p_user_id;
+  END IF;
+  
+  -- Check sufficient balance
+  IF v_balance_before < p_amount THEN
+    RAISE EXCEPTION 'Insufficient balance. Available: %, Required: %', v_balance_before, p_amount;
+  END IF;
+  
+  -- Check if wallet is locked
+  IF EXISTS (
+    SELECT 1 FROM public.user_wallets 
+    WHERE id = v_wallet_id AND is_locked = true
+  ) THEN
+    RAISE EXCEPTION 'Wallet is locked. Contact support.';
+  END IF;
+  
+  v_balance_after := v_balance_before - p_amount;
+  
+  -- Create transaction
+  INSERT INTO public.wallet_transactions (
+    wallet_id, user_id, transaction_type, amount,
+    balance_before, balance_after, reference_type,
+    reference_id, description, idempotency_key, metadata
+  ) VALUES (
+    v_wallet_id, p_user_id, 'debit', p_amount,
+    v_balance_before, v_balance_after, p_reference_type,
+    p_reference_id, p_description, p_idempotency_key, p_metadata
+  )
+  RETURNING id INTO v_transaction_id;
+  
+  -- Update wallet
+  UPDATE public.user_wallets
+  SET 
+    balance = v_balance_after,
+    total_spent = total_spent + p_amount,
+    last_transaction_at = NOW(),
+    updated_at = NOW()
+  WHERE id = v_wallet_id;
+  
+  RETURN v_transaction_id;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."debit_wallet"("p_user_id" "uuid", "p_amount" numeric, "p_reference_type" "text", "p_reference_id" "uuid", "p_description" "text", "p_idempotency_key" "text", "p_metadata" "jsonb") OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."decrement_product_inventory"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -1166,6 +1504,29 @@ $$;
 
 
 ALTER FUNCTION "public"."decrement_product_inventory"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."decrement_product_inventory_on_order"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  -- Only trigger when order moves to confirmed status
+  IF OLD.status IS DISTINCT FROM NEW.status AND NEW.status = 'confirmed' THEN
+    -- Decrement product quantity
+    UPDATE products
+    SET quantity = quantity - COALESCE(NEW.subtotal / NULLIF(NEW.total - NEW.shipping - NEW.tax, 0), 1),
+        updated_at = NOW()
+    WHERE id IN (
+      SELECT product_id FROM order_items WHERE order_id = NEW.id
+    );
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."decrement_product_inventory_on_order"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."dequeue_job"("p_queue_name" "text", "p_visibility_timeout_seconds" integer DEFAULT 30) RETURNS TABLE("id" "uuid", "payload" "jsonb", "attempts" integer)
@@ -1478,6 +1839,111 @@ $$;
 ALTER FUNCTION "public"."find_nearby_sellers"("p_latitude" numeric, "p_longitude" numeric, "p_radius_km" numeric, "p_limit" integer) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."generate_cod_verification_key"("p_order_id" "uuid", "p_key_length" integer DEFAULT 6, "p_expiry_hours" integer DEFAULT 24) RETURNS "text"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_verification_key TEXT;
+  v_key_id UUID;
+  v_order RECORD;
+BEGIN
+  -- Get order details
+  SELECT * INTO v_order FROM public.orders WHERE id = p_order_id;
+  
+  IF v_order IS NULL THEN
+    RAISE EXCEPTION 'Order not found: %', p_order_id;
+  END IF;
+  
+  IF v_order.payment_method != 'cod' THEN
+    RAISE EXCEPTION 'Verification key only for COD orders. Payment method: %', v_order.payment_method;
+  END IF;
+  
+  -- Generate unique numeric key
+  LOOP
+    v_verification_key := 'COD-' || LPAD(FLOOR(RANDOM() * (10 ^ p_key_length))::TEXT, p_key_length, '0');
+    
+    -- Check if key already exists
+    IF NOT EXISTS (SELECT 1 FROM public.cod_verification_keys WHERE verification_key = v_verification_key) THEN
+      EXIT;
+    END IF;
+  END LOOP;
+  
+  -- Insert or update verification key
+  INSERT INTO public.cod_verification_keys (
+    order_id,
+    verification_key,
+    key_type,
+    key_length,
+    status,
+    expires_at,
+    metadata
+  ) VALUES (
+    p_order_id,
+    v_verification_key,
+    'numeric',
+    p_key_length,
+    'pending',
+    NOW() + (p_expiry_hours || ' hours')::INTERVAL,
+    jsonb_build_object(
+      'order_total', v_order.total,
+      'customer_id', v_order.user_id,
+      'delivery_address', v_order.shipping_address_snapshot
+    )
+  )
+  ON CONFLICT (order_id) DO UPDATE SET
+    verification_key = EXCLUDED.verification_key,
+    status = 'pending',
+    expires_at = EXCLUDED.expires_at,
+    verification_attempts = 0,
+    updated_at = NOW()
+  RETURNING id INTO v_key_id;
+  
+  -- Update order
+  UPDATE public.orders
+  SET 
+    cod_verification_required = true,
+    cod_verified = false,
+    cod_collection_amount = v_order.total,
+    updated_at = NOW()
+  WHERE id = p_order_id;
+  
+  -- Create COD collection record
+  INSERT INTO public.cod_collections (
+    order_id,
+    customer_id,
+    collection_amount,
+    verification_key_id,
+    status
+  ) VALUES (
+    p_order_id,
+    v_order.user_id,
+    v_order.total,
+    v_key_id,
+    'pending'
+  );
+  
+  -- Send notification to customer with key
+  INSERT INTO public.notifications (user_id, type, title, message, metadata)
+  VALUES (
+    v_order.user_id,
+    'order',
+    '🔐 COD Verification Key',
+    'Your verification key for order ' || SUBSTRING(p_order_id::TEXT, 1, 8) || ' is: ' || v_verification_key || '. Share this with the delivery driver upon payment.',
+    jsonb_build_object(
+      'order_id', p_order_id,
+      'verification_key', v_verification_key,
+      'expires_at', NOW() + (p_expiry_hours || ' hours')::INTERVAL
+    )
+  );
+  
+  RETURN v_verification_key;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."generate_cod_verification_key"("p_order_id" "uuid", "p_key_length" integer, "p_expiry_hours" integer) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."generate_medicine_qr_code"("p_pharmacy_id" "uuid", "p_medicine_id" "uuid", "p_batch_number" "text") RETURNS "text"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -1762,6 +2228,64 @@ $$;
 
 
 ALTER FUNCTION "public"."generate_product_description"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."get_cod_reconciliation_report"("p_start_date" "date" DEFAULT (CURRENT_DATE - '7 days'::interval), "p_end_date" "date" DEFAULT CURRENT_DATE) RETURNS TABLE("date" "date", "total_cod_orders" bigint, "total_cod_amount" numeric, "verified_orders" bigint, "pending_orders" bigint, "failed_orders" bigint, "collected_amount" numeric, "deposited_amount" numeric, "pending_deposit" numeric)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    DATE(o.created_at) AS date,
+    COUNT(o.id) AS total_cod_orders,
+    SUM(o.total) AS total_cod_amount,
+    COUNT(CASE WHEN o.cod_verified = true THEN 1 END) AS verified_orders,
+    COUNT(CASE WHEN o.cod_verified = false AND o.status != 'cancelled' THEN 1 END) AS pending_orders,
+    COUNT(CASE WHEN o.cod_collection_status = 'failed' THEN 1 END) AS failed_orders,
+    SUM(CASE WHEN o.cod_verified = true THEN o.total ELSE 0 END) AS collected_amount,
+    SUM(CASE WHEN cc.status = 'deposited' THEN o.total ELSE 0 END) AS deposited_amount,
+    SUM(CASE WHEN o.cod_verified = true AND cc.status != 'deposited' THEN o.total ELSE 0 END) AS pending_deposit
+  FROM public.orders o
+  LEFT JOIN public.cod_collections cc ON cc.order_id = o.id
+  WHERE o.payment_method = 'cod'
+    AND DATE(o.created_at) BETWEEN p_start_date AND p_end_date
+  GROUP BY DATE(o.created_at)
+  ORDER BY date DESC;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."get_cod_reconciliation_report"("p_start_date" "date", "p_end_date" "date") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."get_driver_cod_orders"("p_driver_id" "uuid") RETURNS TABLE("order_id" "uuid", "customer_name" "text", "customer_phone" "text", "delivery_address" "jsonb", "total_amount" numeric, "verification_key" "text", "expires_at" timestamp with time zone, "status" "text", "created_at" timestamp with time zone)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    o.id AS order_id,
+    u.full_name AS customer_name,
+    u.phone AS customer_phone,
+    o.shipping_address_snapshot AS delivery_address,
+    o.total AS total_amount,
+    cvk.verification_key,
+    cvk.expires_at,
+    cvk.status AS verification_status,
+    o.created_at
+  FROM public.orders o
+  JOIN public.cod_verification_keys cvk ON cvk.order_id = o.id
+  JOIN public.users u ON u.user_id = o.user_id
+  WHERE o.delivery_id = p_driver_id
+    AND o.payment_method = 'cod'
+    AND cvk.status = 'pending'
+    AND cvk.expires_at > NOW()
+  ORDER BY o.created_at DESC;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."get_driver_cod_orders"("p_driver_id" "uuid") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."get_factory_rating"("p_factory_id" "uuid") RETURNS TABLE("average_rating" numeric, "total_reviews" bigint, "delivery_rating" numeric, "quality_rating" numeric, "communication_rating" numeric)
@@ -2457,6 +2981,16 @@ $$;
 ALTER FUNCTION "public"."haversine_distance"("lat1" double precision, "lon1" double precision, "lat2" double precision, "lon2" double precision) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."is_admin_user"() RETURNS boolean
+    LANGUAGE "sql" STABLE SECURITY DEFINER
+    AS $$
+  SELECT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true);
+$$;
+
+
+ALTER FUNCTION "public"."is_admin_user"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."log_activity"("p_action_type" "text", "p_action_category" "text", "p_description" "text" DEFAULT NULL::"text", "p_metadata" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -2517,6 +3051,90 @@ $$;
 ALTER FUNCTION "public"."log_error"("p_error_type" "text", "p_error_message" "text", "p_stack_trace" "text", "p_screen_name" "text", "p_metadata" "jsonb") OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."log_payment_activity"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  INSERT INTO public.activity_logs (
+    user_id, action_type, action_category,
+    description, metadata
+  ) VALUES (
+    COALESCE(NEW.user_id, auth.uid()),
+    TG_OP,
+    'payment',
+    TG_TABLE_NAME || ' ' || TG_OP || ' by ' || COALESCE(NEW.user_id::text, auth.uid()::text),
+    jsonb_build_object(
+      'table', TG_TABLE_NAME,
+      'record_id', NEW.id,
+      'old_data', TO_JSONB(OLD),
+      'new_data', TO_JSONB(NEW)
+    )
+  );
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."log_payment_activity"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."log_payment_status_change"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  IF OLD.status IS DISTINCT FROM NEW.status THEN
+    INSERT INTO audit_logs (event, severity, description, metadata, user_id)
+    VALUES (
+      'PAYMENT_STATUS_CHANGE',
+      CASE 
+        WHEN NEW.status = 'failed' THEN 'high'
+        WHEN NEW.status = 'succeeded' THEN 'low'
+        ELSE 'medium'
+      END,
+      'Payment status changed from ' || COALESCE(OLD.status, 'NULL') || ' to ' || NEW.status,
+      jsonb_build_object(
+        'old_status', OLD.status,
+        'new_status', NEW.status,
+        'amount', NEW.amount,
+        'order_id', NEW.order_id
+      ),
+      NEW.user_id
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."log_payment_status_change"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."log_wallet_transaction"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  IF OLD.balance IS DISTINCT FROM NEW.balance THEN
+    INSERT INTO wallet_transactions (user_id, amount, balance_after, transaction_type, description)
+    VALUES (
+      NEW.user_id,
+      NEW.balance - OLD.balance,
+      NEW.balance,
+      CASE 
+        WHEN NEW.balance > OLD.balance THEN 'credit'
+        ELSE 'debit'
+      END,
+      'Balance change: ' || (NEW.balance - OLD.balance)
+    );
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."log_wallet_transaction"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."messages_tsvector_trigger"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -2528,6 +3146,66 @@ $$;
 
 
 ALTER FUNCTION "public"."messages_tsvector_trigger"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."process_fawry_payment"("p_order_id" "uuid", "p_fawry_reference" "text", "p_amount" numeric, "p_gateway_response" "jsonb", "p_idempotency_key" "text") RETURNS "uuid"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_transaction_id UUID;
+  v_order RECORD;
+  v_user_id UUID;
+BEGIN
+  -- Check idempotency (PREVENT DOUBLE PROCESSING)
+  SELECT id INTO v_transaction_id
+  FROM public.payment_transactions
+  WHERE idempotency_key = p_idempotency_key;
+  
+  IF v_transaction_id IS NOT NULL THEN
+    RETURN v_transaction_id;
+  END IF;
+  
+  -- Get order details
+  SELECT * INTO v_order
+  FROM public.orders
+  WHERE id = p_order_id
+  FOR UPDATE;
+  
+  IF v_order IS NULL THEN
+    RAISE EXCEPTION 'Order not found: %', p_order_id;
+  END IF;
+  
+  v_user_id := v_order.user_id;
+  
+  -- Create payment transaction
+  INSERT INTO public.payment_transactions (
+    order_id, user_id, payment_gateway, gateway_transaction_id,
+    amount, currency, status, payment_method,
+    gateway_response, idempotency_key, processed_at
+  ) VALUES (
+    p_order_id, v_user_id, 'fawry', p_fawry_reference,
+    p_amount, 'EGP', 'success', 'card',
+    p_gateway_response, p_idempotency_key, NOW()
+  )
+  RETURNING id INTO v_transaction_id;
+  
+  -- Update order payment status
+  UPDATE public.orders
+  SET 
+    payment_status = 'completed',
+    payment_intent_id = p_fawry_reference,
+    updated_at = NOW()
+  WHERE id = p_order_id;
+  
+  -- Split payment to parties
+  PERFORM public.split_payment_to_parties(p_order_id, v_transaction_id, p_amount);
+  
+  RETURN v_transaction_id;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."process_fawry_payment"("p_order_id" "uuid", "p_fawry_reference" "text", "p_amount" numeric, "p_gateway_response" "jsonb", "p_idempotency_key" "text") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."process_qr_scan"("p_pharmacy_id" "uuid", "p_user_id" "uuid", "p_qr_code" "text", "p_scan_type" "text", "p_device_info" "text" DEFAULT NULL::"text", "p_location_lat" double precision DEFAULT NULL::double precision, "p_location_lng" double precision DEFAULT NULL::double precision) RETURNS "jsonb"
@@ -2667,6 +3345,117 @@ $$;
 
 
 ALTER FUNCTION "public"."products_tsvector_trigger"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."request_payout"("p_user_id" "uuid", "p_amount" numeric, "p_payout_method" "text", "p_bank_details" "jsonb" DEFAULT NULL::"jsonb", "p_idempotency_key" "text" DEFAULT NULL::"text") RETURNS "uuid"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_wallet_id UUID;
+  v_available_balance NUMERIC;
+  v_payout_id UUID;
+  v_fee NUMERIC;
+  v_net_amount NUMERIC;
+  v_min_payout NUMERIC := 50;  -- Minimum payout amount
+BEGIN
+  -- Check idempotency
+  IF p_idempotency_key IS NOT NULL THEN
+    SELECT id INTO v_payout_id
+    FROM public.payouts
+    WHERE idempotency_key = p_idempotency_key;
+    
+    IF v_payout_id IS NOT NULL THEN
+      RETURN v_payout_id;
+    END IF;
+  END IF;
+  
+  -- Get wallet with lock
+  SELECT id, balance INTO v_wallet_id, v_available_balance
+  FROM public.user_wallets
+  WHERE user_id = p_user_id AND is_active = true
+  FOR UPDATE;
+  
+  IF v_wallet_id IS NULL THEN
+    RAISE EXCEPTION 'No active wallet found for user';
+  END IF;
+  
+  -- Validate amount
+  IF p_amount < v_min_payout THEN
+    RAISE EXCEPTION 'Minimum payout amount is % EGP', v_min_payout;
+  END IF;
+  
+  IF p_amount > v_available_balance THEN
+    RAISE EXCEPTION 'Insufficient balance. Available: %, Requested: %', v_available_balance, p_amount;
+  END IF;
+  
+  -- Calculate fee (2% fee, min 5 EGP, max 100 EGP)
+  v_fee := GREATEST(LEAST(p_amount * 0.02, 100), 5);
+  v_net_amount := p_amount - v_fee;
+  
+  -- Create payout request
+  INSERT INTO public.payouts (
+    user_id, wallet_id, amount, fee, net_amount, currency,
+    status, payout_method, bank_account_name, bank_account_number,
+    bank_name, bank_code, metadata, idempotency_key
+  ) VALUES (
+    p_user_id, v_wallet_id, p_amount, v_fee, v_net_amount, 'EGP',
+    'pending', p_payout_method,
+    p_bank_details->>'account_name',
+    p_bank_details->>'account_number',
+    p_bank_details->>'bank_name',
+    p_bank_details->>'bank_code',
+    p_bank_details,
+    p_idempotency_key
+  )
+  RETURNING id INTO v_payout_id;
+  
+  -- Hold the amount in wallet
+  UPDATE public.user_wallets
+  SET
+    balance = balance - p_amount,
+    pending_balance = pending_balance + p_amount,
+    updated_at = NOW()
+  WHERE id = v_wallet_id;
+  
+  -- Create wallet transaction
+  INSERT INTO public.wallet_transactions (
+    wallet_id, user_id, transaction_type, amount,
+    balance_before, balance_after, reference_type, reference_id, description
+  ) VALUES (
+    v_wallet_id, p_user_id, 'hold', p_amount,
+    v_available_balance, v_available_balance - p_amount,
+    'payout', v_payout_id, 'Payout request held'
+  );
+  
+  RETURN v_payout_id;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."request_payout"("p_user_id" "uuid", "p_amount" numeric, "p_payout_method" "text", "p_bank_details" "jsonb", "p_idempotency_key" "text") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."restore_product_inventory_on_cancel"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  -- Only trigger when order is cancelled
+  IF OLD.status IS DISTINCT FROM NEW.status AND NEW.status = 'cancelled' THEN
+    -- Restore product quantity
+    UPDATE products
+    SET quantity = quantity + COALESCE(OLD.subtotal / NULLIF(OLD.total - OLD.shipping - OLD.tax, 0), 1),
+        updated_at = NOW()
+    WHERE id IN (
+      SELECT product_id FROM order_items WHERE order_id = OLD.id
+    );
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."restore_product_inventory_on_cancel"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."run_daily_patient_backup"("p_doctor_id" "uuid") RETURNS "jsonb"
@@ -2814,6 +3603,101 @@ $$;
 ALTER FUNCTION "public"."search_public_profiles"("p_search_term" "text", "p_account_type" "text", "p_location" "text", "p_limit" integer, "p_offset" integer) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."split_payment_to_parties"("p_order_id" "uuid", "p_transaction_id" "uuid", "p_total_amount" numeric) RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_order RECORD;
+  v_seller_share NUMERIC;
+  v_middleman_share NUMERIC;
+  v_platform_share NUMERIC;
+  v_delivery_share NUMERIC;
+BEGIN
+  SELECT * INTO v_order FROM public.orders WHERE id = p_order_id;
+  
+  -- Calculate shares (ADJUST PERCENTAGES AS NEEDED)
+  v_platform_share := p_total_amount * 0.05;  -- 5% platform fee
+  v_seller_share := p_total_amount * 0.90;    -- 90% to seller
+  v_middleman_share := 0;
+  v_delivery_share := COALESCE(v_order.delivery_fee, 0);
+  
+  -- Adjust seller share if middleman exists
+  IF v_order.middle_man_id IS NOT NULL THEN
+    v_middleman_share := p_total_amount * 0.05;  -- 5% to middleman
+    v_seller_share := v_seller_share - v_middleman_share;
+  END IF;
+  
+  -- Insert splits
+  INSERT INTO public.payment_splits (
+    order_id, payment_transaction_id, recipient_id,
+    recipient_type, amount, percentage, split_type, status
+  ) VALUES 
+    (p_order_id, p_transaction_id, v_order.seller_id, 'seller', 
+     v_seller_share, 90.00, 'revenue', 'pending'),
+    (p_order_id, p_transaction_id, v_order.seller_id, 'platform', 
+     v_platform_share, 5.00, 'fee', 'paid');
+  
+  -- Middleman split
+  IF v_order.middle_man_id IS NOT NULL THEN
+    INSERT INTO public.payment_splits (
+      order_id, payment_transaction_id, recipient_id,
+      recipient_type, amount, percentage, split_type, status
+    ) VALUES (
+      p_order_id, p_transaction_id, v_order.middle_man_id,
+      'middleman', v_middleman_share, 5.00, 'commission', 'pending'
+    );
+    
+    -- Credit middleman wallet
+    PERFORM public.credit_wallet(
+      v_order.middle_man_id,
+      v_middleman_share,
+      'commission',
+      p_order_id,
+      'Commission from order ' || p_order_id,
+      'mm_comm_' || p_order_id || '_' || v_order.middle_man_id,
+      jsonb_build_object('order_id', p_order_id)
+    );
+  END IF;
+  
+  -- Delivery split
+  IF v_order.delivery_id IS NOT NULL AND v_delivery_share > 0 THEN
+    INSERT INTO public.payment_splits (
+      order_id, payment_transaction_id, recipient_id,
+      recipient_type, amount, split_type, status
+    ) VALUES (
+      p_order_id, p_transaction_id, v_order.delivery_id,
+      'delivery', v_delivery_share, 'delivery_fee', 'pending'
+    );
+    
+    -- Credit delivery wallet
+    PERFORM public.credit_wallet(
+      v_order.delivery_id,
+      v_delivery_share,
+      'payment',
+      p_order_id,
+      'Delivery fee for order ' || p_order_id,
+      'del_fee_' || p_order_id,
+      jsonb_build_object('order_id', p_order_id)
+    );
+  END IF;
+  
+  -- Credit seller wallet (after holding period if needed)
+  PERFORM public.credit_wallet(
+    v_order.seller_id,
+    v_seller_share,
+    'payment',
+    p_order_id,
+    'Revenue from order ' || p_order_id,
+    'seller_rev_' || p_order_id,
+    jsonb_build_object('order_id', p_order_id)
+  );
+END;
+$$;
+
+
+ALTER FUNCTION "public"."split_payment_to_parties"("p_order_id" "uuid", "p_transaction_id" "uuid", "p_total_amount" numeric) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."track_deal_click"("p_unique_slug" "text") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -2873,6 +3757,28 @@ $$;
 ALTER FUNCTION "public"."update_conversation_on_message"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."update_conversation_unread_count"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  IF TG_OP = 'INSERT' THEN
+    UPDATE conversations
+    SET unread_count = COALESCE(unread_count, 0) + 1,
+        last_message_at = NOW()
+    WHERE id = NEW.conversation_id;
+  ELSIF TG_OP = 'UPDATE' AND OLD.is_read = false AND NEW.is_read = true THEN
+    UPDATE conversations
+    SET unread_count = GREATEST(COALESCE(unread_count, 1) - 1, 0)
+    WHERE id = NEW.conversation_id;
+  END IF;
+  RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_conversation_unread_count"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."update_customer_stats_on_sale"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -2905,6 +3811,32 @@ $$;
 
 
 ALTER FUNCTION "public"."update_customers_timestamp"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."update_delivery_assignments_updated_at"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_delivery_assignments_updated_at"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."update_delivery_profiles_updated_at"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_delivery_profiles_updated_at"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."update_factory_connections_timestamp"() RETURNS "trigger"
@@ -3116,6 +4048,34 @@ $$;
 ALTER FUNCTION "public"."update_medicine_stock_on_order"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."update_order_payment_status"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  IF NEW.status = 'succeeded' THEN
+    UPDATE orders
+    SET payment_status = 'paid',
+        updated_at = NOW()
+    WHERE id = NEW.order_id;
+  ELSIF NEW.status = 'failed' THEN
+    UPDATE orders
+    SET payment_status = 'failed',
+        updated_at = NOW()
+    WHERE id = NEW.order_id;
+  ELSIF NEW.status = 'refunded' THEN
+    UPDATE orders
+    SET payment_status = 'refunded',
+        updated_at = NOW()
+    WHERE id = NEW.order_id;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_order_payment_status"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."update_order_status_timestamps"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -3189,6 +4149,34 @@ $$;
 ALTER FUNCTION "public"."update_post_likes_count"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."update_product_rating"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+DECLARE
+  avg_rating NUMERIC;
+BEGIN
+  IF TG_OP = 'DELETE' THEN
+    OLD.asin := OLD.asin;
+  END IF;
+  
+  SELECT AVG(rating) INTO avg_rating
+  FROM reviews
+  WHERE asin = COALESCE(NEW.asin, OLD.asin)
+  AND is_approved = true;
+  
+  UPDATE products
+  SET average_rating = COALESCE(avg_rating, 0),
+      updated_at = NOW()
+  WHERE asin = COALESCE(NEW.asin, OLD.asin);
+  
+  RETURN COALESCE(NEW, OLD);
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_product_rating"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."update_products_updated_at_column"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -3213,6 +4201,73 @@ $$;
 
 
 ALTER FUNCTION "public"."update_sales_timestamp"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."update_seller_product_count"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  IF TG_OP = 'INSERT' AND NEW.status = 'active' THEN
+    UPDATE sellers
+    SET product_count = COALESCE(product_count, 0) + 1
+    WHERE user_id = NEW.seller_id;
+    RETURN NEW;
+  ELSIF TG_OP = 'DELETE' AND OLD.status = 'active' THEN
+    UPDATE sellers
+    SET product_count = GREATEST(product_count - 1, 0)
+    WHERE user_id = OLD.seller_id;
+    RETURN OLD;
+  ELSIF TG_OP = 'UPDATE' THEN
+    -- Handle status change
+    IF OLD.status != NEW.status THEN
+      IF NEW.status = 'active' THEN
+        UPDATE sellers
+        SET product_count = COALESCE(product_count, 0) + 1
+        WHERE user_id = NEW.seller_id;
+      ELSIF OLD.status = 'active' THEN
+        UPDATE sellers
+        SET product_count = GREATEST(product_count - 1, 0)
+        WHERE user_id = NEW.seller_id;
+      END IF;
+    END IF;
+    RETURN NEW;
+  END IF;
+  RETURN NULL;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_seller_product_count"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."update_seller_stats_on_order_delivered"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  -- Only trigger on status change to 'delivered'
+  IF OLD.status IS DISTINCT FROM NEW.status AND NEW.status = 'delivered' THEN
+    -- Update seller's total revenue
+    UPDATE sellers
+    SET total_revenue = COALESCE(total_revenue, 0) + NEW.total,
+        updated_at = NOW()
+    WHERE user_id = NEW.seller_id;
+    
+    -- Update seller's total orders
+    UPDATE sellers
+    SET total_orders = COALESCE(total_orders, 0) + 1
+    WHERE user_id = NEW.seller_id;
+    
+    -- Create sales record for analytics
+    INSERT INTO sales (seller_id, customer_id, amount, sale_date, order_id)
+    VALUES (NEW.seller_id, NEW.user_id, NEW.total, NOW(), NEW.id);
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_seller_stats_on_order_delivered"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."update_svc_conv_on_message"() RETURNS "trigger"
@@ -3332,6 +4387,19 @@ $$;
 ALTER FUNCTION "public"."update_updated_at_column"() OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."update_user_last_seen"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  NEW.last_seen = NOW();
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_user_last_seen"() OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."user_is_in_conversation"("p_conversation_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
     SET "search_path" TO 'public'
@@ -3348,6 +4416,257 @@ $$;
 
 
 ALTER FUNCTION "public"."user_is_in_conversation"("p_conversation_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."validate_product_price"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  -- If cost field exists, prevent selling below cost
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'products' AND column_name = 'cost') THEN
+    IF NEW.price < NEW.cost THEN
+      RAISE EXCEPTION 'Product price cannot be below cost (Price: %, Cost: %)', NEW.price, NEW.cost;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."validate_product_price"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."validate_wallet_balance"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  IF NEW.balance < 0 THEN
+    RAISE EXCEPTION 'Wallet balance cannot be negative';
+  END IF;
+  
+  IF NEW.pending_balance < 0 THEN
+    RAISE EXCEPTION 'Pending balance cannot be negative';
+  END IF;
+  
+  -- Validate balance_after matches calculation
+  IF TG_TABLE_NAME = 'wallet_transactions' THEN
+    IF NEW.transaction_type IN ('credit', 'release') THEN
+      IF NEW.balance_after != NEW.balance_before + NEW.amount THEN
+        RAISE EXCEPTION 'Balance calculation mismatch for credit transaction';
+      END IF;
+    ELSIF NEW.transaction_type IN ('debit', 'hold') THEN
+      IF NEW.balance_after != NEW.balance_before - NEW.amount THEN
+        RAISE EXCEPTION 'Balance calculation mismatch for debit transaction';
+      END IF;
+    END IF;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."validate_wallet_balance"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."verify_cod_verification_key"("p_verification_key" "text", "p_driver_id" "uuid") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_key_record RECORD;
+  v_order RECORD;
+  v_collection RECORD;
+  v_result JSONB;
+BEGIN
+  -- Get verification key details
+  SELECT * INTO v_key_record
+  FROM public.cod_verification_keys
+  WHERE verification_key = p_verification_key
+  FOR UPDATE;
+  
+  IF v_key_record IS NULL THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'error', 'Invalid verification key',
+      'error_code', 'INVALID_KEY'
+    );
+  END IF;
+  
+  -- Check if already verified
+  IF v_key_record.status = 'verified' THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'error', 'Verification key already used',
+      'error_code', 'ALREADY_VERIFIED',
+      'verified_at', v_key_record.verified_at
+    );
+  END IF;
+  
+  -- Check if expired
+  IF v_key_record.expires_at < NOW() THEN
+    UPDATE public.cod_verification_keys
+    SET status = 'expired', updated_at = NOW()
+    WHERE id = v_key_record.id;
+    
+    RETURN jsonb_build_object(
+      'success', false,
+      'error', 'Verification key has expired',
+      'error_code', 'KEY_EXPIRED',
+      'expires_at', v_key_record.expires_at
+    );
+  END IF;
+  
+  -- Check max attempts
+  IF v_key_record.verification_attempts >= v_key_record.max_attempts THEN
+    UPDATE public.cod_verification_keys
+    SET status = 'cancelled', updated_at = NOW()
+    WHERE id = v_key_record.id;
+    
+    RETURN jsonb_build_object(
+      'success', false,
+      'error', 'Maximum verification attempts exceeded',
+      'error_code', 'MAX_ATTEMPTS_EXCEEDED'
+    );
+  END IF;
+  
+  -- Get order details
+  SELECT * INTO v_order FROM public.orders WHERE id = v_key_record.order_id;
+  
+  -- Verify driver is assigned to this order
+  IF v_order.delivery_id != p_driver_id THEN
+    -- Increment attempt counter
+    UPDATE public.cod_verification_keys
+    SET verification_attempts = verification_attempts + 1, updated_at = NOW()
+    WHERE id = v_key_record.id;
+    
+    RETURN jsonb_build_object(
+      'success', false,
+      'error', 'You are not assigned to this order',
+      'error_code', 'UNAUTHORIZED_DRIVER'
+    );
+  END IF;
+  
+  -- Mark key as verified
+  UPDATE public.cod_verification_keys
+  SET 
+    status = 'verified',
+    verified_at = NOW(),
+    verified_by = p_driver_id,
+    updated_at = NOW()
+  WHERE id = v_key_record.id;
+  
+  -- Update order
+  UPDATE public.orders
+  SET 
+    cod_verified = true,
+    cod_verified_at = NOW(),
+    cod_collected_by = p_driver_id,
+    cod_collection_status = 'collected',
+    payment_status = 'completed',
+    status = 'delivered',
+    delivered_at = NOW(),
+    updated_at = NOW()
+  WHERE id = v_key_record.order_id;
+  
+  -- Update COD collection
+  UPDATE public.cod_collections
+  SET 
+    status = 'collected',
+    collected_at = NOW(),
+    delivery_id = p_driver_id,
+    metadata = jsonb_set(
+      COALESCE(metadata, '{}'::jsonb),
+      '{verified_by_driver}',
+      'true'::jsonb
+    ),
+    updated_at = NOW()
+  WHERE order_id = v_key_record.order_id
+  RETURNING * INTO v_collection;
+  
+  -- Credit driver wallet (delivery fee)
+  IF v_order.delivery_fee > 0 THEN
+    PERFORM public.credit_wallet(
+      p_driver_id,
+      v_order.delivery_fee,
+      'payment',
+      v_key_record.order_id,
+      'Delivery fee for COD order ' || SUBSTRING(v_key_record.order_id::TEXT, 1, 8),
+      'cod_delivery_fee_' || v_key_record.order_id::TEXT,
+      jsonb_build_object('order_id', v_key_record.order_id, 'cod_verified', true)
+    );
+  END IF;
+  
+  -- Hold seller revenue until driver deposits cash (optional security)
+  -- Or credit immediately based on your business logic
+  PERFORM public.credit_wallet(
+    v_order.seller_id,
+    v_order.total - COALESCE(v_order.delivery_fee, 0),
+    'payment',
+    v_key_record.order_id,
+    'COD payment for order ' || SUBSTRING(v_key_record.order_id::TEXT, 1, 8),
+    'cod_seller_revenue_' || v_key_record.order_id::TEXT,
+    jsonb_build_object('order_id', v_key_record.order_id, 'cod_verified', true)
+  );
+  
+  -- Notify customer
+  INSERT INTO public.notifications (user_id, type, title, message, metadata)
+  VALUES (
+    v_order.user_id,
+    'order',
+    '✅ Order Delivered & Paid',
+    'Your COD order has been delivered and payment confirmed. Thank you!',
+    jsonb_build_object('order_id', v_key_record.order_id, 'amount', v_order.total)
+  );
+  
+  -- Notify driver
+  INSERT INTO public.notifications (user_id, type, title, message, metadata)
+  VALUES (
+    p_driver_id,
+    'delivery',
+    '💰 COD Payment Collected',
+    'You collected ' || v_order.total || ' EGP. Please deposit to company account within 24 hours.',
+    jsonb_build_object('order_id', v_key_record.order_id, 'amount', v_order.total)
+  );
+  
+  RETURN jsonb_build_object(
+    'success', true,
+    'message', 'COD payment verified successfully',
+    'order_id', v_key_record.order_id,
+    'amount', v_order.total,
+    'verified_at', NOW(),
+    'driver_id', p_driver_id
+  );
+END;
+$$;
+
+
+ALTER FUNCTION "public"."verify_cod_verification_key"("p_verification_key" "text", "p_driver_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."verify_purchase_before_review"() RETURNS "trigger"
+    LANGUAGE "plpgsql"
+    AS $$
+BEGIN
+  -- Check if user actually purchased the product
+  IF NOT EXISTS (
+    SELECT 1 FROM orders o
+    JOIN order_items oi ON o.id = oi.order_id
+    WHERE o.user_id = NEW.user_id
+    AND oi.asin = NEW.asin
+    AND o.status = 'delivered'
+  ) THEN
+    NEW.is_verified_purchase := false;
+    -- Optionally: RAISE EXCEPTION 'Cannot review products you have not purchased';
+  ELSE
+    NEW.is_verified_purchase := true;
+  END IF;
+  
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."verify_purchase_before_review"() OWNER TO "postgres";
 
 SET default_tablespace = '';
 
@@ -3371,11 +4690,23 @@ ALTER TABLE "public"."activity_logs" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."admin_users" (
-    "user_id" "uuid" NOT NULL
+    "user_id" "uuid" NOT NULL,
+    "role" "text" DEFAULT 'admin'::"text"
 );
 
 
 ALTER TABLE "public"."admin_users" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."admins" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "granted_by" "uuid",
+    "granted_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+ALTER TABLE "public"."admins" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."analytics" (
@@ -3520,6 +4851,63 @@ CREATE TABLE IF NOT EXISTS "public"."categories_backup_20260308_124506" (
 ALTER TABLE "public"."categories_backup_20260308_124506" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."cod_collections" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "order_id" "uuid" NOT NULL,
+    "verification_key_id" "uuid",
+    "customer_id" "uuid" NOT NULL,
+    "delivery_id" "uuid",
+    "collection_amount" numeric(10,2) NOT NULL,
+    "collection_method" "text" DEFAULT 'cash'::"text",
+    "status" "text" DEFAULT 'pending'::"text",
+    "collected_at" timestamp with time zone,
+    "deposited_at" timestamp with time zone,
+    "deposit_reference" "text",
+    "deposit_method" "text",
+    "customer_signature_url" "text",
+    "driver_notes" "text",
+    "customer_feedback" "text",
+    "dispute_reason" "text",
+    "disputed_at" timestamp with time zone,
+    "disputed_by" "uuid",
+    "resolved_at" timestamp with time zone,
+    "resolved_by" "uuid",
+    "resolution_notes" "text",
+    "metadata" "jsonb" DEFAULT '{}'::"jsonb",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    CONSTRAINT "cod_collections_collection_method_check" CHECK (("collection_method" = ANY (ARRAY['cash'::"text", 'digital_wallet'::"text", 'card_on_delivery'::"text"]))),
+    CONSTRAINT "cod_collections_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'collected'::"text", 'deposited'::"text", 'failed'::"text", 'disputed'::"text", 'refunded'::"text"])))
+);
+
+
+ALTER TABLE "public"."cod_collections" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."cod_verification_keys" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "order_id" "uuid" NOT NULL,
+    "verification_key" "text" NOT NULL,
+    "key_type" "text" DEFAULT 'numeric'::"text",
+    "key_length" integer DEFAULT 6,
+    "status" "text" DEFAULT 'pending'::"text",
+    "expires_at" timestamp with time zone NOT NULL,
+    "verified_at" timestamp with time zone,
+    "verified_by" "uuid",
+    "verification_attempts" integer DEFAULT 0,
+    "max_attempts" integer DEFAULT 3,
+    "customer_notified_at" timestamp with time zone,
+    "metadata" "jsonb" DEFAULT '{}'::"jsonb",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    CONSTRAINT "cod_verification_keys_key_type_check" CHECK (("key_type" = ANY (ARRAY['numeric'::"text", 'alphanumeric'::"text"]))),
+    CONSTRAINT "cod_verification_keys_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'verified'::"text", 'expired'::"text", 'cancelled'::"text", 'disputed'::"text"])))
+);
+
+
+ALTER TABLE "public"."cod_verification_keys" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."commissions" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "middle_man_id" "uuid" NOT NULL,
@@ -3627,14 +5015,14 @@ CREATE TABLE IF NOT EXISTS "public"."delivery_assignments" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "order_id" "uuid",
     "driver_id" "uuid",
-    "assigned_at" timestamp with time zone DEFAULT "now"(),
+    "status" "text" DEFAULT 'pending'::"text",
+    "assigned_at" timestamp with time zone,
     "picked_up_at" timestamp with time zone,
     "delivered_at" timestamp with time zone,
-    "status" "text" DEFAULT 'pending'::"text",
-    "delivery_fee" numeric(10,2),
-    "distance_km" numeric(10,2),
+    "notes" "text",
     "created_at" timestamp with time zone DEFAULT "now"(),
-    CONSTRAINT "delivery_assignments_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'accepted'::"text", 'picked_up'::"text", 'delivered'::"text", 'cancelled'::"text"])))
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    CONSTRAINT "delivery_assignments_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'assigned'::"text", 'in_transit'::"text", 'delivered'::"text", 'failed'::"text"])))
 );
 
 
@@ -3642,22 +5030,21 @@ ALTER TABLE "public"."delivery_assignments" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."delivery_profiles" (
-    "user_id" "uuid" NOT NULL,
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid",
+    "full_name" "text" NOT NULL,
+    "phone" "text",
     "vehicle_type" "text",
-    "vehicle_number" "text",
-    "driver_license_url" "text",
+    "license_number" "text",
+    "is_active" boolean DEFAULT true,
     "is_verified" boolean DEFAULT false,
-    "is_active" boolean DEFAULT false,
-    "latitude" numeric(10,8),
-    "longitude" numeric(10,8),
-    "rating" numeric(3,2) DEFAULT 0,
-    "total_deliveries" integer DEFAULT 0,
-    "completed_deliveries" integer DEFAULT 0,
-    "cancelled_deliveries" integer DEFAULT 0,
-    "commission_rate" numeric(5,2) DEFAULT 10,
+    "is_available" boolean DEFAULT true,
+    "current_location" "jsonb",
     "created_at" timestamp with time zone DEFAULT "now"(),
     "updated_at" timestamp with time zone DEFAULT "now"(),
-    CONSTRAINT "delivery_profiles_vehicle_type_check" CHECK (("vehicle_type" = ANY (ARRAY['motorcycle'::"text", 'car'::"text", 'bicycle'::"text", 'van'::"text", 'truck'::"text"])))
+    "latitude" double precision,
+    "longitude" double precision,
+    CONSTRAINT "delivery_profiles_vehicle_type_check" CHECK (("vehicle_type" = ANY (ARRAY['motorcycle'::"text", 'car'::"text", 'van'::"text", 'truck'::"text"])))
 );
 
 
@@ -4452,6 +5839,25 @@ CREATE TABLE IF NOT EXISTS "public"."health_prescriptions" (
 ALTER TABLE "public"."health_prescriptions" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."health_reviews" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "doctor_id" "uuid",
+    "patient_id" "uuid",
+    "appointment_id" "uuid",
+    "rating" integer NOT NULL,
+    "title" "text",
+    "comment" "text",
+    "is_verified" boolean DEFAULT false,
+    "is_approved" boolean DEFAULT true,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    CONSTRAINT "health_reviews_rating_check" CHECK ((("rating" >= 1) AND ("rating" <= 5)))
+);
+
+
+ALTER TABLE "public"."health_reviews" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."idempotency_keys" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "key" "text" NOT NULL,
@@ -4627,6 +6033,14 @@ CREATE TABLE IF NOT EXISTS "public"."orders" (
     "production_completed_at" timestamp without time zone,
     "quality_check_passed" boolean,
     "middle_man_id" "uuid",
+    "cod_verification_required" boolean DEFAULT false,
+    "cod_verified" boolean DEFAULT false,
+    "cod_verified_at" timestamp with time zone,
+    "cod_collection_amount" numeric(10,2),
+    "cod_collected_by" "uuid",
+    "cod_collection_status" "text" DEFAULT 'pending'::"text",
+    "cod_deposit_deadline" timestamp with time zone,
+    CONSTRAINT "orders_cod_collection_status_check" CHECK (("cod_collection_status" = ANY (ARRAY['pending'::"text", 'collected'::"text", 'failed'::"text", 'refunded'::"text"]))),
     CONSTRAINT "orders_delivery_status_check" CHECK (("delivery_status" = ANY (ARRAY['pending'::"text", 'assigned'::"text", 'picked_up'::"text", 'in_transit'::"text", 'delivered'::"text", 'failed'::"text"]))),
     CONSTRAINT "orders_payment_method_check" CHECK (("payment_method" = ANY (ARRAY['cash'::"text", 'card'::"text", 'bank_transfer'::"text", 'digital_wallet'::"text", 'cod'::"text"]))),
     CONSTRAINT "orders_payment_status_check" CHECK (("payment_status" = ANY (ARRAY['pending'::"text", 'completed'::"text", 'failed'::"text", 'refunded'::"text"]))),
@@ -4655,6 +6069,115 @@ CREATE TABLE IF NOT EXISTS "public"."payment_intentions" (
 
 
 ALTER TABLE "public"."payment_intentions" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."payment_splits" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "order_id" "uuid" NOT NULL,
+    "payment_transaction_id" "uuid",
+    "recipient_id" "uuid" NOT NULL,
+    "recipient_type" "text" NOT NULL,
+    "amount" numeric(15,2) NOT NULL,
+    "percentage" numeric(5,2),
+    "split_type" "text" NOT NULL,
+    "status" "text" DEFAULT 'pending'::"text" NOT NULL,
+    "held_until" timestamp with time zone,
+    "released_at" timestamp with time zone,
+    "paid_at" timestamp with time zone,
+    "metadata" "jsonb" DEFAULT '{}'::"jsonb",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    CONSTRAINT "payment_splits_amount_check" CHECK (("amount" >= (0)::numeric)),
+    CONSTRAINT "payment_splits_percentage_check" CHECK ((("percentage" >= (0)::numeric) AND ("percentage" <= (100)::numeric))),
+    CONSTRAINT "payment_splits_recipient_type_check" CHECK (("recipient_type" = ANY (ARRAY['seller'::"text", 'factory'::"text", 'middleman'::"text", 'platform'::"text", 'freelancer'::"text", 'doctor'::"text", 'pharmacy'::"text", 'service_provider'::"text", 'delivery'::"text"]))),
+    CONSTRAINT "payment_splits_split_type_check" CHECK (("split_type" = ANY (ARRAY['revenue'::"text", 'commission'::"text", 'fee'::"text", 'tax'::"text", 'delivery_fee'::"text"]))),
+    CONSTRAINT "payment_splits_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'held'::"text", 'released'::"text", 'paid'::"text", 'cancelled'::"text"])))
+);
+
+
+ALTER TABLE "public"."payment_splits" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."payment_transactions" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "order_id" "uuid",
+    "user_id" "uuid" NOT NULL,
+    "wallet_id" "uuid",
+    "payment_gateway" "text" DEFAULT 'fawry'::"text" NOT NULL,
+    "gateway_transaction_id" "text",
+    "amount" numeric(15,2) NOT NULL,
+    "currency" "text" DEFAULT 'EGP'::"text" NOT NULL,
+    "status" "text" DEFAULT 'pending'::"text" NOT NULL,
+    "payment_method" "text",
+    "gateway_response" "jsonb",
+    "failure_reason" "text",
+    "processed_at" timestamp with time zone,
+    "refunded_at" timestamp with time zone,
+    "refund_amount" numeric(15,2),
+    "metadata" "jsonb" DEFAULT '{}'::"jsonb",
+    "idempotency_key" "text",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    CONSTRAINT "payment_transactions_amount_check" CHECK (("amount" > (0)::numeric)),
+    CONSTRAINT "payment_transactions_payment_gateway_check" CHECK (("payment_gateway" = ANY (ARRAY['fawry'::"text", 'stripe'::"text", 'cod'::"text", 'wallet'::"text", 'bank_transfer'::"text"]))),
+    CONSTRAINT "payment_transactions_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'processing'::"text", 'success'::"text", 'failed'::"text", 'cancelled'::"text", 'refunded'::"text", 'reversed'::"text"])))
+);
+
+
+ALTER TABLE "public"."payment_transactions" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."payment_webhook_logs" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "payment_gateway" "text" DEFAULT 'fawry'::"text" NOT NULL,
+    "event_type" "text" NOT NULL,
+    "gateway_transaction_id" "text",
+    "order_id" "uuid",
+    "amount" numeric(15,2),
+    "raw_payload" "jsonb" NOT NULL,
+    "signature_verified" boolean DEFAULT false,
+    "processed" boolean DEFAULT false,
+    "processed_at" timestamp with time zone,
+    "error_message" "text",
+    "retry_count" integer DEFAULT 0,
+    "created_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+ALTER TABLE "public"."payment_webhook_logs" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."payouts" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "wallet_id" "uuid" NOT NULL,
+    "amount" numeric(15,2) NOT NULL,
+    "fee" numeric(15,2) DEFAULT 0 NOT NULL,
+    "net_amount" numeric(15,2) NOT NULL,
+    "currency" "text" DEFAULT 'EGP'::"text" NOT NULL,
+    "status" "text" DEFAULT 'pending'::"text" NOT NULL,
+    "payout_method" "text" NOT NULL,
+    "bank_account_name" "text",
+    "bank_account_number" "text",
+    "bank_name" "text",
+    "bank_code" "text",
+    "fawry_reference" "text",
+    "processed_by" "uuid",
+    "processed_at" timestamp with time zone,
+    "rejected_reason" "text",
+    "failure_reason" "text",
+    "metadata" "jsonb" DEFAULT '{}'::"jsonb",
+    "idempotency_key" "text",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    CONSTRAINT "payouts_amount_check" CHECK (("amount" > (0)::numeric)),
+    CONSTRAINT "payouts_fee_check" CHECK (("fee" >= (0)::numeric)),
+    CONSTRAINT "payouts_net_amount_check" CHECK (("net_amount" >= (0)::numeric)),
+    CONSTRAINT "payouts_payout_method_check" CHECK (("payout_method" = ANY (ARRAY['bank_transfer'::"text", 'fawry_cash'::"text", 'wallet'::"text", 'cod'::"text"]))),
+    CONSTRAINT "payouts_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'processing'::"text", 'paid'::"text", 'failed'::"text", 'cancelled'::"text", 'rejected'::"text"])))
+);
+
+
+ALTER TABLE "public"."payouts" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."pharmacy_activity_logs" (
@@ -4881,6 +6404,17 @@ CREATE TABLE IF NOT EXISTS "public"."posts" (
 ALTER TABLE "public"."posts" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."profiles" (
+    "id" "uuid" NOT NULL,
+    "email" "text",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "is_admin" boolean DEFAULT false
+);
+
+
+ALTER TABLE "public"."profiles" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."provider_availability" (
     "provider_id" "uuid" NOT NULL,
     "day_of_week" smallint NOT NULL,
@@ -5006,26 +6540,36 @@ ALTER TABLE "public"."sellers_backup" OWNER TO "postgres";
 CREATE TABLE IF NOT EXISTS "public"."service_bookings" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "listing_id" "uuid",
-    "provider_id" "uuid" NOT NULL,
-    "customer_id" "uuid" NOT NULL,
-    "booking_type" "text" NOT NULL,
-    "start_date" timestamp with time zone,
-    "end_date" timestamp with time zone,
-    "project_title" "text",
-    "project_description" "text",
-    "agreed_price" numeric(10,2),
-    "milestone_data" "jsonb",
+    "provider_id" "uuid",
+    "customer_id" "uuid",
+    "vertical" "text" NOT NULL,
+    "booking_type" "text",
     "status" "text" DEFAULT 'pending'::"text",
-    "interaction_mode" "text",
+    "scheduled_date" timestamp with time zone,
+    "scheduled_end" timestamp with time zone,
+    "duration_minutes" integer,
+    "location_type" "text",
+    "location_address" "jsonb",
     "meeting_link" "text",
+    "price" numeric(10,2) NOT NULL,
+    "discount" numeric(10,2) DEFAULT 0,
+    "total_amount" numeric(10,2) NOT NULL,
+    "payment_status" "text" DEFAULT 'pending'::"text",
+    "payment_method" "text",
+    "payment_intent_id" "text",
+    "customer_notes" "text",
+    "provider_notes" "text",
+    "internal_notes" "text",
+    "cancellation_reason" "text",
+    "cancelled_by" "text",
+    "completed_at" timestamp with time zone,
     "created_at" timestamp with time zone DEFAULT "now"(),
     "updated_at" timestamp with time zone DEFAULT "now"(),
-    "is_recurring" boolean DEFAULT false,
-    "recurrence_pattern" "text",
-    "recurrence_end_date" "date",
-    CONSTRAINT "service_bookings_booking_type_check" CHECK (("booking_type" = ANY (ARRAY['appointment'::"text", 'project_contract'::"text"]))),
-    CONSTRAINT "service_bookings_interaction_mode_check" CHECK (("interaction_mode" = ANY (ARRAY['online'::"text", 'offline'::"text"]))),
-    CONSTRAINT "service_bookings_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'confirmed'::"text", 'in_progress'::"text", 'completed'::"text", 'cancelled'::"text", 'disputed'::"text"])))
+    CONSTRAINT "service_bookings_booking_type_check" CHECK (("booking_type" = ANY (ARRAY['appointment'::"text", 'project'::"text", 'session'::"text", 'visit'::"text"]))),
+    CONSTRAINT "service_bookings_location_type_check" CHECK (("location_type" = ANY (ARRAY['online'::"text", 'in_person'::"text", 'customer_location'::"text", 'provider_location'::"text"]))),
+    CONSTRAINT "service_bookings_payment_status_check" CHECK (("payment_status" = ANY (ARRAY['pending'::"text", 'paid'::"text", 'refunded'::"text", 'failed'::"text"]))),
+    CONSTRAINT "service_bookings_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'confirmed'::"text", 'in_progress'::"text", 'completed'::"text", 'cancelled'::"text", 'no_show'::"text"]))),
+    CONSTRAINT "service_bookings_vertical_check" CHECK (("vertical" = ANY (ARRAY['medical'::"text", 'tech'::"text", 'home'::"text", 'custom'::"text"])))
 );
 
 
@@ -5072,22 +6616,33 @@ ALTER TABLE "public"."service_gigs" OWNER TO "postgres";
 
 CREATE TABLE IF NOT EXISTS "public"."service_listings" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "provider_id" "uuid" NOT NULL,
+    "provider_id" "uuid",
     "title" "text" NOT NULL,
     "description" "text" NOT NULL,
-    "category_slug" "text" NOT NULL,
-    "pricing_type" "text" NOT NULL,
-    "price" numeric(10,2),
-    "currency" "text" DEFAULT 'EGP'::"text",
-    "estimated_duration_hours" integer,
-    "delivery_days" integer,
-    "is_remote_allowed" boolean DEFAULT true,
-    "requires_physical_presence" boolean DEFAULT false,
-    "images" "jsonb" DEFAULT '[]'::"jsonb",
-    "attachments" "jsonb" DEFAULT '[]'::"jsonb",
+    "category" "text" NOT NULL,
+    "subcategory" "text",
+    "vertical" "text" NOT NULL,
+    "service_type" "text",
+    "price" numeric(10,2) NOT NULL,
+    "currency" "text" DEFAULT 'USD'::"text",
+    "duration_minutes" integer,
+    "package_details" "jsonb",
+    "deliverables" "text"[],
+    "requirements" "text"[],
+    "images" "text"[],
+    "video_url" "text",
     "is_active" boolean DEFAULT true,
+    "max_bookings_per_day" integer,
+    "advance_booking_days" integer DEFAULT 7,
+    "cancellation_policy" "text",
+    "rating_avg" numeric(3,2) DEFAULT 0,
+    "review_count" integer DEFAULT 0,
+    "total_bookings" integer DEFAULT 0,
+    "featured" boolean DEFAULT false,
     "created_at" timestamp with time zone DEFAULT "now"(),
-    CONSTRAINT "service_listings_pricing_type_check" CHECK (("pricing_type" = ANY (ARRAY['fixed'::"text", 'hourly'::"text", 'consultation'::"text"])))
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    CONSTRAINT "service_listings_service_type_check" CHECK (("service_type" = ANY (ARRAY['hourly'::"text", 'fixed'::"text", 'package'::"text", 'consultation'::"text"]))),
+    CONSTRAINT "service_listings_vertical_check" CHECK (("vertical" = ANY (ARRAY['medical'::"text", 'tech'::"text", 'home'::"text", 'custom'::"text"])))
 );
 
 
@@ -5123,27 +6678,39 @@ ALTER TABLE "public"."service_orders" OWNER TO "postgres";
 
 CREATE TABLE IF NOT EXISTS "public"."service_providers" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "user_id" "uuid" NOT NULL,
-    "provider_type" "public"."provider_category" NOT NULL,
-    "business_name" "text" NOT NULL,
-    "tagline" "text",
-    "description" "text",
-    "engagement_models" "public"."engagement_model"[] NOT NULL,
-    "metadata" "jsonb" DEFAULT '{}'::"jsonb",
-    "latitude" numeric(9,6),
-    "longitude" numeric(9,6),
-    "address_line1" "text",
-    "city" "text",
-    "country" "text" DEFAULT 'EG'::"text",
+    "user_id" "uuid",
+    "vertical" "text" NOT NULL,
+    "category" "text" NOT NULL,
+    "business_name" "text",
+    "display_name" "text",
+    "bio" "text",
+    "license_number" "text",
+    "license_verified" boolean DEFAULT false,
+    "hourly_rate" numeric(10,2),
+    "fixed_price" numeric(10,2),
+    "currency" "text" DEFAULT 'USD'::"text",
+    "location" "text",
+    "latitude" numeric(10,8),
+    "longitude" numeric(11,8),
+    "radius_km" integer DEFAULT 50,
+    "phone" "text",
+    "email" "text",
+    "website" "text",
+    "portfolio_urls" "text"[],
+    "social_links" "jsonb",
+    "availability_schedule" "jsonb",
+    "is_available" boolean DEFAULT true,
+    "rating_avg" numeric(3,2) DEFAULT 0,
+    "review_count" integer DEFAULT 0,
+    "total_bookings" integer DEFAULT 0,
+    "total_earnings" numeric(12,2) DEFAULT 0,
     "is_verified" boolean DEFAULT false,
     "verification_documents" "text"[],
     "status" "text" DEFAULT 'pending'::"text",
-    "rating_avg" numeric(3,2) DEFAULT 0.00,
-    "total_jobs" integer DEFAULT 0,
-    "total_hours_worked" integer DEFAULT 0,
     "created_at" timestamp with time zone DEFAULT "now"(),
     "updated_at" timestamp with time zone DEFAULT "now"(),
-    CONSTRAINT "service_providers_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'active'::"text", 'suspended'::"text"])))
+    CONSTRAINT "service_providers_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'active'::"text", 'suspended'::"text", 'rejected'::"text"]))),
+    CONSTRAINT "service_providers_vertical_check" CHECK (("vertical" = ANY (ARRAY['medical'::"text", 'tech'::"text", 'home'::"text", 'custom'::"text"])))
 );
 
 
@@ -5151,18 +6718,23 @@ ALTER TABLE "public"."service_providers" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."service_reviews" (
-    "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
-    "order_id" "uuid" NOT NULL,
-    "gig_id" "uuid" NOT NULL,
-    "freelancer_id" "uuid" NOT NULL,
-    "buyer_id" "uuid" NOT NULL,
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "booking_id" "uuid",
+    "listing_id" "uuid",
+    "provider_id" "uuid",
+    "customer_id" "uuid",
+    "vertical" "text" NOT NULL,
     "rating" integer NOT NULL,
+    "title" "text",
     "comment" "text",
-    "is_visible" boolean DEFAULT true,
-    "created_at" timestamp with time zone DEFAULT "now"(),
-    "helpful_votes" integer DEFAULT 0,
-    "is_flagged" boolean DEFAULT false,
+    "is_verified_booking" boolean DEFAULT true,
+    "is_approved" boolean DEFAULT true,
+    "helpful_count" integer DEFAULT 0,
+    "images" "text"[],
     "provider_response" "text",
+    "provider_response_at" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
     CONSTRAINT "service_reviews_rating_check" CHECK ((("rating" >= 1) AND ("rating" <= 5)))
 );
 
@@ -5251,6 +6823,24 @@ CREATE TABLE IF NOT EXISTS "public"."svc_categories" (
 ALTER TABLE "public"."svc_categories" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."svc_conversations" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "listing_id" "uuid",
+    "booking_id" "uuid",
+    "provider_id" "uuid",
+    "customer_id" "uuid",
+    "vertical" "text" NOT NULL,
+    "last_message" "text",
+    "last_message_at" timestamp with time zone,
+    "is_archived" boolean DEFAULT false,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+ALTER TABLE "public"."svc_conversations" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."svc_listing_packages" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "listing_id" "uuid" NOT NULL,
@@ -5290,6 +6880,9 @@ CREATE TABLE IF NOT EXISTS "public"."svc_listings" (
     "created_at" timestamp with time zone DEFAULT "now"(),
     "updated_at" timestamp with time zone DEFAULT "now"(),
     "is_active" boolean DEFAULT true,
+    "rating" numeric(3,2) DEFAULT 0.00,
+    "review_count" integer DEFAULT 0,
+    "reviews_count" integer DEFAULT 0,
     CONSTRAINT "svc_listings_listing_type_check" CHECK (("listing_type" = ANY (ARRAY['service_package'::"text", 'appointment'::"text", 'job_posting'::"text", 'quote_request'::"text"]))),
     CONSTRAINT "svc_listings_price_type_check" CHECK (("price_type" = ANY (ARRAY['fixed'::"text", 'hourly'::"text", 'range'::"text", 'negotiable'::"text", 'free'::"text"]))),
     CONSTRAINT "svc_listings_status_check" CHECK (("status" = ANY (ARRAY['draft'::"text", 'active'::"text", 'paused'::"text", 'filled'::"text", 'closed'::"text"])))
@@ -5297,6 +6890,27 @@ CREATE TABLE IF NOT EXISTS "public"."svc_listings" (
 
 
 ALTER TABLE "public"."svc_listings" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."svc_messages" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "conversation_id" "uuid",
+    "sender_id" "uuid",
+    "content" "text",
+    "message_type" "text" DEFAULT 'text'::"text",
+    "attachment_url" "text",
+    "attachment_name" "text",
+    "attachment_size" bigint,
+    "is_read" boolean DEFAULT false,
+    "read_at" timestamp with time zone,
+    "is_deleted" boolean DEFAULT false,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    CONSTRAINT "svc_messages_message_type_check" CHECK (("message_type" = ANY (ARRAY['text'::"text", 'image'::"text", 'file'::"text", 'voice'::"text"])))
+);
+
+
+ALTER TABLE "public"."svc_messages" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."svc_orders" (
@@ -5381,6 +6995,7 @@ CREATE TABLE IF NOT EXISTS "public"."svc_providers" (
     "email" character varying(200),
     "latitude" numeric(10,8),
     "longitude" numeric(11,8),
+    "response_rate" integer DEFAULT 0,
     CONSTRAINT "svc_providers_provider_type_check" CHECK (("provider_type" = ANY (ARRAY['individual'::"text", 'company'::"text", 'hospital'::"text", 'institution'::"text", 'ngo'::"text"]))),
     CONSTRAINT "svc_providers_status_check" CHECK (("status" = ANY (ARRAY['active'::"text", 'inactive'::"text", 'suspended'::"text", 'pending_review'::"text"])))
 );
@@ -5462,6 +7077,31 @@ CREATE TABLE IF NOT EXISTS "public"."user_events" (
 ALTER TABLE "public"."user_events" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."user_wallets" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "balance" numeric(15,2) DEFAULT 0 NOT NULL,
+    "pending_balance" numeric(15,2) DEFAULT 0 NOT NULL,
+    "total_deposited" numeric(15,2) DEFAULT 0 NOT NULL,
+    "total_withdrawn" numeric(15,2) DEFAULT 0 NOT NULL,
+    "total_earned" numeric(15,2) DEFAULT 0 NOT NULL,
+    "total_spent" numeric(15,2) DEFAULT 0 NOT NULL,
+    "currency" "text" DEFAULT 'EGP'::"text" NOT NULL,
+    "is_active" boolean DEFAULT true,
+    "is_locked" boolean DEFAULT false,
+    "lock_reason" "text",
+    "locked_at" timestamp with time zone,
+    "last_transaction_at" timestamp with time zone,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    CONSTRAINT "user_wallets_balance_check" CHECK (("balance" >= (0)::numeric)),
+    CONSTRAINT "user_wallets_pending_balance_check" CHECK (("pending_balance" >= (0)::numeric))
+);
+
+
+ALTER TABLE "public"."user_wallets" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."users" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
     "user_id" "uuid" NOT NULL,
@@ -5482,20 +7122,47 @@ CREATE TABLE IF NOT EXISTS "public"."users" (
 ALTER TABLE "public"."users" OWNER TO "postgres";
 
 
-COMMENT ON COLUMN "public"."users"."preferred_language" IS 'User preferred language code (e.g., en, ar, fr)';
+COMMENT ON COLUMN "public"."users"."account_type" IS 'User account type';
 
 
 
-COMMENT ON COLUMN "public"."users"."preferred_currency" IS 'User preferred currency code (e.g., USD, EUR, EGP)';
+COMMENT ON COLUMN "public"."users"."preferred_language" IS 'Preferred language code';
 
 
 
-COMMENT ON COLUMN "public"."users"."theme_preference" IS 'User theme preference (light, dark, system)';
+COMMENT ON COLUMN "public"."users"."preferred_currency" IS 'Preferred currency code';
 
 
 
-COMMENT ON COLUMN "public"."users"."sidebar_state" IS 'Sidebar UI state as JSONB';
+COMMENT ON COLUMN "public"."users"."theme_preference" IS 'Theme preference';
 
+
+
+COMMENT ON COLUMN "public"."users"."sidebar_state" IS 'Sidebar UI state';
+
+
+
+CREATE TABLE IF NOT EXISTS "public"."wallet_transactions" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "wallet_id" "uuid" NOT NULL,
+    "user_id" "uuid" NOT NULL,
+    "transaction_type" "text" NOT NULL,
+    "amount" numeric(15,2) NOT NULL,
+    "balance_before" numeric(15,2) NOT NULL,
+    "balance_after" numeric(15,2) NOT NULL,
+    "reference_type" "text" NOT NULL,
+    "reference_id" "uuid",
+    "description" "text" NOT NULL,
+    "metadata" "jsonb" DEFAULT '{}'::"jsonb",
+    "idempotency_key" "text",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    CONSTRAINT "wallet_transactions_amount_check" CHECK (("amount" > (0)::numeric)),
+    CONSTRAINT "wallet_transactions_reference_type_check" CHECK (("reference_type" = ANY (ARRAY['order'::"text", 'commission'::"text", 'payout'::"text", 'refund'::"text", 'adjustment'::"text", 'payment'::"text", 'deal'::"text", 'booking'::"text", 'service'::"text"]))),
+    CONSTRAINT "wallet_transactions_transaction_type_check" CHECK (("transaction_type" = ANY (ARRAY['credit'::"text", 'debit'::"text", 'hold'::"text", 'release'::"text", 'refund'::"text", 'adjustment'::"text", 'fee'::"text", 'commission'::"text", 'payout'::"text", 'payment'::"text"])))
+);
+
+
+ALTER TABLE "public"."wallet_transactions" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."wishlist" (
@@ -5511,6 +7178,11 @@ ALTER TABLE "public"."wishlist" OWNER TO "postgres";
 
 ALTER TABLE ONLY "public"."admin_users"
     ADD CONSTRAINT "admin_users_pkey" PRIMARY KEY ("user_id");
+
+
+
+ALTER TABLE ONLY "public"."admins"
+    ADD CONSTRAINT "admins_pkey" PRIMARY KEY ("id");
 
 
 
@@ -5569,6 +7241,31 @@ ALTER TABLE ONLY "public"."categories"
 
 
 
+ALTER TABLE ONLY "public"."cod_collections"
+    ADD CONSTRAINT "cod_collections_order_id_key" UNIQUE ("order_id");
+
+
+
+ALTER TABLE ONLY "public"."cod_collections"
+    ADD CONSTRAINT "cod_collections_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."cod_verification_keys"
+    ADD CONSTRAINT "cod_verification_keys_order_id_key" UNIQUE ("order_id");
+
+
+
+ALTER TABLE ONLY "public"."cod_verification_keys"
+    ADD CONSTRAINT "cod_verification_keys_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."cod_verification_keys"
+    ADD CONSTRAINT "cod_verification_keys_verification_key_key" UNIQUE ("verification_key");
+
+
+
 ALTER TABLE ONLY "public"."commissions"
     ADD CONSTRAINT "commissions_pkey" PRIMARY KEY ("id");
 
@@ -5605,12 +7302,22 @@ ALTER TABLE ONLY "public"."deals_v2"
 
 
 ALTER TABLE ONLY "public"."delivery_assignments"
+    ADD CONSTRAINT "delivery_assignments_order_id_key" UNIQUE ("order_id");
+
+
+
+ALTER TABLE ONLY "public"."delivery_assignments"
     ADD CONSTRAINT "delivery_assignments_pkey" PRIMARY KEY ("id");
 
 
 
 ALTER TABLE ONLY "public"."delivery_profiles"
-    ADD CONSTRAINT "delivery_profiles_pkey" PRIMARY KEY ("user_id");
+    ADD CONSTRAINT "delivery_profiles_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."delivery_profiles"
+    ADD CONSTRAINT "delivery_profiles_user_id_key" UNIQUE ("user_id");
 
 
 
@@ -5804,6 +7511,11 @@ ALTER TABLE ONLY "public"."health_prescriptions"
 
 
 
+ALTER TABLE ONLY "public"."health_reviews"
+    ADD CONSTRAINT "health_reviews_pkey" PRIMARY KEY ("id");
+
+
+
 ALTER TABLE ONLY "public"."idempotency_keys"
     ADD CONSTRAINT "idempotency_keys_key_key" UNIQUE ("key");
 
@@ -5861,6 +7573,41 @@ ALTER TABLE ONLY "public"."orders"
 
 ALTER TABLE ONLY "public"."payment_intentions"
     ADD CONSTRAINT "payment_intentions_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."payment_splits"
+    ADD CONSTRAINT "payment_splits_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."payment_transactions"
+    ADD CONSTRAINT "payment_transactions_gateway_transaction_id_key" UNIQUE ("gateway_transaction_id");
+
+
+
+ALTER TABLE ONLY "public"."payment_transactions"
+    ADD CONSTRAINT "payment_transactions_idempotency_key_key" UNIQUE ("idempotency_key");
+
+
+
+ALTER TABLE ONLY "public"."payment_transactions"
+    ADD CONSTRAINT "payment_transactions_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."payment_webhook_logs"
+    ADD CONSTRAINT "payment_webhook_logs_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."payouts"
+    ADD CONSTRAINT "payouts_idempotency_key_key" UNIQUE ("idempotency_key");
+
+
+
+ALTER TABLE ONLY "public"."payouts"
+    ADD CONSTRAINT "payouts_pkey" PRIMARY KEY ("id");
 
 
 
@@ -5946,6 +7693,11 @@ ALTER TABLE ONLY "public"."products"
 
 ALTER TABLE ONLY "public"."products"
     ADD CONSTRAINT "products_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."profiles"
+    ADD CONSTRAINT "profiles_pkey" PRIMARY KEY ("id");
 
 
 
@@ -6040,12 +7792,12 @@ ALTER TABLE ONLY "public"."service_providers"
 
 
 ALTER TABLE ONLY "public"."service_reviews"
-    ADD CONSTRAINT "service_reviews_order_id_key" UNIQUE ("order_id");
+    ADD CONSTRAINT "service_reviews_pkey" PRIMARY KEY ("id");
 
 
 
 ALTER TABLE ONLY "public"."service_reviews"
-    ADD CONSTRAINT "service_reviews_pkey" PRIMARY KEY ("id");
+    ADD CONSTRAINT "service_reviews_unique_booking" UNIQUE ("customer_id", "booking_id");
 
 
 
@@ -6099,6 +7851,11 @@ ALTER TABLE ONLY "public"."svc_categories"
 
 
 
+ALTER TABLE ONLY "public"."svc_conversations"
+    ADD CONSTRAINT "svc_conversations_pkey" PRIMARY KEY ("id");
+
+
+
 ALTER TABLE ONLY "public"."svc_listing_packages"
     ADD CONSTRAINT "svc_listing_packages_pkey" PRIMARY KEY ("id");
 
@@ -6111,6 +7868,11 @@ ALTER TABLE ONLY "public"."svc_listings"
 
 ALTER TABLE ONLY "public"."svc_listings"
     ADD CONSTRAINT "svc_listings_provider_id_slug_key" UNIQUE ("provider_id", "slug");
+
+
+
+ALTER TABLE ONLY "public"."svc_messages"
+    ADD CONSTRAINT "svc_messages_pkey" PRIMARY KEY ("id");
 
 
 
@@ -6159,11 +7921,6 @@ ALTER TABLE ONLY "public"."trading_conversations"
 
 
 
-ALTER TABLE ONLY "public"."service_providers"
-    ADD CONSTRAINT "unique_provider_user" UNIQUE ("user_id");
-
-
-
 ALTER TABLE ONLY "public"."analytics_snapshots"
     ADD CONSTRAINT "unique_seller_period" UNIQUE ("seller_id", "period_type", "period_start", "period_end");
 
@@ -6179,6 +7936,16 @@ ALTER TABLE ONLY "public"."user_events"
 
 
 
+ALTER TABLE ONLY "public"."user_wallets"
+    ADD CONSTRAINT "user_wallets_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."user_wallets"
+    ADD CONSTRAINT "user_wallets_user_id_key" UNIQUE ("user_id");
+
+
+
 ALTER TABLE ONLY "public"."users"
     ADD CONSTRAINT "users_pkey" PRIMARY KEY ("id");
 
@@ -6186,6 +7953,16 @@ ALTER TABLE ONLY "public"."users"
 
 ALTER TABLE ONLY "public"."users"
     ADD CONSTRAINT "users_user_id_key" UNIQUE ("user_id");
+
+
+
+ALTER TABLE ONLY "public"."wallet_transactions"
+    ADD CONSTRAINT "wallet_transactions_idempotency_key_key" UNIQUE ("idempotency_key");
+
+
+
+ALTER TABLE ONLY "public"."wallet_transactions"
+    ADD CONSTRAINT "wallet_transactions_pkey" PRIMARY KEY ("id");
 
 
 
@@ -6235,14 +8012,6 @@ CREATE INDEX "idx_analytics_seller_id" ON "public"."analytics_snapshots" USING "
 
 
 
-CREATE INDEX "idx_assignments_driver" ON "public"."delivery_assignments" USING "btree" ("driver_id");
-
-
-
-CREATE INDEX "idx_assignments_order" ON "public"."delivery_assignments" USING "btree" ("order_id");
-
-
-
 CREATE INDEX "idx_async_jobs_queue_status" ON "public"."async_jobs" USING "btree" ("queue_name", "status", "scheduled_for");
 
 
@@ -6256,14 +8025,6 @@ CREATE INDEX "idx_backup_status_date" ON "public"."health_daily_backup_status" U
 
 
 CREATE INDEX "idx_backup_status_doctor" ON "public"."health_daily_backup_status" USING "btree" ("doctor_id");
-
-
-
-CREATE INDEX "idx_bookings_customer" ON "public"."service_bookings" USING "btree" ("customer_id");
-
-
-
-CREATE INDEX "idx_bookings_provider" ON "public"."service_bookings" USING "btree" ("provider_id");
 
 
 
@@ -6296,6 +8057,42 @@ CREATE INDEX "idx_change_log_patient" ON "public"."health_patient_change_log" US
 
 
 CREATE INDEX "idx_change_log_type" ON "public"."health_patient_change_log" USING "btree" ("change_type");
+
+
+
+CREATE INDEX "idx_cod_collections_collected" ON "public"."cod_collections" USING "btree" ("collected_at");
+
+
+
+CREATE INDEX "idx_cod_collections_delivery" ON "public"."cod_collections" USING "btree" ("delivery_id");
+
+
+
+CREATE INDEX "idx_cod_collections_disputed" ON "public"."cod_collections" USING "btree" ("disputed_at") WHERE ("status" = 'disputed'::"text");
+
+
+
+CREATE INDEX "idx_cod_collections_order" ON "public"."cod_collections" USING "btree" ("order_id");
+
+
+
+CREATE INDEX "idx_cod_collections_status" ON "public"."cod_collections" USING "btree" ("status");
+
+
+
+CREATE INDEX "idx_cod_keys_expires" ON "public"."cod_verification_keys" USING "btree" ("expires_at");
+
+
+
+CREATE INDEX "idx_cod_keys_key" ON "public"."cod_verification_keys" USING "btree" ("verification_key");
+
+
+
+CREATE INDEX "idx_cod_keys_order" ON "public"."cod_verification_keys" USING "btree" ("order_id");
+
+
+
+CREATE INDEX "idx_cod_keys_status" ON "public"."cod_verification_keys" USING "btree" ("status");
 
 
 
@@ -6339,7 +8136,27 @@ CREATE INDEX "idx_daily_reports_pharmacy" ON "public"."pharmacy_daily_reports" U
 
 
 
+CREATE INDEX "idx_delivery_assignments_driver" ON "public"."delivery_assignments" USING "btree" ("driver_id");
+
+
+
+CREATE INDEX "idx_delivery_assignments_order" ON "public"."delivery_assignments" USING "btree" ("order_id");
+
+
+
+CREATE INDEX "idx_delivery_assignments_status" ON "public"."delivery_assignments" USING "btree" ("status");
+
+
+
 CREATE INDEX "idx_delivery_location" ON "public"."delivery_profiles" USING "btree" ("latitude", "longitude") WHERE (("is_active" = true) AND ("is_verified" = true));
+
+
+
+CREATE INDEX "idx_delivery_profiles_active" ON "public"."delivery_profiles" USING "btree" ("is_active", "is_verified", "is_available");
+
+
+
+CREATE INDEX "idx_delivery_profiles_user" ON "public"."delivery_profiles" USING "btree" ("user_id");
 
 
 
@@ -6487,6 +8304,18 @@ CREATE INDEX "idx_health_pharmacy_verified" ON "public"."health_pharmacy_profile
 
 
 
+CREATE INDEX "idx_health_reviews_approved" ON "public"."health_reviews" USING "btree" ("is_approved");
+
+
+
+CREATE INDEX "idx_health_reviews_doctor" ON "public"."health_reviews" USING "btree" ("doctor_id");
+
+
+
+CREATE INDEX "idx_health_reviews_patient" ON "public"."health_reviews" USING "btree" ("patient_id");
+
+
+
 CREATE INDEX "idx_health_stock_history_medicine" ON "public"."health_medicine_stock_history" USING "btree" ("medicine_id");
 
 
@@ -6512,6 +8341,10 @@ CREATE INDEX "idx_messages_conversation_created" ON "public"."messages" USING "b
 
 
 CREATE INDEX "idx_messages_conversation_id" ON "public"."messages" USING "btree" ("conversation_id", "created_at" DESC);
+
+
+
+CREATE INDEX "idx_messages_convo_created" ON "public"."messages" USING "btree" ("conversation_id", "created_at" DESC);
 
 
 
@@ -6551,6 +8384,14 @@ CREATE INDEX "idx_order_items_order_id" ON "public"."order_items" USING "btree" 
 
 
 
+CREATE INDEX "idx_orders_cod_collection_status" ON "public"."orders" USING "btree" ("cod_collection_status");
+
+
+
+CREATE INDEX "idx_orders_cod_verified" ON "public"."orders" USING "btree" ("cod_verified") WHERE ("cod_verified" = true);
+
+
+
 CREATE INDEX "idx_orders_created_at" ON "public"."orders" USING "btree" ("created_at" DESC);
 
 
@@ -6559,7 +8400,15 @@ CREATE INDEX "idx_orders_middle_man" ON "public"."orders" USING "btree" ("middle
 
 
 
+CREATE INDEX "idx_orders_payment_status" ON "public"."orders" USING "btree" ("payment_status", "created_at" DESC);
+
+
+
 CREATE INDEX "idx_orders_seller_id" ON "public"."orders" USING "btree" ("seller_id");
+
+
+
+CREATE INDEX "idx_orders_seller_status_date" ON "public"."orders" USING "btree" ("seller_id", "status", "created_at" DESC) WHERE ("status" <> 'cancelled'::"text");
 
 
 
@@ -6567,7 +8416,15 @@ CREATE INDEX "idx_orders_status" ON "public"."orders" USING "btree" ("status");
 
 
 
+CREATE INDEX "idx_orders_status_created" ON "public"."orders" USING "btree" ("status", "created_at" DESC);
+
+
+
 CREATE INDEX "idx_orders_user_id" ON "public"."orders" USING "btree" ("user_id");
+
+
+
+CREATE INDEX "idx_orders_user_status_created" ON "public"."orders" USING "btree" ("user_id", "status", "created_at" DESC);
 
 
 
@@ -6592,6 +8449,58 @@ CREATE INDEX "idx_patient_archives_patient" ON "public"."health_patient_archives
 
 
 CREATE INDEX "idx_patient_archives_sync" ON "public"."health_patient_archives" USING "btree" ("is_synced") WHERE ("is_synced" = false);
+
+
+
+CREATE INDEX "idx_payment_splits_order" ON "public"."payment_splits" USING "btree" ("order_id");
+
+
+
+CREATE INDEX "idx_payment_splits_recipient" ON "public"."payment_splits" USING "btree" ("recipient_id");
+
+
+
+CREATE INDEX "idx_payment_splits_status" ON "public"."payment_splits" USING "btree" ("status");
+
+
+
+CREATE INDEX "idx_payment_splits_transaction" ON "public"."payment_splits" USING "btree" ("payment_transaction_id");
+
+
+
+CREATE INDEX "idx_payment_transactions_created" ON "public"."payment_transactions" USING "btree" ("created_at" DESC);
+
+
+
+CREATE INDEX "idx_payment_transactions_gateway" ON "public"."payment_transactions" USING "btree" ("gateway_transaction_id");
+
+
+
+CREATE INDEX "idx_payment_transactions_order" ON "public"."payment_transactions" USING "btree" ("order_id");
+
+
+
+CREATE INDEX "idx_payment_transactions_status" ON "public"."payment_transactions" USING "btree" ("status");
+
+
+
+CREATE INDEX "idx_payment_transactions_user" ON "public"."payment_transactions" USING "btree" ("user_id");
+
+
+
+CREATE INDEX "idx_payouts_created" ON "public"."payouts" USING "btree" ("created_at" DESC);
+
+
+
+CREATE INDEX "idx_payouts_status" ON "public"."payouts" USING "btree" ("status");
+
+
+
+CREATE INDEX "idx_payouts_user" ON "public"."payouts" USING "btree" ("user_id");
+
+
+
+CREATE INDEX "idx_payouts_wallet" ON "public"."payouts" USING "btree" ("wallet_id");
 
 
 
@@ -6691,7 +8600,15 @@ CREATE INDEX "idx_products_created_at" ON "public"."products" USING "btree" ("cr
 
 
 
+CREATE INDEX "idx_products_created_desc" ON "public"."products" USING "btree" ("created_at" DESC) WHERE ("status" = 'active'::"text");
+
+
+
 CREATE INDEX "idx_products_price" ON "public"."products" USING "btree" ("price");
+
+
+
+CREATE INDEX "idx_products_quantity" ON "public"."products" USING "btree" ("quantity") WHERE ("status" = 'active'::"text");
 
 
 
@@ -6703,11 +8620,19 @@ CREATE INDEX "idx_products_seller_id" ON "public"."products" USING "btree" ("sel
 
 
 
+CREATE INDEX "idx_products_seller_status_price" ON "public"."products" USING "btree" ("seller_id", "status", "price");
+
+
+
 CREATE INDEX "idx_products_status" ON "public"."products" USING "btree" ("status");
 
 
 
 CREATE INDEX "idx_products_subcategory" ON "public"."products" USING "btree" ("subcategory");
+
+
+
+CREATE INDEX "idx_profiles_is_admin" ON "public"."profiles" USING "btree" ("is_admin");
 
 
 
@@ -6739,15 +8664,23 @@ CREATE INDEX "idx_sellers_location" ON "public"."sellers" USING "btree" ("latitu
 
 
 
-CREATE INDEX "idx_service_bookings_customer_id" ON "public"."service_bookings" USING "btree" ("customer_id");
+CREATE INDEX "idx_service_bookings_customer" ON "public"."service_bookings" USING "btree" ("customer_id");
 
 
 
-CREATE INDEX "idx_service_bookings_listing_id" ON "public"."service_bookings" USING "btree" ("listing_id");
+CREATE INDEX "idx_service_bookings_listing" ON "public"."service_bookings" USING "btree" ("listing_id");
 
 
 
-CREATE INDEX "idx_service_bookings_provider_id" ON "public"."service_bookings" USING "btree" ("provider_id");
+CREATE INDEX "idx_service_bookings_provider" ON "public"."service_bookings" USING "btree" ("provider_id");
+
+
+
+CREATE INDEX "idx_service_bookings_status" ON "public"."service_bookings" USING "btree" ("status");
+
+
+
+CREATE INDEX "idx_service_bookings_vertical" ON "public"."service_bookings" USING "btree" ("vertical");
 
 
 
@@ -6763,11 +8696,15 @@ CREATE INDEX "idx_service_gigs_status" ON "public"."service_gigs" USING "btree" 
 
 
 
-CREATE INDEX "idx_service_listings_category_slug" ON "public"."service_listings" USING "btree" ("category_slug");
+CREATE INDEX "idx_service_listings_active" ON "public"."service_listings" USING "btree" ("is_active");
 
 
 
-CREATE INDEX "idx_service_listings_provider_id" ON "public"."service_listings" USING "btree" ("provider_id");
+CREATE INDEX "idx_service_listings_provider" ON "public"."service_listings" USING "btree" ("provider_id");
+
+
+
+CREATE INDEX "idx_service_listings_vertical" ON "public"."service_listings" USING "btree" ("vertical");
 
 
 
@@ -6780,6 +8717,34 @@ CREATE INDEX "idx_service_orders_freelancer" ON "public"."service_orders" USING 
 
 
 CREATE INDEX "idx_service_orders_status" ON "public"."service_orders" USING "btree" ("status");
+
+
+
+CREATE INDEX "idx_service_providers_category" ON "public"."service_providers" USING "btree" ("category");
+
+
+
+CREATE INDEX "idx_service_providers_status" ON "public"."service_providers" USING "btree" ("status");
+
+
+
+CREATE INDEX "idx_service_providers_user" ON "public"."service_providers" USING "btree" ("user_id");
+
+
+
+CREATE INDEX "idx_service_providers_vertical" ON "public"."service_providers" USING "btree" ("vertical");
+
+
+
+CREATE INDEX "idx_service_reviews_booking" ON "public"."service_reviews" USING "btree" ("booking_id");
+
+
+
+CREATE INDEX "idx_service_reviews_listing" ON "public"."service_reviews" USING "btree" ("listing_id");
+
+
+
+CREATE INDEX "idx_service_reviews_provider" ON "public"."service_reviews" USING "btree" ("provider_id");
 
 
 
@@ -6815,14 +8780,6 @@ CREATE INDEX "idx_subcategories_category" ON "public"."subcategories" USING "btr
 
 
 
-CREATE INDEX "idx_svc_bookings_customer" ON "public"."service_bookings" USING "btree" ("customer_id");
-
-
-
-CREATE INDEX "idx_svc_bookings_provider" ON "public"."service_bookings" USING "btree" ("provider_id");
-
-
-
 CREATE INDEX "idx_svc_categories_active" ON "public"."svc_categories" USING "btree" ("is_active");
 
 
@@ -6843,6 +8800,14 @@ CREATE INDEX "idx_svc_conv_updated" ON "public"."services_conversations" USING "
 
 
 
+CREATE INDEX "idx_svc_conversations_customer" ON "public"."svc_conversations" USING "btree" ("customer_id");
+
+
+
+CREATE INDEX "idx_svc_conversations_provider" ON "public"."svc_conversations" USING "btree" ("provider_id");
+
+
+
 CREATE INDEX "idx_svc_listings_active" ON "public"."svc_listings" USING "btree" ("is_active");
 
 
@@ -6855,11 +8820,11 @@ CREATE INDEX "idx_svc_listings_category_id" ON "public"."svc_listings" USING "bt
 
 
 
-CREATE INDEX "idx_svc_listings_provider" ON "public"."service_listings" USING "btree" ("provider_id");
-
-
-
 CREATE INDEX "idx_svc_listings_provider_id" ON "public"."svc_listings" USING "btree" ("provider_id");
+
+
+
+CREATE INDEX "idx_svc_listings_rating" ON "public"."svc_listings" USING "btree" ("rating" DESC NULLS LAST);
 
 
 
@@ -6868,6 +8833,10 @@ CREATE INDEX "idx_svc_listings_status" ON "public"."svc_listings" USING "btree" 
 
 
 CREATE INDEX "idx_svc_listings_type" ON "public"."svc_listings" USING "btree" ("listing_type");
+
+
+
+CREATE INDEX "idx_svc_messages_conversation" ON "public"."svc_messages" USING "btree" ("conversation_id", "created_at" DESC);
 
 
 
@@ -6915,7 +8884,11 @@ CREATE INDEX "idx_svc_providers_type" ON "public"."svc_providers" USING "btree" 
 
 
 
-CREATE INDEX "idx_svc_providers_user" ON "public"."service_providers" USING "btree" ("user_id");
+CREATE INDEX "idx_svc_reviews_order_visible" ON "public"."svc_reviews" USING "btree" ("order_id", "is_visible");
+
+
+
+CREATE INDEX "idx_svc_reviews_provider_visible" ON "public"."svc_reviews" USING "btree" ("provider_id", "is_visible");
 
 
 
@@ -6955,11 +8928,63 @@ CREATE INDEX "idx_user_events_user_id" ON "public"."user_events" USING "btree" (
 
 
 
+CREATE INDEX "idx_user_wallets_active" ON "public"."user_wallets" USING "btree" ("is_active") WHERE ("is_active" = true);
+
+
+
+CREATE INDEX "idx_user_wallets_balance" ON "public"."user_wallets" USING "btree" ("balance");
+
+
+
+CREATE INDEX "idx_user_wallets_user" ON "public"."user_wallets" USING "btree" ("user_id");
+
+
+
+CREATE INDEX "idx_users_account_type" ON "public"."users" USING "btree" ("account_type");
+
+
+
 CREATE INDEX "idx_users_email" ON "public"."users" USING "btree" ("email");
 
 
 
 CREATE INDEX "idx_users_user_id" ON "public"."users" USING "btree" ("user_id");
+
+
+
+CREATE INDEX "idx_wallet_transactions_created" ON "public"."wallet_transactions" USING "btree" ("created_at" DESC);
+
+
+
+CREATE INDEX "idx_wallet_transactions_idempotency" ON "public"."wallet_transactions" USING "btree" ("idempotency_key") WHERE ("idempotency_key" IS NOT NULL);
+
+
+
+CREATE INDEX "idx_wallet_transactions_reference" ON "public"."wallet_transactions" USING "btree" ("reference_type", "reference_id");
+
+
+
+CREATE INDEX "idx_wallet_transactions_type" ON "public"."wallet_transactions" USING "btree" ("transaction_type");
+
+
+
+CREATE INDEX "idx_wallet_transactions_user" ON "public"."wallet_transactions" USING "btree" ("user_id");
+
+
+
+CREATE INDEX "idx_wallet_transactions_wallet" ON "public"."wallet_transactions" USING "btree" ("wallet_id");
+
+
+
+CREATE INDEX "idx_webhook_logs_created" ON "public"."payment_webhook_logs" USING "btree" ("created_at" DESC);
+
+
+
+CREATE INDEX "idx_webhook_logs_gateway" ON "public"."payment_webhook_logs" USING "btree" ("payment_gateway", "gateway_transaction_id");
+
+
+
+CREATE INDEX "idx_webhook_logs_processed" ON "public"."payment_webhook_logs" USING "btree" ("processed") WHERE ("processed" = false);
 
 
 
@@ -6983,6 +9008,70 @@ CREATE OR REPLACE TRIGGER "products_tsvector_update" BEFORE INSERT OR UPDATE ON 
 
 
 
+CREATE OR REPLACE TRIGGER "trg_audit_sensitive_user_changes" AFTER UPDATE ON "public"."users" FOR EACH ROW EXECUTE FUNCTION "public"."audit_sensitive_data_changes"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_auto_create_wallet" AFTER INSERT ON "public"."users" FOR EACH ROW EXECUTE FUNCTION "public"."auto_create_user_wallet"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_auto_generate_description" BEFORE INSERT ON "public"."products" FOR EACH ROW EXECUTE FUNCTION "public"."auto_generate_product_description"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_decrement_inventory_on_order_confirmed" AFTER UPDATE ON "public"."orders" FOR EACH ROW EXECUTE FUNCTION "public"."decrement_product_inventory_on_order"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_log_payment_status_change" AFTER UPDATE ON "public"."payment_intentions" FOR EACH ROW WHEN (("old"."status" IS DISTINCT FROM "new"."status")) EXECUTE FUNCTION "public"."log_payment_status_change"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_log_wallet_transaction" AFTER UPDATE ON "public"."user_wallets" FOR EACH ROW WHEN (("old"."balance" IS DISTINCT FROM "new"."balance")) EXECUTE FUNCTION "public"."log_wallet_transaction"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_low_stock_alert" AFTER INSERT OR UPDATE ON "public"."products" FOR EACH ROW EXECUTE FUNCTION "public"."check_low_stock_and_notify"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_restore_inventory_on_order_cancelled" AFTER UPDATE ON "public"."orders" FOR EACH ROW EXECUTE FUNCTION "public"."restore_product_inventory_on_cancel"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_update_conversation_unread" AFTER INSERT OR UPDATE ON "public"."messages" FOR EACH ROW EXECUTE FUNCTION "public"."update_conversation_unread_count"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_update_order_payment_status" AFTER UPDATE ON "public"."payment_intentions" FOR EACH ROW EXECUTE FUNCTION "public"."update_order_payment_status"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_update_product_rating" AFTER INSERT OR DELETE OR UPDATE ON "public"."reviews" FOR EACH ROW EXECUTE FUNCTION "public"."update_product_rating"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_update_seller_product_count" AFTER INSERT OR DELETE OR UPDATE ON "public"."products" FOR EACH ROW EXECUTE FUNCTION "public"."update_seller_product_count"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_update_seller_stats_on_order_delivered" AFTER UPDATE ON "public"."orders" FOR EACH ROW EXECUTE FUNCTION "public"."update_seller_stats_on_order_delivered"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_update_user_last_seen" BEFORE UPDATE ON "public"."users" FOR EACH ROW EXECUTE FUNCTION "public"."update_user_last_seen"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_validate_product_price" BEFORE INSERT OR UPDATE ON "public"."products" FOR EACH ROW EXECUTE FUNCTION "public"."validate_product_price"();
+
+
+
+CREATE OR REPLACE TRIGGER "trg_verify_purchase_review" BEFORE INSERT ON "public"."reviews" FOR EACH ROW EXECUTE FUNCTION "public"."verify_purchase_before_review"();
+
+
+
 CREATE OR REPLACE TRIGGER "trigger_calculate_commission" BEFORE INSERT OR UPDATE OF "deal_id", "subtotal" ON "public"."orders" FOR EACH ROW EXECUTE FUNCTION "public"."calculate_order_commission"();
 
 
@@ -6995,7 +9084,15 @@ CREATE OR REPLACE TRIGGER "trigger_cleanup_product_images" BEFORE UPDATE ON "pub
 
 
 
-CREATE OR REPLACE TRIGGER "trigger_service_booking_notifications" AFTER INSERT OR UPDATE ON "public"."service_bookings" FOR EACH ROW EXECUTE FUNCTION "public"."handle_service_booking_notifications"();
+CREATE OR REPLACE TRIGGER "trigger_create_cod_verification_on_order" AFTER INSERT ON "public"."orders" FOR EACH ROW WHEN (("new"."payment_method" = 'cod'::"text")) EXECUTE FUNCTION "public"."create_cod_verification_on_order"();
+
+
+
+CREATE OR REPLACE TRIGGER "trigger_log_payout_changes" AFTER INSERT OR UPDATE ON "public"."payouts" FOR EACH ROW EXECUTE FUNCTION "public"."log_payment_activity"();
+
+
+
+CREATE OR REPLACE TRIGGER "trigger_log_wallet_changes" AFTER INSERT OR UPDATE ON "public"."user_wallets" FOR EACH ROW EXECUTE FUNCTION "public"."log_payment_activity"();
 
 
 
@@ -7008,10 +9105,6 @@ CREATE OR REPLACE TRIGGER "trigger_svc_stats" AFTER UPDATE ON "public"."svc_orde
 
 
 CREATE OR REPLACE TRIGGER "trigger_update_factory_connections_timestamp" BEFORE UPDATE ON "public"."factory_connections" FOR EACH ROW EXECUTE FUNCTION "public"."update_factory_connections_timestamp"();
-
-
-
-CREATE OR REPLACE TRIGGER "trigger_update_freelancer_rating" AFTER INSERT OR UPDATE ON "public"."service_reviews" FOR EACH ROW EXECUTE FUNCTION "public"."update_freelancer_rating"();
 
 
 
@@ -7028,6 +9121,22 @@ CREATE OR REPLACE TRIGGER "trigger_update_post_comments" AFTER INSERT OR DELETE 
 
 
 CREATE OR REPLACE TRIGGER "trigger_update_post_likes" AFTER INSERT OR DELETE ON "public"."post_likes" FOR EACH ROW EXECUTE FUNCTION "public"."update_post_likes_count"();
+
+
+
+CREATE OR REPLACE TRIGGER "trigger_validate_transaction_balance" BEFORE INSERT ON "public"."wallet_transactions" FOR EACH ROW EXECUTE FUNCTION "public"."validate_wallet_balance"();
+
+
+
+CREATE OR REPLACE TRIGGER "trigger_validate_wallet_balance" BEFORE INSERT OR UPDATE ON "public"."user_wallets" FOR EACH ROW EXECUTE FUNCTION "public"."validate_wallet_balance"();
+
+
+
+CREATE OR REPLACE TRIGGER "update_delivery_assignments_updated_at" BEFORE UPDATE ON "public"."delivery_assignments" FOR EACH ROW EXECUTE FUNCTION "public"."update_delivery_assignments_updated_at"();
+
+
+
+CREATE OR REPLACE TRIGGER "update_delivery_profiles_updated_at" BEFORE UPDATE ON "public"."delivery_profiles" FOR EACH ROW EXECUTE FUNCTION "public"."update_delivery_profiles_updated_at"();
 
 
 
@@ -7083,7 +9192,31 @@ CREATE OR REPLACE TRIGGER "update_pharmacy_profiles_updated_at" BEFORE UPDATE ON
 
 
 
+CREATE OR REPLACE TRIGGER "update_service_bookings_updated_at" BEFORE UPDATE ON "public"."service_bookings" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
+
+
+
+CREATE OR REPLACE TRIGGER "update_service_listings_updated_at" BEFORE UPDATE ON "public"."service_listings" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
+
+
+
+CREATE OR REPLACE TRIGGER "update_service_providers_updated_at" BEFORE UPDATE ON "public"."service_providers" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
+
+
+
+CREATE OR REPLACE TRIGGER "update_service_reviews_updated_at" BEFORE UPDATE ON "public"."service_reviews" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
+
+
+
 CREATE OR REPLACE TRIGGER "update_svc_conv_timestamp" BEFORE UPDATE ON "public"."services_conversations" FOR EACH ROW EXECUTE FUNCTION "public"."update_svc_timestamps"();
+
+
+
+CREATE OR REPLACE TRIGGER "update_svc_conversations_updated_at" BEFORE UPDATE ON "public"."svc_conversations" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
+
+
+
+CREATE OR REPLACE TRIGGER "update_svc_messages_updated_at" BEFORE UPDATE ON "public"."svc_messages" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
 
 
 
@@ -7099,11 +9232,6 @@ ALTER TABLE ONLY "public"."analytics"
 
 ALTER TABLE ONLY "public"."analytics_snapshots"
     ADD CONSTRAINT "analytics_snapshots_seller_id_fkey" FOREIGN KEY ("seller_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."booking_milestones"
-    ADD CONSTRAINT "booking_milestones_booking_id_fkey" FOREIGN KEY ("booking_id") REFERENCES "public"."service_bookings"("id") ON DELETE CASCADE;
 
 
 
@@ -7124,6 +9252,41 @@ ALTER TABLE ONLY "public"."cart"
 
 ALTER TABLE ONLY "public"."categories"
     ADD CONSTRAINT "categories_parent_id_fkey" FOREIGN KEY ("parent_id") REFERENCES "public"."categories"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."cod_collections"
+    ADD CONSTRAINT "cod_collections_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "auth"."users"("id");
+
+
+
+ALTER TABLE ONLY "public"."cod_collections"
+    ADD CONSTRAINT "cod_collections_disputed_by_fkey" FOREIGN KEY ("disputed_by") REFERENCES "auth"."users"("id");
+
+
+
+ALTER TABLE ONLY "public"."cod_collections"
+    ADD CONSTRAINT "cod_collections_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."cod_collections"
+    ADD CONSTRAINT "cod_collections_resolved_by_fkey" FOREIGN KEY ("resolved_by") REFERENCES "auth"."users"("id");
+
+
+
+ALTER TABLE ONLY "public"."cod_collections"
+    ADD CONSTRAINT "cod_collections_verification_key_id_fkey" FOREIGN KEY ("verification_key_id") REFERENCES "public"."cod_verification_keys"("id");
+
+
+
+ALTER TABLE ONLY "public"."cod_verification_keys"
+    ADD CONSTRAINT "cod_verification_keys_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."cod_verification_keys"
+    ADD CONSTRAINT "cod_verification_keys_verified_by_fkey" FOREIGN KEY ("verified_by") REFERENCES "auth"."users"("id");
 
 
 
@@ -7173,7 +9336,7 @@ ALTER TABLE ONLY "public"."customers"
 
 
 ALTER TABLE ONLY "public"."delivery_assignments"
-    ADD CONSTRAINT "delivery_assignments_driver_id_fkey" FOREIGN KEY ("driver_id") REFERENCES "public"."delivery_profiles"("user_id");
+    ADD CONSTRAINT "delivery_assignments_driver_id_fkey" FOREIGN KEY ("driver_id") REFERENCES "public"."delivery_profiles"("id");
 
 
 
@@ -7467,6 +9630,21 @@ ALTER TABLE ONLY "public"."health_prescriptions"
 
 
 
+ALTER TABLE ONLY "public"."health_reviews"
+    ADD CONSTRAINT "health_reviews_appointment_id_fkey" FOREIGN KEY ("appointment_id") REFERENCES "public"."health_appointments"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."health_reviews"
+    ADD CONSTRAINT "health_reviews_doctor_id_fkey" FOREIGN KEY ("doctor_id") REFERENCES "public"."health_doctor_profiles"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."health_reviews"
+    ADD CONSTRAINT "health_reviews_patient_id_fkey" FOREIGN KEY ("patient_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."messages"
     ADD CONSTRAINT "messages_conversation_id_fkey" FOREIGN KEY ("conversation_id") REFERENCES "public"."conversations"("id") ON DELETE CASCADE;
 
@@ -7508,7 +9686,7 @@ ALTER TABLE ONLY "public"."order_items"
 
 
 ALTER TABLE ONLY "public"."orders"
-    ADD CONSTRAINT "orders_delivery_id_fkey" FOREIGN KEY ("delivery_id") REFERENCES "public"."delivery_profiles"("user_id");
+    ADD CONSTRAINT "orders_cod_collected_by_fkey" FOREIGN KEY ("cod_collected_by") REFERENCES "auth"."users"("id");
 
 
 
@@ -7539,6 +9717,51 @@ ALTER TABLE ONLY "public"."payment_intentions"
 
 ALTER TABLE ONLY "public"."payment_intentions"
     ADD CONSTRAINT "payment_intentions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."payment_splits"
+    ADD CONSTRAINT "payment_splits_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."payment_splits"
+    ADD CONSTRAINT "payment_splits_payment_transaction_id_fkey" FOREIGN KEY ("payment_transaction_id") REFERENCES "public"."payment_transactions"("id");
+
+
+
+ALTER TABLE ONLY "public"."payment_splits"
+    ADD CONSTRAINT "payment_splits_recipient_id_fkey" FOREIGN KEY ("recipient_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."payment_transactions"
+    ADD CONSTRAINT "payment_transactions_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "public"."orders"("id");
+
+
+
+ALTER TABLE ONLY "public"."payment_transactions"
+    ADD CONSTRAINT "payment_transactions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."payment_transactions"
+    ADD CONSTRAINT "payment_transactions_wallet_id_fkey" FOREIGN KEY ("wallet_id") REFERENCES "public"."user_wallets"("id");
+
+
+
+ALTER TABLE ONLY "public"."payouts"
+    ADD CONSTRAINT "payouts_processed_by_fkey" FOREIGN KEY ("processed_by") REFERENCES "auth"."users"("id");
+
+
+
+ALTER TABLE ONLY "public"."payouts"
+    ADD CONSTRAINT "payouts_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."payouts"
+    ADD CONSTRAINT "payouts_wallet_id_fkey" FOREIGN KEY ("wallet_id") REFERENCES "public"."user_wallets"("id") ON DELETE CASCADE;
 
 
 
@@ -7667,16 +9890,6 @@ ALTER TABLE ONLY "public"."products"
 
 
 
-ALTER TABLE ONLY "public"."provider_availability"
-    ADD CONSTRAINT "provider_availability_provider_id_fkey" FOREIGN KEY ("provider_id") REFERENCES "public"."service_providers"("id") ON DELETE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."provider_time_off"
-    ADD CONSTRAINT "provider_time_off_provider_id_fkey" FOREIGN KEY ("provider_id") REFERENCES "public"."service_providers"("id") ON DELETE CASCADE;
-
-
-
 ALTER TABLE ONLY "public"."push_subscriptions"
     ADD CONSTRAINT "push_subscriptions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
@@ -7703,22 +9916,17 @@ ALTER TABLE ONLY "public"."sellers"
 
 
 ALTER TABLE ONLY "public"."service_bookings"
-    ADD CONSTRAINT "service_bookings_client_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."service_bookings"
     ADD CONSTRAINT "service_bookings_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
 ALTER TABLE ONLY "public"."service_bookings"
-    ADD CONSTRAINT "service_bookings_listing_id_fkey" FOREIGN KEY ("listing_id") REFERENCES "public"."service_listings"("id") ON DELETE SET NULL;
+    ADD CONSTRAINT "service_bookings_listing_id_fkey" FOREIGN KEY ("listing_id") REFERENCES "public"."service_listings"("id") ON DELETE CASCADE;
 
 
 
 ALTER TABLE ONLY "public"."service_bookings"
-    ADD CONSTRAINT "service_bookings_provider_id_fkey" FOREIGN KEY ("provider_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+    ADD CONSTRAINT "service_bookings_provider_id_fkey" FOREIGN KEY ("provider_id") REFERENCES "public"."service_providers"("id") ON DELETE CASCADE;
 
 
 
@@ -7763,22 +9971,22 @@ ALTER TABLE ONLY "public"."service_providers"
 
 
 ALTER TABLE ONLY "public"."service_reviews"
-    ADD CONSTRAINT "service_reviews_buyer_id_fkey" FOREIGN KEY ("buyer_id") REFERENCES "auth"."users"("id");
+    ADD CONSTRAINT "service_reviews_booking_id_fkey" FOREIGN KEY ("booking_id") REFERENCES "public"."service_bookings"("id") ON DELETE CASCADE;
 
 
 
 ALTER TABLE ONLY "public"."service_reviews"
-    ADD CONSTRAINT "service_reviews_freelancer_id_fkey" FOREIGN KEY ("freelancer_id") REFERENCES "public"."freelancer_profiles"("id");
+    ADD CONSTRAINT "service_reviews_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
 ALTER TABLE ONLY "public"."service_reviews"
-    ADD CONSTRAINT "service_reviews_gig_id_fkey" FOREIGN KEY ("gig_id") REFERENCES "public"."service_gigs"("id");
+    ADD CONSTRAINT "service_reviews_listing_id_fkey" FOREIGN KEY ("listing_id") REFERENCES "public"."service_listings"("id") ON DELETE CASCADE;
 
 
 
 ALTER TABLE ONLY "public"."service_reviews"
-    ADD CONSTRAINT "service_reviews_order_id_fkey" FOREIGN KEY ("order_id") REFERENCES "public"."service_orders"("id");
+    ADD CONSTRAINT "service_reviews_provider_id_fkey" FOREIGN KEY ("provider_id") REFERENCES "public"."service_providers"("id") ON DELETE CASCADE;
 
 
 
@@ -7789,11 +9997,6 @@ ALTER TABLE ONLY "public"."service_subcategories"
 
 ALTER TABLE ONLY "public"."services_conversations"
     ADD CONSTRAINT "services_conversations_client_id_fkey" FOREIGN KEY ("client_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
-
-
-ALTER TABLE ONLY "public"."services_conversations"
-    ADD CONSTRAINT "services_conversations_listing_id_fkey" FOREIGN KEY ("listing_id") REFERENCES "public"."service_listings"("id") ON DELETE CASCADE;
 
 
 
@@ -7809,6 +10012,26 @@ ALTER TABLE ONLY "public"."shipping_addresses"
 
 ALTER TABLE ONLY "public"."subcategories"
     ADD CONSTRAINT "subcategories_category_id_fkey" FOREIGN KEY ("category_id") REFERENCES "public"."categories"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."svc_conversations"
+    ADD CONSTRAINT "svc_conversations_booking_id_fkey" FOREIGN KEY ("booking_id") REFERENCES "public"."service_bookings"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."svc_conversations"
+    ADD CONSTRAINT "svc_conversations_customer_id_fkey" FOREIGN KEY ("customer_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."svc_conversations"
+    ADD CONSTRAINT "svc_conversations_listing_id_fkey" FOREIGN KEY ("listing_id") REFERENCES "public"."service_listings"("id") ON DELETE SET NULL;
+
+
+
+ALTER TABLE ONLY "public"."svc_conversations"
+    ADD CONSTRAINT "svc_conversations_provider_id_fkey" FOREIGN KEY ("provider_id") REFERENCES "public"."service_providers"("id") ON DELETE CASCADE;
 
 
 
@@ -7829,6 +10052,16 @@ ALTER TABLE ONLY "public"."svc_listings"
 
 ALTER TABLE ONLY "public"."svc_listings"
     ADD CONSTRAINT "svc_listings_subcategory_id_fkey" FOREIGN KEY ("subcategory_id") REFERENCES "public"."svc_subcategories"("id");
+
+
+
+ALTER TABLE ONLY "public"."svc_messages"
+    ADD CONSTRAINT "svc_messages_conversation_id_fkey" FOREIGN KEY ("conversation_id") REFERENCES "public"."svc_conversations"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."svc_messages"
+    ADD CONSTRAINT "svc_messages_sender_id_fkey" FOREIGN KEY ("sender_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -7907,8 +10140,23 @@ ALTER TABLE ONLY "public"."user_events"
 
 
 
+ALTER TABLE ONLY "public"."user_wallets"
+    ADD CONSTRAINT "user_wallets_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."users"
     ADD CONSTRAINT "users_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."wallet_transactions"
+    ADD CONSTRAINT "wallet_transactions_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."wallet_transactions"
+    ADD CONSTRAINT "wallet_transactions_wallet_id_fkey" FOREIGN KEY ("wallet_id") REFERENCES "public"."user_wallets"("id") ON DELETE CASCADE;
 
 
 
@@ -7917,9 +10165,9 @@ ALTER TABLE ONLY "public"."wishlist"
 
 
 
-CREATE POLICY "Buyers create reviews for completed orders" ON "public"."service_reviews" FOR INSERT TO "authenticated" WITH CHECK ((("buyer_id" = "auth"."uid"()) AND (EXISTS ( SELECT 1
-   FROM "public"."service_orders"
-  WHERE (("service_orders"."id" = "service_reviews"."order_id") AND ("service_orders"."status" = 'completed'::"text") AND ("service_orders"."buyer_id" = "auth"."uid"()))))));
+CREATE POLICY "Admins can view all profiles" ON "public"."health_doctor_profiles" USING ((EXISTS ( SELECT 1
+   FROM "public"."admin_users"
+  WHERE ("admin_users"."user_id" = "auth"."uid"()))));
 
 
 
@@ -7940,6 +10188,14 @@ CREATE POLICY "Chat insert participants" ON "public"."health_conversations" FOR 
 CREATE POLICY "Chat view participants" ON "public"."health_conversations" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."health_appointments"
   WHERE (("health_appointments"."id" = "health_conversations"."appointment_id") AND (("health_appointments"."doctor_id" = "auth"."uid"()) OR ("health_appointments"."patient_id" = "auth"."uid"()))))));
+
+
+
+CREATE POLICY "Doctors can update own profile" ON "public"."health_doctor_profiles" FOR UPDATE USING (("auth"."uid"() = "user_id"));
+
+
+
+CREATE POLICY "Doctors can view own profile" ON "public"."health_doctor_profiles" FOR SELECT USING (("auth"."uid"() = "user_id"));
 
 
 
@@ -8105,6 +10361,10 @@ CREATE POLICY "Pharmacies view own stock movements" ON "public"."pharmacy_stock_
 
 
 
+CREATE POLICY "Prevent direct inserts - must use API" ON "public"."payment_intentions" FOR INSERT TO "authenticated" WITH CHECK (false);
+
+
+
 CREATE POLICY "Public view active gigs" ON "public"."service_gigs" FOR SELECT TO "authenticated", "anon" USING (("status" = 'active'::"text"));
 
 
@@ -8118,10 +10378,6 @@ CREATE POLICY "Public view freelancer profiles" ON "public"."freelancer_profiles
 
 
 CREATE POLICY "Public view portfolio" ON "public"."freelancer_portfolio" FOR SELECT TO "authenticated", "anon" USING (true);
-
-
-
-CREATE POLICY "Public view reviews" ON "public"."service_reviews" FOR SELECT TO "authenticated", "anon" USING (("is_visible" = true));
 
 
 
@@ -8150,6 +10406,16 @@ CREATE POLICY "Sellers can update products" ON "public"."products" FOR UPDATE US
 
 
 CREATE POLICY "Sellers can view own products" ON "public"."products" FOR SELECT USING ((( SELECT "auth"."uid"() AS "uid") = "seller_id"));
+
+
+
+CREATE POLICY "Users can only view their own payment intentions" ON "public"."payment_intentions" FOR SELECT TO "authenticated" USING ((("auth"."uid"() = "user_id") OR ("auth"."uid"() = ( SELECT "orders"."user_id"
+   FROM "public"."orders"
+  WHERE ("orders"."id" = "payment_intentions"."order_id")))));
+
+
+
+CREATE POLICY "Users cannot directly insert payment intentions" ON "public"."payment_intentions" FOR INSERT TO "authenticated" WITH CHECK (false);
 
 
 
@@ -8198,6 +10464,30 @@ CREATE POLICY "Users view own service orders" ON "public"."service_orders" FOR S
 ALTER TABLE "public"."activity_logs" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "admins_manage_all_payouts" ON "public"."payouts" TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."admin_users"
+  WHERE ("admin_users"."user_id" = "auth"."uid"())))) WITH CHECK ((EXISTS ( SELECT 1
+   FROM "public"."admin_users"
+  WHERE ("admin_users"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "admins_manage_all_products" ON "public"."products" TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."admin_users"
+  WHERE ("admin_users"."user_id" = "auth"."uid"())))) WITH CHECK ((EXISTS ( SELECT 1
+   FROM "public"."admin_users"
+  WHERE ("admin_users"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "admins_manage_assignments" ON "public"."delivery_assignments" TO "authenticated" USING ((("auth"."jwt"() ->> 'role'::"text") = ANY (ARRAY['admin'::"text", 'delivery_manager'::"text"])));
+
+
+
+CREATE POLICY "admins_manage_delivery_profiles" ON "public"."delivery_profiles" TO "authenticated" USING ((("auth"."jwt"() ->> 'role'::"text") = ANY (ARRAY['admin'::"text", 'delivery_manager'::"text"])));
+
+
+
 CREATE POLICY "admins_view_all_commissions" ON "public"."commissions" TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."admin_users"
   WHERE ("admin_users"."user_id" = "auth"."uid"()))));
@@ -8216,7 +10506,33 @@ CREATE POLICY "admins_view_all_orders" ON "public"."orders" TO "authenticated" U
 
 
 
-CREATE POLICY "analytics_seller_own" ON "public"."analytics_snapshots" TO "authenticated" USING (("seller_id" = "auth"."uid"())) WITH CHECK (("seller_id" = "auth"."uid"()));
+CREATE POLICY "admins_view_all_payments" ON "public"."payment_transactions" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."admin_users"
+  WHERE ("admin_users"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "admins_view_all_splits" ON "public"."payment_splits" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."admin_users"
+  WHERE ("admin_users"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "admins_view_all_transactions" ON "public"."wallet_transactions" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."admin_users"
+  WHERE ("admin_users"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "admins_view_all_wallets" ON "public"."user_wallets" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."admin_users"
+  WHERE ("admin_users"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "admins_view_all_webhook_logs" ON "public"."payment_webhook_logs" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."admin_users"
+  WHERE ("admin_users"."user_id" = "auth"."uid"()))));
 
 
 
@@ -8227,7 +10543,50 @@ CREATE POLICY "anyone_view_factory_ratings" ON "public"."factory_ratings" FOR SE
 
 
 
+ALTER TABLE "public"."async_jobs" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "async_jobs_no_user_access" ON "public"."async_jobs" FOR SELECT TO "authenticated" USING (false);
+
+
+
+CREATE POLICY "async_jobs_no_user_delete" ON "public"."async_jobs" FOR DELETE TO "authenticated" USING (false);
+
+
+
+CREATE POLICY "async_jobs_no_user_insert" ON "public"."async_jobs" FOR INSERT TO "authenticated" WITH CHECK (false);
+
+
+
+CREATE POLICY "async_jobs_no_user_update" ON "public"."async_jobs" FOR UPDATE TO "authenticated" WITH CHECK (false);
+
+
+
+CREATE POLICY "async_jobs_service_only" ON "public"."async_jobs" TO "service_role" USING (true) WITH CHECK (true);
+
+
+
 CREATE POLICY "authenticated_can_insert_conversation" ON "public"."services_conversations" FOR INSERT TO "authenticated" WITH CHECK ((("client_id" = ( SELECT "auth"."uid"() AS "uid")) OR (( SELECT "public"."get_provider_user_id"("services_conversations"."provider_id") AS "get_provider_user_id") = ( SELECT "auth"."uid"() AS "uid"))));
+
+
+
+CREATE POLICY "bookings_customer_create" ON "public"."service_bookings" FOR INSERT TO "authenticated" WITH CHECK (("customer_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "bookings_customer_view" ON "public"."service_bookings" FOR SELECT TO "authenticated" USING (("customer_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "bookings_provider_update" ON "public"."service_bookings" FOR UPDATE TO "authenticated" USING (("provider_id" IN ( SELECT "service_providers"."id"
+   FROM "public"."service_providers"
+  WHERE ("service_providers"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "bookings_provider_view" ON "public"."service_bookings" FOR SELECT TO "authenticated" USING (("provider_id" IN ( SELECT "service_providers"."id"
+   FROM "public"."service_providers"
+  WHERE ("service_providers"."user_id" = "auth"."uid"()))));
 
 
 
@@ -8238,10 +10597,6 @@ ALTER TABLE "public"."categories" ENABLE ROW LEVEL SECURITY;
 
 
 CREATE POLICY "clients_can_select" ON "public"."services_conversations" FOR SELECT TO "authenticated" USING (("client_id" = ( SELECT "auth"."uid"() AS "uid")));
-
-
-
-CREATE POLICY "clients_view_own_bookings" ON "public"."service_bookings" FOR SELECT USING (("auth"."uid"() = "customer_id"));
 
 
 
@@ -8272,11 +10627,11 @@ CREATE POLICY "conversations_view_participant" ON "public"."conversations" FOR S
 
 
 
+CREATE POLICY "conversations_view_participants" ON "public"."svc_conversations" FOR SELECT TO "authenticated" USING ((("provider_id" = "auth"."uid"()) OR ("customer_id" = "auth"."uid"())));
+
+
+
 ALTER TABLE "public"."customers" ENABLE ROW LEVEL SECURITY;
-
-
-CREATE POLICY "customers_create_bookings" ON "public"."service_bookings" FOR INSERT WITH CHECK (("auth"."uid"() = "customer_id"));
-
 
 
 CREATE POLICY "customers_view_active_products" ON "public"."products" FOR SELECT TO "authenticated" USING (("status" = 'active'::"text"));
@@ -8291,26 +10646,23 @@ CREATE POLICY "deals_view_participants" ON "public"."deals" FOR SELECT TO "authe
 
 
 
-CREATE POLICY "delivery_manage_own_assignments" ON "public"."delivery_assignments" TO "authenticated" USING (("driver_id" = "auth"."uid"())) WITH CHECK (("driver_id" = "auth"."uid"()));
-
+ALTER TABLE "public"."delivery_assignments" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."delivery_profiles" ENABLE ROW LEVEL SECURITY;
-
-
-CREATE POLICY "delivery_update_location" ON "public"."delivery_profiles" FOR UPDATE TO "authenticated" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
-
-
-
-CREATE POLICY "delivery_update_own" ON "public"."delivery_profiles" FOR UPDATE TO "authenticated" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
-
 
 
 CREATE POLICY "delivery_view_assigned_orders" ON "public"."orders" FOR SELECT TO "authenticated" USING ((("delivery_id" = "auth"."uid"()) OR ("seller_id" = "auth"."uid"()) OR ("user_id" = "auth"."uid"())));
 
 
 
-CREATE POLICY "delivery_view_own" ON "public"."delivery_profiles" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
+CREATE POLICY "drivers_view_own_assignments" ON "public"."delivery_assignments" TO "authenticated" USING (("driver_id" = ( SELECT "delivery_profiles"."id"
+   FROM "public"."delivery_profiles"
+  WHERE ("delivery_profiles"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "drivers_view_own_profile" ON "public"."delivery_profiles" TO "authenticated" USING (("user_id" = "auth"."uid"()));
 
 
 
@@ -8459,7 +10811,45 @@ CREATE POLICY "idempotency_keys_user_own" ON "public"."idempotency_keys" TO "aut
 
 
 
-CREATE POLICY "listings_public_read" ON "public"."service_listings" FOR SELECT TO "authenticated" USING (true);
+CREATE POLICY "listings_delete_own" ON "public"."svc_listings" FOR DELETE TO "authenticated" USING (("provider_id" IN ( SELECT "svc_providers"."id"
+   FROM "public"."svc_providers"
+  WHERE ("svc_providers"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "listings_insert_own" ON "public"."svc_listings" FOR INSERT TO "authenticated" WITH CHECK (("provider_id" IN ( SELECT "svc_providers"."id"
+   FROM "public"."svc_providers"
+  WHERE ("svc_providers"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "listings_manage_own" ON "public"."service_listings" TO "authenticated" USING (("provider_id" IN ( SELECT "service_providers"."id"
+   FROM "public"."service_providers"
+  WHERE ("service_providers"."user_id" = "auth"."uid"())))) WITH CHECK (("provider_id" IN ( SELECT "service_providers"."id"
+   FROM "public"."service_providers"
+  WHERE ("service_providers"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "listings_manage_own" ON "public"."svc_listings" TO "authenticated" USING (("provider_id" IN ( SELECT "svc_providers"."id"
+   FROM "public"."svc_providers"
+  WHERE ("svc_providers"."user_id" = "auth"."uid"())))) WITH CHECK (("provider_id" IN ( SELECT "svc_providers"."id"
+   FROM "public"."svc_providers"
+  WHERE ("svc_providers"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "listings_public_view" ON "public"."svc_listings" FOR SELECT TO "authenticated", "anon" USING (("is_active" = true));
+
+
+
+CREATE POLICY "listings_update_own" ON "public"."svc_listings" FOR UPDATE TO "authenticated" USING (("provider_id" IN ( SELECT "svc_providers"."id"
+   FROM "public"."svc_providers"
+  WHERE ("svc_providers"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "listings_view_active" ON "public"."service_listings" FOR SELECT TO "authenticated" USING (("is_active" = true));
 
 
 
@@ -8477,6 +10867,12 @@ CREATE POLICY "messages_insert_own" ON "public"."messages" FOR INSERT TO "authen
 
 
 
+CREATE POLICY "messages_insert_participants" ON "public"."svc_messages" FOR INSERT TO "authenticated" WITH CHECK ((("sender_id" = "auth"."uid"()) AND ("conversation_id" IN ( SELECT "svc_conversations"."id"
+   FROM "public"."svc_conversations"
+  WHERE (("svc_conversations"."provider_id" = "auth"."uid"()) OR ("svc_conversations"."customer_id" = "auth"."uid"()))))));
+
+
+
 CREATE POLICY "messages_update_own" ON "public"."messages" FOR UPDATE TO "authenticated" USING (("sender_id" = "auth"."uid"())) WITH CHECK (("sender_id" = "auth"."uid"()));
 
 
@@ -8484,6 +10880,12 @@ CREATE POLICY "messages_update_own" ON "public"."messages" FOR UPDATE TO "authen
 CREATE POLICY "messages_view_own" ON "public"."messages" FOR SELECT TO "authenticated" USING (("conversation_id" IN ( SELECT "conversation_participants"."conversation_id"
    FROM "public"."conversation_participants"
   WHERE ("conversation_participants"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "messages_view_participants" ON "public"."svc_messages" FOR SELECT TO "authenticated" USING (("conversation_id" IN ( SELECT "svc_conversations"."id"
+   FROM "public"."svc_conversations"
+  WHERE (("svc_conversations"."provider_id" = "auth"."uid"()) OR ("svc_conversations"."customer_id" = "auth"."uid"())))));
 
 
 
@@ -8575,6 +10977,21 @@ CREATE POLICY "patients_private" ON "public"."health_patient_profiles" FOR SELEC
 
 
 
+ALTER TABLE "public"."payment_intentions" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."payment_splits" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."payment_transactions" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."payment_webhook_logs" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."payouts" ENABLE ROW LEVEL SECURITY;
+
+
 ALTER TABLE "public"."pharmacy_activity_logs" ENABLE ROW LEVEL SECURITY;
 
 
@@ -8650,6 +11067,28 @@ CREATE POLICY "posts_view_public_anon" ON "public"."posts" FOR SELECT TO "anon" 
 
 
 
+CREATE POLICY "prevent_balance_changes" ON "public"."user_wallets" FOR UPDATE TO "authenticated" USING (("user_id" = "auth"."uid"())) WITH CHECK ((("user_id" = "auth"."uid"()) AND ("balance" = ( SELECT "user_wallets_1"."balance"
+   FROM "public"."user_wallets" "user_wallets_1"
+  WHERE ("user_wallets_1"."id" = "user_wallets_1"."id")))));
+
+
+
+CREATE POLICY "prevent_direct_analytics_inserts" ON "public"."analytics_snapshots" FOR INSERT TO "authenticated" WITH CHECK (false);
+
+
+
+CREATE POLICY "prevent_direct_analytics_updates" ON "public"."analytics_snapshots" FOR UPDATE TO "authenticated" WITH CHECK (false);
+
+
+
+CREATE POLICY "prevent_direct_payment_inserts" ON "public"."payment_intentions" FOR INSERT TO "authenticated" WITH CHECK (false);
+
+
+
+CREATE POLICY "prevent_direct_payment_updates" ON "public"."payment_intentions" FOR UPDATE TO "authenticated" WITH CHECK (false);
+
+
+
 ALTER TABLE "public"."products" ENABLE ROW LEVEL SECURITY;
 
 
@@ -8658,10 +11097,6 @@ CREATE POLICY "products_view_active_anon" ON "public"."products" FOR SELECT TO "
 
 
 CREATE POLICY "products_view_active_public" ON "public"."products" FOR SELECT TO "authenticated" USING ((("is_deleted" = false) AND ("status" = 'active'::"text")));
-
-
-
-CREATE POLICY "profiles_public_view" ON "public"."delivery_profiles" FOR SELECT TO "authenticated" USING (true);
 
 
 
@@ -8689,35 +11124,15 @@ CREATE POLICY "profiles_public_view" ON "public"."sellers" FOR SELECT TO "authen
 
 
 
-CREATE POLICY "profiles_public_view" ON "public"."service_providers" FOR SELECT TO "authenticated" USING (true);
-
-
-
 CREATE POLICY "providers_can_select" ON "public"."services_conversations" FOR SELECT TO "authenticated" USING ((( SELECT "public"."get_provider_user_id"("services_conversations"."provider_id") AS "get_provider_user_id") = ( SELECT "auth"."uid"() AS "uid")));
 
 
 
-CREATE POLICY "providers_manage_listings" ON "public"."service_listings" TO "authenticated" USING ((EXISTS ( SELECT 1
-   FROM "public"."service_providers" "sp"
-  WHERE (("sp"."id" = "service_listings"."provider_id") AND ("sp"."user_id" = "auth"."uid"())))));
+CREATE POLICY "providers_manage_own" ON "public"."service_providers" TO "authenticated" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
 
 
 
-CREATE POLICY "providers_update_bookings" ON "public"."service_bookings" FOR UPDATE USING (("auth"."uid"() = "provider_id"));
-
-
-
-CREATE POLICY "providers_update_own" ON "public"."service_providers" FOR UPDATE USING (("auth"."uid"() = "user_id"));
-
-
-
-CREATE POLICY "providers_view_own_bookings" ON "public"."service_bookings" FOR SELECT USING (("auth"."uid"() = "provider_id"));
-
-
-
-CREATE POLICY "providers_view_related_bookings" ON "public"."service_bookings" FOR SELECT USING (("auth"."uid"() = ( SELECT "service_providers"."user_id"
-   FROM "public"."service_providers"
-  WHERE ("service_providers"."id" = "service_bookings"."provider_id"))));
+CREATE POLICY "providers_view_active" ON "public"."service_providers" FOR SELECT TO "authenticated" USING ((("status" = 'active'::"text") OR ("user_id" = "auth"."uid"())));
 
 
 
@@ -8725,19 +11140,26 @@ CREATE POLICY "public_view_active_products" ON "public"."products" FOR SELECT TO
 
 
 
-CREATE POLICY "public_view_listings" ON "public"."service_listings" FOR SELECT USING (("is_active" = true));
-
-
-
 CREATE POLICY "public_view_middleman_profiles" ON "public"."middleman_profiles" FOR SELECT TO "authenticated" USING (true);
 
 
 
-CREATE POLICY "public_view_providers" ON "public"."service_providers" FOR SELECT USING ((("status" = 'active'::"text") OR ("auth"."uid"() = "user_id")));
+ALTER TABLE "public"."push_subscriptions" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "recipients_view_own_splits" ON "public"."payment_splits" FOR SELECT TO "authenticated" USING (("recipient_id" = "auth"."uid"()));
 
 
 
 ALTER TABLE "public"."reviews" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "reviews_create_own" ON "public"."service_reviews" FOR INSERT TO "authenticated" WITH CHECK (("customer_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "reviews_view_approved" ON "public"."service_reviews" FOR SELECT TO "authenticated" USING (("is_approved" = true));
+
 
 
 ALTER TABLE "public"."seller_profiles" ENABLE ROW LEVEL SECURITY;
@@ -8778,6 +11200,22 @@ CREATE POLICY "sellers_view_all_authenticated" ON "public"."sellers" FOR SELECT 
 
 
 
+CREATE POLICY "sellers_view_order_payments" ON "public"."payment_transactions" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."orders"
+  WHERE (("orders"."id" = "payment_transactions"."order_id") AND ("orders"."seller_id" = "auth"."uid"())))));
+
+
+
+CREATE POLICY "sellers_view_order_splits" ON "public"."payment_splits" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
+   FROM "public"."orders"
+  WHERE (("orders"."id" = "payment_splits"."order_id") AND ("orders"."seller_id" = "auth"."uid"())))));
+
+
+
+CREATE POLICY "sellers_view_own_analytics" ON "public"."analytics_snapshots" FOR SELECT TO "authenticated" USING (("seller_id" = "auth"."uid"()));
+
+
+
 CREATE POLICY "sellers_view_own_customers" ON "public"."customers" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
 
 
@@ -8811,6 +11249,18 @@ ALTER TABLE "public"."service_providers" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."service_reviews" ENABLE ROW LEVEL SECURITY;
 
 
+CREATE POLICY "service_role_manage_analytics" ON "public"."analytics_snapshots" TO "service_role" USING (true) WITH CHECK (true);
+
+
+
+CREATE POLICY "service_role_manage_notifications" ON "public"."notifications" TO "service_role" USING (true) WITH CHECK (true);
+
+
+
+CREATE POLICY "service_role_manage_payment_intentions" ON "public"."payment_intentions" TO "service_role" USING (true) WITH CHECK (true);
+
+
+
 ALTER TABLE "public"."service_subcategories" ENABLE ROW LEVEL SECURITY;
 
 
@@ -8839,17 +11289,13 @@ CREATE POLICY "svc_clients_create_conversations" ON "public"."services_conversat
 
 
 
-CREATE POLICY "svc_list_owner_write" ON "public"."svc_listings" TO "authenticated" USING (("provider_id" = ( SELECT "svc_providers"."id"
-   FROM "public"."svc_providers"
-  WHERE ("svc_providers"."user_id" = "auth"."uid"()))));
-
-
-
-CREATE POLICY "svc_list_public_read" ON "public"."svc_listings" FOR SELECT TO "authenticated", "anon" USING (("status" = 'active'::"text"));
-
+ALTER TABLE "public"."svc_conversations" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."svc_listings" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."svc_messages" ENABLE ROW LEVEL SECURITY;
 
 
 CREATE POLICY "svc_ord_create" ON "public"."svc_orders" FOR INSERT TO "authenticated" WITH CHECK (("user_id" = "auth"."uid"()));
@@ -8919,6 +11365,38 @@ CREATE POLICY "svc_users_view_own_conversations" ON "public"."services_conversat
 
 
 
+CREATE POLICY "system_insert_payments" ON "public"."payment_transactions" FOR INSERT TO "service_role" WITH CHECK (true);
+
+
+
+CREATE POLICY "system_insert_transactions" ON "public"."wallet_transactions" FOR INSERT TO "service_role" WITH CHECK (true);
+
+
+
+CREATE POLICY "system_insert_wallets" ON "public"."user_wallets" FOR INSERT TO "service_role" WITH CHECK (true);
+
+
+
+CREATE POLICY "system_insert_webhook_logs" ON "public"."payment_webhook_logs" FOR INSERT TO "service_role" WITH CHECK (true);
+
+
+
+CREATE POLICY "system_manage_splits" ON "public"."payment_splits" TO "service_role" USING (true) WITH CHECK (true);
+
+
+
+CREATE POLICY "system_update_payments" ON "public"."payment_transactions" FOR UPDATE TO "service_role" USING (true) WITH CHECK (true);
+
+
+
+CREATE POLICY "system_update_payouts" ON "public"."payouts" FOR UPDATE TO "service_role" USING (true) WITH CHECK (true);
+
+
+
+CREATE POLICY "system_update_webhook_logs" ON "public"."payment_webhook_logs" FOR UPDATE TO "service_role" USING (true) WITH CHECK (true);
+
+
+
 ALTER TABLE "public"."trading_conversations" ENABLE ROW LEVEL SECURITY;
 
 
@@ -8933,7 +11411,14 @@ CREATE POLICY "trading_conversations_view_own" ON "public"."trading_conversation
 ALTER TABLE "public"."user_events" ENABLE ROW LEVEL SECURITY;
 
 
+ALTER TABLE "public"."user_wallets" ENABLE ROW LEVEL SECURITY;
+
+
 ALTER TABLE "public"."users" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "users_create_own_payouts" ON "public"."payouts" FOR INSERT TO "authenticated" WITH CHECK (("user_id" = "auth"."uid"()));
+
 
 
 CREATE POLICY "users_create_own_reviews" ON "public"."reviews" FOR INSERT TO "authenticated" WITH CHECK (("user_id" = "auth"."uid"()));
@@ -8944,7 +11429,19 @@ CREATE POLICY "users_create_trading_conversations" ON "public"."trading_conversa
 
 
 
+CREATE POLICY "users_delete_own_notifications" ON "public"."notifications" FOR DELETE TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "users_delete_own_push_subscriptions" ON "public"."push_subscriptions" FOR DELETE TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
+
+
 CREATE POLICY "users_delete_own_reviews" ON "public"."reviews" FOR DELETE TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "users_insert_own" ON "public"."users" FOR INSERT TO "authenticated" WITH CHECK (("user_id" = "auth"."uid"()));
 
 
 
@@ -8964,11 +11461,15 @@ CREATE POLICY "users_insert_own_location_history" ON "public"."location_history"
 
 
 
+CREATE POLICY "users_insert_own_notifications" ON "public"."notifications" FOR INSERT TO "authenticated" WITH CHECK (("user_id" = "auth"."uid"()));
+
+
+
 CREATE POLICY "users_insert_own_profile" ON "public"."seller_profiles" FOR INSERT TO "authenticated" WITH CHECK (("auth"."uid"() = "id"));
 
 
 
-CREATE POLICY "users_insert_own_provider" ON "public"."service_providers" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
+CREATE POLICY "users_insert_own_push_subscriptions" ON "public"."push_subscriptions" FOR INSERT TO "authenticated" WITH CHECK (("user_id" = "auth"."uid"()));
 
 
 
@@ -9004,10 +11505,6 @@ CREATE POLICY "users_manage_own_middleman_profile" ON "public"."middleman_profil
 
 
 
-CREATE POLICY "users_manage_own_notifications" ON "public"."notifications" TO "authenticated" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
-
-
-
 CREATE POLICY "users_manage_own_orders" ON "public"."orders" TO "authenticated" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
 
 
@@ -9016,11 +11513,27 @@ CREATE POLICY "users_manage_own_wishlist" ON "public"."wishlist" TO "authenticat
 
 
 
+CREATE POLICY "users_select_own" ON "public"."users" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "users_select_public" ON "public"."users" FOR SELECT TO "authenticated" USING (true);
+
+
+
+CREATE POLICY "users_update_own" ON "public"."users" FOR UPDATE TO "authenticated" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "users_update_own_notifications" ON "public"."notifications" FOR UPDATE TO "authenticated" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
+
+
+
 CREATE POLICY "users_update_own_profile" ON "public"."seller_profiles" FOR UPDATE TO "authenticated" USING (("auth"."uid"() = "id"));
 
 
 
-CREATE POLICY "users_update_own_provider" ON "public"."service_providers" FOR UPDATE USING (("auth"."uid"() = "user_id"));
+CREATE POLICY "users_update_own_push_subscriptions" ON "public"."push_subscriptions" FOR UPDATE TO "authenticated" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
 
 
 
@@ -9036,6 +11549,10 @@ CREATE POLICY "users_update_own_trading_conversations" ON "public"."trading_conv
 
 
 
+CREATE POLICY "users_update_own_wallet" ON "public"."user_wallets" FOR UPDATE TO "authenticated" USING (("user_id" = "auth"."uid"())) WITH CHECK (("user_id" = "auth"."uid"()));
+
+
+
 CREATE POLICY "users_view_all_anon" ON "public"."users" FOR SELECT TO "anon" USING (true);
 
 
@@ -9045,10 +11562,6 @@ CREATE POLICY "users_view_all_authenticated" ON "public"."users" FOR SELECT TO "
 
 
 CREATE POLICY "users_view_own_activity_logs" ON "public"."activity_logs" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
-
-
-
-CREATE POLICY "users_view_own_bookings" ON "public"."service_bookings" FOR SELECT USING ((("auth"."uid"() = "customer_id") OR ("auth"."uid"() = "provider_id")));
 
 
 
@@ -9064,7 +11577,29 @@ CREATE POLICY "users_view_own_location_history" ON "public"."location_history" F
 
 
 
+CREATE POLICY "users_view_own_notifications" ON "public"."notifications" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "users_view_own_payment_intentions" ON "public"."payment_intentions" FOR SELECT TO "authenticated" USING ((("user_id" = "auth"."uid"()) OR (EXISTS ( SELECT 1
+   FROM "public"."orders"
+  WHERE (("orders"."id" = "payment_intentions"."order_id") AND ("orders"."user_id" = "auth"."uid"()))))));
+
+
+
+CREATE POLICY "users_view_own_payments" ON "public"."payment_transactions" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "users_view_own_payouts" ON "public"."payouts" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
+
+
 CREATE POLICY "users_view_own_profile" ON "public"."seller_profiles" FOR SELECT TO "authenticated" USING (("auth"."uid"() = "id"));
+
+
+
+CREATE POLICY "users_view_own_push_subscriptions" ON "public"."push_subscriptions" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
 
 
 
@@ -9076,10 +11611,21 @@ CREATE POLICY "users_view_own_trading_conversations" ON "public"."trading_conver
 
 
 
+CREATE POLICY "users_view_own_transactions" ON "public"."wallet_transactions" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "users_view_own_wallet" ON "public"."user_wallets" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
+
+
 CREATE POLICY "view_order_items" ON "public"."order_items" FOR SELECT TO "authenticated" USING (("order_id" IN ( SELECT "orders"."id"
    FROM "public"."orders"
   WHERE (("orders"."user_id" = "auth"."uid"()) OR ("orders"."seller_id" = "auth"."uid"())))));
 
+
+
+ALTER TABLE "public"."wallet_transactions" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."wishlist" ENABLE ROW LEVEL SECURITY;
@@ -9094,7 +11640,27 @@ ALTER PUBLICATION "supabase_realtime" OWNER TO "postgres";
 
 
 
+ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."cart";
+
+
+
+ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."conversation_participants";
+
+
+
+ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."conversations";
+
+
+
 ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."factories";
+
+
+
+ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."health_conversations";
+
+
+
+ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."messages";
 
 
 
@@ -9103,6 +11669,14 @@ ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."notifications";
 
 
 ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."products";
+
+
+
+ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."services_conversations";
+
+
+
+ALTER PUBLICATION "supabase_realtime" ADD TABLE ONLY "public"."trading_conversations";
 
 
 
@@ -11498,6 +14072,18 @@ GRANT ALL ON FUNCTION "public"."add_seller_to_conversation"() TO "service_role";
 
 
 
+GRANT ALL ON FUNCTION "public"."archive_old_messages"() TO "anon";
+GRANT ALL ON FUNCTION "public"."archive_old_messages"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."archive_old_messages"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."archive_old_notifications"() TO "anon";
+GRANT ALL ON FUNCTION "public"."archive_old_notifications"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."archive_old_notifications"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."archive_patient_data"("p_doctor_id" "uuid", "p_patient_id" "uuid", "p_archive_type" "text") TO "anon";
 GRANT ALL ON FUNCTION "public"."archive_patient_data"("p_doctor_id" "uuid", "p_patient_id" "uuid", "p_archive_type" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."archive_patient_data"("p_doctor_id" "uuid", "p_patient_id" "uuid", "p_archive_type" "text") TO "service_role";
@@ -11507,6 +14093,24 @@ GRANT ALL ON FUNCTION "public"."archive_patient_data"("p_doctor_id" "uuid", "p_p
 GRANT ALL ON FUNCTION "public"."assign_delivery_to_driver"("p_order_id" "uuid", "p_seller_latitude" numeric, "p_seller_longitude" numeric) TO "anon";
 GRANT ALL ON FUNCTION "public"."assign_delivery_to_driver"("p_order_id" "uuid", "p_seller_latitude" numeric, "p_seller_longitude" numeric) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."assign_delivery_to_driver"("p_order_id" "uuid", "p_seller_latitude" numeric, "p_seller_longitude" numeric) TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."audit_sensitive_data_changes"() TO "anon";
+GRANT ALL ON FUNCTION "public"."audit_sensitive_data_changes"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."audit_sensitive_data_changes"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."auto_create_user_wallet"() TO "anon";
+GRANT ALL ON FUNCTION "public"."auto_create_user_wallet"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."auto_create_user_wallet"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."auto_generate_product_description"() TO "anon";
+GRANT ALL ON FUNCTION "public"."auto_generate_product_description"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."auto_generate_product_description"() TO "service_role";
 
 
 
@@ -11556,6 +14160,12 @@ GRANT ALL ON FUNCTION "public"."can_start_conversation"("from_user_id" "uuid", "
 
 
 
+GRANT ALL ON FUNCTION "public"."check_low_stock_and_notify"() TO "anon";
+GRANT ALL ON FUNCTION "public"."check_low_stock_and_notify"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."check_low_stock_and_notify"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."check_product_chat_permission"("p_user_id" "uuid", "p_product_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."check_product_chat_permission"("p_user_id" "uuid", "p_product_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."check_product_chat_permission"("p_user_id" "uuid", "p_product_id" "uuid") TO "service_role";
@@ -11568,6 +14178,12 @@ GRANT ALL ON FUNCTION "public"."cleanup_expired_idempotency_keys"() TO "service_
 
 
 
+GRANT ALL ON FUNCTION "public"."cleanup_expired_sessions"() TO "anon";
+GRANT ALL ON FUNCTION "public"."cleanup_expired_sessions"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."cleanup_expired_sessions"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."cleanup_product_images"() TO "anon";
 GRANT ALL ON FUNCTION "public"."cleanup_product_images"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."cleanup_product_images"() TO "service_role";
@@ -11576,6 +14192,12 @@ GRANT ALL ON FUNCTION "public"."cleanup_product_images"() TO "service_role";
 
 GRANT ALL ON FUNCTION "public"."create_analytics_snapshot"("p_seller_id" "uuid", "p_period_type" "text", "p_start_date" "date", "p_end_date" "date") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."create_analytics_snapshot"("p_seller_id" "uuid", "p_period_type" "text", "p_start_date" "date", "p_end_date" "date") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."create_cod_verification_on_order"() TO "anon";
+GRANT ALL ON FUNCTION "public"."create_cod_verification_on_order"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."create_cod_verification_on_order"() TO "service_role";
 
 
 
@@ -11603,9 +14225,33 @@ GRANT ALL ON FUNCTION "public"."create_order_notification"() TO "service_role";
 
 
 
+GRANT ALL ON FUNCTION "public"."create_user_wallet_on_signup"() TO "anon";
+GRANT ALL ON FUNCTION "public"."create_user_wallet_on_signup"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."create_user_wallet_on_signup"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."credit_wallet"("p_user_id" "uuid", "p_amount" numeric, "p_reference_type" "text", "p_reference_id" "uuid", "p_description" "text", "p_idempotency_key" "text", "p_metadata" "jsonb") TO "anon";
+GRANT ALL ON FUNCTION "public"."credit_wallet"("p_user_id" "uuid", "p_amount" numeric, "p_reference_type" "text", "p_reference_id" "uuid", "p_description" "text", "p_idempotency_key" "text", "p_metadata" "jsonb") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."credit_wallet"("p_user_id" "uuid", "p_amount" numeric, "p_reference_type" "text", "p_reference_id" "uuid", "p_description" "text", "p_idempotency_key" "text", "p_metadata" "jsonb") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."debit_wallet"("p_user_id" "uuid", "p_amount" numeric, "p_reference_type" "text", "p_reference_id" "uuid", "p_description" "text", "p_idempotency_key" "text", "p_metadata" "jsonb") TO "anon";
+GRANT ALL ON FUNCTION "public"."debit_wallet"("p_user_id" "uuid", "p_amount" numeric, "p_reference_type" "text", "p_reference_id" "uuid", "p_description" "text", "p_idempotency_key" "text", "p_metadata" "jsonb") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."debit_wallet"("p_user_id" "uuid", "p_amount" numeric, "p_reference_type" "text", "p_reference_id" "uuid", "p_description" "text", "p_idempotency_key" "text", "p_metadata" "jsonb") TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."decrement_product_inventory"() TO "anon";
 GRANT ALL ON FUNCTION "public"."decrement_product_inventory"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."decrement_product_inventory"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."decrement_product_inventory_on_order"() TO "anon";
+GRANT ALL ON FUNCTION "public"."decrement_product_inventory_on_order"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."decrement_product_inventory_on_order"() TO "service_role";
 
 
 
@@ -11663,6 +14309,12 @@ GRANT ALL ON FUNCTION "public"."find_nearby_sellers"("p_latitude" numeric, "p_lo
 
 
 
+GRANT ALL ON FUNCTION "public"."generate_cod_verification_key"("p_order_id" "uuid", "p_key_length" integer, "p_expiry_hours" integer) TO "anon";
+GRANT ALL ON FUNCTION "public"."generate_cod_verification_key"("p_order_id" "uuid", "p_key_length" integer, "p_expiry_hours" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."generate_cod_verification_key"("p_order_id" "uuid", "p_key_length" integer, "p_expiry_hours" integer) TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."generate_medicine_qr_code"("p_pharmacy_id" "uuid", "p_medicine_id" "uuid", "p_batch_number" "text") TO "anon";
 GRANT ALL ON FUNCTION "public"."generate_medicine_qr_code"("p_pharmacy_id" "uuid", "p_medicine_id" "uuid", "p_batch_number" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."generate_medicine_qr_code"("p_pharmacy_id" "uuid", "p_medicine_id" "uuid", "p_batch_number" "text") TO "service_role";
@@ -11684,6 +14336,18 @@ GRANT ALL ON FUNCTION "public"."generate_pharmacy_daily_report"("p_pharmacy_id" 
 GRANT ALL ON FUNCTION "public"."generate_product_description"() TO "anon";
 GRANT ALL ON FUNCTION "public"."generate_product_description"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."generate_product_description"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."get_cod_reconciliation_report"("p_start_date" "date", "p_end_date" "date") TO "anon";
+GRANT ALL ON FUNCTION "public"."get_cod_reconciliation_report"("p_start_date" "date", "p_end_date" "date") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_cod_reconciliation_report"("p_start_date" "date", "p_end_date" "date") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."get_driver_cod_orders"("p_driver_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."get_driver_cod_orders"("p_driver_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_driver_cod_orders"("p_driver_id" "uuid") TO "service_role";
 
 
 
@@ -11804,6 +14468,10 @@ GRANT ALL ON FUNCTION "public"."haversine_distance"("lat1" double precision, "lo
 
 
 
+GRANT ALL ON FUNCTION "public"."is_admin_user"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."log_activity"("p_action_type" "text", "p_action_category" "text", "p_description" "text", "p_metadata" "jsonb") TO "anon";
 GRANT ALL ON FUNCTION "public"."log_activity"("p_action_type" "text", "p_action_category" "text", "p_description" "text", "p_metadata" "jsonb") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."log_activity"("p_action_type" "text", "p_action_category" "text", "p_description" "text", "p_metadata" "jsonb") TO "service_role";
@@ -11816,9 +14484,33 @@ GRANT ALL ON FUNCTION "public"."log_error"("p_error_type" "text", "p_error_messa
 
 
 
+GRANT ALL ON FUNCTION "public"."log_payment_activity"() TO "anon";
+GRANT ALL ON FUNCTION "public"."log_payment_activity"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."log_payment_activity"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."log_payment_status_change"() TO "anon";
+GRANT ALL ON FUNCTION "public"."log_payment_status_change"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."log_payment_status_change"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."log_wallet_transaction"() TO "anon";
+GRANT ALL ON FUNCTION "public"."log_wallet_transaction"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."log_wallet_transaction"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."messages_tsvector_trigger"() TO "anon";
 GRANT ALL ON FUNCTION "public"."messages_tsvector_trigger"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."messages_tsvector_trigger"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."process_fawry_payment"("p_order_id" "uuid", "p_fawry_reference" "text", "p_amount" numeric, "p_gateway_response" "jsonb", "p_idempotency_key" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."process_fawry_payment"("p_order_id" "uuid", "p_fawry_reference" "text", "p_amount" numeric, "p_gateway_response" "jsonb", "p_idempotency_key" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."process_fawry_payment"("p_order_id" "uuid", "p_fawry_reference" "text", "p_amount" numeric, "p_gateway_response" "jsonb", "p_idempotency_key" "text") TO "service_role";
 
 
 
@@ -11840,6 +14532,18 @@ GRANT ALL ON FUNCTION "public"."products_tsvector_trigger"() TO "service_role";
 
 
 
+GRANT ALL ON FUNCTION "public"."request_payout"("p_user_id" "uuid", "p_amount" numeric, "p_payout_method" "text", "p_bank_details" "jsonb", "p_idempotency_key" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."request_payout"("p_user_id" "uuid", "p_amount" numeric, "p_payout_method" "text", "p_bank_details" "jsonb", "p_idempotency_key" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."request_payout"("p_user_id" "uuid", "p_amount" numeric, "p_payout_method" "text", "p_bank_details" "jsonb", "p_idempotency_key" "text") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."restore_product_inventory_on_cancel"() TO "anon";
+GRANT ALL ON FUNCTION "public"."restore_product_inventory_on_cancel"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."restore_product_inventory_on_cancel"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."run_daily_patient_backup"("p_doctor_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."run_daily_patient_backup"("p_doctor_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."run_daily_patient_backup"("p_doctor_id" "uuid") TO "service_role";
@@ -11849,6 +14553,12 @@ GRANT ALL ON FUNCTION "public"."run_daily_patient_backup"("p_doctor_id" "uuid") 
 GRANT ALL ON FUNCTION "public"."search_public_profiles"("p_search_term" "text", "p_account_type" "text", "p_location" "text", "p_limit" integer, "p_offset" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."search_public_profiles"("p_search_term" "text", "p_account_type" "text", "p_location" "text", "p_limit" integer, "p_offset" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."search_public_profiles"("p_search_term" "text", "p_account_type" "text", "p_location" "text", "p_limit" integer, "p_offset" integer) TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."split_payment_to_parties"("p_order_id" "uuid", "p_transaction_id" "uuid", "p_total_amount" numeric) TO "anon";
+GRANT ALL ON FUNCTION "public"."split_payment_to_parties"("p_order_id" "uuid", "p_transaction_id" "uuid", "p_total_amount" numeric) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."split_payment_to_parties"("p_order_id" "uuid", "p_transaction_id" "uuid", "p_total_amount" numeric) TO "service_role";
 
 
 
@@ -11870,6 +14580,12 @@ GRANT ALL ON FUNCTION "public"."update_conversation_on_message"() TO "service_ro
 
 
 
+GRANT ALL ON FUNCTION "public"."update_conversation_unread_count"() TO "anon";
+GRANT ALL ON FUNCTION "public"."update_conversation_unread_count"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_conversation_unread_count"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."update_customer_stats_on_sale"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_customer_stats_on_sale"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_customer_stats_on_sale"() TO "service_role";
@@ -11879,6 +14595,18 @@ GRANT ALL ON FUNCTION "public"."update_customer_stats_on_sale"() TO "service_rol
 GRANT ALL ON FUNCTION "public"."update_customers_timestamp"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_customers_timestamp"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_customers_timestamp"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."update_delivery_assignments_updated_at"() TO "anon";
+GRANT ALL ON FUNCTION "public"."update_delivery_assignments_updated_at"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_delivery_assignments_updated_at"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."update_delivery_profiles_updated_at"() TO "anon";
+GRANT ALL ON FUNCTION "public"."update_delivery_profiles_updated_at"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_delivery_profiles_updated_at"() TO "service_role";
 
 
 
@@ -11930,6 +14658,12 @@ GRANT ALL ON FUNCTION "public"."update_medicine_stock_on_order"() TO "service_ro
 
 
 
+GRANT ALL ON FUNCTION "public"."update_order_payment_status"() TO "anon";
+GRANT ALL ON FUNCTION "public"."update_order_payment_status"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_order_payment_status"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."update_order_status_timestamps"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_order_status_timestamps"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_order_status_timestamps"() TO "service_role";
@@ -11954,6 +14688,12 @@ GRANT ALL ON FUNCTION "public"."update_post_likes_count"() TO "service_role";
 
 
 
+GRANT ALL ON FUNCTION "public"."update_product_rating"() TO "anon";
+GRANT ALL ON FUNCTION "public"."update_product_rating"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_product_rating"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."update_products_updated_at_column"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_products_updated_at_column"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_products_updated_at_column"() TO "service_role";
@@ -11963,6 +14703,18 @@ GRANT ALL ON FUNCTION "public"."update_products_updated_at_column"() TO "service
 GRANT ALL ON FUNCTION "public"."update_sales_timestamp"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_sales_timestamp"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_sales_timestamp"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."update_seller_product_count"() TO "anon";
+GRANT ALL ON FUNCTION "public"."update_seller_product_count"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_seller_product_count"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."update_seller_stats_on_order_delivered"() TO "anon";
+GRANT ALL ON FUNCTION "public"."update_seller_stats_on_order_delivered"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_seller_stats_on_order_delivered"() TO "service_role";
 
 
 
@@ -12002,9 +14754,39 @@ GRANT ALL ON FUNCTION "public"."update_updated_at_column"() TO "service_role";
 
 
 
+GRANT ALL ON FUNCTION "public"."update_user_last_seen"() TO "anon";
+GRANT ALL ON FUNCTION "public"."update_user_last_seen"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_user_last_seen"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."user_is_in_conversation"("p_conversation_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."user_is_in_conversation"("p_conversation_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."user_is_in_conversation"("p_conversation_id" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."validate_product_price"() TO "anon";
+GRANT ALL ON FUNCTION "public"."validate_product_price"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."validate_product_price"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."validate_wallet_balance"() TO "anon";
+GRANT ALL ON FUNCTION "public"."validate_wallet_balance"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."validate_wallet_balance"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."verify_cod_verification_key"("p_verification_key" "text", "p_driver_id" "uuid") TO "anon";
+GRANT ALL ON FUNCTION "public"."verify_cod_verification_key"("p_verification_key" "text", "p_driver_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."verify_cod_verification_key"("p_verification_key" "text", "p_driver_id" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."verify_purchase_before_review"() TO "anon";
+GRANT ALL ON FUNCTION "public"."verify_purchase_before_review"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."verify_purchase_before_review"() TO "service_role";
 
 
 
@@ -12110,6 +14892,12 @@ GRANT ALL ON TABLE "public"."admin_users" TO "service_role";
 
 
 
+GRANT ALL ON TABLE "public"."admins" TO "anon";
+GRANT ALL ON TABLE "public"."admins" TO "authenticated";
+GRANT ALL ON TABLE "public"."admins" TO "service_role";
+
+
+
 GRANT ALL ON TABLE "public"."analytics" TO "anon";
 GRANT ALL ON TABLE "public"."analytics" TO "authenticated";
 GRANT ALL ON TABLE "public"."analytics" TO "service_role";
@@ -12161,6 +14949,18 @@ GRANT ALL ON TABLE "public"."categories" TO "service_role";
 GRANT ALL ON TABLE "public"."categories_backup_20260308_124506" TO "anon";
 GRANT ALL ON TABLE "public"."categories_backup_20260308_124506" TO "authenticated";
 GRANT ALL ON TABLE "public"."categories_backup_20260308_124506" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."cod_collections" TO "anon";
+GRANT ALL ON TABLE "public"."cod_collections" TO "authenticated";
+GRANT ALL ON TABLE "public"."cod_collections" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."cod_verification_keys" TO "anon";
+GRANT ALL ON TABLE "public"."cod_verification_keys" TO "authenticated";
+GRANT ALL ON TABLE "public"."cod_verification_keys" TO "service_role";
 
 
 
@@ -12410,6 +15210,12 @@ GRANT ALL ON TABLE "public"."health_prescriptions" TO "service_role";
 
 
 
+GRANT ALL ON TABLE "public"."health_reviews" TO "anon";
+GRANT ALL ON TABLE "public"."health_reviews" TO "authenticated";
+GRANT ALL ON TABLE "public"."health_reviews" TO "service_role";
+
+
+
 GRANT ALL ON TABLE "public"."idempotency_keys" TO "anon";
 GRANT ALL ON TABLE "public"."idempotency_keys" TO "authenticated";
 GRANT ALL ON TABLE "public"."idempotency_keys" TO "service_role";
@@ -12470,6 +15276,30 @@ GRANT ALL ON TABLE "public"."payment_intentions" TO "service_role";
 
 
 
+GRANT ALL ON TABLE "public"."payment_splits" TO "anon";
+GRANT ALL ON TABLE "public"."payment_splits" TO "authenticated";
+GRANT ALL ON TABLE "public"."payment_splits" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."payment_transactions" TO "anon";
+GRANT ALL ON TABLE "public"."payment_transactions" TO "authenticated";
+GRANT ALL ON TABLE "public"."payment_transactions" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."payment_webhook_logs" TO "anon";
+GRANT ALL ON TABLE "public"."payment_webhook_logs" TO "authenticated";
+GRANT ALL ON TABLE "public"."payment_webhook_logs" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."payouts" TO "anon";
+GRANT ALL ON TABLE "public"."payouts" TO "authenticated";
+GRANT ALL ON TABLE "public"."payouts" TO "service_role";
+
+
+
 GRANT ALL ON TABLE "public"."pharmacy_activity_logs" TO "anon";
 GRANT ALL ON TABLE "public"."pharmacy_activity_logs" TO "authenticated";
 GRANT ALL ON TABLE "public"."pharmacy_activity_logs" TO "service_role";
@@ -12521,6 +15351,12 @@ GRANT ALL ON TABLE "public"."post_likes" TO "service_role";
 GRANT ALL ON TABLE "public"."posts" TO "anon";
 GRANT ALL ON TABLE "public"."posts" TO "authenticated";
 GRANT ALL ON TABLE "public"."posts" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."profiles" TO "anon";
+GRANT ALL ON TABLE "public"."profiles" TO "authenticated";
+GRANT ALL ON TABLE "public"."profiles" TO "service_role";
 
 
 
@@ -12638,6 +15474,12 @@ GRANT ALL ON TABLE "public"."svc_categories" TO "service_role";
 
 
 
+GRANT ALL ON TABLE "public"."svc_conversations" TO "anon";
+GRANT ALL ON TABLE "public"."svc_conversations" TO "authenticated";
+GRANT ALL ON TABLE "public"."svc_conversations" TO "service_role";
+
+
+
 GRANT ALL ON TABLE "public"."svc_listing_packages" TO "anon";
 GRANT ALL ON TABLE "public"."svc_listing_packages" TO "authenticated";
 GRANT ALL ON TABLE "public"."svc_listing_packages" TO "service_role";
@@ -12647,6 +15489,12 @@ GRANT ALL ON TABLE "public"."svc_listing_packages" TO "service_role";
 GRANT ALL ON TABLE "public"."svc_listings" TO "anon";
 GRANT ALL ON TABLE "public"."svc_listings" TO "authenticated";
 GRANT ALL ON TABLE "public"."svc_listings" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."svc_messages" TO "anon";
+GRANT ALL ON TABLE "public"."svc_messages" TO "authenticated";
+GRANT ALL ON TABLE "public"."svc_messages" TO "service_role";
 
 
 
@@ -12692,9 +15540,21 @@ GRANT ALL ON TABLE "public"."user_events" TO "service_role";
 
 
 
+GRANT ALL ON TABLE "public"."user_wallets" TO "anon";
+GRANT ALL ON TABLE "public"."user_wallets" TO "authenticated";
+GRANT ALL ON TABLE "public"."user_wallets" TO "service_role";
+
+
+
 GRANT ALL ON TABLE "public"."users" TO "anon";
 GRANT ALL ON TABLE "public"."users" TO "authenticated";
 GRANT ALL ON TABLE "public"."users" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."wallet_transactions" TO "anon";
+GRANT ALL ON TABLE "public"."wallet_transactions" TO "authenticated";
+GRANT ALL ON TABLE "public"."wallet_transactions" TO "service_role";
 
 
 

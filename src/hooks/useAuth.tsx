@@ -295,13 +295,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
 
     try {
-      // Simplified signup to avoid 500 error
       const { error, data } = await supabase.auth.signUp({
         email: sanitizedEmail,
         password,
         options: {
           data: {
             full_name: sanitizedName || undefined,
+            account_type: accountType || "customer",
           },
           // Remove emailRedirectTo to avoid 500 error
           // emailRedirectTo: import.meta.env.VITE_APP_URL,
@@ -317,20 +317,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Clear rate limiter on successful signup
       signupRateLimiter.clear(rateLimitKey);
 
-      // Create user profile after successful signup
-      if (data.user) {
-        try {
-          await supabase.from("users").insert({
-            user_id: data.user.id,
-            email: sanitizedEmail,
-            full_name: sanitizedName || null,
-            account_type: accountType || "customer",
-          });
-        } catch (profileError) {
-          console.error("Failed to create user profile:", profileError);
-          // Don't fail signup if profile creation fails
-        }
-      }
+      // User profile is safely created via the secure database trigger (`handle_new_user`)
+      // which has been updated to validate the requested account_type.
 
       return { error: null };
     } catch (err) {

@@ -299,6 +299,10 @@ function App() {
                       element={<ServiceCategoryPage />}
                     />
                     <Route
+                      path=":categorySlug/:subcategorySlug"
+                      element={<ServiceCategoryPage />}
+                    />
+                    <Route
                       path="listing/:listingId"
                       element={<ServiceDetailPage />}
                     />

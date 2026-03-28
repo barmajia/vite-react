@@ -1,6 +1,6 @@
+// src/components/layout/ServicesHeader.tsx
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Logo } from "@/components/shared/Logo";
 import {
   Search,
   MessageSquare,
@@ -17,17 +17,23 @@ import {
   LayoutDashboard,
   UserPlus,
   Briefcase,
+  HeartPulse,
+  Stethoscope,
+  Users,
+  Pill,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { useSwipeToOpen } from "@/hooks/useSwipeToOpen";
 import { supabase } from "@/lib/supabase";
+import { supabaseHealth } from "@/features/health/api/supabaseHealth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
+import { Logo } from "@/components/shared/Logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +42,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu";
 
 export function ServicesHeader() {
   const { t } = useTranslation();
@@ -50,10 +64,16 @@ export function ServicesHeader() {
     provider_name: string | null;
     logo_url: string | null;
     is_verified: boolean | null;
+    vertical?: string;
+  } | null>(null);
+  const [healthProvider, setHealthProvider] = useState<{
+    id: string;
+    is_verified: boolean;
+    specialization?: string;
   } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const notificationCount = 2;
-  const messageCount = 1;
+  const [notificationCount, setNotificationCount] = useState(0);
+  const [messageCount, setMessageCount] = useState(0);
 
   const { onTouchStart } = useSwipeToOpen({
     isOpen: isMobileMenuOpen,
@@ -85,29 +105,62 @@ export function ServicesHeader() {
     };
   }, [isMobileMenuOpen]);
 
+  // Fetch provider profiles
   useEffect(() => {
-    const getProviderProfile = async () => {
+    const fetchProfiles = async () => {
       if (!user) return;
       try {
-        const { data, error } = await supabase
+        // Fetch services provider
+        const { data: svcData } = await supabase
           .from("svc_providers")
-          .select("id, provider_name, logo_url, is_verified")
+          .select("id, provider_name, logo_url, is_verified, vertical")
           .eq("user_id", user.id)
           .maybeSingle();
 
-        if (error) {
-          console.error("Error fetching provider profile:", error);
-          return;
+        if (svcData) {
+          setProviderProfile(svcData);
         }
 
-        if (data) {
-          setProviderProfile(data);
+        // Fetch healthcare provider
+        const healthData = await supabaseHealth
+          .from("health_doctor_profiles")
+          .select("id, is_verified, specialization")
+          .eq("user_id", user.id)
+          .maybeSingle();
+
+        if (healthData) {
+          setHealthProvider(healthData);
         }
       } catch (err) {
-        console.error("Unexpected error fetching provider profile:", err);
+        console.error("Error fetching provider profiles:", err);
       }
     };
-    getProviderProfile();
+    fetchProfiles();
+  }, [user]);
+
+  // Fetch notification counts
+  useEffect(() => {
+    const fetchCounts = async () => {
+      if (!user) return;
+      try {
+        const { count: notifCount } = await supabase
+          .from("notifications")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id)
+          .eq("is_read", false);
+
+        const { count: msgCount } = await supabase
+          .from("svc_conversations")
+          .select("*", { count: "exact", head: true })
+          .or(`provider_id.eq.${user.id},customer_id.eq.${user.id}`);
+
+        setNotificationCount(notifCount || 0);
+        setMessageCount(msgCount || 0);
+      } catch (error) {
+        console.error("Error fetching counts:", error);
+      }
+    };
+    fetchCounts();
   }, [user]);
 
   const handleLogout = async () => {
@@ -129,20 +182,91 @@ export function ServicesHeader() {
     return location.pathname.startsWith(path);
   };
 
+  const isHealthRoute = location.pathname.startsWith("/services/health");
+  const isPharmacyRoute = location.pathname.startsWith(
+    "/services/health/pharmacies",
+  );
+
   const navItems = [
     {
-      label: t("services.findTalent"),
-      href: "/services/programming",
+      label: t("services.tech"),
+      href: "/services/tech",
+      icon: Briefcase,
+      description: t("services.techDesc"),
     },
     {
       label: t("services.healthcare"),
       href: "/services/health",
+      icon: HeartPulse,
+      description: t("services.healthcareDesc"),
+      children: [
+        { label: t("services.doctors"), href: "/services/health/doctors" },
+        {
+          label: t("services.pharmacies"),
+          href: "/services/health/pharmacies",
+        },
+        { label: t("services.hospitals"), href: "/services/health/hospitals" },
+      ],
     },
+
     {
       label: t("services.allServices"),
       href: "/services",
+      icon: Briefcase,
     },
   ];
+
+  const healthNavItems = [
+    {
+      label: t("health.findDoctor"),
+      href: "/services/health/doctors",
+      icon: Stethoscope,
+    },
+    {
+      label: t("health.pharmacies"),
+      href: "/services/health/pharmacies",
+      icon: Pill,
+    },
+    {
+      label: t("health.hospitals"),
+      href: "/services/health/hospitals",
+      icon: Users,
+    },
+  ];
+
+  const getRoleNavItems = () => {
+    const items = [];
+
+    if (providerProfile) {
+      items.push({
+        label: t("services.providerDashboard"),
+        href: "/services/dashboard",
+        icon: LayoutDashboard,
+      });
+    }
+    if (healthProvider) {
+      items.push({
+        label: t("health.doctorDashboard"),
+        href: "/services/health/doctor/dashboard",
+        icon: LayoutDashboard,
+      });
+    }
+    if (!providerProfile && !healthProvider) {
+      items.push({
+        label: t("common.profile"),
+        href: "/profile",
+        icon: LayoutDashboard,
+      });
+    }
+
+    items.push({
+      label: t("common.orders"),
+      href: "/orders",
+      icon: ShoppingBag,
+    });
+
+    return items;
+  };
 
   return (
     <>
@@ -158,7 +282,7 @@ export function ServicesHeader() {
           <div className="flex justify-between items-center h-20">
             {/* Logo Section */}
             <Link
-              to="/services"
+              to={isHealthRoute ? "/services/health" : "/services"}
               className="flex items-center gap-3 group hover:opacity-90 transition-opacity"
             >
               <Logo size="xl" showText={true} />
@@ -166,51 +290,118 @@ export function ServicesHeader() {
 
             {/* Center Navigation - Desktop */}
             <nav className="hidden lg:flex items-center gap-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.label}
-                  to={item.href}
-                  className={cn(
-                    "relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
-                    isActive(item.href)
-                      ? "text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20"
-                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
+              {isHealthRoute
+                ? // Healthcare-specific nav
+                  healthNavItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      className={cn(
+                        "relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2",
+                        isActive(item.href)
+                          ? "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20"
+                          : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
+                      )}
+                    >
+                      <item.icon className="h-4 w-4" />
+                      {item.label}
+                      {isActive(item.href) && (
+                        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-rose-600 dark:bg-rose-400 rounded-full" />
+                      )}
+                    </Link>
+                  ))
+                : // Regular services nav with dropdown
+                  navItems.map((item) =>
+                    item.children ? (
+                      <NavigationMenu key={item.label}>
+                        <NavigationMenuList>
+                          <NavigationMenuItem>
+                            <NavigationMenuTrigger
+                              className={cn(
+                                "text-sm font-medium flex items-center gap-2",
+                                isActive(item.href)
+                                  ? "text-violet-700 dark:text-violet-400"
+                                  : "text-gray-600 dark:text-gray-300",
+                              )}
+                            >
+                              <item.icon className="h-4 w-4" />
+                              {item.label}
+                            </NavigationMenuTrigger>
+                            <NavigationMenuContent>
+                              <ul className="grid w-[250px] gap-2 p-4">
+                                {item.children.map((child) => (
+                                  <li key={child.href}>
+                                    <NavigationMenuLink asChild>
+                                      <Link
+                                        to={child.href}
+                                        className="block p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                      >
+                                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                                          {child.label}
+                                        </p>
+                                      </Link>
+                                    </NavigationMenuLink>
+                                  </li>
+                                ))}
+                              </ul>
+                            </NavigationMenuContent>
+                          </NavigationMenuItem>
+                        </NavigationMenuList>
+                      </NavigationMenu>
+                    ) : (
+                      <Link
+                        key={item.label}
+                        to={item.href}
+                        className={cn(
+                          "relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2",
+                          isActive(item.href)
+                            ? "text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20"
+                            : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
+                        )}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        {item.label}
+                        {isActive(item.href) && (
+                          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-violet-600 dark:bg-violet-400 rounded-full" />
+                        )}
+                      </Link>
+                    ),
                   )}
-                >
-                  {item.label}
-                  {isActive(item.href) && (
-                    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-violet-600 dark:bg-violet-400 rounded-full" />
-                  )}
-                </Link>
-              ))}
             </nav>
 
             {/* Right Actions - Desktop */}
             <div className="hidden md:flex items-center gap-3">
               {/* Products Cross-Link */}
-              <Link
-                to="/products"
-                className="group flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
-              >
-                <div className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-violet-50 dark:group-hover:bg-violet-900/20 transition-colors">
-                  <ShoppingBag size={14} strokeWidth={2.5} />
-                </div>
-                <span className="hidden xl:inline">
-                  {t("services.shopProducts")}
-                </span>
-                <ArrowRight
-                  size={14}
-                  className="group-hover:translate-x-0.5 transition-transform"
-                />
-              </Link>
-
-              <div className="w-px h-6 bg-gray-200 dark:bg-gray-700" />
+              {!isHealthRoute && (
+                <>
+                  <Link
+                    to="/products"
+                    className="group flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
+                  >
+                    <div className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-violet-50 dark:group-hover:bg-violet-900/20 transition-colors">
+                      <ShoppingBag size={14} strokeWidth={2.5} />
+                    </div>
+                    <span className="hidden xl:inline">
+                      {t("services.shopProducts")}
+                    </span>
+                    <ArrowRight
+                      size={14}
+                      className="group-hover:translate-x-0.5 transition-transform"
+                    />
+                  </Link>
+                  <div className="w-px h-6 bg-gray-200 dark:bg-gray-700" />
+                </>
+              )}
 
               {/* Search */}
               <form onSubmit={handleSearch} className="relative">
                 <input
                   type="text"
-                  placeholder={t("services.searchPlaceholder")}
+                  placeholder={
+                    isHealthRoute
+                      ? t("health.searchDoctors")
+                      : t("services.searchPlaceholder")
+                  }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-64 pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-800 border-0 rounded-full text-sm text-gray-900 dark:text-white focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all placeholder:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
@@ -221,7 +412,7 @@ export function ServicesHeader() {
                 />
               </form>
 
-              {/* Theme Toggle - Enhanced Visibility */}
+              {/* Theme Toggle */}
               <button
                 onClick={() => setTheme(theme === "light" ? "dark" : "light")}
                 className="relative p-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-yellow-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-all hover:scale-110 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700"
@@ -251,7 +442,11 @@ export function ServicesHeader() {
 
                   {/* Messages */}
                   <Link
-                    to="/services/messages"
+                    to={
+                      isHealthRoute
+                        ? "/services/health/messages"
+                        : "/services/messages"
+                    }
                     className="relative p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
                   >
                     <MessageSquare size={20} />
@@ -270,6 +465,7 @@ export function ServicesHeader() {
                         <Avatar
                           name={
                             providerProfile?.provider_name ||
+                            healthProvider?.specialization ||
                             user.user_metadata.full_name
                           }
                           src={providerProfile?.logo_url}
@@ -292,7 +488,8 @@ export function ServicesHeader() {
                             <p className="text-sm font-semibold text-gray-900 dark:text-white">
                               {user.user_metadata.full_name}
                             </p>
-                            {providerProfile?.is_verified && (
+                            {(providerProfile?.is_verified ||
+                              healthProvider?.is_verified) && (
                               <Badge className="h-4 text-[8px] px-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400">
                                 <CheckCircle2 size={10} className="mr-0.5" />
                                 {t("services.verified")}
@@ -305,28 +502,22 @@ export function ServicesHeader() {
                         </div>
                       </DropdownMenuLabel>
                       <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
-                      <DropdownMenuItem
-                        asChild
-                        className="cursor-pointer text-gray-700 dark:text-gray-200 dark:focus:bg-gray-700"
-                      >
-                        <Link
-                          to="/services/dashboard"
-                          className="flex items-center"
+
+                      {/* Role-based dashboard links */}
+                      {getRoleNavItems().map((item) => (
+                        <DropdownMenuItem
+                          key={item.href}
+                          asChild
+                          className="cursor-pointer text-gray-700 dark:text-gray-200 dark:focus:bg-gray-700"
                         >
-                          <LayoutDashboard className="mr-2 h-4 w-4" />
-                          <span>{t("common.dashboard")}</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        asChild
-                        className="cursor-pointer text-gray-700 dark:text-gray-200 dark:focus:bg-gray-700"
-                      >
-                        <Link to="/orders" className="flex items-center">
-                          <ShoppingBag className="mr-2 h-4 w-4" />
-                          <span>{t("common.orders")}</span>
-                        </Link>
-                      </DropdownMenuItem>
-                      {!providerProfile && (
+                          <Link to={item.href} className="flex items-center">
+                            <item.icon className="mr-2 h-4 w-4" />
+                            <span>{item.label}</span>
+                          </Link>
+                        </DropdownMenuItem>
+                      ))}
+
+                      {!providerProfile && !healthProvider && (
                         <>
                           <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
                           <DropdownMenuItem
@@ -334,15 +525,24 @@ export function ServicesHeader() {
                             className="cursor-pointer text-violet-600 dark:text-violet-400 dark:focus:bg-gray-700"
                           >
                             <Link
-                              to={"/services/onboarding"}
+                              to={
+                                isHealthRoute
+                                  ? "/services/health/doctor/signup"
+                                  : "/services/onboarding"
+                              }
                               className="flex items-center font-medium"
                             >
                               <Briefcase className="mr-2 h-4 w-4" />
-                              <span>{t("services.becomeProvider")}</span>
+                              <span>
+                                {isHealthRoute
+                                  ? t("health.doctorSignup")
+                                  : t("services.becomeProvider")}
+                              </span>
                             </Link>
                           </DropdownMenuItem>
                         </>
                       )}
+
                       <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
                       <DropdownMenuItem
                         onClick={handleLogout}
@@ -364,10 +564,18 @@ export function ServicesHeader() {
                     {t("auth.signIn")}
                   </Button>
                   <Button
-                    onClick={() => navigate("/services/onboarding")}
+                    onClick={() =>
+                      navigate(
+                        isHealthRoute
+                          ? "/services/health/doctor/signup"
+                          : "/services/onboarding",
+                      )
+                    }
                     className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:from-violet-700 hover:to-indigo-700 transition-all shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50"
                   >
-                    {t("auth.joinNow")}
+                    {isHealthRoute
+                      ? t("health.doctorSignup")
+                      : t("auth.joinNow")}
                   </Button>
                 </div>
               )}
@@ -375,7 +583,6 @@ export function ServicesHeader() {
 
             {/* Mobile Menu Button */}
             <div className="flex items-center gap-2 lg:hidden">
-              {/* Mobile Menu Button */}
               <button
                 className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -405,12 +612,12 @@ export function ServicesHeader() {
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
               <span className="font-bold text-lg text-gray-900 dark:text-white">
-                {t("services.auroraServices")}
+                {isHealthRoute
+                  ? t("health.auroraHealth")
+                  : t("services.auroraServices")}
               </span>
               <div className="flex items-center gap-2">
-                {/* Language Switcher */}
                 <LanguageSwitcher />
-                {/* Theme Toggle */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -438,7 +645,11 @@ export function ServicesHeader() {
               <form onSubmit={handleSearch} className="relative">
                 <input
                   type="text"
-                  placeholder={t("services.searchPlaceholder")}
+                  placeholder={
+                    isHealthRoute
+                      ? t("health.searchDoctors")
+                      : t("services.searchPlaceholder")
+                  }
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-3 bg-gray-100 dark:bg-gray-800 border-0 rounded-xl text-sm text-gray-900 dark:text-white focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-violet-500/20 focus:outline-none"
@@ -451,32 +662,37 @@ export function ServicesHeader() {
 
               {/* Navigation */}
               <div className="space-y-1">
-                {navItems.map((item) => (
+                {(isHealthRoute ? healthNavItems : navItems).map((item) => (
                   <Link
-                    key={item.label}
+                    key={item.href}
                     to={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
                     className={cn(
                       "flex items-center gap-3 px-4 py-3 text-base font-medium rounded-xl transition-colors",
                       isActive(item.href)
-                        ? "bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400"
+                        ? isHealthRoute
+                          ? "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400"
+                          : "bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400"
                         : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800",
                     )}
                   >
+                    {item.icon && <item.icon size={20} />}
                     {item.label}
                   </Link>
                 ))}
               </div>
 
               {/* Products Cross-Link */}
-              <Link
-                to="/products"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="flex items-center justify-center gap-2 w-full px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 rounded-xl shadow-md transition-all"
-              >
-                <ShoppingBag size={18} />
-                {t("services.shopProducts")}
-              </Link>
+              {!isHealthRoute && (
+                <Link
+                  to="/products"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center justify-center gap-2 w-full px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 rounded-xl shadow-md transition-all"
+                >
+                  <ShoppingBag size={18} />
+                  {t("services.shopProducts")}
+                </Link>
+              )}
 
               <div className="border-t border-gray-100 dark:border-gray-800 my-4" />
 
@@ -497,16 +713,25 @@ export function ServicesHeader() {
                       </p>
                     </div>
                   </div>
+
+                  {getRoleNavItems().map((item) => (
+                    <Link
+                      key={item.href}
+                      to={item.href}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-colors"
+                    >
+                      <item.icon size={20} />
+                      {item.label}
+                    </Link>
+                  ))}
+
                   <Link
-                    to="/services/dashboard"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-colors"
-                  >
-                    <LayoutDashboard size={20} />
-                    {t("common.dashboard")}
-                  </Link>
-                  <Link
-                    to="/services/messages"
+                    to={
+                      isHealthRoute
+                        ? "/services/health/messages"
+                        : "/services/messages"
+                    }
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-colors"
                   >
@@ -518,6 +743,7 @@ export function ServicesHeader() {
                       </Badge>
                     )}
                   </Link>
+
                   <button
                     onClick={() => {
                       handleLogout();
@@ -543,13 +769,19 @@ export function ServicesHeader() {
                   </Button>
                   <Button
                     onClick={() => {
-                      navigate("/services/onboarding");
+                      navigate(
+                        isHealthRoute
+                          ? "/services/health/doctor/signup"
+                          : "/services/onboarding",
+                      );
                       setIsMobileMenuOpen(false);
                     }}
                     className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white"
                   >
                     <UserPlus className="mr-2 h-4 w-4" />
-                    {t("auth.joinNow")}
+                    {isHealthRoute
+                      ? t("health.doctorSignup")
+                      : t("auth.joinNow")}
                   </Button>
                 </div>
               )}

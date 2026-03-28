@@ -43,7 +43,6 @@ import {
   Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { FloatingActionButton } from "@/components/ui/floating-action-button";
 import { Plus } from "lucide-react";
 import { getProductImageUrl, getProductImageAlt } from "@/utils/productshelper";
 
@@ -346,14 +345,6 @@ export function AdminProducts() {
           </Table>
         </CardContent>
       </Card>
-
-      {/* Floating Action Button */}
-      <FloatingActionButton
-        onClick={() => navigate("/admin/products/new")}
-        icon={<Plus className="h-6 w-6" />}
-        label="Add New Product"
-        position="bottom-left"
-      />
     </div>
   );
 }
