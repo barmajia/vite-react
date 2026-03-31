@@ -112,30 +112,43 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 
 /**
  * Get image URL from product images JSON
+ * Handles multiple formats: full URLs, relative paths, or objects with url property
  */
 export function getProductImage(images: unknown, index: number = 0): string {
-  if (!images || !Array.isArray(images)) return "/placeholder-product.png";
+  // Fallback placeholder - use a data URI with a simple placeholder design
+  const placeholderSvg =
+    'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"%3E%3Crect fill="%23f0f0f0" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" font-size="24" fill="%23999" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
+
+  if (!images || !Array.isArray(images)) return placeholderSvg;
 
   const image = images[index];
-  if (!image) return "/placeholder-product.png";
+  if (!image) return placeholderSvg;
 
   // If it's an object, try to extract the URL
   if (typeof image === "object") {
     const obj = image as Record<string, unknown>;
     const url = obj.url || obj.imageUrl || obj.src || obj.path || obj.file_url;
     if (url) return String(url);
-    return "/placeholder-product.png";
+    return placeholderSvg;
   }
 
   // Convert to string
   const urlString = String(image);
 
-  // If already a full URL, return as is
+  // If already a full URL (starts with http/https), return as is
   if (urlString.startsWith("http://") || urlString.startsWith("https://")) {
     return urlString;
   }
 
-  // Construct Supabase storage URL
+  // If it's a storage URL path (starts with /storage/), prepend Supabase URL
+  if (urlString.startsWith("/storage/")) {
+    const supabaseUrl =
+      import.meta.env.VITE_SUPABASE_URL ||
+      "https://ofovfxsfazlwvcakpuer.supabase.co";
+    return `${supabaseUrl}${urlString}`;
+  }
+
+  // Construct Supabase storage URL for relative paths
   const supabaseUrl =
     import.meta.env.VITE_SUPABASE_URL ||
     "https://ofovfxsfazlwvcakpuer.supabase.co";
@@ -148,14 +161,24 @@ export function getProductImage(images: unknown, index: number = 0): string {
  * @returns Full image URL
  */
 export function buildImageUrl(imagePath: string | null | undefined): string {
-  if (!imagePath) return "/placeholder-product.png";
+  const placeholderSvg =
+    'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"%3E%3Crect fill="%23f0f0f0" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" font-size="24" fill="%23999" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
+  if (!imagePath) return placeholderSvg;
 
-  // If already a full URL, return as is
+  // If already a full URL (starts with http/https), return as is
   if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
     return imagePath;
   }
 
-  // Construct Supabase storage URL
+  // If it's a storage URL path (starts with /storage/), prepend Supabase URL
+  if (imagePath.startsWith("/storage/")) {
+    const supabaseUrl =
+      import.meta.env.VITE_SUPABASE_URL ||
+      "https://ofovfxsfazlwvcakpuer.supabase.co";
+    return `${supabaseUrl}${imagePath}`;
+  }
+
+  // Construct Supabase storage URL for relative paths
   const supabaseUrl =
     import.meta.env.VITE_SUPABASE_URL ||
     "https://ofovfxsfazlwvcakpuer.supabase.co";

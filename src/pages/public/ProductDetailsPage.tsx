@@ -60,6 +60,11 @@ const ProductDetailsPage = () => {
         }
 
         setProduct(data);
+        console.log("ProductDetails - Raw images from DB:", data.images);
+        console.log(
+          "ProductDetails - First image:",
+          Array.isArray(data.images) ? data.images[0] : "Not an array",
+        );
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Unknown error";

@@ -11,8 +11,10 @@ interface ProductGalleryProps {
 
 // Helper function to construct full Supabase storage URL
 const getImageUrl = (imageUrl: unknown): string => {
+  const placeholderSvg =
+    'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"%3E%3Crect fill="%23f0f0f0" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" font-size="24" fill="%23999" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
   // Handle null/undefined
-  if (!imageUrl) return "/placeholder-product.png";
+  if (!imageUrl) return placeholderSvg;
 
   // If it's an object, try to extract the URL from common properties
   if (typeof imageUrl === "object") {
@@ -23,7 +25,7 @@ const getImageUrl = (imageUrl: unknown): string => {
       return String(url);
     }
     // If no known property, return placeholder
-    return "/placeholder-product.png";
+    return placeholderSvg;
   }
 
   // Convert to string if it's not already
@@ -42,6 +44,8 @@ const getImageUrl = (imageUrl: unknown): string => {
 };
 
 export function ProductGallery({ images, title }: ProductGalleryProps) {
+  const placeholderSvg =
+    'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"%3E%3Crect fill="%23f0f0f0" width="300" height="300"/%3E%3Ctext x="50%25" y="50%25" font-size="24" fill="%23999" text-anchor="middle" dominant-baseline="middle"%3ENo Image%3C/text%3E%3C/svg%3E';
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
@@ -49,9 +53,7 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
 
   const imageList = Array.isArray(images) ? (images as string[]) : [];
   const allImages =
-    imageList.length > 0
-      ? imageList.map(getImageUrl)
-      : ["/placeholder-product.png"];
+    imageList.length > 0 ? imageList.map(getImageUrl) : [placeholderSvg];
 
   const openFullscreen = (index: number) => {
     setSelectedIndex(index);
