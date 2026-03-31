@@ -34,7 +34,7 @@ export function useAdminAuth() {
       // Check if user is in admin_users table
       const { data: adminRecord, error } = await supabase
         .from("admin_users")
-        .select("user_id, role")
+        .select("admin_users, role")
         .eq("user_id", user.id)
         .maybeSingle();
 

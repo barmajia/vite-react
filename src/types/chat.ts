@@ -1,3 +1,8 @@
+// ═══════════════════════════════════════════════════════════════════════
+// AuroraChat Type Definitions
+// Unified chat system supporting all account types
+// ═══════════════════════════════════════════════════════════════════════
+
 // Account types from your schema
 export type AccountType =
   | "user"
@@ -30,6 +35,10 @@ export type MessageType =
   | "call_invite"
   | "voice_call"
   | "video_call";
+
+// ═══════════════════════════════════════════════════════════════════════
+// Legacy Chat System Types (kept for backward compatibility)
+// ═══════════════════════════════════════════════════════════════════════
 
 // User profile from your schema
 export interface ChatUser {
@@ -75,6 +84,68 @@ export interface Conversation {
   participants?: ChatUser[];
   unread_count?: number;
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// New AuroraChat Core Types
+// ═══════════════════════════════════════════════════════════════════════
+
+export type ConversationType = "direct" | "group";
+
+/**
+ * Core User interface for AuroraChat
+ * Simplified user representation
+ */
+export interface User {
+  id: string;
+  email: string;
+  full_name: string | null;
+  avatar_url: string | null;
+  account_type: AccountType;
+}
+
+/**
+ * Core Conversation interface
+ * Works with existing conversations table
+ */
+export interface AuroraConversation {
+  id: string;
+  name: string;
+  type: ConversationType;
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Conversation Participant
+ * Links users to conversations with their account type
+ * Matches schema: conversation_participants table
+ */
+export interface ConversationParticipant {
+  conversation_id: string;
+  user_id: string;
+  joined_at: string;
+  account_type: AccountType;
+}
+
+/**
+ * Conversation with full participant information
+ */
+export interface ConversationWithParticipants extends AuroraConversation {
+  participants: ConversationParticipant[];
+}
+
+/**
+ * Result of starting a conversation
+ */
+export interface StartConversationResult {
+  success: boolean;
+  conversation: ConversationWithParticipants | null;
+  error: string | null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Legacy Trading/Health/Services Types (kept for backward compatibility)
+// ═══════════════════════════════════════════════════════════════════════
 
 export interface CustomRequestDetails {
   product_type?: string;
@@ -144,14 +215,15 @@ export interface ServicesConversation {
 }
 
 // Conversation Participant from your schema
+// Matches: conversation_participants table with additional fields
 export interface ConversationParticipant {
   id: string;
   conversation_id: string;
   user_id: string;
-  role: AccountType;
+  joined_at: string;
+  account_type: AccountType;
   last_read_message_id?: string;
   is_muted: boolean;
-  joined_at: string;
   user?: ChatUser;
 }
 

@@ -46,9 +46,9 @@ type AuthContextType = {
     password: string,
     fullName?: string,
     accountType?:
-      | "buyer"
+      | "customer"
       | "seller"
-      | "provider"
+      | "middleman"
       | "factory"
       | "delivery_driver",
   ) => Promise<{ error: Error | null }>;
@@ -57,7 +57,13 @@ type AuthContextType = {
     password: string,
     fullName: string,
     phone: string,
-    role: "client" | "individual" | "company" | "hospital",
+    role:
+      | "client"
+      | "trader"
+      | "customer"
+      | "individual"
+      | "company"
+      | "hospital",
   ) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: Error | null }>;

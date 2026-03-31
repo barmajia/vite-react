@@ -12,6 +12,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import type { WalletTransaction } from "@/types/wallet";
 
 export function WalletDashboard() {
   const [loading, setLoading] = useState(true);
@@ -29,17 +30,33 @@ export function WalletDashboard() {
       } = await supabase.auth.getUser();
       if (!user) return;
 
-      // 1. Load Wallet Balance
+      // 1. Try user_wallets table first
       const { data: walletData, error: walletError } = await supabase
         .from("user_wallets")
         .select("*")
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (walletError && walletError.code !== "PGRST116") {
-        console.warn("Wallet table not available:", walletError.message);
+      if (walletData) {
+        setWallet(walletData);
+      } else {
+        // 🔹 FALLBACK: Calculate balance from completed sales
+        const { data: sales } = await supabase
+          .from("sales")
+          .select("total_price, status")
+          .eq("seller_id", user.id)
+          .eq("status", "completed");
+
+        const totalEarned =
+          sales?.reduce((sum, s) => sum + s.total_price, 0) || 0;
+        const availableBalance = totalEarned * 0.98; // 2% platform fee
+
+        setWallet({
+          balance: availableBalance,
+          pending_balance: 0,
+          total_earned: totalEarned,
+        });
       }
-      setWallet(walletData);
 
       // 2. Load Recent Transactions
       const { data: txData, error: txError } = await supabase
@@ -49,13 +66,43 @@ export function WalletDashboard() {
         .order("created_at", { ascending: false })
         .limit(5);
 
-      if (txError && txError.code !== "PGRST116") {
-        console.warn(
-          "Wallet transactions table not available:",
-          txError.message,
-        );
+      if (txData && txData.length > 0) {
+        setRecentTransactions(txData);
+      } else {
+        // 🔹 FALLBACK: Show recent sales as transactions
+        const { data: salesData, error: salesError } = await supabase
+          .from("sales")
+          .select(
+            `
+            id,
+            total_price,
+            sale_date,
+            product_id
+          `,
+          )
+          .eq("seller_id", user.id)
+          .order("sale_date", { ascending: false })
+          .limit(5);
+
+        if (salesError) {
+          console.warn("Error loading sales fallback:", salesError.message);
+          setRecentTransactions([]);
+        } else {
+          const transformed =
+            salesData?.map((sale) => ({
+              id: sale.id,
+              transaction_type: "credit" as const,
+              amount: sale.total_price,
+              description: `Sale: ${sale.product_id ? "Product" : "Product"}`,
+              created_at: sale.sale_date,
+              reference_type: "sale",
+              reference_id: sale.product_id,
+              status: "completed",
+            })) || [];
+
+          setRecentTransactions(transformed);
+        }
       }
-      setRecentTransactions(txData || []);
     } catch (error) {
       console.error("Error loading wallet:", error);
       toast.error("Failed to load wallet data");
@@ -73,7 +120,7 @@ export function WalletDashboard() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 p-14">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>

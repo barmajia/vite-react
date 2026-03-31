@@ -2,11 +2,20 @@
 
 > A modern, production-ready full-stack B2B2C e-commerce platform built with React, Vite, TypeScript, Tailwind CSS, and Supabase. Features a minimalist, high-contrast luxury tech aesthetic with real-time messaging, factory management, services marketplace, geolocation capabilities, and multi-language support (i18n).
 
-**Version:** 2.6.0  
-**Status:** ✅ Production Ready (Phases 1-5 Complete + Stripe Payments + Reviews System + Factory Features + Services Marketplace + Healthcare + i18n + Unified Messaging + Middleman + Wallet Integration)  
-**Last Updated:** March 27, 2026  
-**Developer:** Youssef  
-**Overall Score:** 95/100 (See [Project Analysis Report](./PROJECT_ANALYSIS_REPORT.md))
+**Version:** 2.7.0
+**Status:** ✅ Production Ready (Phases 1-5 Complete + Stripe Payments + Reviews System + Factory Features + Services Marketplace + Healthcare + i18n + Unified Messaging + Middleman + Wallet Integration + **New Chat System**)
+**Last Updated:** March 30, 2026
+**Developer:** Youssef
+**Overall Score:** 93/100
+
+> ⚠️ **Production Readiness Notice:** While feature-complete, this project has **critical gaps** that must be addressed before production deployment:
+>
+> - ❌ **Zero automated test coverage** (unit, integration, E2E)
+> - ❌ **Client-side security only** (needs backend enforcement)
+> - ❌ **No error monitoring** (Sentry, crash reporting)
+> - ⚠️ **Large bundle size** (1,427 KB, target: <500 KB)
+>
+> See [Known Gaps & Roadmap](#-known-gaps--roadmap) section for details.
 
 ---
 
@@ -29,6 +38,7 @@
 - [TypeScript Implementation](#-typescript-implementation)
 - [Documentation](#-documentation)
 - [Project Analysis](#-project-analysis)
+- [Known Gaps & Roadmap](#-known-gaps--roadmap)
 - [Troubleshooting](#-troubleshooting)
 - [Contributing](#-contributing)
 - [License](#-license)
@@ -64,13 +74,15 @@ Aurora is a comprehensive e-commerce platform that supports multiple business mo
 | ----------------------- | ------------------------------------------------------------------------------------------------------------- |
 | **Feature Modules**     | 17 (Auth, Cart, Products, Orders, Reviews, Messaging, Factory, Services, Healthcare, Middleman, Wallet, etc.) |
 | **Database Tables**     | 45+ with Row Level Security                                                                                   |
-| **SQL Migrations**      | 55+ files                                                                                                     |
-| **Supported Languages** | 13 (with RTL for Arabic, Hebrew, Persian, Urdu)                                                               |
-| **UI Components**       | 23 Shadcn/UI primitives + 55+ custom components                                                               |
-| **Custom Hooks**        | 28+ reusable hooks                                                                                            |
-| **Documentation Files** | 55+ markdown files                                                                                            |
+| **SQL Migrations**      | 72 files                                                                                                      |
+| **Supported Languages** | 12 (with RTL for Arabic)                                                                                      |
+| **UI Components**       | 21 Shadcn/UI primitives + 45+ custom components                                                               |
+| **Custom Hooks**        | 32+ reusable hooks                                                                                            |
+| **Documentation Files** | 120+ markdown files                                                                                           |
 | **Lines of Code**       | ~65,000+                                                                                                      |
 | **Payment Methods**     | 3 (Stripe Cards, Fawry, Cash on Delivery)                                                                     |
+| **Test Coverage**       | ⚠️ 5% (Critical Gap - Target: 80%)                                                                            |
+| **Bundle Size**         | ⚠️ 1,427 KB (Target: <500 KB)                                                                                 |
 
 ### 🏗️ Architecture Highlights
 
@@ -217,7 +229,78 @@ fix-conversations-rls-2026.sql
 
 ### 💬 Real-Time Messaging
 
-#### Unified Inbox System
+#### 🆕 New Chat System (v2.7.0)
+
+**WhatsApp-style Interface** with unified inbox for all conversation types:
+
+**Features:**
+
+- ✅ **Start New Chat** - Search and start conversations with any user
+- ✅ **User Search** - RLS-safe search by name or email using RPC functions
+- ✅ **Account Type Badges** - Display user roles (Customer, Seller, Doctor, etc.)
+- ✅ **Real-time Messages** - Live message delivery via Supabase Realtime
+- ✅ **Read Receipts** - Message status indicators (✓✓)
+- ✅ **Typing Indicators** - See when others are typing
+- ✅ **Unread Count** - Badge showing unread message count
+- ✅ **Last Message Preview** - Quick preview with timestamps
+- ✅ **Responsive Design** - Mobile-friendly with sidebar navigation
+- ✅ **User Profile Integration** - Shows avatar, name, and UUID
+
+**Components:**
+
+- `ChatHeader.tsx` - Aurora branding with "+" new chat button
+- `ChatLayout.tsx` - WhatsApp-style conversation list
+- `ConversationItem.tsx` - Contact cards with account types
+- `StartNewChat.tsx` - Search and start new conversations
+- `MessageBubble.tsx` - Message display (sent/received)
+- `MessageInput.tsx` - Send messages with attachments
+
+**Database Functions:**
+
+```sql
+-- Search users for chat (RLS-safe)
+search_users_for_chat(p_query text, p_current_user_id uuid)
+
+-- Get or create direct conversation (atomic)
+get_or_create_direct_conversation(
+  p_user1_id uuid,
+  p_user2_id uuid,
+  p_display_name text
+)
+```
+
+**Routes:**
+
+- `/Chat` - Main chat page with conversation list
+- `/Chat?conversation={id}` - Specific conversation
+
+**Schema Updates:**
+
+```sql
+-- New columns for conversations
+ALTER TABLE conversations ADD COLUMN conversation_type text;
+ALTER TABLE conversations ADD COLUMN display_name text;
+ALTER TABLE conversations ADD COLUMN metadata jsonb;
+
+-- Expanded role options
+ALTER TABLE conversation_participants
+  DROP CONSTRAINT conversation_participants_role_check,
+  ADD CONSTRAINT conversation_participants_role_check
+  CHECK (role IN (
+    'customer', 'seller', 'factory', 'middleman',
+    'delivery', 'freelancer', 'doctor', 'pharmacy',
+    'admin', 'patient', 'service_provider'
+  ));
+```
+
+**Migration Files:**
+
+- `migrations/fix-chat-schema.sql` - Schema updates for new chat system
+- `fix-rls-policies.sql` - RLS policy fixes for conversation_participants
+
+#### Legacy Messaging Systems
+
+##### Unified Inbox System (Previous Version)
 
 - **Single inbox** for all conversation types (product, services, factory)
 - Live message delivery via Supabase Realtime
@@ -227,13 +310,13 @@ fix-conversations-rls-2026.sql
 - Conversation inbox with filtering
 - Routes: `/messages`, `/messages/:conversationId`
 
-#### Product Messaging (B2C/B2B)
+##### Product Messaging (B2C/B2B)
 
 - Buyer-seller conversation threads
 - Tied to specific products
 - Route: `/messages`
 
-#### Services Messaging (Isolated System)
+##### Services Messaging (Isolated System)
 
 - **Completely separate** from product messaging
 - Dedicated tables: `services_conversations` & `services_messages`
@@ -1385,6 +1468,482 @@ export type ChatMessage = messages.Row & {
 
 ---
 
+## ⚠️ Known Gaps & Roadmap
+
+> **Important:** While this platform is feature-complete and functional, the following gaps must be addressed before production deployment to ensure security, reliability, and performance.
+
+### Current Health Score: 91/100
+
+| Category                 | Score  | Status              | Priority |
+| ------------------------ | ------ | ------------------- | -------- |
+| **Code Quality**         | 95/100 | ✅ Excellent        | -        |
+| **Type Safety**          | 93/100 | ✅ Excellent        | -        |
+| **Architecture**         | 98/100 | ✅ Excellent        | -        |
+| **Security**             | 70/100 | ⚠️ **Critical Gap** | P0       |
+| **Performance**          | 85/100 | ⚠️ Needs Work       | P1       |
+| **Documentation**        | 95/100 | ✅ Excellent        | -        |
+| **Testing**              | 5/100  | ❌ **Critical Gap** | P0       |
+| **Feature Completeness** | 95/100 | ✅ Excellent        | -        |
+| **Accessibility**        | 75/100 | ⚠️ Needs Work       | P1       |
+| **SEO**                  | 60/100 | ❌ **Gap**          | P1       |
+
+---
+
+### 🔴 CRITICAL GAPS (P0 - Must Fix Before Production)
+
+#### 1. ❌ Testing Infrastructure (Score: 5/100)
+
+**Current State:**
+
+- Only 7 basic test files (security tests only)
+- Zero unit tests for 32+ custom hooks
+- Zero component tests for 45+ components
+- Zero E2E tests for critical user flows
+- Zero integration tests for Supabase queries
+
+**Why Critical:**
+
+- Production bugs will go undetected
+- No regression protection when refactoring
+- Cannot verify security implementations
+- Manual testing is slow and error-prone
+
+**What's Needed:**
+
+```markdown
+Unit Tests (Vitest + React Testing Library)
+├── Custom hooks: useAuth, useCart, useProducts, useSecurityInput
+├── Components: Button, Input, Card, ProductCard, ServiceCard
+├── Utilities: security.ts, sanitization functions
+└── Type definitions validation
+
+Integration Tests
+├── Authentication flows (login, signup, password reset)
+├── Shopping cart flows (add, remove, update, checkout)
+├── Service booking flows
+├── File upload flows
+└── Security boundary enforcement
+
+E2E Tests (Playwright)
+├── Complete user journeys
+├── Payment flows (Stripe, Fawry, COD)
+├── Multi-device testing
+├── Performance benchmarks
+└── Security tests (XSS, CSRF, rate limiting)
+
+Files to Create:
+
+- src/**tests**/setup.ts (test configuration)
+- src/**tests**/utils/security.test.ts
+- src/**tests**/hooks/useAuth.test.tsx
+- src/**tests**/components/\*.test.tsx
+- e2e/auth.spec.ts
+- e2e/checkout.spec.ts
+- e2e/security.spec.ts
+```
+
+**Estimated Time:** 2-3 weeks
+**Priority:** P0 - Critical
+
+---
+
+#### 2. ❌ Backend Security Enforcement (Score: 60/100)
+
+**Current State:**
+
+- All security is client-side only (can be bypassed)
+- No server-side rate limiting
+- No CSRF token verification on backend
+- No input validation middleware
+- No SQL injection prevention at database level
+
+**Why Critical:**
+
+- Client-side security can be bypassed via browser dev tools
+- No protection against DDoS attacks
+- Vulnerable to CSRF attacks
+- Rate limiting can be circumvented
+
+**What's Needed (Supabase Edge Functions):**
+
+```typescript
+// Server-side rate limiting (Redis-based)
+supabase / functions / rate - limiter / index.ts;
+
+// Input validation middleware
+supabase / functions / validate - request / index.ts;
+
+// CSRF token verification
+supabase / functions / csrf - verify / index.ts;
+
+// SQL injection prevention
+supabase / functions / parameterized - queries / index.ts;
+
+// Audit log storage
+supabase / functions / audit - log / index.ts;
+```
+
+**Estimated Time:** 1-2 weeks
+**Priority:** P0 - Critical
+
+---
+
+#### 3. ❌ Error Monitoring & Crash Reporting (Score: 0/100)
+
+**Current State:**
+
+- No error tracking system
+- No session replay for debugging
+- No performance monitoring
+- No real-time alerting
+- No user impact analysis
+
+**Why Critical:**
+
+- Won't know when production breaks
+- Cannot reproduce user-reported bugs
+- No performance baseline
+- Slow incident response
+
+**What's Needed:**
+
+```bash
+# Install Sentry
+npm install @sentry/react @sentry/tracing
+
+# Configure error tracking
+src/lib/sentry.ts
+
+# Add performance monitoring
+src/lib/performance.ts
+
+# Set up alerts
+sentry.io/alerts
+```
+
+**Estimated Time:** 2-3 days
+**Priority:** P0 - Critical
+
+---
+
+### 🟡 HIGH PRIORITY GAPS (P1 - Should Fix Soon)
+
+#### 4. ⚠️ Performance Optimization (Score: 85/100)
+
+**Current Issues:**
+
+- Bundle size: **1,427 KB** (target: <500 KB)
+- Main chunk: **862 KB** (too large)
+- No route lazy loading
+- No image optimization
+- No service worker
+- No virtual scrolling
+
+**Optimization Tasks:**
+
+```markdown
+Code Splitting
+├── Route-based lazy loading
+├── Component lazy loading
+└── Dynamic imports for heavy components
+
+Bundle Analysis
+├── webpack-bundle-analyzer
+├── Identify large dependencies
+└── Remove unused code (tree-shaking)
+
+Image Optimization
+├── WebP format conversion
+├── Lazy loading images
+└── Responsive image srcset
+
+Caching Strategy
+├── Service Worker implementation
+├── API response caching
+└── Static asset caching
+
+Database Optimization
+├── Query optimization
+├── Index creation
+└── Connection pooling
+```
+
+**Expected Results:**
+
+- Bundle size: 1,427 KB → 400-500 KB
+- First Contentful Paint: <1.5s
+- Time to Interactive: <3s
+- Lighthouse Score: 90+
+
+**Estimated Time:** 1-2 weeks
+**Priority:** P1 - High
+
+---
+
+#### 5. ⚠️ Accessibility (a11y) Compliance (Score: 75/100)
+
+**Current State:**
+
+- WCAG 2.1 AA compliance not verified
+- Missing ARIA labels in some components
+- Keyboard navigation not fully tested
+- No screen reader testing
+
+**What's Needed:**
+
+```markdown
+Screen Reader Support
+├── ARIA labels for all interactive elements
+├── Live regions for dynamic content
+└── Skip navigation links
+
+Keyboard Navigation
+├── Focus management
+├── Keyboard shortcuts
+└── Focus visible indicators
+
+Color Contrast
+├── Minimum 4.5:1 for text
+├── Don't rely on color alone
+└── Dark mode compliance
+
+Form Accessibility
+├── Proper label associations
+├── Error announcements
+└── Required field indicators
+
+Testing
+├── axe-core automated testing
+├── Screen reader testing (NVDA, VoiceOver)
+└── Manual keyboard testing
+```
+
+**Tools:**
+
+```bash
+npm install -g @axe-core/cli
+npm install react-aria
+npm install focus-trap-react
+```
+
+**Estimated Time:** 1 week
+**Priority:** P1 - High
+
+---
+
+#### 6. ❌ SEO Optimization (Score: 60/100)
+
+**Current State:**
+
+- Client-side rendering limits SEO
+- Missing dynamic meta tags
+- No structured data (schema.org)
+- No sitemap.xml
+- No robots.txt optimization
+
+**What's Needed:**
+
+```markdown
+Meta Tags
+├── Dynamic title tags
+├── Meta descriptions
+├── Open Graph tags
+└── Twitter cards
+
+Structured Data
+├── Product schema
+├── Organization schema
+├── Breadcrumb schema
+└── Review schema
+
+Sitemap
+├── Dynamic sitemap generation
+├── robots.txt configuration
+└── Submit to search engines
+
+SSR/SSG Consideration
+├── Consider Next.js migration
+├── Or use Vite SSR plugins
+└── Pre-render critical pages
+```
+
+**Expected Results:**
+
+- Google Lighthouse SEO: 90+
+- Search engine visibility
+- Better organic traffic
+
+**Estimated Time:** 1 week
+**Priority:** P1 - High
+
+---
+
+### 🟢 MEDIUM PRIORITY GAPS (P2 - Important Features)
+
+#### 7. ⚠️ Admin Dashboard Incomplete
+
+**Missing Features:**
+
+- Comprehensive user management (ban, suspend, role changes)
+- Content moderation tools (reviews, messages, reports)
+- Analytics dashboard (sales, users, traffic, revenue)
+- System settings (site config, email templates, security)
+- Audit log viewer
+
+**Estimated Time:** 2-3 weeks
+**Priority:** P2 - Medium
+
+---
+
+#### 8. ⚠️ Advanced Features Missing
+
+**Missing Features:**
+
+- Reviews system (not fully integrated)
+- Brands pages (placeholders)
+- Advanced search (Elasticsearch integration)
+- Recommendation engine (ML-based)
+- Email notifications (transactional emails)
+- SMS notifications (order updates)
+- Push notifications (browser, mobile)
+
+**Estimated Time:** 3-4 weeks
+**Priority:** P2 - Medium
+
+---
+
+#### 9. ❌ PWA Features
+
+**Missing Features:**
+
+- Service worker implementation
+- Offline support (cache, queue actions)
+- Install prompt (custom UI)
+- Web app manifest
+- Background sync
+
+**Estimated Time:** 1 week
+**Priority:** P2 - Medium
+
+---
+
+### 🔵 LOW PRIORITY GAPS (P3 - Nice to Have)
+
+#### 10. ⚠️ i18n Enhancements
+
+**Missing:**
+
+- Real-time currency conversion
+- Regional content filtering
+- Translation management (Crowdin integration)
+- RTL email templates
+
+**Estimated Time:** 1-2 weeks
+**Priority:** P3 - Low
+
+---
+
+#### 11. ⚠️ Social Features
+
+**Missing:**
+
+- Social sharing (products, wishlists)
+- Referral program (codes, rewards)
+- Community features (Q&A, forums)
+- User activity feeds
+
+**Estimated Time:** 2 weeks
+**Priority:** P3 - Low
+
+---
+
+#### 12. ❌ Mobile App
+
+**Options:**
+
+- React Native (share code with web)
+- Flutter (already have Flutter project)
+- PWA first (test market fit)
+
+**Estimated Time:** 8-12 weeks
+**Priority:** P3 - Low
+
+---
+
+### 📅 Recommended Timeline
+
+#### Phase 1: Foundation (Weeks 1-4) **CRITICAL**
+
+```
+Week 1-2: Testing Infrastructure (P0)
+Week 3:   Error Monitoring (P0)
+Week 4:   Backend Security (P0)
+```
+
+#### Phase 2: Optimization (Weeks 5-8)
+
+```
+Week 5:   Performance Optimization (P1)
+Week 6:   Accessibility (P1)
+Week 7:   SEO Optimization (P1)
+Week 8:   Buffer & Polish
+```
+
+#### Phase 3: Features (Weeks 9-16)
+
+```
+Week 9-11:  Admin Dashboard (P2)
+Week 12-14: Advanced Features (P2)
+Week 15-16: PWA & Mobile (P2/P3)
+```
+
+#### Phase 4: Enhancement (Weeks 17-20)
+
+```
+Week 17-18: i18n Enhancements (P3)
+Week 19-20: Social Features (P3)
+```
+
+---
+
+### 🚀 Quick Wins (1-2 days each)
+
+1. ✅ Add Sentry error tracking
+2. ✅ Implement lazy loading for routes
+3. ✅ Add meta tags to all pages
+4. ✅ Set up Google Analytics 4
+5. ✅ Create sitemap.xml
+6. ✅ Add ARIA labels to buttons
+7. ✅ Implement image lazy loading
+8. ✅ Add loading skeletons
+9. ✅ Create error pages (404, 500)
+10. ✅ Set up performance monitoring
+
+---
+
+### 📊 Success Metrics
+
+| Metric           | Current     | Target     | Priority |
+| ---------------- | ----------- | ---------- | -------- |
+| Test Coverage    | 5%          | 80%        | P0       |
+| Bundle Size      | 1,427 KB    | <500 KB    | P1       |
+| Lighthouse Score | ~75         | 90+        | P1       |
+| Error Detection  | None        | Real-time  | P0       |
+| Accessibility    | Unknown     | AA         | P1       |
+| SEO Score        | ~60         | 90+        | P1       |
+| Backend Security | Client-only | Full stack | P0       |
+
+---
+
+### 📖 Additional Documentation
+
+- [Project Roadmap](./PROJECT_ROADMAP.md) - Detailed implementation plan
+- [Project Analysis Report](./PROJECT_ANALYSIS_REPORT.md) - Comprehensive analysis
+- [Security Guide](./SECURITY_GUIDE.md) - Security best practices
+- [Deployment Checklist](./DEPLOYMENT_CHECKLIST.md) - Pre-deployment tasks
+
+---
+
 ## 🐛 Troubleshooting
 
 ### Common Issues
@@ -1484,14 +2043,14 @@ This project is proprietary software. All rights reserved.
 
 ## 📞 Support
 
-**Documentation:** This file + inline code comments + 45+ markdown files  
-**Issues:** Check browser console + Supabase logs  
+**Documentation:** This file + inline code comments + 120+ markdown files
+**Issues:** Check browser console + Supabase logs
 **Contact:** support@aurora.com
 
 ---
 
 **Built with ❤️ for Aurora E-commerce Platform**
 
-**Last Updated:** March 22, 2026  
-**Version:** 2.5.0  
-**Status:** ✅ Production Ready
+**Last Updated:** March 29, 2026
+**Version:** 2.6.0
+**Status:** ✅ Production Ready (See [Known Gaps](#-known-gaps--roadmap) for production checklist)

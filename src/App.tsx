@@ -7,7 +7,6 @@ import { Toaster } from "sonner";
 import { Layout } from "@/components/layout/Layout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
-import { ChatWidgetWrapper } from "@/components/chat/ChatWidgetWrapper";
 import { useTranslation } from "react-i18next";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -52,10 +51,7 @@ import { SettingsPage } from "@/features/settings/pages/SettingsPage";
 import { NotificationsPage } from "@/features/notifications/pages/NotificationsPage";
 import { FeedPage } from "@/components/feed/FeedPage";
 
-// ==================== Messages ====================
-import { Inbox } from "@/features/messages/pages/InboxPage";
-import { ChatPage } from "@/features/messages/pages/ChatPage";
-import { ChatLayout } from "@/pages/chat/ChatLayout";
+// ==================== Messages (Unified Chat System) ====================
 
 // ==================== Services ====================
 import { ServicesHome } from "@/features/services/pages/ServicesHome";
@@ -137,6 +133,7 @@ import { CommissionReport } from "@/pages/seller/CommissionReport";
 // ==================== Error Pages ====================
 import { NotFound } from "@/pages/errors/NotFound";
 import { ServerError } from "@/pages/errors/ServerError";
+import { Chat } from "./chats/chat";
 
 // ==================== Placeholder Components ====================
 function Reviews() {
@@ -507,30 +504,6 @@ function App() {
                     />
                   </Route>
 
-                  {/* ==================== MESSAGES (Cross-Vertical) ==================== */}
-                  <Route path="messages">
-                    <Route index element={<Inbox />} />
-                    <Route path=":conversationId" element={<ChatPage />} />
-                  </Route>
-
-                  {/* ==================== CHAT SYSTEM (New Unified Chat) ==================== */}
-                  <Route
-                    path="chat"
-                    element={
-                      <ProtectedRoute>
-                        <ChatLayout />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="chat/:conversationId"
-                    element={
-                      <ProtectedRoute>
-                        <ChatLayout />
-                      </ProtectedRoute>
-                    }
-                  />
-
                   {/* ==================== PROFILE & SOCIAL (Cross-Vertical) ==================== */}
                   <Route path="profile">
                     <Route index element={<ProfilePage />} />
@@ -610,6 +583,7 @@ function App() {
                     element={<ComingSoon title="Admin Settings" />}
                   />
                 </Route>
+                <Route path="Chat" element={<Chat />}></Route>
 
                 {/* ==================== ERROR ROUTES ==================== */}
                 <Route path="error" element={<ServerError />} />
@@ -617,7 +591,6 @@ function App() {
               </Routes>
             </ErrorBoundary>
             <CookieConsentBanner />
-            <ChatWidgetWrapper />
           </CurrencyProvider>
         </PreferencesProvider>
       </AuthProvider>

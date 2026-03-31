@@ -1,401 +1,230 @@
-// Enhanced useConversations Hook for Aurora Chat System
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
-import type { ConversationListItem, ChatUser } from "@/lib/chat-types";
+import { Conversation, User } from "@/types/chat";
 
-export function useConversations(currentUserId: string | null) {
-  const [conversations, setConversations] = useState<ConversationListItem[]>([]);
+interface ConversationWithDetails extends Conversation {
+  otherUser?: User | null;
+  unreadCount?: number;
+}
+
+export const useConversations = (currentUserId: string) => {
+  const [conversations, setConversations] = useState<ConversationWithDetails[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchAllConversations = useCallback(async () => {
+  const fetchConversations = useCallback(async () => {
     if (!currentUserId) {
-      setConversations([]);
       setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setError(null);
-
     try {
-      const results = await Promise.allSettled([
-        fetchGeneralConversations(currentUserId),
-        fetchTradingConversations(currentUserId),
-        fetchHealthConversations(currentUserId),
-        fetchServicesConversations(currentUserId),
-      ]);
+      setLoading(true);
+      setError(null);
 
-      const allConversations: ConversationListItem[] = [];
+      // STEP 1: Get conversation IDs user participates in (SIMPLE QUERY)
+      console.log("Fetching conversations for user:", currentUserId);
+      const { data: participantData, error: participantError } = await supabase
+        .from("conversation_participants")
+        .select("conversation_id")
+        .eq("user_id", currentUserId);
 
-      results.forEach((result) => {
-        if (result.status === "fulfilled" && result.value) {
-          allConversations.push(...result.value);
-        } else if (result.status === "rejected") {
-          console.warn("Error fetching conversations:", result.reason);
-        }
+      console.log("Participant query result:", {
+        data: participantData,
+        error: participantError,
       });
 
-      // Sort by last message time
-      allConversations.sort((a, b) => {
-        const aTime = a.last_message_at
-          ? new Date(a.last_message_at).getTime()
-          : 0;
-        const bTime = b.last_message_at
-          ? new Date(b.last_message_at).getTime()
-          : 0;
-        return bTime - aTime;
-      });
+      if (participantError) {
+        console.error("Participant query error:", participantError);
+        throw participantError;
+      }
 
-      setConversations(allConversations);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      const conversationIds =
+        participantData?.map((p) => p.conversation_id) || [];
+
+      console.log("Conversation IDs found:", conversationIds.length);
+
+      if (conversationIds.length === 0) {
+        console.log("No conversations found for this user");
+        setConversations([]);
+        setLoading(false);
+        return;
+      }
+
+      // STEP 2: Fetch conversations by IDs (SIMPLE QUERY - no nested joins)
+      const { data: conversationsData, error: convError } = await supabase
+        .from("conversations")
+        .select(
+          "id, name, type, category, created_at, updated_at, last_message, last_message_at",
+        )
+        .in("id", conversationIds)
+        .order("updated_at", { ascending: false });
+
+      if (convError) {
+        console.error("Conversations query error:", convError);
+        throw convError;
+      }
+
+      // STEP 3: For each conversation, fetch the OTHER participant separately
+      const conversationsWithDetails = await Promise.all(
+        (conversationsData || []).map(async (conv) => {
+          try {
+            // Fetch other participant (not current user)
+            const { data: participants, error: partError } = await supabase
+              .from("conversation_participants")
+              .select(
+                `
+                user_id,
+                account_type,
+                users:users!inner (
+                  id,
+                  email,
+                  full_name,
+                  avatar_url,
+                  account_type
+                )
+              `,
+              )
+              .eq("conversation_id", conv.id)
+              .neq("user_id", currentUserId)
+              .limit(1)
+              .maybeSingle();
+
+            if (partError) {
+              console.warn(
+                `Participant fetch error for conv ${conv.id}:`,
+                partError,
+              );
+            }
+
+            const otherUser = (participants?.users as User) || null;
+
+            return {
+              ...conv,
+              otherUser,
+              unreadCount: 0, // Simplified - can add receipt logic later
+            };
+          } catch (err) {
+            console.warn(
+              `Failed to fetch participant for conversation ${conv.id}:`,
+              err,
+            );
+            return { ...conv, otherUser: null, unreadCount: 0 };
+          }
+        }),
+      );
+
+      setConversations(conversationsWithDetails);
+    } catch (err: any) {
+      console.error("Failed to fetch conversations:", err);
+
+      // Provide user-friendly error messages
+      let errorMessage = "Failed to load conversations";
+      if (err?.code === "PGRST301") {
+        errorMessage = "Permission denied. Please check your account settings.";
+      } else if (err?.code === "42P01" || err?.code === "42P17") {
+        errorMessage = "Database configuration error. Please contact support.";
+      } else if (err?.message) {
+        errorMessage = err.message;
+      }
+
       setError(errorMessage);
-      console.error("Error fetching conversations:", err);
     } finally {
       setLoading(false);
     }
   }, [currentUserId]);
 
-  // Fetch general/product conversations
-  const fetchGeneralConversations = async (
-    userId: string
-  ): Promise<ConversationListItem[]> => {
-    try {
-      // Get conversation IDs from participants table
-      const { data: participantData } = await supabase
-        .from("conversation_participants")
-        .select("conversation_id")
-        .eq("user_id", userId);
+  // Create new conversation
+  const createConversation = useCallback(
+    async (otherUserId: string, name?: string): Promise<string | null> => {
+      if (!currentUserId) return null;
 
-      const conversationIds =
-        participantData?.map((p) => p.conversation_id) || [];
+      try {
+        // Check if conversation already exists between these users
+        const { data: existingParticipants } = await supabase
+          .from("conversation_participants")
+          .select("conversation_id")
+          .eq("user_id", currentUserId);
 
-      if (conversationIds.length === 0) return [];
+        if (existingParticipants) {
+          for (const p of existingParticipants) {
+            const { data: check } = await supabase
+              .from("conversation_participants")
+              .select("user_id")
+              .eq("conversation_id", p.conversation_id)
+              .eq("user_id", otherUserId)
+              .maybeSingle();
 
-      const { data: general } = await supabase
-        .from("conversations")
-        .select(
-          `
-          id,
-          last_message,
-          last_message_at,
-          is_archived,
-          product_id,
-          context,
-          participants:conversation_participants!inner(
-            conversation_id,
-            user_id,
-            role,
-            user:users(
-              user_id,
-              full_name,
-              avatar_url,
-              account_type
-            )
-          ),
-          products(
-            id,
-            title,
-            price,
-            images
-          )
-        `
-        )
-        .in("id", conversationIds)
-        .order("last_message_at", { ascending: false })
-        .limit(50);
+            if (check) {
+              return p.conversation_id; // Already exists
+            }
+          }
+        }
 
-      return (general || []).map((conv) => {
-        const otherParticipant = conv.participants?.find(
-          (p: any) => p.user_id !== userId
-        );
+        // Create new conversation (your schema only has: id, product_id, created_at, updated_at, last_message, last_message_at, is_archived)
+        const { data: conversation, error: convError } = await supabase
+          .from("conversations")
+          .insert({
+            product_id: null,
+          })
+          .select("id")
+          .single();
 
-        return {
-          id: conv.id,
-          context: (conv.context as any) || "general",
-          last_message: conv.last_message,
-          last_message_at: conv.last_message_at,
-          unread_count: 0,
-          other_user: otherParticipant?.user as ChatUser | undefined,
-          product: conv.products?.[0] || null,
-          is_archived: conv.is_archived,
-        };
-      });
-    } catch (error) {
-      console.warn("Error fetching general conversations:", error);
-      return [];
-    }
-  };
+        if (convError) throw convError;
 
-  // Fetch trading conversations
-  const fetchTradingConversations = async (
-    userId: string
-  ): Promise<ConversationListItem[]> => {
-    try {
-      const { data: trading } = await supabase
-        .from("trading_conversations")
-        .select(
-          `
-          id,
-          last_message,
-          last_message_at,
-          is_archived,
-          conversation_type,
-          product_id,
-          initiator_id,
-          receiver_id,
-          initiator_role,
-          receiver_role,
-          products(
-            id,
-            title,
-            price,
-            images
-          )
-        `
-        )
-        .or(`initiator_id.eq.${userId},receiver_id.eq.${userId}`)
-        .eq("is_archived", false)
-        .order("last_message_at", { ascending: false })
-        .limit(50);
+        // Add both participants
+        const { error: participantsError } = await supabase
+          .from("conversation_participants")
+          .insert([
+            { conversation_id: conversation.id, user_id: currentUserId },
+            { conversation_id: conversation.id, user_id: otherUserId },
+          ]);
 
-      return (trading || []).map((conv) => {
-        const isInitiator = conv.initiator_id === userId;
-        const otherUserId = isInitiator ? conv.receiver_id : conv.initiator_id;
-        const otherUserRole = isInitiator
-          ? conv.receiver_role
-          : conv.initiator_role;
+        if (participantsError) throw participantsError;
 
-        return {
-          id: conv.id,
-          context: "trading",
-          last_message: conv.last_message,
-          last_message_at: conv.last_message_at,
-          unread_count: 0,
-          other_user: otherUserId
-            ? ({
-                user_id: otherUserId,
-                id: otherUserId,
-                email: "",
-                full_name: "Trading Partner",
-                account_type: otherUserRole,
-              } as ChatUser)
-            : undefined,
-          product: conv.products?.[0] || null,
-          is_archived: conv.is_archived,
-        };
-      });
-    } catch (error) {
-      console.warn("Error fetching trading conversations:", error);
-      return [];
-    }
-  };
+        return conversation.id;
+      } catch (err) {
+        console.error("Failed to create conversation:", err);
+        return null;
+      }
+    },
+    [currentUserId],
+  );
 
-  // Fetch health conversations
-  const fetchHealthConversations = async (
-    userId: string
-  ): Promise<ConversationListItem[]> => {
-    try {
-      // Get appointment IDs first
-      const { data: appointmentData } = await supabase
-        .from("health_appointments")
-        .select("id")
-        .or(`doctor_id.eq.${userId},patient_id.eq.${userId}`);
+  // Delete conversation (soft delete by removing participant)
+  const deleteConversation = useCallback(
+    async (conversationId: string): Promise<boolean> => {
+      try {
+        // Remove current user from participants (soft delete)
+        const { error } = await supabase
+          .from("conversation_participants")
+          .delete()
+          .eq("conversation_id", conversationId)
+          .eq("user_id", currentUserId);
 
-      const appointmentIds = appointmentData?.map((a) => a.id) || [];
-      if (appointmentIds.length === 0) return [];
+        if (error) throw error;
+        return true;
+      } catch (err) {
+        console.error("Failed to delete conversation:", err);
+        return false;
+      }
+    },
+    [currentUserId],
+  );
 
-      const { data: health } = await supabase
-        .from("health_conversations")
-        .select(
-          `
-          id,
-          last_message,
-          last_message_at,
-          appointment_id,
-          health_appointments(
-            id,
-            scheduled_at,
-            status,
-            doctor_id,
-            patient_id,
-            health_doctor_profiles(
-              user_id,
-              full_name
-            ),
-            health_patient_profiles(
-              user_id,
-              full_name
-            )
-          )
-        `
-        )
-        .in("appointment_id", appointmentIds)
-        .order("last_message_at", { ascending: false })
-        .limit(50);
-
-      return (health || []).map((conv) => {
-        const appointment = conv.health_appointments;
-        const isDoctor = appointment?.doctor_id === userId;
-        const otherUser = isDoctor
-          ? appointment?.health_patient_profiles
-          : appointment?.health_doctor_profiles;
-
-        return {
-          id: conv.id,
-          context: "health",
-          last_message: conv.last_message,
-          last_message_at: conv.last_message_at,
-          unread_count: 0,
-          other_user: otherUser
-            ? ({
-                user_id: otherUser.user_id,
-                id: otherUser.user_id,
-                email: "",
-                full_name: otherUser.full_name,
-                account_type: isDoctor ? "patient" : "doctor",
-              } as ChatUser)
-            : undefined,
-          appointment: appointment
-            ? {
-                scheduled_at: appointment.scheduled_at,
-                status: appointment.status,
-              }
-            : null,
-          is_archived: false,
-        };
-      });
-    } catch (error) {
-      console.warn("Error fetching health conversations:", error);
-      return [];
-    }
-  };
-
-  // Fetch services conversations
-  const fetchServicesConversations = async (
-    userId: string
-  ): Promise<ConversationListItem[]> => {
-    try {
-      const { data: services } = await supabase
-        .from("services_conversations")
-        .select(
-          `
-          id,
-          last_message,
-          last_message_at,
-          is_archived,
-          provider_id,
-          client_id,
-          listing_id,
-          service_listings(
-            id,
-            title,
-            price
-          )
-        `
-        )
-        .or(`provider_id.eq.${userId},client_id.eq.${userId}`)
-        .eq("is_archived", false)
-        .order("last_message_at", { ascending: false })
-        .limit(50);
-
-      return (services || []).map((conv) => {
-        const isProvider = conv.provider_id === userId;
-        const otherUserId = isProvider ? conv.client_id : conv.provider_id;
-
-        return {
-          id: conv.id,
-          context: "service",
-          last_message: conv.last_message,
-          last_message_at: conv.last_message_at,
-          unread_count: 0,
-          other_user: {
-            user_id: otherUserId,
-            id: otherUserId,
-            email: "",
-            full_name: isProvider ? "Client" : "Provider",
-            account_type: isProvider ? "user" : "service_provider",
-          } as ChatUser,
-          listing: conv.service_listings
-            ? {
-                title: conv.service_listings.title,
-              }
-            : null,
-          is_archived: conv.is_archived,
-        };
-      });
-    } catch (error) {
-      console.warn("Error fetching services conversations:", error);
-      return [];
-    }
-  };
-
-  // Realtime subscription
+  // Initial load
   useEffect(() => {
-    if (!currentUserId) return;
-
-    const channel = supabase
-      .channel(`conversations:${currentUserId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "conversations",
-        },
-        () => {
-          fetchAllConversations();
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-        },
-        () => {
-          fetchAllConversations();
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "trading_conversations",
-        },
-        () => {
-          fetchAllConversations();
-        }
-      )
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "services_conversations",
-        },
-        () => {
-          fetchAllConversations();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [currentUserId, fetchAllConversations]);
-
-  useEffect(() => {
-    fetchAllConversations();
-  }, [fetchAllConversations]);
+    fetchConversations();
+  }, [fetchConversations]);
 
   return {
     conversations,
     loading,
     error,
-    refresh: fetchAllConversations,
+    refresh: fetchConversations,
+    createConversation,
+    deleteConversation,
   };
-}
+};

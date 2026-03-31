@@ -1,343 +1,356 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Banknote, Building, Smartphone, Info, Wallet } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+// Payout Request Page
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Download,
+  AlertCircle,
+  CheckCircle,
+  ArrowLeft,
+  Wallet,
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+
+const MINIMUM_PAYOUT = 50;
+const PAYOUT_FEE_PERCENT = 2;
+
+interface WalletBalance {
+  balance: number;
+  pending_balance: number;
+  total_earned: number;
+}
 
 export function PayoutRequest() {
-  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
-  const [walletData, setWalletData] = useState<any>(null);
-  const [amount, setAmount] = useState('');
-  const [method, setMethod] = useState('bank_transfer');
-  const [bankDetails, setBankDetails] = useState({
-    account_name: '',
-    account_number: '',
-    bank_name: '',
-  });
-
-  const MIN_PAYOUT = 50;
-  const PAYOUT_FEE_PERCENTAGE = 2;
+  const [wallet, setWallet] = useState<any>(null);
+  const [amount, setAmount] = useState("");
+  const [method, setMethod] = useState("bank_transfer");
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [accountName, setAccountName] = useState("");
 
   useEffect(() => {
-    loadWalletData();
+    loadWallet();
   }, []);
 
-  const loadWalletData = async () => {
+  const loadWallet = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: walletData, error } = await supabase
-        .from('user_wallets')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+      // Try user_wallets table first
+      const { data: walletData } = await supabase
+        .from("user_wallets")
+        .select("*")
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
-      setWalletData(walletData);
+      if (walletData) {
+        setWallet(walletData);
+        return;
+      }
+
+      // 🔹 FALLBACK: Calculate available balance from completed sales
+      const { data: sales } = await supabase
+        .from("sales")
+        .select("total_price, status")
+        .eq("seller_id", user.id)
+        .eq("status", "completed");
+
+      const availableBalance =
+        sales?.reduce(
+          (sum, s) => sum + s.total_price * 0.98, // 2% platform fee
+          0,
+        ) || 0;
+
+      setWallet({
+        balance: availableBalance,
+        pending_balance: 0,
+        total_earned: availableBalance,
+      });
     } catch (error) {
-      console.error('Error loading wallet:', error);
+      console.error("Error loading wallet:", error);
     }
   };
 
-  const handleRequest = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const numAmount = parseFloat(amount);
+
+    if (isNaN(numAmount) || numAmount <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+
+    if (numAmount < MINIMUM_PAYOUT) {
+      toast.error(`Minimum payout amount is ${MINIMUM_PAYOUT} EGP`);
+      return;
+    }
+
+    if (wallet && numAmount > wallet.balance) {
+      toast.error("Insufficient balance");
+      return;
+    }
+
     setLoading(true);
+
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      const payoutAmount = parseFloat(amount);
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) return;
 
-      // Validation
-      if (isNaN(payoutAmount) || payoutAmount <= 0) {
-        toast.error('Please enter a valid amount');
-        setLoading(false);
-        return;
-      }
+      const fee = (numAmount * PAYOUT_FEE_PERCENT) / 100;
+      const netAmount = numAmount - fee;
 
-      if (payoutAmount < MIN_PAYOUT) {
-        toast.error(`Minimum payout amount is ${MIN_PAYOUT} EGP`);
-        setLoading(false);
-        return;
-      }
+      // Create payout request
+      const { data: payout, error: payoutError } = await supabase
+        .from("payout_requests")
+        .insert({
+          user_id: user.id,
+          amount: numAmount,
+          fee: fee,
+          net_amount: netAmount,
+          payment_method: method,
+          bank_name: method === "bank_transfer" ? bankName : null,
+          account_number: method === "bank_transfer" ? accountNumber : null,
+          account_name: method === "bank_transfer" ? accountName : null,
+          status: "pending",
+        })
+        .select()
+        .single();
 
-      if (!walletData || payoutAmount > walletData.balance) {
-        toast.error('Insufficient wallet balance');
-        setLoading(false);
-        return;
-      }
+      if (payoutError) throw payoutError;
 
-      // Calculate fee and net amount
-      const fee = payoutAmount * (PAYOUT_FEE_PERCENTAGE / 100);
-      const netAmount = payoutAmount - fee;
+      // Deduct from wallet
+      const newBalance = wallet.balance - numAmount;
+      const { error: updateError } = await supabase
+        .from("user_wallets")
+        .update({
+          balance: newBalance,
+          pending_balance: wallet.pending_balance + numAmount,
+        })
+        .eq("user_id", user.id);
 
-      // Call backend function to request payout
-      const { data, error } = await supabase.rpc('request_payout', {
-        p_user_id: user!.id,
-        p_amount: payoutAmount,
-        p_payout_method: method,
-        p_bank_details: method === 'bank_transfer' ? bankDetails : {},
-        p_idempotency_key: `payout_${user!.id}_${Date.now()}` // Prevent duplicates
+      if (updateError) throw updateError;
+
+      // Create transaction record
+      await supabase.from("wallet_transactions").insert({
+        user_id: user.id,
+        amount: -numAmount,
+        transaction_type: "debit",
+        description: "Payout Request",
+        reference_type: "payout_request",
+        reference_id: payout.id,
+        status: "pending",
       });
 
-      if (error) throw error;
-
-      toast.success('Payout request submitted successfully!');
-      setAmount('');
-      navigate('/wallet/payouts/history');
+      toast.success("Payout request submitted successfully!");
+      setAmount("");
+      setBankName("");
+      setAccountNumber("");
+      setAccountName("");
     } catch (error: any) {
-      console.error(error);
-      toast.error(error.message || 'Failed to request payout');
+      console.error("Error submitting payout:", error);
+      toast.error(error.message || "Failed to submit payout request");
     } finally {
       setLoading(false);
     }
   };
 
-  const calculateFee = () => {
-    const value = parseFloat(amount);
-    if (isNaN(value) || value <= 0) return 0;
-    return value * (PAYOUT_FEE_PERCENTAGE / 100);
-  };
-
-  const calculateNetAmount = () => {
-    const value = parseFloat(amount);
-    if (isNaN(value) || value <= 0) return 0;
-    return value - calculateFee();
-  };
-
-  const availableBalance = walletData?.balance || 0;
+  const availableBalance = wallet?.balance || 0;
+  const numAmount = parseFloat(amount) || 0;
+  const fee = (numAmount * PAYOUT_FEE_PERCENT) / 100;
+  const netAmount = numAmount - fee;
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+    <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Request Payout</h1>
-        <p className="text-gray-600 mt-1">Withdraw funds from your wallet</p>
+      <div className="flex items-center gap-4">
+        <Link to="/wallet">
+          <Button variant="ghost" size="icon">
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </Link>
+        <div>
+          <h1 className="text-3xl font-bold">Request Payout</h1>
+          <p className="text-gray-600">Withdraw funds from your wallet</p>
+        </div>
       </div>
 
-      {/* Wallet Balance Card */}
-      <Card className="bg-gradient-to-r from-green-50 to-green-100 border-green-200">
-        <CardContent className="p-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-sm text-green-700 font-medium">Available Balance</p>
-              <p className="text-3xl font-bold text-green-900 mt-1">
-                {availableBalance.toFixed(2)} EGP
-              </p>
-            </div>
-            <div className="p-3 bg-green-200 rounded-full">
-              <Wallet className="h-8 w-8 text-green-700" />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Balance Alert */}
+      <Alert className="bg-green-50 border-green-200">
+        <Wallet className="h-4 w-4 text-green-600" />
+        <AlertDescription className="ml-2">
+          Available Balance:{" "}
+          <span className="font-bold text-green-700">
+            {availableBalance.toFixed(2)} EGP
+          </span>
+        </AlertDescription>
+      </Alert>
 
-      {/* Main Form */}
+      {/* Info Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              <div>
+                <p className="font-medium">Minimum Payout</p>
+                <p className="text-sm text-gray-600">{MINIMUM_PAYOUT} EGP</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-blue-600" />
+              <div>
+                <p className="font-medium">Processing Time</p>
+                <p className="text-sm text-gray-600">1-3 business days</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Payout Form */}
       <Card>
         <CardHeader>
           <CardTitle>Payout Details</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Info Banner */}
-          <Alert className="bg-blue-50 border-blue-200">
-            <Info className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-800 ml-2">
-              <p className="font-medium">Payout Information</p>
-              <ul className="text-sm mt-1 space-y-1">
-                <li>• Minimum payout: {MIN_PAYOUT} EGP</li>
-                <li>• Processing fee: {PAYOUT_FEE_PERCENTAGE}%</li>
-                <li>• Processing time: 1-3 business days</li>
-              </ul>
-            </AlertDescription>
-          </Alert>
-
-          {/* Amount Input */}
-          <div className="space-y-2">
-            <Label htmlFor="amount">Payout Amount (EGP)</Label>
-            <div className="relative">
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-6">
+            {/* Amount */}
+            <div className="space-y-2">
+              <Label htmlFor="amount">Amount (EGP)</Label>
               <Input
                 id="amount"
                 type="number"
+                placeholder="Enter amount"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                placeholder="Enter amount"
-                min={MIN_PAYOUT}
+                min={MINIMUM_PAYOUT}
                 max={availableBalance}
                 step="0.01"
-                className="pr-16"
+                required
               />
-              <div className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
-                EGP
-              </div>
-            </div>
-            <div className="flex justify-between text-xs text-gray-500">
-              <span>Min: {MIN_PAYOUT} EGP</span>
-              <span>Max: {availableBalance.toFixed(2)} EGP</span>
-            </div>
-            {/* Quick Amount Buttons */}
-            <div className="flex gap-2">
-              {[25, 50, 75, 100].map((percent) => (
-                <Button
-                  key={percent}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setAmount((availableBalance * percent / 100).toFixed(2))}
-                  className="flex-1"
-                >
-                  {percent}%
-                </Button>
-              ))}
-            </div>
-          </div>
-
-          {/* Payout Method Selection */}
-          <div className="space-y-2">
-            <Label>Payout Method</Label>
-            <Select value={method} onValueChange={setMethod}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="bank_transfer">
-                  <div className="flex items-center gap-2">
-                    <Building className="h-4 w-4" />
-                    Bank Transfer
-                  </div>
-                </SelectItem>
-                <SelectItem value="fawry_cash">
-                  <div className="flex items-center gap-2">
-                    <Smartphone className="h-4 w-4" />
-                    Fawry Cash Pickup
-                  </div>
-                </SelectItem>
-                <SelectItem value="wallet">
-                  <div className="flex items-center gap-2">
-                    <Wallet className="h-4 w-4" />
-                    Digital Wallet
-                  </div>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Bank Details (conditional) */}
-          {method === 'bank_transfer' && (
-            <div className="space-y-4 bg-gray-50 p-4 rounded-lg border">
-              <div className="space-y-2">
-                <Label htmlFor="account_name">Account Name</Label>
-                <Input
-                  id="account_name"
-                  value={bankDetails.account_name}
-                  onChange={(e) =>
-                    setBankDetails({ ...bankDetails, account_name: e.target.value })
-                  }
-                  placeholder="As shown on bank account"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="account_number">Account Number</Label>
-                <Input
-                  id="account_number"
-                  value={bankDetails.account_number}
-                  onChange={(e) =>
-                    setBankDetails({ ...bankDetails, account_number: e.target.value })
-                  }
-                  placeholder="Full account number"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bank_name">Bank Name</Label>
-                <Input
-                  id="bank_name"
-                  value={bankDetails.bank_name}
-                  onChange={(e) =>
-                    setBankDetails({ ...bankDetails, bank_name: e.target.value })
-                  }
-                  placeholder="e.g., NBE, CIB, QNB"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Fawry Info (conditional) */}
-          {method === 'fawry_cash' && (
-            <Alert className="bg-amber-50 border-amber-200">
-              <Smartphone className="h-4 w-4 text-amber-600" />
-              <AlertDescription className="text-amber-800 ml-2">
-                <p className="font-medium">Fawry Cash Pickup</p>
-                <p className="text-sm mt-1">
-                  You will receive a reference number to collect cash from any Fawry kiosk nationwide.
+              {numAmount > availableBalance && (
+                <p className="text-sm text-red-600">
+                  Amount exceeds available balance
                 </p>
-              </AlertDescription>
-            </Alert>
-          )}
-
-          {/* Fee Breakdown */}
-          {amount && parseFloat(amount) > 0 && (
-            <Card className="bg-gray-50">
-              <CardContent className="p-4 space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Payout Amount</span>
-                  <span className="font-medium">{parseFloat(amount).toFixed(2)} EGP</span>
+              )}
+              {numAmount > 0 && numAmount <= availableBalance && (
+                <div className="text-sm text-gray-600">
+                  <p>
+                    Fee ({PAYOUT_FEE_PERCENT}%): {fee.toFixed(2)} EGP
+                  </p>
+                  <p className="font-medium">
+                    You'll receive: {netAmount.toFixed(2)} EGP
+                  </p>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Processing Fee ({PAYOUT_FEE_PERCENTAGE}%)</span>
-                  <span className="text-red-600">-{calculateFee().toFixed(2)} EGP</span>
-                </div>
-                <div className="border-t pt-2 flex justify-between items-center">
-                  <span className="font-semibold">You Receive</span>
-                  <span className="text-lg font-bold text-green-600">
-                    {calculateNetAmount().toFixed(2)} EGP
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+              )}
+            </div>
 
-          {/* Warning */}
-          <Alert className="bg-yellow-50 border-yellow-200">
-            <AlertCircle className="h-4 w-4 text-yellow-600" />
-            <AlertDescription className="text-yellow-800 ml-2">
-              <p className="text-sm">
-                By clicking submit, you agree to our payout terms and conditions. 
-                Payout requests cannot be cancelled once submitted.
-              </p>
-            </AlertDescription>
-          </Alert>
+            {/* Payment Method */}
+            <div className="space-y-2">
+              <Label htmlFor="method">Payment Method</Label>
+              <Select value={method} onValueChange={setMethod}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select method" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                  <SelectItem value="fawry">Fawry</SelectItem>
+                  <SelectItem value="wallet">Digital Wallet</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          {/* Submit Button */}
-          <Button 
-            onClick={handleRequest} 
-            disabled={loading || !amount || parseFloat(amount) < MIN_PAYOUT} 
-            className="w-full"
-            size="lg"
-          >
-            {loading ? (
-              <div className="flex items-center gap-2">
-                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-                Processing...
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <Banknote className="h-4 w-4" />
-                Submit Payout Request
+            {/* Bank Details */}
+            {method === "bank_transfer" && (
+              <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                <div className="space-y-2">
+                  <Label htmlFor="bankName">Bank Name</Label>
+                  <Input
+                    id="bankName"
+                    placeholder="e.g., National Bank of Egypt"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="accountNumber">Account Number</Label>
+                  <Input
+                    id="accountNumber"
+                    placeholder="Enter account number"
+                    value={accountNumber}
+                    onChange={(e) => setAccountNumber(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="accountName">Account Name</Label>
+                  <Input
+                    id="accountName"
+                    placeholder="Enter account holder name"
+                    value={accountName}
+                    onChange={(e) => setAccountName(e.target.value)}
+                    required
+                  />
+                </div>
               </div>
             )}
-          </Button>
 
-          {/* Cancel Link */}
-          <div className="text-center">
-            <Link to="/wallet" className="text-sm text-gray-600 hover:text-gray-900">
-              ← Back to Wallet Dashboard
-            </Link>
-          </div>
-        </CardContent>
+            {/* Submit Button */}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={
+                loading ||
+                numAmount < MINIMUM_PAYOUT ||
+                numAmount > availableBalance
+              }
+            >
+              {loading ? (
+                <>
+                  <div className="animate-spin h-4 w-4 border-2 border-current border-t-transparent mr-2" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <Download className="h-4 w-4 mr-2" />
+                  Request Payout
+                </>
+              )}
+            </Button>
+
+            <p className="text-xs text-center text-gray-500">
+              By submitting this request, you agree to our payout terms and
+              conditions
+            </p>
+          </CardContent>
+        </form>
       </Card>
     </div>
   );

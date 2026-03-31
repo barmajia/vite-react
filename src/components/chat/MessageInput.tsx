@@ -1,17 +1,13 @@
-// MessageInput Component for Aurora Chat System
+// Message Input Component for Aurora Chat System
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Send, Paperclip, Image as ImageIcon, X } from "lucide-react";
 import {
-  Paperclip,
-  Send,
-  X,
-  Smile,
-  Mic,
-  Image as ImageIcon,
-} from "lucide-react";
-import { uploadChatAttachment, getMessageTypeFromFile, validateFile } from "@/lib/chat-utils";
-import { toast } from "sonner";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 interface MessageInputProps {
   conversationId: string;
@@ -19,297 +15,208 @@ interface MessageInputProps {
     content: string,
     type: "text" | "image" | "file",
     attachmentUrl?: string,
-    attachmentName?: string
+    attachmentName?: string,
   ) => Promise<void>;
   disabled?: boolean;
 }
 
-const EMOJIS = [
-  "😀",
-  "😂",
-  "🥰",
-  "😎",
-  "👍",
-  "❤️",
-  "🎉",
-  "🔥",
-  "👏",
-  "🙏",
-  "💯",
-  "✨",
-  "👋",
-  "🤔",
-  "😅",
-  "😢",
-  "😍",
-  "🤣",
-  "🙌",
-  "💪",
-  "🎊",
-  "🌟",
-  "✅",
-  "❌",
-];
-
 export function MessageInput({
   conversationId,
   onSend,
-  disabled,
+  disabled = false,
 }: MessageInputProps) {
   const [message, setMessage] = useState("");
-  const [uploading, setUploading] = useState(false);
-  const [preview, setPreview] = useState<{
-    url: string;
-    name: string;
-    type: string;
-  } | null>(null);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!message.trim() && !preview) return;
+  const handleSend = async () => {
+    if (!message.trim() || disabled || isSending) return;
 
-    if (preview) {
-      await onSend(preview.name, preview.type as "image" | "file", preview.url);
-      setPreview(null);
-    } else {
-      await onSend(message, "text");
+    setIsSending(true);
+    try {
+      await onSend(message.trim(), "text");
+      setMessage("");
+    } catch (error) {
+      console.error("Failed to send message:", error);
+    } finally {
+      setIsSending(false);
     }
-
-    setMessage("");
-    setShowEmojiPicker(false);
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit();
+      handleSend();
+    }
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPreviewImage(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSendImage = async () => {
+    if (!previewImage || disabled || isSending) return;
+
+    setIsSending(true);
+    try {
+      await onSend("Shared an image", "image", previewImage, "image.jpg");
+      setPreviewImage(null);
+    } catch (error) {
+      console.error("Failed to send image:", error);
+    } finally {
+      setIsSending(false);
     }
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || disabled || isSending) return;
 
-    const validation = validateFile(file);
-    if (!validation.valid) {
-      toast.error(validation.error || "Invalid file");
-      return;
-    }
-
-    setUploading(true);
-
+    setIsSending(true);
     try {
-      const publicUrl = await uploadChatAttachment(file, conversationId);
-      const messageType = getMessageTypeFromFile(file);
-
-      setPreview({
-        url: publicUrl,
-        name: file.name,
-        type: messageType,
-      });
-
-      toast.success("File uploaded successfully");
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        onSend(
+          `Shared a file: ${file.name}`,
+          "file",
+          event.target?.result as string,
+          file.name,
+        );
+      };
+      reader.readAsDataURL(file);
     } catch (error) {
-      console.error("Upload error:", error);
-      toast.error("Failed to upload file");
+      console.error("Failed to send file:", error);
     } finally {
-      setUploading(false);
+      setIsSending(false);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
     }
   };
 
-  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
-      return;
-    }
-
-    const validation = validateFile(file);
-    if (!validation.valid) {
-      toast.error(validation.error || "Invalid file");
-      return;
-    }
-
-    setUploading(true);
-
-    try {
-      const publicUrl = await uploadChatAttachment(file, conversationId);
-
-      await onSend(file.name, "image", publicUrl);
-      toast.success("Image sent successfully");
-    } catch (error) {
-      console.error("Upload error:", error);
-      toast.error("Failed to send image");
-    } finally {
-      setUploading(false);
-      if (imageInputRef.current) {
-        imageInputRef.current.value = "";
-      }
-    }
-  };
-
-  const handleEmojiSelect = (emoji: string) => {
-    setMessage((prev) => prev + emoji);
-    setShowEmojiPicker(false);
-  };
-
-  const removePreview = () => {
-    setPreview(null);
-  };
-
   return (
-    <div className="border-t p-4 bg-background">
-      {/* Preview */}
-      {preview && (
-        <div className="mb-3 p-3 bg-muted rounded-lg flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {preview.type === "image" ? (
-              <img
-                src={preview.url}
-                alt="Preview"
-                className="h-16 w-16 object-cover rounded"
-              />
-            ) : (
-              <div className="h-16 w-16 bg-primary/10 rounded flex items-center justify-center">
-                <span className="text-2xl">📎</span>
-              </div>
-            )}
-            <div className="max-w-[200px]">
-              <p className="text-sm font-medium truncate">{preview.name}</p>
-              <p className="text-xs text-muted-foreground capitalize">
-                {preview.type}
-              </p>
-            </div>
-          </div>
-          <button
-            onClick={removePreview}
-            className="text-muted-foreground hover:text-foreground transition-colors"
+    <div className="border-t bg-card p-3">
+      {/* Image Preview */}
+      {previewImage && (
+        <div className="mb-3 relative inline-block">
+          <img
+            src={previewImage}
+            alt="Preview"
+            className="max-h-48 rounded-lg border shadow-sm"
+          />
+          <Button
+            variant="destructive"
+            size="icon"
+            className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+            onClick={() => setPreviewImage(null)}
           >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-      )}
-
-      {/* Emoji Picker */}
-      {showEmojiPicker && (
-        <div className="mb-3 p-3 bg-card border border-border rounded-lg shadow-lg grid grid-cols-8 gap-2 animate-in slide-in-from-bottom-2">
-          {EMOJIS.map((emoji) => (
-            <button
-              key={emoji}
-              onClick={() => handleEmojiSelect(emoji)}
-              className="text-xl hover:bg-muted rounded p-1 transition-colors"
-            >
-              {emoji}
-            </button>
-          ))}
+            <X className="h-3 w-3" />
+          </Button>
+          <Button
+            variant="default"
+            size="sm"
+            className="absolute -bottom-2 -right-2 h-8 rounded-full"
+            onClick={handleSendImage}
+            disabled={isSending}
+          >
+            <Send className="h-4 w-4" />
+          </Button>
         </div>
       )}
 
       {/* Input Area */}
-      <form onSubmit={handleSubmit} className="flex items-end gap-2">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*,.pdf,.doc,.docx,.txt,.xls,.xlsx"
-          onChange={handleFileSelect}
-          className="hidden"
-        />
-
-        <input
-          ref={imageInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleImageSelect}
-          className="hidden"
-        />
-
-        {/* Attach File */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-10 w-10 shrink-0"
-          onClick={() => fileInputRef.current?.click()}
-          disabled={uploading || disabled}
-          title="Attach File"
-        >
-          {uploading ? (
-            <div className="animate-spin h-4 w-4 border-2 border-muted-foreground border-t-transparent rounded-full" />
-          ) : (
-            <Paperclip className="h-5 w-5" />
-          )}
-        </Button>
-
-        {/* Send Image */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-10 w-10 shrink-0"
-          onClick={() => imageInputRef.current?.click()}
-          disabled={uploading || disabled}
-          title="Send Image"
-        >
-          <ImageIcon className="h-5 w-5" />
-        </Button>
-
-        {/* Emoji */}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-10 w-10 shrink-0"
-          onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-          disabled={disabled}
-          title="Emoji"
-        >
-          <Smile className="h-5 w-5" />
-        </Button>
+      <div className="flex items-end gap-2">
+        {/* Attachment Button */}
+        <Popover>
+          <PopoverTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="shrink-0"
+              disabled={disabled || isSending}
+              aria-label="Open attachment options"
+              title="Attach file"
+            >
+              <Paperclip className="h-5 w-5" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-2" align="end">
+            <div className="flex flex-col gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  imageInputRef.current?.click();
+                }}
+              >
+                <ImageIcon className="h-4 w-4 mr-2" />
+                Photo
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="justify-start"
+                onClick={() => {
+                  fileInputRef.current?.click();
+                }}
+              >
+                <Paperclip className="h-4 w-4 mr-2" />
+                Document
+              </Button>
+            </div>
+          </PopoverContent>
+        </Popover>
 
         {/* Text Input */}
         <div className="flex-1 relative">
-          <Textarea
+          <Input
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Type a message..."
-            className="min-h-[44px] max-h-[120px] resize-none pr-12 bg-muted/30 border-transparent focus:bg-background"
-            disabled={disabled || uploading}
-            rows={1}
+            aria-label="Type your chat message"
+            disabled={disabled || isSending}
+            className="min-h-[44px] resize-none pr-12"
           />
-          {/* Send Button */}
-          <div className="absolute right-2 bottom-2">
-            <Button
-              type="submit"
-              size="icon"
-              className="h-8 w-8 rounded-full shadow-md"
-              disabled={(!message.trim() && !preview) || disabled || uploading}
-            >
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
         </div>
 
-        {/* Voice Message (Coming Soon) */}
+        {/* Send Button */}
         <Button
-          type="button"
-          variant="ghost"
+          variant="default"
           size="icon"
-          className="h-10 w-10 shrink-0"
-          disabled
-          title="Voice Message (Coming Soon)"
+          className="shrink-0"
+          onClick={handleSend}
+          disabled={disabled || isSending || !message.trim()}
+          aria-label="Send message"
         >
-          <Mic className="h-5 w-5" />
+          <Send className="h-5 w-5" />
         </Button>
-      </form>
+
+        {/* Hidden File Inputs */}
+        <input
+          type="file"
+          ref={imageInputRef}
+          onChange={handleImageSelect}
+          accept="image/*"
+          className="hidden"
+        />
+        <input
+          type="file"
+          ref={fileInputRef}
+          onChange={handleFileSelect}
+          className="hidden"
+        />
+      </div>
     </div>
   );
 }

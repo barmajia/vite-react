@@ -78,13 +78,25 @@ export function Header() {
   useEffect(() => {
     const getProviderProfile = async () => {
       if (!user) return;
-      const { data, error } = await supabase
-        .from("svc_providers")
-        .select("id, provider_name, logo_url, is_verified")
-        .eq("user_id", user.id);
+      try {
+        const { data, error } = await supabase
+          .from("svc_providers")
+          .select("id, provider_name, logo_url, is_verified")
+          .eq("user_id", user.id)
+          .maybeSingle();
 
-      if (!error && data && data.length > 0) {
-        setProviderProfile(data[0]);
+        if (error) {
+          console.warn("Provider profile fetch error:", error.message);
+          // Don't set state on error - user might not be a provider
+          return;
+        }
+
+        if (data) {
+          setProviderProfile(data);
+        }
+      } catch (err) {
+        // Silently fail - user might not have a provider profile
+        console.debug("No provider profile found for user");
       }
     };
     getProviderProfile();
@@ -208,38 +220,6 @@ export function Header() {
                   </div>
                 </DropdownMenuContent>
               </DropdownMenu>
-
-              {/* Factory */}
-              <Link
-                to={ROUTES.FACTORY}
-                className={cn(
-                  "relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
-                  location.pathname.startsWith(ROUTES.FACTORY)
-                    ? "text-violet-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
-                )}
-              >
-                {t("nav.factory")}
-                {location.pathname.startsWith(ROUTES.FACTORY) && (
-                  <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full" />
-                )}
-              </Link>
-
-              {/* Middleman */}
-              <Link
-                to={ROUTES.MIDDLEMAN}
-                className={cn(
-                  "relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
-                  location.pathname.startsWith(ROUTES.MIDDLEMAN)
-                    ? "text-violet-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/20"
-                    : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
-                )}
-              >
-                {t("nav.middleman")}
-                {location.pathname.startsWith(ROUTES.MIDDLEMAN) && (
-                  <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-blue-600 dark:bg-blue-400 rounded-full" />
-                )}
-              </Link>
             </nav>
 
             {/* Right Actions - Desktop */}

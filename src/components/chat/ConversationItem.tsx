@@ -1,145 +1,100 @@
-// ConversationItem Component for Aurora Chat System
+// WhatsApp-style Conversation Item Component
 import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-import { formatMessageTime, getContextBadgeColor, getContextLabel } from "@/lib/chat-utils";
+import { ACCOUNT_TYPE_CONFIG } from "@/lib/chatConfig";
 import type { ConversationListItem } from "@/lib/chat-types";
-import { Clock, Check, CheckCheck } from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { CheckCheck } from "lucide-react";
 
 interface ConversationItemProps {
   conversation: ConversationListItem;
-  isActive: boolean;
+  isActive?: boolean;
   onClick: () => void;
 }
 
 export function ConversationItem({
   conversation,
-  isActive,
+  isActive = false,
   onClick,
 }: ConversationItemProps) {
-  const getOtherUserName = () => {
-    if (conversation.other_user?.full_name) {
-      return conversation.other_user.full_name;
+  const otherUser = conversation.other_user;
+  const accountType = otherUser?.account_type || "user";
+  const accountTypeConfig = ACCOUNT_TYPE_CONFIG[accountType];
+
+  const getTimeAgo = () => {
+    if (!conversation.last_message_at) return "";
+    try {
+      const date = new Date(conversation.last_message_at);
+      return formatDistanceToNow(date, { addSuffix: true });
+    } catch {
+      return "";
     }
-    
-    // Fallback names based on context
-    const contextNames: Record<string, string> = {
-      trading: "Trading Partner",
-      health: conversation.other_user?.account_type === "doctor" ? "Patient" : "Doctor",
-      services: conversation.other_user?.account_type === "service_provider" ? "Client" : "Provider",
-      general: "User",
-      product: "User",
-    };
-    
-    return contextNames[conversation.context] || "User";
   };
 
-  const getAvatarUrl = () => {
-    return conversation.other_user?.avatar_url;
+  const getName = () => {
+    return otherUser?.full_name || "Unknown User";
   };
 
-  const getLastMessagePreview = () => {
-    if (!conversation.last_message) {
-      return "No messages yet";
+  const getLastMessage = () => {
+    if (conversation.context === "product" && conversation.product) {
+      return `Product: ${conversation.product.title}`;
     }
-    
-    if (conversation.last_message.startsWith("📷")) {
-      return conversation.last_message;
-    }
-    
-    if (conversation.last_message.startsWith("📎")) {
-      return conversation.last_message;
-    }
-    
-    return conversation.last_message.length > 50
-      ? conversation.last_message.substring(0, 50) + "..."
-      : conversation.last_message;
+    return conversation.last_message || "No messages yet";
   };
-
-  const hasUnreadMessages = conversation.unread_count && conversation.unread_count > 0;
 
   return (
-    <Card
+    <button
       onClick={onClick}
-      className={`p-4 cursor-pointer transition-all hover:shadow-md ${
-        isActive
-          ? "bg-muted/80 border-primary shadow-md"
-          : "hover:bg-muted/50 border-transparent hover:border-muted"
-      }`}
+      className={`w-full p-3 flex items-center gap-3 transition-colors text-left border-b border-muted/50
+        ${isActive ? "bg-primary/10" : "hover:bg-muted/50"}
+      `}
     >
-      <div className="flex items-start gap-3">
-        <Avatar
-          name={getOtherUserName()}
-          src={getAvatarUrl()}
-          size="md"
-          className={conversation.other_user?.account_type ? "" : "bg-muted"}
-        />
+      {/* Profile Picture */}
+      <Avatar
+        name={getName()}
+        src={otherUser?.avatar_url}
+        size="lg"
+        className={accountTypeConfig?.color || "bg-muted"}
+      />
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1">
-            <h3 className="font-semibold text-sm truncate flex-1">
-              {getOtherUserName()}
-            </h3>
-            {conversation.last_message_at && (
-              <span className="text-xs text-muted-foreground ml-2 flex-shrink-0">
-                {formatMessageTime(conversation.last_message_at)}
+      {/* Content */}
+      <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+        {/* Name and Time */}
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-sm truncate flex-1">{getName()}</h3>
+          <span className="text-xs text-muted-foreground ml-2 shrink-0">
+            {getTimeAgo()}
+          </span>
+        </div>
+
+        {/* Account Type and Last Message */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            {/* Account Type Badge */}
+            {accountTypeConfig && (
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full shrink-0 bg-secondary text-secondary-foreground font-medium`}
+              >
+                {accountTypeConfig.label}
               </span>
             )}
-          </div>
-
-          <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <Badge
-              variant="secondary"
-              className={`text-xs ${getContextBadgeColor(conversation.context)}`}
-            >
-              {getContextLabel(conversation.context)}
-            </Badge>
-            
-            {conversation.product && (
-              <Badge variant="outline" className="text-xs">
-                📦 Product
-              </Badge>
-            )}
-            
-            {conversation.appointment && (
-              <Badge variant="outline" className="text-xs">
-                🏥 Appointment
-              </Badge>
-            )}
-            
-            {conversation.listing && (
-              <Badge variant="outline" className="text-xs">
-                🛠️ Service
-              </Badge>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground truncate flex-1">
-              {getLastMessagePreview()}
+            {/* Last Message */}
+            <p className="text-xs text-muted-foreground truncate flex-1">
+              {getLastMessage()}
             </p>
-            {hasUnreadMessages && (
-              <Badge className="bg-primary text-primary-foreground text-xs ml-2 flex-shrink-0">
-                {conversation.unread_count}
-              </Badge>
-            )}
           </div>
 
-          {/* Product/Service Info if available */}
-          {conversation.product && (
-            <div className="mt-2 p-2 bg-muted/50 rounded-md">
-              <p className="text-xs font-medium truncate">
-                {conversation.product.title}
-              </p>
-              {conversation.product.price && (
-                <p className="text-xs text-muted-foreground">
-                  {conversation.product.price.toFixed(2)} EGP
-                </p>
-              )}
+          {/* Unread Badge or Read Receipt */}
+          {conversation.unread_count && conversation.unread_count > 0 ? (
+            <div className="bg-primary text-primary-foreground text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 min-w-[20px] text-center">
+              {conversation.unread_count}
+            </div>
+          ) : (
+            <div className="text-muted-foreground shrink-0">
+              <CheckCheck className="h-4 w-4" />
             </div>
           )}
         </div>
       </div>
-    </Card>
+    </button>
   );
 }
