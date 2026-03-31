@@ -28,11 +28,6 @@ export function ProductCard({ product }: ProductCardProps) {
   const [isChatLoading, setIsChatLoading] = useState(false);
   const imageUrl = getProductImage(product.images);
 
-  // Debug: Log image data to console
-  console.log("ProductCard - Product ASIN:", product.asin);
-  console.log("ProductCard - Raw images:", product.images);
-  console.log("ProductCard - Image URL:", imageUrl);
-
   // Calculate discount percentage if there was a compare price logic
   const hasDiscount = product.price && product.price > 0;
 

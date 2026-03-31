@@ -111,6 +111,19 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 }
 
 /**
+ * Get Supabase URL from environment or use hardcoded fallback
+ * This ensures images work both locally and in production (Vercel)
+ */
+function getSupabaseUrl(): string {
+  // Try environment variable first
+  const envUrl = import.meta.env.VITE_SUPABASE_URL;
+  if (envUrl) return envUrl;
+
+  // Hardcoded fallback - this ensures production works even without env vars
+  return "https://ofovfxsfazlwvcakpuer.supabase.co";
+}
+
+/**
  * Get image URL from product images JSON
  * Handles multiple formats: full URLs, relative paths, or objects with url property
  */
@@ -142,17 +155,11 @@ export function getProductImage(images: unknown, index: number = 0): string {
 
   // If it's a storage URL path (starts with /storage/), prepend Supabase URL
   if (urlString.startsWith("/storage/")) {
-    const supabaseUrl =
-      import.meta.env.VITE_SUPABASE_URL ||
-      "https://ofovfxsfazlwvcakpuer.supabase.co";
-    return `${supabaseUrl}${urlString}`;
+    return `${getSupabaseUrl()}${urlString}`;
   }
 
   // Construct Supabase storage URL for relative paths
-  const supabaseUrl =
-    import.meta.env.VITE_SUPABASE_URL ||
-    "https://ofovfxsfazlwvcakpuer.supabase.co";
-  return `${supabaseUrl}/storage/v1/object/public/product-images/${urlString}`;
+  return `${getSupabaseUrl()}/storage/v1/object/public/product-images/${urlString}`;
 }
 
 /**
@@ -172,15 +179,9 @@ export function buildImageUrl(imagePath: string | null | undefined): string {
 
   // If it's a storage URL path (starts with /storage/), prepend Supabase URL
   if (imagePath.startsWith("/storage/")) {
-    const supabaseUrl =
-      import.meta.env.VITE_SUPABASE_URL ||
-      "https://ofovfxsfazlwvcakpuer.supabase.co";
-    return `${supabaseUrl}${imagePath}`;
+    return `${getSupabaseUrl()}${imagePath}`;
   }
 
   // Construct Supabase storage URL for relative paths
-  const supabaseUrl =
-    import.meta.env.VITE_SUPABASE_URL ||
-    "https://ofovfxsfazlwvcakpuer.supabase.co";
-  return `${supabaseUrl}/storage/v1/object/public/product-images/${imagePath}`;
+  return `${getSupabaseUrl()}/storage/v1/object/public/product-images/${imagePath}`;
 }
