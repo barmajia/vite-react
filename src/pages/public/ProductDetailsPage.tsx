@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
-import { ShoppingCart, Loader2, AlertCircle, ImageOff } from "lucide-react";
+import {
+  ShoppingCart,
+  Loader2,
+  AlertCircle,
+  ImageOff,
+  MessageSquare,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
@@ -144,6 +150,25 @@ const ProductDetailsPage = () => {
     }
   };
 
+  // Message Seller Logic
+  const handleMessageSeller = () => {
+    if (!user) {
+      toast.error("Please log in to message the seller");
+      navigate(ROUTES.LOGIN, {
+        state: { from: { pathname: window.location.pathname } },
+      });
+      return;
+    }
+
+    if (user.id === product.seller_id) {
+      toast.error("You cannot message yourself");
+      return;
+    }
+
+    // Navigate to messages with seller ID as parameter
+    navigate(`${ROUTES.MESSAGES}?seller=${product.seller_id}`);
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 pt-20">
       <div className="lg:grid lg:grid-cols-2 lg:gap-x-8">
@@ -257,6 +282,16 @@ const ProductDetailsPage = () => {
                 <ShoppingCart className="mr-2 h-5 w-5" />
               )}
               {product.quantity === 0 ? "Sold Out" : "Add to Cart"}
+            </Button>
+            <Button
+              onClick={handleMessageSeller}
+              disabled={user?.id === product.seller_id}
+              variant="outline"
+              className="flex-1"
+              size="lg"
+            >
+              <MessageSquare className="mr-2 h-5 w-5" />
+              Start Chat with Seller
             </Button>
           </div>
 

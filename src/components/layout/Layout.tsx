@@ -8,8 +8,6 @@ import { useAuth } from "@/hooks/useAuth";
 const noLayoutRoutes = [
   "/login",
   "/signup",
-  "/forgot-password",
-  "/reset-password",
 ];
 const servicesRoutes = ["/services"];
 

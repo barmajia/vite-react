@@ -16,10 +16,9 @@ import HealthLayout from "@/features/health/layouts/HealthLayout";
 
 // ==================== Auth Routes ====================
 import { Login } from "@/pages/auth/Login";
-import { ForgotPassword } from "@/pages/auth/ForgotPassword";
-import { ResetPassword } from "@/pages/auth/ResetPassword";
 import { SignupPage } from "@/pages/signup/SignupPage";
 import { MiddlemanSignup } from "@/pages/middleman/MiddlemanSignup";
+import { AuthCallback } from "@/pages/auth/AuthCallback";
 
 // ==================== Public Pages ====================
 import { ServicesGateway } from "@/pages/public/ServicesGateway";
@@ -204,8 +203,7 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/signup/middleman" element={<MiddlemanSignup />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
 
                 {/* ==================== MAIN LAYOUT ROUTES ==================== */}
                 <Route path="/" element={<Layout />}>
@@ -398,7 +396,6 @@ function App() {
                         path="patient/data-export"
                         element={<DataExport />}
                       />
-                      <Route path="admin/audit-logs" element={<AuditLogs />} />
                     </Route>
                   </Route>
 

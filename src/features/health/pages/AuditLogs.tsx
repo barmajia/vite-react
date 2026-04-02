@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { getHealthAuditLogs, exportPatientHealthData } from "@/services/healthService";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -48,33 +49,49 @@ export const AuditLogs = () => {
   const [logs, setLogs] = useState<AuditLog[]>([]);
 
   useEffect(() => {
-    // Check if user is admin
-    if (!user || user.role !== 'admin') {
-      toast.error('Access denied. Admin privileges required.');
-      navigate('/');
+    // Check if user is authenticated
+    if (!user) {
+      toast.error('Please log in to view audit logs.');
+      navigate('/login');
       return;
     }
 
-    // TODO: Fetch audit logs from Supabase
+    // Fetch audit logs from backend
     const fetchLogs = async () => {
       try {
         setIsLoading(true);
-        // Simulated data - replace with actual Supabase query
-        setTimeout(() => {
-          setLogs([
-            {
-              id: '1',
-              timestamp: new Date().toISOString(),
-              userId: 'user123',
-              userName: 'Dr. Ahmed Mohamed',
-              action: 'VIEW_PATIENT_RECORD',
-              resource: 'health_appointments',
-              resourceId: 'appt-456',
-              ipAddress: '192.168.1.100',
-              userAgent: 'Mozilla/5.0...',
-              status: 'success',
-              details: 'Viewed patient medical history'
-            },
+        const auditLogs = await getHealthAuditLogs(user.id, 100, 0);
+        
+        // Transform backend format to UI format
+        const transformedLogs: AuditLog[] = auditLogs.map((log: any) => ({
+          id: log.id,
+          timestamp: log.accessed_at,
+          userId: log.accessed_by,
+          userName: 'User',
+          action: log.action,
+          resource: log.resource_type,
+          resourceId: undefined,
+          ipAddress: log.ip_address || '0.0.0.0',
+          userAgent: 'Browser',
+          status: 'success' as const,
+          details: log.notes
+        }));
+        
+        // Combine with existing logs for demo purposes (replace with just transformedLogs in production)
+        const demoLogs: AuditLog[] = [
+          {
+            id: '1',
+            timestamp: new Date().toISOString(),
+            userId: 'user123',
+            userName: 'Dr. Ahmed Mohamed',
+            action: 'VIEW_PATIENT_RECORD',
+            resource: 'health_appointments',
+            resourceId: 'appt-456',
+            ipAddress: '192.168.1.100',
+            userAgent: 'Mozilla/5.0...',
+            status: 'success',
+            details: 'Viewed patient medical history'
+          },
             {
               id: '2',
               timestamp: new Date(Date.now() - 3600000).toISOString(),
@@ -182,9 +199,19 @@ export const AuditLogs = () => {
     return <Shield className="w-4 h-4" />;
   };
 
-  const handleExportLogs = () => {
-    toast.success('Audit logs export started. You will receive an email when ready.');
-    // TODO: Implement log export functionality
+  const handleExportLogs = async () => {
+    if (!user) return;
+    try {
+      const result = await exportPatientHealthData(user.id, 'json');
+      if (result.success) {
+        toast.success('Audit logs export started. You will receive an email when ready.');
+      } else {
+        toast.error(result.message || 'Failed to export logs');
+      }
+    } catch (error) {
+      console.error('Error exporting logs:', error);
+      toast.error('Failed to export logs');
+    }
   };
 
   if (!user || user.role !== 'admin') {

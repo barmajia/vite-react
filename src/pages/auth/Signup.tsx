@@ -15,6 +15,7 @@ import {
   Zap,
   Sparkles,
   ArrowRight,
+  Chrome,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,7 @@ import { useTheme } from "@/hooks/useTheme";
 export function Signup() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { signUp } = useAuth();
+  const { signUp, signInWithGoogle } = useAuth();
   const { theme, setTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -47,6 +48,22 @@ export function Signup() {
     password?: string;
     confirmPassword?: string;
   }>({});
+
+  const handleGoogleSignUp = async () => {
+    setIsLoading(true);
+    try {
+      const result = await signInWithGoogle();
+      if (result.error) {
+        toast.error(result.error.message ?? t("auth.googleAuthFailed"));
+      }
+      // If successful, user will be redirected to Google
+      // and then back to /auth/callback
+    } catch (_err) {
+      toast.error(t("auth.googleAuthFailed"));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const validateStep1 = () => {
     const newErrors: typeof errors = {};
@@ -193,6 +210,34 @@ export function Signup() {
             <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
               Join our community today
             </p>
+          </div>
+
+          {/* Google Sign-In Button */}
+          <div className="px-6 mt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+              onClick={handleGoogleSignUp}
+              disabled={isLoading}
+            >
+              <Chrome className="mr-2 h-5 w-5" />
+              {t("auth.signUpWithGoogle")}
+            </Button>
+          </div>
+
+          {/* Divider */}
+          <div className="px-6 mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-200 dark:border-gray-700" />
+              </div>
+              <div className="relative flex justify-center text-xs">
+                <span className="px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400">
+                  {t("auth.orUseEmail")}
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Step Indicator */}

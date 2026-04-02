@@ -9,6 +9,7 @@ import {
   Sun,
   Moon,
   ArrowLeft,
+  Chrome,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ import { Logo } from "@/components/shared/Logo";
 export function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const { theme, setTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -34,6 +35,23 @@ export function Login() {
     password: "",
   });
   const [error, setError] = useState("");
+
+  const handleGoogleSignIn = async () => {
+    setIsLoading(true);
+    try {
+      const result = await signInWithGoogle();
+      if (result.error) {
+        setError(result.error.message ?? t("auth.googleAuthFailed"));
+        toast.error(result.error.message ?? t("auth.googleAuthFailed"));
+      }
+      // If successful, user will be redirected to Google
+      // and then back to /auth/callback
+    } catch (_err) {
+      toast.error(t("auth.googleAuthFailed"));
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const validateForm = () => {
     if (!formData.email) {
@@ -258,6 +276,30 @@ export function Login() {
                 )}
               </Button>
             </form>
+
+            {/* Google Sign-In Divider */}
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300 dark:border-gray-600" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+                  {t("auth.orContinueWith")}
+                </span>
+              </div>
+            </div>
+
+            {/* Google Sign-In Button */}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
+              onClick={handleGoogleSignIn}
+              disabled={isLoading}
+            >
+              <Chrome className="mr-2 h-5 w-5" />
+              {t("auth.signInWithGoogle")}
+            </Button>
 
             <div className="mt-6">
               <div className="relative">

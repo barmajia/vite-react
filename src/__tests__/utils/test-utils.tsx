@@ -55,8 +55,6 @@ export function createMockAuth(options: MockAuthOptions = {}) {
     signIn: vi.fn(),
     signUp: vi.fn(),
     signOut: vi.fn(),
-    resetPassword: vi.fn(),
-    resendVerification: vi.fn(),
     checkProviderProfile: vi.fn(),
     changePassword: vi.fn(),
     changeEmail: vi.fn(),

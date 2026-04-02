@@ -3,6 +3,7 @@ import { CustomerSignupData } from "@/types/signup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { supabase } from "@/lib/supabase";
 
 interface CustomerSignupFormProps {
   onSubmit: (data: CustomerSignupData) => Promise<void>;
@@ -25,14 +26,23 @@ export function CustomerSignupForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+
+    const trimmed = {
+      ...formData,
+      email: (formData.email ?? "").trim().toLowerCase(),
+      full_name: (formData.full_name ?? "").trim(),
+      phone: (formData.phone ?? "").trim(),
+      password: formData.password, // keep as-is
+    };
+
+    onSubmit(trimmed);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
         <Label htmlFor="full_name" className="text-gray-700 dark:text-gray-200">
-          Full Name
+          Customer Name
         </Label>
         <Input
           id="full_name"

@@ -13,8 +13,15 @@ export interface BaseSignupData {
   account_type: UserRole;
 }
 
-export interface CustomerSignupData extends BaseSignupData {
+export type CustomerSignupData = Omit<BaseSignupData, "account_type"> & {
   account_type: "customer";
+};
+
+// Minimal payload shape for server-side customer creation (matches public.customers)
+export interface CustomerSignupPayload {
+  email: string;
+  full_name: string;
+  phone: string;
 }
 
 export interface SellerSignupData extends BaseSignupData {

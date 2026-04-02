@@ -18,11 +18,7 @@ import {
   detectSqlInjection,
   detectXss,
 } from "@/utils/sanitize";
-import {
-  authRateLimiter,
-  resetRateLimiter,
-  signupRateLimiter,
-} from "@/lib/security";
+import { authRateLimiter, signupRateLimiter } from "@/lib/security";
 
 // Json type for Supabase responses
 type Json =
@@ -32,6 +28,17 @@ type Json =
   | null
   | { [key: string]: Json | undefined }
   | Json[];
+
+type SignupMetadata = {
+  phone?: string;
+  location?: string;
+  currency?: string;
+  vehicle_type?: string;
+  vehicle_number?: string;
+  production_capacity?: string;
+  min_order_quantity?: number;
+  commission_rate?: number;
+};
 
 type AuthContextType = {
   session: Session | null;
@@ -51,6 +58,7 @@ type AuthContextType = {
       | "middleman"
       | "factory"
       | "delivery_driver",
+    metadata?: SignupMetadata,
   ) => Promise<{ error: Error | null }>;
   signUpWithRole: (
     email: string,
@@ -65,9 +73,9 @@ type AuthContextType = {
       | "company"
       | "hospital",
   ) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
+  linkGoogleAccount: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<{ error: Error | null }>;
-  resendVerification: (email: string) => Promise<{ error: Error | null }>;
   checkProviderProfile: () => Promise<{
     hasProviderProfile: boolean;
     status?: string;
@@ -254,11 +262,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     password: string,
     fullName?: string,
     accountType:
-      | "buyer"
+      | "customer"
       | "seller"
-      | "provider"
       | "factory"
-      | "delivery_driver" = "buyer",
+      | "delivery_driver"
+      | "middleman" = "customer",
+    metadata: SignupMetadata = {},
   ) => {
     // Input validation
     if (!email || !password) {
@@ -267,6 +276,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     const sanitizedEmail = email.trim().toLowerCase();
     const sanitizedName = fullName?.trim() || "";
+    const sanitizedPhone = metadata.phone?.trim();
+    const sanitizedLocation = metadata.location?.trim();
+    const sanitizedCurrency = metadata.currency?.trim();
+    const sanitizedVehicleType = metadata.vehicle_type?.trim();
+    const sanitizedVehicleNumber = metadata.vehicle_number?.trim();
+    const sanitizedProductionCapacity = metadata.production_capacity?.trim();
+    const sanitizedMinOrderQuantity =
+      metadata.min_order_quantity !== undefined
+        ? Number(metadata.min_order_quantity)
+        : undefined;
+    const sanitizedCommissionRate =
+      metadata.commission_rate !== undefined
+        ? Number(metadata.commission_rate)
+        : undefined;
 
     // Validate email format
     if (!validateEmail(sanitizedEmail)) {
@@ -300,6 +323,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return { error: new Error(passwordCheck.errors[0]) };
     }
 
+    const resolvedAccountType =
+      accountType === "delivery_driver" ? "delivery" : accountType;
+
     try {
       const { error, data } = await supabase.auth.signUp({
         email: sanitizedEmail,
@@ -307,7 +333,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         options: {
           data: {
             full_name: sanitizedName || undefined,
-            account_type: accountType || "customer",
+            phone: sanitizedPhone || undefined,
+            location: sanitizedLocation || undefined,
+            currency: sanitizedCurrency || undefined,
+            vehicle_type: sanitizedVehicleType || undefined,
+            vehicle_number: sanitizedVehicleNumber || undefined,
+            production_capacity: sanitizedProductionCapacity || undefined,
+            min_order_quantity: sanitizedMinOrderQuantity,
+            commission_rate: sanitizedCommissionRate,
+            account_type: resolvedAccountType || "customer",
           },
           // Remove emailRedirectTo to avoid 500 error
           // emailRedirectTo: import.meta.env.VITE_APP_URL,
@@ -446,87 +480,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   /**
-   * Reset password with rate limiting
-   */
-  const resetPassword = async (email: string) => {
-    if (!email) {
-      return { error: new Error("Email is required") };
-    }
-
-    const sanitizedEmail = email.trim().toLowerCase();
-
-    // Validate email format
-    if (!validateEmail(sanitizedEmail)) {
-      return { error: new Error("Please enter a valid email address") };
-    }
-
-    // Rate limiting for password reset
-    if (!resetRateLimiter.isAllowed(sanitizedEmail)) {
-      const waitTime = resetRateLimiter.getBlockTimeRemaining(sanitizedEmail);
-      return {
-        error: new Error(
-          `Too many requests. Try again in ${waitTime} seconds.`,
-        ),
-      };
-    }
-
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${import.meta.env.VITE_APP_URL}/reset-password`,
-      });
-
-      if (error) {
-        resetRateLimiter.recordAttempt(sanitizedEmail);
-        return { error: error as Error };
-      }
-
-      // Don't clear rate limiter on success to prevent abuse
-      // It will clear automatically after the time window
-
-      return { error: null };
-    } catch (err) {
-      console.error("Password reset error:", err);
-      return {
-        error: new Error("An unexpected error occurred. Please try again."),
-      };
-    }
-  };
-
-  /**
-   * Resend verification email
-   */
-  const resendVerification = async (email: string) => {
-    if (!email) {
-      return { error: new Error("Email is required") };
-    }
-
-    const sanitizedEmail = email.trim().toLowerCase();
-
-    // Validate email format
-    if (!validateEmail(sanitizedEmail)) {
-      return { error: new Error("Please enter a valid email address") };
-    }
-
-    try {
-      const { error } = await supabase.auth.resend({
-        type: "signup",
-        email: sanitizedEmail,
-      });
-
-      if (error) {
-        return { error: error as Error };
-      }
-
-      return { error: null };
-    } catch (err) {
-      console.error("Resend verification error:", err);
-      return {
-        error: new Error("An unexpected error occurred. Please try again."),
-      };
-    }
-  };
-
-  /**
    * Check if user has a service provider profile
    */
   const checkProviderProfile = async () => {
@@ -639,6 +592,60 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  /**
+   * Sign in with Google OAuth
+   */
+  const signInWithGoogle = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      });
+
+      if (error) {
+        return { error: error as Error };
+      }
+
+      return { error: null };
+    } catch (err) {
+      console.error("Google sign in error:", err);
+      return {
+        error: new Error("An unexpected error occurred. Please try again."),
+      };
+    }
+  };
+
+  /**
+   * Link Google account to existing user
+   */
+  const linkGoogleAccount = async () => {
+    try {
+      const { error } = await supabase.auth.linkIdentity({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+
+      if (error) {
+        return { error: error as Error };
+      }
+
+      return { error: null };
+    } catch (err) {
+      console.error("Google link error:", err);
+      return {
+        error: new Error("An unexpected error occurred. Please try again."),
+      };
+    }
+  };
+
   const value = {
     session,
     user,
@@ -646,9 +653,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signIn,
     signUp,
     signUpWithRole,
+    signInWithGoogle,
+    linkGoogleAccount,
     signOut,
-    resetPassword,
-    resendVerification,
     checkProviderProfile,
     changePassword,
     changeEmail,

@@ -1,19 +1,24 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { Card, CardContent, CardHeader, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-
+import { exportPatientHealthData } from "@/services/healthService";
 import { Badge } from "@/components/ui/badge";
-import { 
-  Download, 
-  FileText, 
-  Shield, 
+import {
+  Download,
+  FileText,
+  Shield,
   Database,
   AlertCircle,
   CheckCircle,
-  Clock
+  Clock,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -31,114 +36,119 @@ export const DataExport = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isExporting, setIsExporting] = useState(false);
-  const [exportFormat, setExportFormat] = useState<'json' | 'csv' | 'pdf'>('json');
+  const [exportFormat, setExportFormat] = useState<"json" | "csv" | "pdf">(
+    "json",
+  );
   const [selectedCategories, setSelectedCategories] = useState<string[]>([
-    'profile',
-    'orders',
-    'appointments',
-    'messages',
-    'consents'
+    "profile",
+    "orders",
+    "appointments",
+    "messages",
+    "consents",
   ]);
 
   const dataCategories: DataCategory[] = [
     {
-      id: 'profile',
-      name: 'Profile Information',
-      description: 'Your personal information, settings, and account details',
+      id: "profile",
+      name: "Profile Information",
+      description: "Your personal information, settings, and account details",
       recordCount: 1,
       lastUpdated: new Date().toISOString(),
-      included: true
+      included: true,
     },
     {
-      id: 'orders',
-      name: 'Order History',
-      description: 'All your product orders, invoices, and delivery information',
+      id: "orders",
+      name: "Order History",
+      description:
+        "All your product orders, invoices, and delivery information",
       recordCount: 15,
       lastUpdated: new Date(Date.now() - 86400000).toISOString(),
-      included: true
+      included: true,
     },
     {
-      id: 'appointments',
-      name: 'Medical Appointments',
-      description: 'Health consultations, doctor appointments, and prescriptions',
+      id: "appointments",
+      name: "Medical Appointments",
+      description:
+        "Health consultations, doctor appointments, and prescriptions",
       recordCount: 8,
       lastUpdated: new Date(Date.now() - 172800000).toISOString(),
-      included: true
+      included: true,
     },
     {
-      id: 'messages',
-      name: 'Messages & Communications',
-      description: 'All your conversations with sellers, doctors, and support',
+      id: "messages",
+      name: "Messages & Communications",
+      description: "All your conversations with sellers, doctors, and support",
       recordCount: 47,
       lastUpdated: new Date().toISOString(),
-      included: true
+      included: true,
     },
     {
-      id: 'consents',
-      name: 'Consent Forms',
-      description: 'Signed medical consent forms and HIPAA agreements',
+      id: "consents",
+      name: "Consent Forms",
+      description: "Signed medical consent forms and HIPAA agreements",
       recordCount: 3,
       lastUpdated: new Date(Date.now() - 604800000).toISOString(),
-      included: true
+      included: true,
     },
     {
-      id: 'activity',
-      name: 'Activity Logs',
-      description: 'Your login history, page views, and app usage',
+      id: "activity",
+      name: "Activity Logs",
+      description: "Your login history, page views, and app usage",
       recordCount: 234,
       lastUpdated: new Date().toISOString(),
-      included: false
-    }
+      included: false,
+    },
   ];
 
   const handleToggleCategory = (categoryId: string) => {
-    setSelectedCategories(prev =>
+    setSelectedCategories((prev) =>
       prev.includes(categoryId)
-        ? prev.filter(id => id !== categoryId)
-        : [...prev, categoryId]
+        ? prev.filter((id) => id !== categoryId)
+        : [...prev, categoryId],
     );
   };
 
   const handleExport = async () => {
     if (selectedCategories.length === 0) {
-      toast.error('Please select at least one data category');
+      toast.error("Please select at least one data category");
       return;
     }
 
     try {
       setIsExporting(true);
 
-      // TODO: Request data export from backend
-      // This would typically be an async job that emails the user when ready
-      // await supabase.functions.invoke('request-data-export', {
-      //   body: {
-      //     categories: selectedCategories,
-      //     format: exportFormat,
-      //     userId: user?.id
-      //   }
-      // });
+      if (!user?.id) {
+        toast.error("User not authenticated");
+        return;
+      }
 
-      // Simulate export request
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      toast.success(
-        'Data export request submitted! You will receive an email when your data is ready for download.',
-        {
-          duration: 8000
-        }
+      // Request data export from backend
+      const result = await exportPatientHealthData(
+        user.id,
+        exportFormat as "json" | "pdf" | "csv",
       );
 
-      navigate('/profile');
+      if (result.success) {
+        toast.success(
+          "Data export request submitted! You will receive an email when your data is ready for download.",
+          {
+            duration: 8000,
+          },
+        );
+        navigate("/profile");
+      } else {
+        toast.error(result.message || "Failed to request data export");
+      }
     } catch (error) {
-      console.error('Error requesting data export:', error);
-      toast.error('Failed to request data export. Please try again.');
+      console.error("Error requesting data export:", error);
+      toast.error("Failed to request data export. Please try again.");
     } finally {
       setIsExporting(false);
     }
   };
 
   if (!user) {
-    navigate('/login');
+    navigate("/login");
     return null;
   }
 
@@ -149,15 +159,18 @@ export const DataExport = () => {
           <Download className="w-8 h-8 text-primary" />
           <div>
             <h1 className="text-3xl font-bold">Data Export</h1>
-            <p className="text-muted-foreground">Download your personal data (GDPR/HIPAA compliant)</p>
+            <p className="text-muted-foreground">
+              Download your personal data (GDPR/HIPAA compliant)
+            </p>
           </div>
         </div>
 
         <Alert>
           <Shield className="w-4 h-4" />
           <AlertDescription>
-            Your data export will include all your personal information stored in our system. 
-            The export file will be encrypted and sent to your registered email address within 24-48 hours.
+            Your data export will include all your personal information stored
+            in our system. The export file will be encrypted and sent to your
+            registered email address within 24-48 hours.
           </AlertDescription>
         </Alert>
       </div>
@@ -167,25 +180,27 @@ export const DataExport = () => {
         <Card>
           <CardHeader>
             <h2 className="text-xl font-semibold">Export Format</h2>
-            <CardDescription>Choose the file format for your data export</CardDescription>
+            <CardDescription>
+              Choose the file format for your data export
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex gap-4">
               <Button
-                variant={exportFormat === 'json' ? 'default' : 'outline'}
-                onClick={() => setExportFormat('json')}
+                variant={exportFormat === "json" ? "default" : "outline"}
+                onClick={() => setExportFormat("json")}
               >
                 JSON
               </Button>
               <Button
-                variant={exportFormat === 'csv' ? 'default' : 'outline'}
-                onClick={() => setExportFormat('csv')}
+                variant={exportFormat === "csv" ? "default" : "outline"}
+                onClick={() => setExportFormat("csv")}
               >
                 CSV
               </Button>
               <Button
-                variant={exportFormat === 'pdf' ? 'default' : 'outline'}
-                onClick={() => setExportFormat('pdf')}
+                variant={exportFormat === "pdf" ? "default" : "outline"}
+                onClick={() => setExportFormat("pdf")}
               >
                 PDF
               </Button>
@@ -201,7 +216,8 @@ export const DataExport = () => {
               <h2 className="text-xl font-semibold">Select Data Categories</h2>
             </div>
             <CardDescription>
-              Choose which types of data you want to export ({selectedCategories.length} selected)
+              Choose which types of data you want to export (
+              {selectedCategories.length} selected)
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -210,25 +226,29 @@ export const DataExport = () => {
                 key={category.id}
                 className={`p-4 border rounded-lg cursor-pointer transition-colors ${
                   selectedCategories.includes(category.id)
-                    ? 'border-primary bg-primary/5'
-                    : 'border-border hover:border-muted-foreground/50'
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-muted-foreground/50"
                 }`}
                 onClick={() => handleToggleCategory(category.id)}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-start gap-3">
-                    <div className={`w-5 h-5 rounded border flex items-center justify-center mt-0.5 ${
-                      selectedCategories.includes(category.id)
-                        ? 'bg-primary border-primary'
-                        : 'border-border'
-                    }`}>
+                    <div
+                      className={`w-5 h-5 rounded border flex items-center justify-center mt-0.5 ${
+                        selectedCategories.includes(category.id)
+                          ? "bg-primary border-primary"
+                          : "border-border"
+                      }`}
+                    >
                       {selectedCategories.includes(category.id) && (
                         <CheckCircle className="w-4 h-4 text-primary-foreground" />
                       )}
                     </div>
                     <div>
                       <h3 className="font-semibold">{category.name}</h3>
-                      <p className="text-sm text-muted-foreground">{category.description}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {category.description}
+                      </p>
                       <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <FileText className="w-3 h-3" />
@@ -236,13 +256,17 @@ export const DataExport = () => {
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="w-3 h-3" />
-                          Updated {format(new Date(category.lastUpdated), 'MMM d, yyyy')}
+                          Updated{" "}
+                          {format(
+                            new Date(category.lastUpdated),
+                            "MMM d, yyyy",
+                          )}
                         </span>
                       </div>
                     </div>
                   </div>
-                  <Badge variant={category.included ? 'default' : 'secondary'}>
-                    {category.included ? 'Included' : 'Optional'}
+                  <Badge variant={category.included ? "default" : "secondary"}>
+                    {category.included ? "Included" : "Optional"}
                   </Badge>
                 </div>
               </div>
@@ -262,11 +286,15 @@ export const DataExport = () => {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 mt-0.5 text-primary" />
-                <span>Your data export will be encrypted with AES-256 encryption</span>
+                <span>
+                  Your data export will be encrypted with AES-256 encryption
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 mt-0.5 text-primary" />
-                <span>The download link will expire after 7 days for security</span>
+                <span>
+                  The download link will expire after 7 days for security
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 mt-0.5 text-primary" />
@@ -274,7 +302,9 @@ export const DataExport = () => {
               </li>
               <li className="flex items-start gap-2">
                 <CheckCircle className="w-4 h-4 mt-0.5 text-primary" />
-                <span>Medical data (HIPAA) requires additional verification</span>
+                <span>
+                  Medical data (HIPAA) requires additional verification
+                </span>
               </li>
             </ul>
           </CardContent>
@@ -282,10 +312,7 @@ export const DataExport = () => {
 
         {/* Submit */}
         <div className="flex items-center gap-4">
-          <Button
-            variant="outline"
-            onClick={() => navigate('/profile')}
-          >
+          <Button variant="outline" onClick={() => navigate("/profile")}>
             Cancel
           </Button>
 
@@ -295,7 +322,7 @@ export const DataExport = () => {
             className="flex-1 md:flex-none"
           >
             {isExporting ? (
-              'Processing Request...'
+              "Processing Request..."
             ) : (
               <>
                 <Download className="w-4 h-4 mr-2" />

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { UserRole } from "@/types/signup";
+import { UserRole, DeliverySignupData } from "@/types/signup";
 import { CustomerSignupForm } from "@/components/signup/CustomerSignupForm";
 import { SellerSignupForm } from "@/components/signup/SellerSignupForm";
 import { FactorySignupForm } from "@/components/signup/FactorySignupForm";
@@ -36,14 +36,13 @@ import { toast } from "sonner";
 export function SignupPage() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
-  const { signUp, resendVerification } = useAuth();
+  const { signUp } = useAuth();
   const [searchParams] = useSearchParams();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [createdEmail, setCreatedEmail] = useState<string>("");
-  const [resending, setResending] = useState(false);
 
   // Handle tab query parameter from login page
   useEffect(() => {
@@ -52,10 +51,22 @@ export function SignupPage() {
       // Products = Seller role
       setSelectedRole("seller");
     } else if (tab === "services") {
-      // Services = Customer role (or create a service provider role)
+      // Services = Customer role
       setSelectedRole("customer");
     }
   }, [searchParams]);
+
+  // Helper function to get account type for database
+  const getAccountType = (role: UserRole): string => {
+    const accountTypeMap: Record<UserRole, string> = {
+      customer: "customer",
+      seller: "seller",
+      factory: "factory",
+      delivery: "delivery",
+      middleman: "middleman",
+    };
+    return accountTypeMap[role] || "customer";
+  };
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
@@ -70,25 +81,6 @@ export function SignupPage() {
   const handleSignupComplete = (email?: string) => {
     if (email) setCreatedEmail(email);
     setSuccess(true);
-  };
-
-  const handleResendVerification = async () => {
-    if (!createdEmail) return;
-
-    setResending(true);
-    try {
-      const { error } = await resendVerification(createdEmail);
-      if (error) {
-        toast.error(error.message || "Failed to resend verification email");
-      } else {
-        toast.success("Verification email sent! Check your inbox.");
-      }
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      toast.error(errorMessage || "Failed to resend verification email");
-    } finally {
-      setResending(false);
-    }
   };
 
   const roleIcons: Record<UserRole | "admin", React.ElementType> = {
@@ -174,24 +166,6 @@ export function SignupPage() {
             </div>
 
             <div className="space-y-4 pt-4">
-              <Button
-                onClick={handleResendVerification}
-                disabled={resending}
-                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white font-semibold py-6 rounded-xl shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 transition-all border-0"
-              >
-                {resending ? (
-                  <>
-                    <Mail className="mr-2 h-4 w-4 animate-pulse" />
-                    Sending...
-                  </>
-                ) : (
-                  <>
-                    <Mail className="mr-2 h-4 w-4" />
-                    Resend Verification Email
-                  </>
-                )}
-              </Button>
-
               <Button
                 onClick={() => navigate("/login")}
                 variant="outline"
@@ -448,6 +422,7 @@ export function SignupPage() {
                         email: string;
                         password: string;
                         full_name: string;
+                        phone?: string;
                       }) => {
                         setLoading(true);
                         try {
@@ -455,7 +430,10 @@ export function SignupPage() {
                             formData.email,
                             formData.password,
                             formData.full_name,
-                            "buyer",
+                            "customer",
+                            {
+                              phone: formData.phone,
+                            },
                           );
                           if (error) setError(error.message);
                           else handleSignupComplete(formData.email);
@@ -479,6 +457,9 @@ export function SignupPage() {
                         email: string;
                         password: string;
                         full_name: string;
+                        phone?: string;
+                        location?: string;
+                        currency?: string;
                       }) => {
                         setLoading(true);
                         try {
@@ -487,6 +468,11 @@ export function SignupPage() {
                             formData.password,
                             formData.full_name,
                             "seller",
+                            {
+                              phone: formData.phone,
+                              location: formData.location,
+                              currency: formData.currency,
+                            },
                           );
                           if (error) setError(error.message);
                           else handleSignupComplete(formData.email);
@@ -510,6 +496,11 @@ export function SignupPage() {
                         email: string;
                         password: string;
                         full_name: string;
+                        phone?: string;
+                        location?: string;
+                        currency?: string;
+                        production_capacity?: string;
+                        min_order_quantity?: number;
                       }) => {
                         setLoading(true);
                         try {
@@ -518,6 +509,13 @@ export function SignupPage() {
                             formData.password,
                             formData.full_name,
                             "factory",
+                            {
+                              phone: formData.phone,
+                              location: formData.location,
+                              currency: formData.currency,
+                              production_capacity: formData.production_capacity,
+                              min_order_quantity: formData.min_order_quantity,
+                            },
                           );
                           if (error) setError(error.message);
                           else handleSignupComplete(formData.email);
@@ -537,11 +535,7 @@ export function SignupPage() {
                   )}
                   {selectedRole === "delivery" && (
                     <DeliverySignupForm
-                      onSubmit={async (formData: {
-                        email: string;
-                        password: string;
-                        full_name: string;
-                      }) => {
+                      onSubmit={async (formData: DeliverySignupData) => {
                         setLoading(true);
                         try {
                           const { error } = await signUp(
@@ -549,6 +543,11 @@ export function SignupPage() {
                             formData.password,
                             formData.full_name,
                             "delivery_driver",
+                            {
+                              phone: formData.phone,
+                              vehicle_type: formData.vehicle_type,
+                              vehicle_number: formData.vehicle_number,
+                            },
                           );
                           if (error) setError(error.message);
                           else handleSignupComplete(formData.email);
