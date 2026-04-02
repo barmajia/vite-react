@@ -1,5 +1,9 @@
 {
   "buildCommand": "vite build",
+  "devCommand": "vite",
+  "installCommand": "npm install",
+  "framework": "vite",
+  "outputDirectory": "dist",
   "headers": [
     {
       "source": "/(.*)",
