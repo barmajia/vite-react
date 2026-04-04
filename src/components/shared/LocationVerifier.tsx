@@ -1,8 +1,14 @@
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { MapPin, Navigation, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  MapPin,
+  Navigation,
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+} from "lucide-react";
 
 interface LocationData {
   latitude: number;
@@ -22,38 +28,43 @@ export default function LocationVerifier({
   onLocationVerified,
   requiredAccuracy = 100,
   showCoordinates = true,
-  autoVerify = false
+  autoVerify = false,
 }: LocationVerifierProps) {
   const [location, setLocation] = useState<LocationData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [permission, setPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
+  const [permission, setPermission] = useState<"granted" | "denied" | "prompt">(
+    "prompt",
+  );
 
   useEffect(() => {
     checkPermission();
     if (autoVerify) {
       verifyLocation();
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoVerify]);
 
   const checkPermission = async () => {
-    if ('permissions' in navigator) {
+    if ("permissions" in navigator) {
       try {
-        const result = await navigator.permissions.query({ name: 'geolocation' });
-        setPermission(result.state as 'granted' | 'denied' | 'prompt');
-        
+        const result = await navigator.permissions.query({
+          name: "geolocation",
+        });
+        setPermission(result.state as "granted" | "denied" | "prompt");
+
         result.onchange = () => {
-          setPermission(result.state as 'granted' | 'denied' | 'prompt');
+          setPermission(result.state as "granted" | "denied" | "prompt");
         };
       } catch (err) {
-        console.error('Permission check failed:', err);
+        console.error("Permission check failed:", err);
       }
     }
   };
 
   const verifyLocation = () => {
-    if (!('geolocation' in navigator)) {
-      setError('Geolocation is not supported by your browser');
+    if (!("geolocation" in navigator)) {
+      setError("Geolocation is not supported by your browser");
       return;
     }
 
@@ -66,7 +77,7 @@ export default function LocationVerifier({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           accuracy: position.coords.accuracy,
-          timestamp: position.timestamp
+          timestamp: position.timestamp,
         };
 
         setLocation(locationData);
@@ -75,38 +86,42 @@ export default function LocationVerifier({
         if (position.coords.accuracy <= requiredAccuracy) {
           onLocationVerified?.(locationData);
         } else {
-          setError(`Location accuracy too low (${Math.round(position.coords.accuracy)}m). Required: ${requiredAccuracy}m`);
+          setError(
+            `Location accuracy too low (${Math.round(position.coords.accuracy)}m). Required: ${requiredAccuracy}m`,
+          );
         }
       },
       (err) => {
         setLoading(false);
         switch (err.code) {
           case err.PERMISSION_DENIED:
-            setError('Location access denied. Please enable location permissions.');
+            setError(
+              "Location access denied. Please enable location permissions.",
+            );
             break;
           case err.POSITION_UNAVAILABLE:
-            setError('Location information unavailable.');
+            setError("Location information unavailable.");
             break;
           case err.TIMEOUT:
-            setError('Location request timed out.');
+            setError("Location request timed out.");
             break;
           default:
-            setError('An unknown error occurred while getting location.');
+            setError("An unknown error occurred while getting location.");
         }
       },
       {
         enableHighAccuracy: true,
         timeout: 10000,
-        maximumAge: 0
-      }
+        maximumAge: 0,
+      },
     );
   };
 
   const getAccuracyStatus = () => {
-    if (!location) return 'unknown';
-    if (location.accuracy <= requiredAccuracy) return 'good';
-    if (location.accuracy <= requiredAccuracy * 2) return 'fair';
-    return 'poor';
+    if (!location) return "unknown";
+    if (location.accuracy <= requiredAccuracy) return "good";
+    if (location.accuracy <= requiredAccuracy * 2) return "fair";
+    return "poor";
   };
 
   const accuracyStatus = getAccuracyStatus();
@@ -121,8 +136,10 @@ export default function LocationVerifier({
             <h3 className="font-semibold">Location Verification</h3>
           </div>
           {location && (
-            <Badge variant={accuracyStatus === 'good' ? 'default' : 'secondary'}>
-              {accuracyStatus === 'good' ? (
+            <Badge
+              variant={accuracyStatus === "good" ? "default" : "secondary"}
+            >
+              {accuracyStatus === "good" ? (
                 <CheckCircle className="h-3 w-3 mr-1" />
               ) : (
                 <AlertCircle className="h-3 w-3 mr-1" />
@@ -147,7 +164,9 @@ export default function LocationVerifier({
             </div>
             <div className="flex items-center gap-2 text-xs text-gray-500">
               <Navigation className="h-3 w-3" />
-              <span>Verified at {new Date(location.timestamp).toLocaleTimeString()}</span>
+              <span>
+                Verified at {new Date(location.timestamp).toLocaleTimeString()}
+              </span>
             </div>
           </div>
         )}
@@ -161,13 +180,14 @@ export default function LocationVerifier({
         )}
 
         {/* Permission Warning */}
-        {permission === 'denied' && (
+        {permission === "denied" && (
           <div className="bg-yellow-50 border border-yellow-200 p-3 rounded-lg">
             <p className="text-sm text-yellow-800 font-medium mb-1">
               Location Permission Denied
             </p>
             <p className="text-xs text-yellow-700">
-              Please enable location permissions in your browser settings to use this feature.
+              Please enable location permissions in your browser settings to use
+              this feature.
             </p>
           </div>
         )}
@@ -175,16 +195,18 @@ export default function LocationVerifier({
         {/* Action Button */}
         <Button
           onClick={verifyLocation}
-          disabled={loading || permission === 'denied'}
+          disabled={loading || permission === "denied"}
           className="w-full"
-          variant={location && accuracyStatus === 'good' ? 'default' : 'outline'}
+          variant={
+            location && accuracyStatus === "good" ? "default" : "outline"
+          }
         >
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Verifying Location...
             </>
-          ) : location && accuracyStatus === 'good' ? (
+          ) : location && accuracyStatus === "good" ? (
             <>
               <CheckCircle className="h-4 w-4 mr-2" />
               Location Verified
@@ -199,7 +221,8 @@ export default function LocationVerifier({
 
         {/* Help Text */}
         <p className="text-xs text-gray-500 text-center">
-          We use your location to verify delivery completion and ensure security.
+          We use your location to verify delivery completion and ensure
+          security.
         </p>
       </CardContent>
     </Card>

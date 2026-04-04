@@ -53,7 +53,7 @@ export function TransactionHistory() {
       if (!user) return;
 
       // Try wallet_transactions table first
-      const { data: walletTx, error: txError } = await supabase
+      const { data: walletTx, error: _txError } = await supabase
         .from("wallet_transactions")
         .select("*")
         .eq("user_id", user.id)

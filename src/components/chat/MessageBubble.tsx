@@ -19,7 +19,8 @@ export function MessageBubble({
   onDelete,
   showAvatar = false,
 }: MessageBubbleProps) {
-  const getTimeAgo = () => {
+   
+  const _getTimeAgo = () => {
     try {
       const date = new Date(message.created_at);
       return formatDistanceToNow(date, { addSuffix: true });
@@ -31,7 +32,10 @@ export function MessageBubble({
   const formatTime = () => {
     try {
       const date = new Date(message.created_at);
-      return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     } catch {
       return "";
     }
@@ -58,7 +62,7 @@ export function MessageBubble({
             className={cn(
               "rounded-2xl px-4 py-2 shadow-sm",
               "bg-primary text-primary-foreground",
-              isDeleted && "opacity-50"
+              isDeleted && "opacity-50",
             )}
           >
             {isDeleted ? (
@@ -132,7 +136,7 @@ export function MessageBubble({
           className={cn(
             "rounded-2xl px-4 py-2 shadow-sm",
             "bg-card text-card-foreground border",
-            isDeleted && "opacity-50"
+            isDeleted && "opacity-50",
           )}
         >
           {isDeleted ? (
@@ -166,7 +170,9 @@ export function MessageBubble({
             </>
           )}
           <div className="flex items-center justify-end gap-1 mt-1">
-            <span className="text-[10px] text-muted-foreground">{formatTime()}</span>
+            <span className="text-[10px] text-muted-foreground">
+              {formatTime()}
+            </span>
           </div>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
 export interface GeolocationPosition {
   latitude: number;
@@ -29,7 +29,7 @@ interface UseGeolocationReturn {
 }
 
 export const useGeolocation = (
-  options: UseGeolocationOptions = {}
+  options: UseGeolocationOptions = {},
 ): UseGeolocationReturn => {
   const {
     enableHighAccuracy = true,
@@ -43,13 +43,14 @@ export const useGeolocation = (
   const [error, setError] = useState<GeolocationError | null>(null);
   const [watchId, setWatchId] = useState<number | null>(null);
 
-  const isSupported = typeof navigator !== 'undefined' && 'geolocation' in navigator;
+  const isSupported =
+    typeof navigator !== "undefined" && "geolocation" in navigator;
 
   const getLocation = useCallback(() => {
     if (!isSupported) {
       setError({
         code: 0,
-        message: 'Geolocation is not supported by your browser',
+        message: "Geolocation is not supported by your browser",
       });
       return;
     }
@@ -68,17 +69,18 @@ export const useGeolocation = (
         setLoading(false);
       },
       (err) => {
-        let message = 'Unable to get your location';
-        
+        let message = "Unable to get your location";
+
         switch (err.code) {
           case err.PERMISSION_DENIED:
-            message = 'Location permission denied. Please enable location access in your browser settings.';
+            message =
+              "Location permission denied. Please enable location access in your browser settings.";
             break;
           case err.POSITION_UNAVAILABLE:
-            message = 'Location information unavailable.';
+            message = "Location information unavailable.";
             break;
           case err.TIMEOUT:
-            message = 'Location request timed out.';
+            message = "Location request timed out.";
             break;
         }
 
@@ -92,7 +94,7 @@ export const useGeolocation = (
         enableHighAccuracy,
         timeout,
         maximumAge,
-      }
+      },
     );
   }, [isSupported, enableHighAccuracy, timeout, maximumAge]);
 
@@ -110,17 +112,17 @@ export const useGeolocation = (
           setLoading(false);
         },
         (err) => {
-          let message = 'Unable to get your location';
-          
+          let message = "Unable to get your location";
+
           switch (err.code) {
             case err.PERMISSION_DENIED:
-              message = 'Location permission denied.';
+              message = "Location permission denied.";
               break;
             case err.POSITION_UNAVAILABLE:
-              message = 'Location information unavailable.';
+              message = "Location information unavailable.";
               break;
             case err.TIMEOUT:
-              message = 'Location request timed out.';
+              message = "Location request timed out.";
               break;
           }
 
@@ -134,7 +136,7 @@ export const useGeolocation = (
           enableHighAccuracy,
           timeout,
           maximumAge,
-        }
+        },
       );
       setWatchId(id);
     }
@@ -144,6 +146,7 @@ export const useGeolocation = (
         navigator.geolocation.clearWatch(watchId);
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchPosition, isSupported, enableHighAccuracy, timeout, maximumAge]);
 
   const clearError = useCallback(() => {

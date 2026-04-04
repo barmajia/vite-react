@@ -138,7 +138,7 @@ export const useConversations = (currentUserId: string) => {
 
   // Create new conversation
   const createConversation = useCallback(
-    async (otherUserId: string, name?: string): Promise<string | null> => {
+    async (otherUserId: string): Promise<string | null> => {
       if (!currentUserId) return null;
 
       try {

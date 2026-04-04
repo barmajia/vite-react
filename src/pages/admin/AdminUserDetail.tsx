@@ -65,6 +65,7 @@ export function AdminUserDetail() {
     if (!adminLoading && isAdmin && userId) {
       loadUserDetail();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, adminLoading, userId]);
 
   const loadUserDetail = async () => {

@@ -3,7 +3,7 @@
  * Tests for XSS, SQL injection, CSRF, and other security functions
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   generateSecureToken,
   generateCSRFToken,

@@ -12,7 +12,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import type { WalletTransaction } from "@/types/wallet";
 
 export function WalletDashboard() {
   const [loading, setLoading] = useState(true);
@@ -31,7 +30,7 @@ export function WalletDashboard() {
       if (!user) return;
 
       // 1. Try user_wallets table first
-      const { data: walletData, error: walletError } = await supabase
+      const { data: walletData, error: _walletError } = await supabase
         .from("user_wallets")
         .select("*")
         .eq("user_id", user.id)
@@ -59,7 +58,7 @@ export function WalletDashboard() {
       }
 
       // 2. Load Recent Transactions
-      const { data: txData, error: txError } = await supabase
+      const { data: txData, error: _txError } = await supabase
         .from("wallet_transactions")
         .select("*")
         .eq("user_id", user.id)

@@ -21,7 +21,7 @@ interface MessageInputProps {
 }
 
 export function MessageInput({
-  conversationId,
+  conversationId: _conversationId,
   onSend,
   disabled = false,
 }: MessageInputProps) {

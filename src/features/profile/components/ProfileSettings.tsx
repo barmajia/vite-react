@@ -1,12 +1,18 @@
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { supabase } from '@/lib/supabase';
-import { toast } from 'sonner';
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { supabase } from "@/lib/supabase";
+import { toast } from "sonner";
 
 interface ProfileSettingsProps {
   userId: string;
@@ -15,10 +21,10 @@ interface ProfileSettingsProps {
 export function ProfileSettings({ userId: _userId }: ProfileSettingsProps) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [confirmText, setConfirmText] = useState('');
+  const [confirmText, setConfirmText] = useState("");
 
   const handleDeleteAccount = async () => {
-    if (confirmText !== 'DELETE') {
+    if (confirmText !== "DELETE") {
       toast.error('Please type "DELETE" to confirm');
       return;
     }
@@ -27,17 +33,17 @@ export function ProfileSettings({ userId: _userId }: ProfileSettingsProps) {
     try {
       // Note: Actual account deletion requires admin privileges or a special RPC function
       // This is a placeholder - you'll need to implement the actual deletion logic
-      toast.error('Account deletion requires contacting support');
+      toast.error("Account deletion requires contacting support");
       // In production, you would:
       // 1. Create a deletion request in a table
       // 2. Send confirmation email
       // 3. Process deletion after grace period
-    } catch (error) {
-      toast.error('Failed to process deletion request');
+    } catch (_error) {
+      toast.error("Failed to process deletion request");
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
-      setConfirmText('');
+      setConfirmText("");
     }
   };
 
@@ -126,7 +132,7 @@ export function ProfileSettings({ userId: _userId }: ProfileSettingsProps) {
         </CardHeader>
         <CardContent className="space-y-4">
           <Separator />
-          
+
           {/* Sign Out */}
           <div className="flex items-center justify-between">
             <div>
@@ -162,8 +168,8 @@ export function ProfileSettings({ userId: _userId }: ProfileSettingsProps) {
             <div className="p-4 border border-destructive rounded-lg space-y-4">
               <Alert variant="destructive">
                 <AlertDescription>
-                  This action cannot be undone. This will permanently delete your
-                  account and all associated data.
+                  This action cannot be undone. This will permanently delete
+                  your account and all associated data.
                 </AlertDescription>
               </Alert>
 
@@ -183,13 +189,13 @@ export function ProfileSettings({ userId: _userId }: ProfileSettingsProps) {
                   onClick={handleDeleteAccount}
                   disabled={isDeleting}
                 >
-                  {isDeleting ? 'Deleting...' : 'Confirm Delete'}
+                  {isDeleting ? "Deleting..." : "Confirm Delete"}
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => {
                     setShowDeleteConfirm(false);
-                    setConfirmText('');
+                    setConfirmText("");
                   }}
                   disabled={isDeleting}
                 >

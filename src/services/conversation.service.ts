@@ -5,8 +5,6 @@
 
 import { supabase } from "@/lib/supabase";
 import type {
-  AuroraConversation,
-  ConversationParticipant,
   ConversationWithParticipants,
   StartConversationResult,
   AccountType,

@@ -22,9 +22,6 @@ import {
   CheckCircle2,
   Heart,
   Filter,
-  ChevronDown,
-  Loader2,
-  X,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -216,9 +213,11 @@ export function ServicesHome() {
     }
 
     if (data) {
-      type === "featured"
-        ? setFeaturedListings(data)
-        : setTrendingListings(data);
+      if (type === "featured") {
+        setFeaturedListings(data);
+      } else {
+        setTrendingListings(data);
+      }
     }
   };
 
@@ -728,7 +727,7 @@ export function ServicesHome() {
                   color: "rose",
                   delay: 300,
                 },
-              ].map((feature, i) => {
+              ].map((feature, _i) => {
                 const IconComponent = feature.icon;
                 const colorClasses: Record<string, string> = {
                   blue: "bg-blue-500/20 text-blue-400",
@@ -1105,8 +1104,6 @@ function ListingCard({
   onFavorite: (e: React.MouseEvent) => void;
   onQuickView: (e: React.MouseEvent) => void;
 }) {
-  const navigate = useNavigate();
-
   return (
     <Link
       to={`/services/listing/${listing.slug}`}

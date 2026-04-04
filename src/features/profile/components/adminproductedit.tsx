@@ -94,6 +94,7 @@ export function AdminProductEdit() {
       fetchProduct();
     };
     getUser();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, id]);
 
   // 2️⃣ Fetch product - Admin can view any product

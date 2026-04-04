@@ -3,7 +3,7 @@
  * Tests for the secure input validation hook
  */
 
-import { describe, it, expect, beforeEach, vi } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import {
   useSecurityInput,

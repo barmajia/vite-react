@@ -3,7 +3,6 @@ import { CustomerSignupData } from "@/types/signup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/supabase";
 
 interface CustomerSignupFormProps {
   onSubmit: (data: CustomerSignupData) => Promise<void>;

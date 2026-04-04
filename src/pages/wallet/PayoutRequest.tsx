@@ -26,12 +26,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 const MINIMUM_PAYOUT = 50;
 const PAYOUT_FEE_PERCENT = 2;
 
-interface WalletBalance {
-  balance: number;
-  pending_balance: number;
-  total_earned: number;
-}
-
 export function PayoutRequest() {
   const [loading, setLoading] = useState(false);
   const [wallet, setWallet] = useState<any>(null);

@@ -35,6 +35,7 @@ export const ProfileDirectoryPage = () => {
 
   useEffect(() => {
     loadProfiles();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [accountType]);
 
   const loadProfiles = async () => {
@@ -110,7 +111,9 @@ export const ProfileDirectoryPage = () => {
 
               <select
                 value={accountType}
-                onChange={(e) => setAccountType(e.target.value as AccountTypeFilter)}
+                onChange={(e) =>
+                  setAccountType(e.target.value as AccountTypeFilter)
+                }
                 className="rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="all">All Types</option>

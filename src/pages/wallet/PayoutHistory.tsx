@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
-import type { PayoutRequest as PayoutRequestType } from "@/types/wallet";
 
 interface Payout {
   id: string;
@@ -83,7 +82,7 @@ export function PayoutHistory() {
       if (!user) return;
 
       // Try payout_requests table first
-      const { data: payoutData, error: payoutError } = await supabase
+      const { data: payoutData, error: _payoutError } = await supabase
         .from("payout_requests")
         .select("*")
         .eq("user_id", user.id)

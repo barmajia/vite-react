@@ -158,6 +158,7 @@ export const useNotifications = () => {
     return () => {
       supabase.removeChannel(realtimeChannel);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   return {

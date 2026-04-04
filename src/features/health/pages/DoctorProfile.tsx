@@ -4,7 +4,6 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   MapPin,
   Star,
-  Clock,
   Calendar,
   Phone,
   Mail,
@@ -18,15 +17,12 @@ import {
   GraduationCap,
   Languages,
   Video,
-  DollarSign,
-  Users,
   FileText,
   ChevronDown,
   ChevronUp,
   CalendarDays,
   AlertCircle,
   Shield,
-  TrendingUp,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -36,19 +32,22 @@ import { Avatar } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { supabase } from "@/lib/supabase";
 import { supabaseHealth } from "../api/supabaseHealth";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { ServicesHeader } from "@/components/layout/ServicesHeader";
 import type { HealthDoctorProfile } from "../types";
+
+interface DoctorWithUsers extends HealthDoctorProfile {
+  users: {
+    id: string;
+    email: string;
+    full_name: string | null;
+    avatar_url: string | null;
+    phone: string | null;
+    created_at: string;
+  } | null;
+}
 
 interface Review {
   id: string;
@@ -65,7 +64,7 @@ const DoctorProfile: React.FC = () => {
   const { doctorId } = useParams<{ doctorId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [doctor, setDoctor] = useState<HealthDoctorProfile | null>(null);
+  const [doctor, setDoctor] = useState<DoctorWithUsers | null>(null);
   const [loading, setLoading] = useState(true);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const [showAllReviews, setShowAllReviews] = useState(false);
@@ -75,6 +74,7 @@ const DoctorProfile: React.FC = () => {
   useEffect(() => {
     fetchDoctor();
     fetchReviews();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [doctorId]);
 
   const fetchDoctor = async () => {

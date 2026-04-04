@@ -7,7 +7,7 @@ export const useUserAccountType = (userId: string | null) => {
     null,
   );
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error, _setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAccountType = async () => {

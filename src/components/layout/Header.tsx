@@ -18,10 +18,6 @@ import {
   Stethoscope,
   Home as HomeIcon,
   Camera,
-  MessageSquare,
-  LayoutDashboard,
-  UserPlus,
-  Heart,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -37,9 +33,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -94,9 +87,8 @@ export function Header() {
         if (data) {
           setProviderProfile(data);
         }
-      } catch (err) {
+      } catch (_err) {
         // Silently fail - user might not have a provider profile
-        console.debug("No provider profile found for user");
       }
     };
     getProviderProfile();

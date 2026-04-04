@@ -43,7 +43,6 @@ import {
   Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Plus } from "lucide-react";
 import { getProductImageUrl, getProductImageAlt } from "@/utils/productshelper";
 
 interface Product {
@@ -69,6 +68,7 @@ export function AdminProducts() {
 
   useEffect(() => {
     loadProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   const loadProducts = async () => {

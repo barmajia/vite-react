@@ -77,7 +77,6 @@ import ConsultationRoom from "@/features/health/pages/ConsultationRoom";
 import PharmacyList from "@/features/health/pages/PharmacyList";
 import { ConsentForm } from "@/features/health/pages/ConsentForm";
 import { DataExport } from "@/features/health/pages/DataExport";
-import { AuditLogs } from "@/features/health/pages/AuditLogs";
 
 // ==================== Factory ====================
 import { FactoryDashboardPage } from "@/pages/factory/FactoryDashboardPage";

@@ -57,6 +57,7 @@ export function ProfilePage() {
     if (fullProfile?.core) {
       loadWalletAndVerification(fullProfile.core.user_id);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fullProfile]);
 
   const loadWalletAndVerification = async (userId: string) => {

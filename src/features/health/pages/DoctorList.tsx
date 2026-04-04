@@ -1,6 +1,6 @@
 // src/features/health/pages/DoctorList.tsx
 import React, { useEffect, useState, useMemo } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Search,
   Filter,
@@ -9,7 +9,6 @@ import {
   Calendar,
   Video,
   Building,
-  Clock,
   CheckCircle2,
   AlertCircle,
   Stethoscope,
@@ -19,7 +18,6 @@ import {
   Baby,
   Eye,
   Activity,
-  Loader2,
   ArrowRight,
   X,
 } from "lucide-react";
@@ -29,7 +27,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar } from "@/components/ui/avatar";
 import {
   Select,
   SelectContent,
@@ -37,21 +34,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { ServicesHeader } from "@/components/layout/ServicesHeader";
 
 const DoctorList: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const { user } = useAuth();
+  const [searchParams, _setSearchParams] = useSearchParams();
   const [doctors, setDoctors] = useState<HealthDoctorProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");

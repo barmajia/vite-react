@@ -1,13 +1,13 @@
 /**
  * Hospital Detail Page
  * Route: /services/health/hospitals/:hospitalId
- * 
+ *
  * Displays detailed information about a hospital/clinic
  * Uses existing sellers + products tables
  */
 
 import { useState, useEffect } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   MapPin,
   Phone,
@@ -66,10 +66,10 @@ export function HospitalDetailPage() {
   const [hospital, setHospital] = useState<HospitalDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [isWishlisted, setIsWishlisted] = useState(false);
-  const [selectedService, setSelectedService] = useState<any | null>(null);
 
   useEffect(() => {
     fetchHospital();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hospitalId]);
 
   const fetchHospital = async () => {
@@ -82,7 +82,7 @@ export function HospitalDetailPage() {
           `
           *,
           users (avatar_url, phone, email)
-        `
+        `,
         )
         .eq("user_id", hospitalId)
         .eq("account_type", "seller")
@@ -102,7 +102,7 @@ export function HospitalDetailPage() {
           `
           *,
           reviews (rating)
-        `
+        `,
         )
         .eq("seller_id", seller.id)
         .eq("category", "Health & Medical")
@@ -116,26 +116,22 @@ export function HospitalDetailPage() {
       const healthProducts = products || [];
       const totalReviews = healthProducts.reduce(
         (sum, p) => sum + (p.review_count || 0),
-        0
+        0,
       );
       const averageRating =
         healthProducts.length > 0
           ? healthProducts.reduce(
               (sum, p) => sum + (p.average_rating || 0),
-              0
+              0,
             ) / healthProducts.length
           : 0;
 
       // Extract unique specialties and features
       const specialties = [
-        ...new Set(
-          healthProducts.map((p) => p.subcategory).filter(Boolean)
-        ),
+        ...new Set(healthProducts.map((p) => p.subcategory).filter(Boolean)),
       ];
       const features = [
-        ...new Set(
-          healthProducts.flatMap((p) => p.attributes?.features || [])
-        ),
+        ...new Set(healthProducts.flatMap((p) => p.attributes?.features || [])),
       ];
 
       setHospital({
@@ -184,7 +180,9 @@ export function HospitalDetailPage() {
       return;
     }
     if (service) {
-      navigate(`/services/health/hospitals/${hospitalId}/book?service=${service.id}`);
+      navigate(
+        `/services/health/hospitals/${hospitalId}/book?service=${service.id}`,
+      );
     } else {
       toast.info(t("health.bookAppointmentFeatureComingSoon"));
     }
@@ -198,7 +196,9 @@ export function HospitalDetailPage() {
     }
     setIsWishlisted(!isWishlisted);
     toast.success(
-      isWishlisted ? t("health.removedFromWishlist") : t("health.addedToWishlist")
+      isWishlisted
+        ? t("health.removedFromWishlist")
+        : t("health.addedToWishlist"),
     );
   };
 
@@ -300,7 +300,9 @@ export function HospitalDetailPage() {
                   {t("health.reviews")})
                 </span>
                 <span>•</span>
-                <span>{hospital.servicesCount} {t("health.services")}</span>
+                <span>
+                  {hospital.servicesCount} {t("health.services")}
+                </span>
               </div>
             </div>
             <div className="flex gap-2">
@@ -311,9 +313,7 @@ export function HospitalDetailPage() {
                 className="bg-white/10 hover:bg-white/20 text-white"
               >
                 <Heart
-                  className={`h-5 w-5 ${
-                    isWishlisted ? "fill-white" : ""
-                  }`}
+                  className={`h-5 w-5 ${isWishlisted ? "fill-white" : ""}`}
                 />
               </Button>
               <Button
@@ -361,7 +361,7 @@ export function HospitalDetailPage() {
                         {Math.floor(
                           (new Date().getTime() -
                             new Date(hospital.joinedDate).getTime()) /
-                            (1000 * 60 * 60 * 24 * 365)
+                            (1000 * 60 * 60 * 24 * 365),
                         )}{" "}
                         {t("health.years")}
                       </p>
@@ -373,9 +373,7 @@ export function HospitalDetailPage() {
                       <p className="text-sm text-slate-500">
                         {t("health.patientsServed")}
                       </p>
-                      <p className="font-semibold">
-                        {hospital.totalReviews}+
-                      </p>
+                      <p className="font-semibold">{hospital.totalReviews}+</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
@@ -445,8 +443,7 @@ export function HospitalDetailPage() {
                               )}
                               {service.review_count && (
                                 <span>
-                                  ({service.review_count}{" "}
-                                  {t("health.reviews")})
+                                  ({service.review_count} {t("health.reviews")})
                                 </span>
                               )}
                             </div>

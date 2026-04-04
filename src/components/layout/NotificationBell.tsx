@@ -1,37 +1,48 @@
-import { Bell } from 'lucide-react';
-import { useTranslation } from 'react-i18next';
-import { Button } from '@/components/ui/button';
+import { Bell } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { useNotifications } from '@/hooks/useNotifications';
-import { cn } from '@/lib/utils';
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { useNotifications } from "@/hooks/useNotifications";
+import { cn } from "@/lib/utils";
 
 // Icon mapping for different notification types
 const getNotificationIcon = (type: string) => {
   switch (type) {
-    case 'booking_request': return '📅';
-    case 'booking_confirmed': return '✅';
-    case 'booking_cancelled': return '❌';
-    case 'order': return '📦';
-    case 'message': return '💬';
-    case 'review_received': return '⭐';
-    case 'system': return '⚙️';
-    case 'promotion': return '🎉';
-    case 'product': return '🛍️';
-    default: return '🔔';
+    case "booking_request":
+      return "📅";
+    case "booking_confirmed":
+      return "✅";
+    case "booking_cancelled":
+      return "❌";
+    case "order":
+      return "📦";
+    case "message":
+      return "💬";
+    case "review_received":
+      return "⭐";
+    case "system":
+      return "⚙️";
+    case "promotion":
+      return "🎉";
+    case "product":
+      return "🛍️";
+    default:
+      return "🔔";
   }
 };
 
-
-
 export const NotificationBell = () => {
   const { t, i18n } = useTranslation();
-  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } = useNotifications();
+  const navigate = useNavigate();
+  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead } =
+    useNotifications();
 
   // Format time distance
   const formatTimeAgo = (dateString: string) => {
@@ -39,23 +50,43 @@ export const NotificationBell = () => {
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
-    if (diffInSeconds < 60) return t('common.justNow');
-    if (diffInSeconds < 3600) return t('common.minutesAgo', { count: Math.floor(diffInSeconds / 60) });
-    if (diffInSeconds < 86400) return t('common.hoursAgo', { count: Math.floor(diffInSeconds / 3600) });
-    if (diffInSeconds < 604800) return t('common.daysAgo', { count: Math.floor(diffInSeconds / 86400) });
-    
-    return date.toLocaleDateString(i18n.language, { month: 'short', day: 'numeric' });
+    if (diffInSeconds < 60) return t("common.justNow");
+    if (diffInSeconds < 3600)
+      return t("common.minutesAgo", { count: Math.floor(diffInSeconds / 60) });
+    if (diffInSeconds < 86400)
+      return t("common.hoursAgo", { count: Math.floor(diffInSeconds / 3600) });
+    if (diffInSeconds < 604800)
+      return t("common.daysAgo", { count: Math.floor(diffInSeconds / 86400) });
+
+    return date.toLocaleDateString(i18n.language, {
+      month: "short",
+      day: "numeric",
+    });
   };
 
-  const handleNotificationClick = (notification: typeof notifications[0]) => {
+  /**
+   * Safely navigate to a URL from notification metadata.
+   * Validates that the URL is same-origin to prevent open redirect attacks.
+   */
+  const handleNotificationClick = (notification: (typeof notifications)[0]) => {
     markAsRead(notification.id);
-    
-    // Deep linking logic based on metadata
+
     const actionUrl = notification.metadata?.action_url;
     if (actionUrl) {
-      window.location.href = actionUrl;
+      // SECURITY: Only allow same-origin URLs to prevent open redirect attacks
+      try {
+        const url = new URL(actionUrl, window.location.origin);
+        if (url.origin === window.location.origin) {
+          navigate(url.pathname + url.search + url.hash);
+        } else {
+          console.warn("Blocked external redirect:", actionUrl);
+          navigate("/notifications");
+        }
+      } catch {
+        navigate("/notifications");
+      }
     } else {
-      window.location.href = '/notifications';
+      navigate("/notifications");
     }
   };
 
@@ -65,33 +96,37 @@ export const NotificationBell = () => {
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
-            <Badge 
-              variant="destructive" 
+            <Badge
+              variant="destructive"
               className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs rounded-full"
             >
-              {unreadCount > 99 ? '99+' : unreadCount}
+              {unreadCount > 99 ? "99+" : unreadCount}
             </Badge>
           )}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-80 p-0" align="end">
         <div className="flex items-center justify-between p-4 border-b">
-          <h4 className="font-semibold text-sm">{t('common.notifications')}</h4>
+          <h4 className="font-semibold text-sm">{t("common.notifications")}</h4>
           {unreadCount > 0 && (
-            <button 
+            <button
               onClick={markAllAsRead}
               className="text-xs text-muted-foreground hover:text-primary transition-colors"
             >
-              {t('common.markAllRead')}
+              {t("common.markAllRead")}
             </button>
           )}
         </div>
-        
+
         <ScrollArea className="h-[300px]">
           {isLoading ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">{t('common.loading')}</div>
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              {t("common.loading")}
+            </div>
           ) : notifications.length === 0 ? (
-            <div className="p-4 text-center text-sm text-muted-foreground">{t('common.noNotifications')}</div>
+            <div className="p-4 text-center text-sm text-muted-foreground">
+              {t("common.noNotifications")}
+            </div>
           ) : (
             <div className="divide-y">
               {notifications.slice(0, 10).map((notification) => (
@@ -100,11 +135,13 @@ export const NotificationBell = () => {
                   onClick={() => handleNotificationClick(notification)}
                   className={cn(
                     "p-4 cursor-pointer hover:bg-accent transition-colors",
-                    !notification.is_read && "bg-accent/50"
+                    !notification.is_read && "bg-accent/50",
                   )}
                 >
                   <div className="flex items-start gap-3">
-                    <span className="text-xl">{getNotificationIcon(notification.type)}</span>
+                    <span className="text-xl">
+                      {getNotificationIcon(notification.type)}
+                    </span>
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium leading-none">
@@ -127,14 +164,14 @@ export const NotificationBell = () => {
             </div>
           )}
         </ScrollArea>
-        
+
         <div className="p-2 border-t">
-          <Button 
-            variant="ghost" 
-            className="w-full text-xs" 
-            onClick={() => window.location.href = '/notifications'}
+          <Button
+            variant="ghost"
+            className="w-full text-xs"
+            onClick={() => navigate("/notifications")}
           >
-            {t('common.viewAllNotifications')}
+            {t("common.viewAllNotifications")}
           </Button>
         </div>
       </PopoverContent>

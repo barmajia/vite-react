@@ -9,7 +9,6 @@ import { useState, useEffect } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   Star,
-  MapPin,
   CheckCircle2,
   Clock,
   Calendar,
@@ -18,7 +17,6 @@ import {
   Share2,
   Shield,
   Award,
-  Users,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -74,6 +72,7 @@ export function ServiceDetailPage() {
 
   useEffect(() => {
     fetchService();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [listingId]);
 
   const fetchService = async () => {

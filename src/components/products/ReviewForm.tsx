@@ -1,6 +1,6 @@
 /**
  * Review Form Component
- * 
+ *
  * Allows users to submit product reviews
  */
 
@@ -12,7 +12,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Star, X } from "lucide-react";
 import { useSubmitReview } from "@/hooks/useReviews";
-import { Badge } from "@/components/ui/badge";
 
 interface ReviewFormProps {
   productId: string;
@@ -20,7 +19,11 @@ interface ReviewFormProps {
   onCancel?: () => void;
 }
 
-export function ReviewForm({ productId, onSuccess, onCancel }: ReviewFormProps) {
+export function ReviewForm({
+  productId,
+  onSuccess,
+  onCancel,
+}: ReviewFormProps) {
   const [rating, setRating] = useState(0);
   const [hoveredRating, setHoveredRating] = useState(0);
   const [title, setTitle] = useState("");

@@ -1,18 +1,18 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { AlertCircle, Lock, Shield } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle, Lock, Shield } from "lucide-react";
 
 interface SecureRoomProps {
   children: React.ReactNode;
-  requiredRole?: 'customer' | 'seller' | 'driver' | 'middleman' | 'admin';
+  requiredRole?: "customer" | "seller" | "driver" | "middleman" | "admin";
   fallback?: React.ReactNode;
 }
 
 export default function SecureRoom({
   children,
   requiredRole,
-  fallback
+  fallback,
 }: SecureRoomProps) {
   const [isAuthorized, setIsAuthorized] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -20,11 +20,14 @@ export default function SecureRoom({
 
   useEffect(() => {
     checkAuthorization();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requiredRole]);
 
   const checkAuthorization = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (!user) {
         setIsAuthorized(false);
@@ -34,12 +37,12 @@ export default function SecureRoom({
 
       // Get user's account type/role
       const { data: userData } = await supabase
-        .from('users')
-        .select('account_type')
-        .eq('user_id', user.id)
+        .from("users")
+        .select("account_type")
+        .eq("user_id", user.id)
         .single();
 
-      const role = userData?.account_type || 'customer';
+      const role = userData?.account_type || "customer";
       setUserRole(role);
 
       if (requiredRole) {
@@ -48,7 +51,7 @@ export default function SecureRoom({
         setIsAuthorized(true);
       }
     } catch (error) {
-      console.error('Authorization check failed:', error);
+      console.error("Authorization check failed:", error);
       setIsAuthorized(false);
     } finally {
       setLoading(false);
@@ -76,7 +79,7 @@ export default function SecureRoom({
           <p className="text-sm text-red-700">
             {requiredRole
               ? `This area is restricted to ${requiredRole}s only.`
-              : 'You do not have permission to access this area.'}
+              : "You do not have permission to access this area."}
             {userRole && (
               <span className="block mt-1">
                 Your current role: <strong>{userRole}</strong>
@@ -92,35 +95,37 @@ export default function SecureRoom({
 }
 
 interface SecurityBadgeProps {
-  level?: 'basic' | 'enhanced' | 'maximum';
+  level?: "basic" | "enhanced" | "maximum";
 }
 
-export function SecurityBadge({ level = 'basic' }: SecurityBadgeProps) {
+export function SecurityBadge({ level = "basic" }: SecurityBadgeProps) {
   const config = {
     basic: {
       icon: Shield,
-      label: 'Secure',
-      color: 'text-green-600',
-      bgColor: 'bg-green-50'
+      label: "Secure",
+      color: "text-green-600",
+      bgColor: "bg-green-50",
     },
     enhanced: {
       icon: Lock,
-      label: 'Enhanced Security',
-      color: 'text-blue-600',
-      bgColor: 'bg-blue-50'
+      label: "Enhanced Security",
+      color: "text-blue-600",
+      bgColor: "bg-blue-50",
     },
     maximum: {
       icon: AlertCircle,
-      label: 'Maximum Security',
-      color: 'text-purple-600',
-      bgColor: 'bg-purple-50'
-    }
+      label: "Maximum Security",
+      color: "text-purple-600",
+      bgColor: "bg-purple-50",
+    },
   };
 
   const { icon: Icon, label, color, bgColor } = config[level];
 
   return (
-    <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${bgColor}`}>
+    <div
+      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full ${bgColor}`}
+    >
       <Icon className={`h-4 w-4 ${color}`} />
       <span className={`text-xs font-medium ${color}`}>{label}</span>
     </div>

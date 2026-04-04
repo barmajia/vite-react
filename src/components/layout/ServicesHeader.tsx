@@ -183,9 +183,6 @@ export function ServicesHeader() {
   };
 
   const isHealthRoute = location.pathname.startsWith("/services/health");
-  const isPharmacyRoute = location.pathname.startsWith(
-    "/services/health/pharmacies",
-  );
 
   const navItems = [
     {

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -7,7 +7,6 @@ import { useTranslation } from "react-i18next";
 
 export function AuthCallback() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { t } = useTranslation();
   const [isProcessing, setIsProcessing] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -18,7 +17,7 @@ export function AuthCallback() {
         // Get the hash from URL (Supabase OAuth returns data in hash)
         const hash = window.location.hash;
         const params = new URLSearchParams(hash.substring(1));
-        
+
         const accessToken = params.get("access_token");
         const refreshToken = params.get("refresh_token");
         const errorCode = params.get("error");
@@ -42,10 +41,12 @@ export function AuthCallback() {
           }
 
           toast.success(t("auth.googleAuthSuccess"));
-          
+
           // Check user role and redirect appropriately
-          const { data: { user } } = await supabase.auth.getUser();
-          
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+
           if (user) {
             // Check if user has a service provider profile
             const { data: provider } = await supabase
@@ -70,8 +71,10 @@ export function AuthCallback() {
         }
 
         // If no access token, try to get existing session
-        const { data: { session } } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
         if (session) {
           navigate("/services");
         } else {
@@ -107,9 +110,7 @@ export function AuthCallback() {
             <h2 className="mt-4 text-xl font-semibold text-gray-900 dark:text-white">
               {t("auth.signInFailed")}
             </h2>
-            <p className="mt-2 text-gray-600 dark:text-gray-400">
-              {error}
-            </p>
+            <p className="mt-2 text-gray-600 dark:text-gray-400">{error}</p>
             <button
               onClick={() => navigate("/login")}
               className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"

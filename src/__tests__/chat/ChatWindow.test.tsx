@@ -4,16 +4,11 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-  act,
-} from "@testing-library/react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter } from "react-router-dom";
-import { vi as vitestVi } from "vitest";
+
+import { vi as _vitestVi } from "vitest";
 
 // Mock Supabase
 vi.mock("@/lib/supabase", () => ({
@@ -48,9 +43,18 @@ vi.mock("@/hooks/useAuth", () => ({
   }),
 }));
 
-// Mock useMessages
-vi.mock("@/hooks/useMessages", () => ({
-  useMessages: () => ({
+// Global mocks for consistency across tests - ALL DEFINED
+export const mockDeleteMessage1 = vi.fn();
+export const mockDeleteMessage2 = vi.fn();
+export const mockDeleteMessage3 = vi.fn();
+export const mockDeleteMessage4 = vi.fn();
+export const mockDeleteMessage5 = vi.fn();
+export const mockDeleteMessage6 = vi.fn();
+export const mockSendMessage = vi.fn();
+export const mockRefresh = vi.fn();
+
+function createMessagesMock(overrides = {}) {
+  return {
     messages: [
       {
         id: "msg-1",
@@ -70,15 +74,32 @@ vi.mock("@/hooks/useMessages", () => ({
         is_deleted: false,
         created_at: "2026-03-29T10:01:00Z",
       },
+      {
+        id: "msg-3",
+        conversation_id: "conv-1",
+        sender_id: "user-2",
+        content: "How are you?",
+        message_type: "text",
+        is_deleted: false,
+        created_at: "2026-03-29T10:02:00Z",
+      },
     ],
     loading: false,
     sending: false,
-    error: null,
-    sendMessage: vi.fn(),
-    deleteMessage: vi.fn(),
-    refresh: vi.fn(),
-  }),
+    deleteMessage: mockDeleteMessage1,
+    sendMessage: mockSendMessage,
+    refresh: mockRefresh,
+    ...overrides,
+  };
+}
+
+// Mock useMessages globally before any imports that use it
+vi.mock("@/hooks/useMessages", () => ({
+  useMessages: vi.fn(),
 }));
+
+import { useMessages } from "@/hooks/useMessages";
+let useMessagesMock = vi.mocked(useMessages);
 
 import { ChatWindow } from "@/pages/chat/ChatWindow";
 import type { ConversationListItem } from "@/lib/chat-types";
@@ -135,6 +156,7 @@ describe("ChatWindow", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    useMessagesMock.mockReturnValue(createMessagesMock());
   });
 
   afterEach(() => {
@@ -401,22 +423,20 @@ describe("ChatWindow - Message Actions", () => {
   });
 
   it("allows deleting own messages", async () => {
+    vi.mocked(useMessages).mockReturnValue(createMessagesMock());
+
     render(<ChatWindow conversation={mockConversation} onBack={mockOnBack} />, {
       wrapper,
     });
 
     // Find own message and hover
     const ownMessage = screen.getByText("Hi there!");
-    const messageBubble = ownMessage.closest("div");
+    fireEvent.mouseEnter(ownMessage.parentElement);
 
-    if (messageBubble) {
-      await fireEvent.mouseEnter(messageBubble);
+    const deleteButton = screen.getByRole("button", { name: /delete/i });
+    fireEvent.click(deleteButton);
 
-      const deleteButton = screen.getByText("Delete");
-      await fireEvent.click(deleteButton);
-
-      expect(mockDeleteMessage).toHaveBeenCalledWith("msg-2");
-    }
+    expect(mockDeleteMessage).toHaveBeenCalledWith("msg-2");
   });
 
   it("shows confirmation before deleting", async () => {

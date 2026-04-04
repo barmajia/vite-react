@@ -109,6 +109,7 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
     if (user && !loading) {
       fetchUserPreferences();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, loading]);
 
   const fetchUserPreferences = async () => {

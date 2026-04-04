@@ -1,6 +1,6 @@
 // src/features/health/pages/PharmacyList.tsx
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Search,
   MapPin,
@@ -11,14 +11,9 @@ import {
   CheckCircle2,
   Truck,
   Pill,
-  CreditCard,
   Shield,
-  AlertCircle,
-  Loader2,
   ChevronDown,
-  ChevronUp,
   Navigation,
-  Heart,
   Share2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -34,7 +29,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { supabase } from "@/lib/supabase";
 import { supabaseHealth } from "../api/supabaseHealth";
 import { toast } from "sonner";
 import { PharmacyHeader } from "../components/PharmacyHeader";

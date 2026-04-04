@@ -1,7 +1,7 @@
 /**
  * Chat System Tests
  * Comprehensive test suite for Aurora Chat System
- * 
+ *
  * Tests cover:
  * - Components: ConversationItem, MessageBubble, MessageInput, ChatWindow
  * - Hooks: useConversations, useMessages
@@ -9,15 +9,22 @@
  * - Integration: Full chat flow
  */
 
-import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter } from 'react-router-dom';
-import { supabase } from '@/lib/supabase';
-import { vi as vitestVi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
+import { supabase } from "@/lib/supabase";
+ 
+import { vi as _vitestVi } from "vitest";
 
 // Mock Supabase
-vi.mock('@/lib/supabase', () => ({
+vi.mock("@/lib/supabase", () => ({
   supabase: {
     from: vi.fn(),
     channel: vi.fn(),
@@ -33,7 +40,7 @@ vi.mock('@/lib/supabase', () => ({
 }));
 
 // Mock toast notifications
-vi.mock('sonner', () => ({
+vi.mock("sonner", () => ({
   toast: {
     success: vi.fn(),
     error: vi.fn(),
@@ -42,71 +49,70 @@ vi.mock('sonner', () => ({
 }));
 
 // Import components after mocks
-import { ConversationItem } from '@/components/chat/ConversationItem';
-import { MessageBubble } from '@/components/chat/MessageBubble';
-import { MessageInput } from '@/components/chat/MessageInput';
-import { useConversations } from '@/hooks/useConversations';
-import type { ConversationListItem, Message } from '@/lib/chat-types';
+import { ConversationItem } from "@/components/chat/ConversationItem";
+import { MessageBubble } from "@/components/chat/MessageBubble";
+import { MessageInput } from "@/components/chat/MessageInput";
+import { useConversations } from "@/hooks/useConversations";
+import type { ConversationListItem, Message } from "@/lib/chat-types";
 
 // ============================================================================
 // Test Utilities
 // ============================================================================
 
-const createQueryClient = () => new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: false,
-      staleTime: 0,
+const createQueryClient = () =>
+  new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+        staleTime: 0,
+      },
     },
-  },
-});
+  });
 
 const wrapper = ({ children }: { children: React.ReactNode }) => (
   <QueryClientProvider client={createQueryClient()}>
-    <BrowserRouter>
-      {children}
-    </BrowserRouter>
+    <BrowserRouter>{children}</BrowserRouter>
   </QueryClientProvider>
 );
 
 // Mock data
 const mockConversation: ConversationListItem = {
-  id: 'conv-1',
-  context: 'general',
-  last_message: 'Hello, how are you?',
-  last_message_at: '2026-03-29T10:00:00Z',
+  id: "conv-1",
+  context: "general",
+  last_message: "Hello, how are you?",
+  last_message_at: "2026-03-29T10:00:00Z",
   unread_count: 2,
   other_user: {
-    user_id: 'user-2',
-    id: 'user-2',
-    email: 'buyer@example.com',
-    full_name: 'John Buyer',
+    user_id: "user-2",
+    id: "user-2",
+    email: "buyer@example.com",
+    full_name: "John Buyer",
     avatar_url: null,
-    account_type: 'customer',
+    account_type: "customer",
   },
   product: {
-    id: 'prod-1',
-    title: 'Test Product',
+    id: "prod-1",
+    title: "Test Product",
     price: 99.99,
-    images: ['image1.jpg'],
+    images: ["image1.jpg"],
   },
   is_archived: false,
 };
 
 const mockMessage: Message = {
-  id: 'msg-1',
-  conversation_id: 'conv-1',
-  sender_id: 'user-2',
-  content: 'Hello, how are you?',
-  message_type: 'text',
+  id: "msg-1",
+  conversation_id: "conv-1",
+  sender_id: "user-2",
+  content: "Hello, how are you?",
+  message_type: "text",
   is_deleted: false,
-  created_at: '2026-03-29T10:00:00Z',
-  updated_at: '2026-03-29T10:00:00Z',
+  created_at: "2026-03-29T10:00:00Z",
+  updated_at: "2026-03-29T10:00:00Z",
   sender: {
-    user_id: 'user-2',
-    full_name: 'John Buyer',
+    user_id: "user-2",
+    full_name: "John Buyer",
     avatar_url: null,
-    account_type: 'customer',
+    account_type: "customer",
   },
 };
 
@@ -114,134 +120,134 @@ const mockMessage: Message = {
 // ConversationItem Component Tests
 // ============================================================================
 
-describe('ConversationItem', () => {
+describe("ConversationItem", () => {
   const mockOnClick = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders conversation with user name', () => {
+  it("renders conversation with user name", () => {
     render(
       <ConversationItem
         conversation={mockConversation}
         isActive={false}
         onClick={mockOnClick}
       />,
-      { wrapper }
+      { wrapper },
     );
 
-    expect(screen.getByText('John Buyer')).toBeInTheDocument();
+    expect(screen.getByText("John Buyer")).toBeInTheDocument();
   });
 
-  it('displays last message preview', () => {
+  it("displays last message preview", () => {
     render(
       <ConversationItem
         conversation={mockConversation}
         isActive={false}
         onClick={mockOnClick}
       />,
-      { wrapper }
+      { wrapper },
     );
 
-    expect(screen.getByText('Hello, how are you?')).toBeInTheDocument();
+    expect(screen.getByText("Hello, how are you?")).toBeInTheDocument();
   });
 
-  it('shows unread count badge when there are unread messages', () => {
+  it("shows unread count badge when there are unread messages", () => {
     render(
       <ConversationItem
         conversation={{ ...mockConversation, unread_count: 3 }}
         isActive={false}
         onClick={mockOnClick}
       />,
-      { wrapper }
+      { wrapper },
     );
 
-    expect(screen.getByText('3')).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
   });
 
-  it('does not show unread badge when count is 0', () => {
+  it("does not show unread badge when count is 0", () => {
     render(
       <ConversationItem
         conversation={{ ...mockConversation, unread_count: 0 }}
         isActive={false}
         onClick={mockOnClick}
       />,
-      { wrapper }
+      { wrapper },
     );
 
-    expect(screen.queryByText('0')).not.toBeInTheDocument();
+    expect(screen.queryByText("0")).not.toBeInTheDocument();
   });
 
-  it('displays context badge', () => {
+  it("displays context badge", () => {
     render(
       <ConversationItem
         conversation={mockConversation}
         isActive={false}
         onClick={mockOnClick}
       />,
-      { wrapper }
+      { wrapper },
     );
 
-    expect(screen.getByText('Chat')).toBeInTheDocument();
+    expect(screen.getByText("Chat")).toBeInTheDocument();
   });
 
-  it('shows product badge when conversation has product', () => {
+  it("shows product badge when conversation has product", () => {
     render(
       <ConversationItem
         conversation={mockConversation}
         isActive={false}
         onClick={mockOnClick}
       />,
-      { wrapper }
+      { wrapper },
     );
 
-    expect(screen.getByText('📦 Product')).toBeInTheDocument();
+    expect(screen.getByText("📦 Product")).toBeInTheDocument();
   });
 
-  it('displays product info with price', () => {
+  it("displays product info with price", () => {
     render(
       <ConversationItem
         conversation={mockConversation}
         isActive={false}
         onClick={mockOnClick}
       />,
-      { wrapper }
+      { wrapper },
     );
 
-    expect(screen.getByText('Test Product')).toBeInTheDocument();
-    expect(screen.getByText('99.99 EGP')).toBeInTheDocument();
+    expect(screen.getByText("Test Product")).toBeInTheDocument();
+    expect(screen.getByText("99.99 EGP")).toBeInTheDocument();
   });
 
-  it('calls onClick when clicked', async () => {
+  it("calls onClick when clicked", async () => {
     render(
       <ConversationItem
         conversation={mockConversation}
         isActive={false}
         onClick={mockOnClick}
       />,
-      { wrapper }
+      { wrapper },
     );
 
-    await fireEvent.click(screen.getByText('John Buyer').closest('div')!);
+    await fireEvent.click(screen.getByText("John Buyer").closest("div")!);
     expect(mockOnClick).toHaveBeenCalledTimes(1);
   });
 
-  it('applies active styles when isActive is true', () => {
+  it("applies active styles when isActive is true", () => {
     const { container } = render(
       <ConversationItem
         conversation={mockConversation}
         isActive={true}
         onClick={mockOnClick}
       />,
-      { wrapper }
+      { wrapper },
     );
 
-    expect(container.firstChild).toHaveClass('bg-muted/80');
+    expect(container.firstChild).toHaveClass("bg-muted/80");
   });
 
-  it('truncates long messages', () => {
-    const longMessage = 'A'.repeat(100);
+  it("truncates long messages", () => {
+    const longMessage = "A".repeat(100);
     render(
       <ConversationItem
         conversation={{
@@ -251,13 +257,15 @@ describe('ConversationItem', () => {
         isActive={false}
         onClick={mockOnClick}
       />,
-      { wrapper }
+      { wrapper },
     );
 
-    expect(screen.getByText(longMessage.substring(0, 50) + '...')).toBeInTheDocument();
+    expect(
+      screen.getByText(longMessage.substring(0, 50) + "..."),
+    ).toBeInTheDocument();
   });
 
-  it('shows fallback name when user name is missing', () => {
+  it("shows fallback name when user name is missing", () => {
     const conversationWithoutUser = {
       ...mockConversation,
       other_user: undefined,
@@ -269,20 +277,20 @@ describe('ConversationItem', () => {
         isActive={false}
         onClick={mockOnClick}
       />,
-      { wrapper }
+      { wrapper },
     );
 
-    expect(screen.getByText('User')).toBeInTheDocument();
+    expect(screen.getByText("User")).toBeInTheDocument();
   });
 
-  it('displays time ago for recent messages', () => {
+  it("displays time ago for recent messages", () => {
     render(
       <ConversationItem
         conversation={mockConversation}
         isActive={false}
         onClick={mockOnClick}
       />,
-      { wrapper }
+      { wrapper },
     );
 
     expect(screen.getByText(/10:00|AM|PM/)).toBeInTheDocument();
@@ -293,197 +301,151 @@ describe('ConversationItem', () => {
 // MessageBubble Component Tests
 // ============================================================================
 
-describe('MessageBubble', () => {
+describe("MessageBubble", () => {
   const mockOnDelete = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders text message correctly', () => {
-    render(
-      <MessageBubble
-        message={mockMessage}
-        isOwn={false}
-      />
-    );
+  it("renders text message correctly", () => {
+    render(<MessageBubble message={mockMessage} isOwn={false} />);
 
-    expect(screen.getByText('Hello, how are you?')).toBeInTheDocument();
+    expect(screen.getByText("Hello, how are you?")).toBeInTheDocument();
   });
 
-  it('applies own message styles when isOwn is true', () => {
+  it("applies own message styles when isOwn is true", () => {
     const { container } = render(
-      <MessageBubble
-        message={mockMessage}
-        isOwn={true}
-      />
+      <MessageBubble message={mockMessage} isOwn={true} />,
     );
 
-    expect(container.firstChild).toHaveClass('flex-row-reverse');
+    expect(container.firstChild).toHaveClass("flex-row-reverse");
   });
 
-  it('shows sender avatar for other user messages', () => {
+  it("shows sender avatar for other user messages", () => {
     render(
-      <MessageBubble
-        message={mockMessage}
-        isOwn={false}
-        showAvatar={true}
-      />
+      <MessageBubble message={mockMessage} isOwn={false} showAvatar={true} />,
     );
 
-    expect(screen.getByRole('img')).toBeInTheDocument();
+    expect(screen.getByRole("img")).toBeInTheDocument();
   });
 
-  it('does not show avatar for own messages', () => {
+  it("does not show avatar for own messages", () => {
     const { container } = render(
-      <MessageBubble
-        message={mockMessage}
-        isOwn={true}
-        showAvatar={true}
-      />
+      <MessageBubble message={mockMessage} isOwn={true} showAvatar={true} />,
     );
 
-    expect(container.querySelectorAll('img')).toHaveLength(0);
+    expect(container.querySelectorAll("img")).toHaveLength(0);
   });
 
-  it('displays message timestamp', () => {
-    render(
-      <MessageBubble
-        message={mockMessage}
-        isOwn={true}
-      />
-    );
+  it("displays message timestamp", () => {
+    render(<MessageBubble message={mockMessage} isOwn={true} />);
 
     expect(screen.getByText(/10:00|AM|PM/)).toBeInTheDocument();
   });
 
-  it('shows read receipt for own messages', () => {
+  it("shows read receipt for own messages", () => {
     const readMessage = {
       ...mockMessage,
-      read_at: '2026-03-29T10:05:00Z',
+      read_at: "2026-03-29T10:05:00Z",
     };
 
-    render(
-      <MessageBubble
-        message={readMessage}
-        isOwn={true}
-      />
-    );
+    render(<MessageBubble message={readMessage} isOwn={true} />);
 
     // Check for double check icon (read)
-    expect(screen.getAllByRole('graphics-symbol').length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("graphics-symbol").length).toBeGreaterThan(0);
   });
 
-  it('shows unread indicator for own messages', () => {
-    render(
-      <MessageBubble
-        message={mockMessage}
-        isOwn={true}
-      />
-    );
+  it("shows unread indicator for own messages", () => {
+    render(<MessageBubble message={mockMessage} isOwn={true} />);
 
     // Single check for unread
-    expect(screen.getByRole('graphics-symbol')).toBeInTheDocument();
+    expect(screen.getByRole("graphics-symbol")).toBeInTheDocument();
   });
 
-  it('renders deleted message placeholder', () => {
+  it("renders deleted message placeholder", () => {
     const deletedMessage = {
       ...mockMessage,
       is_deleted: true,
     };
 
-    render(
-      <MessageBubble
-        message={deletedMessage}
-        isOwn={false}
-      />
-    );
+    render(<MessageBubble message={deletedMessage} isOwn={false} />);
 
-    expect(screen.getByText('This message was deleted')).toBeInTheDocument();
+    expect(screen.getByText("This message was deleted")).toBeInTheDocument();
   });
 
-  it('shows delete button on hover for own messages', async () => {
+  it("shows delete button on hover for own messages", async () => {
     render(
       <MessageBubble
         message={mockMessage}
         isOwn={true}
         onDelete={mockOnDelete}
-      />
+      />,
     );
 
-    const bubble = screen.getByText('Hello, how are you?').closest('div')!;
+    const bubble = screen.getByText("Hello, how are you?").closest("div")!;
     await fireEvent.mouseEnter(bubble);
 
-    expect(screen.getByText('Delete')).toBeInTheDocument();
+    expect(screen.getByText("Delete")).toBeInTheDocument();
   });
 
-  it('calls onDelete when delete button clicked', async () => {
+  it("calls onDelete when delete button clicked", async () => {
     render(
       <MessageBubble
         message={mockMessage}
         isOwn={true}
         onDelete={mockOnDelete}
-      />
+      />,
     );
 
-    const bubble = screen.getByText('Hello, how are you?').closest('div')!;
+    const bubble = screen.getByText("Hello, how are you?").closest("div")!;
     await fireEvent.mouseEnter(bubble);
-    
-    await fireEvent.click(screen.getByText('Delete'));
-    expect(mockOnDelete).toHaveBeenCalledWith('msg-1');
+
+    await fireEvent.click(screen.getByText("Delete"));
+    expect(mockOnDelete).toHaveBeenCalledWith("msg-1");
   });
 
-  it('does not show delete button for other user messages', async () => {
+  it("does not show delete button for other user messages", async () => {
     render(
       <MessageBubble
         message={mockMessage}
         isOwn={false}
         onDelete={mockOnDelete}
-      />
+      />,
     );
 
-    const bubble = screen.getByText('Hello, how are you?').closest('div')!;
+    const bubble = screen.getByText("Hello, how are you?").closest("div")!;
     await fireEvent.mouseEnter(bubble);
 
-    expect(screen.queryByText('Delete')).not.toBeInTheDocument();
+    expect(screen.queryByText("Delete")).not.toBeInTheDocument();
   });
 
-  it('renders image message with attachment', () => {
+  it("renders image message with attachment", () => {
     const imageMessage: Message = {
       ...mockMessage,
-      message_type: 'image',
-      attachment_url: 'https://example.com/image.jpg',
+      message_type: "image",
+      attachment_url: "https://example.com/image.jpg",
     };
 
-    render(
-      <MessageBubble
-        message={imageMessage}
-        isOwn={false}
-      />
-    );
+    render(<MessageBubble message={imageMessage} isOwn={false} />);
 
-    const img = screen.getByAltText('Attachment');
+    const img = screen.getByAltText("Attachment");
     expect(img).toBeInTheDocument();
-    expect(img).toHaveAttribute('src', 'https://example.com/image.jpg');
+    expect(img).toHaveAttribute("src", "https://example.com/image.jpg");
   });
 
-  it('renders file attachment with download link', () => {
+  it("renders file attachment with download link", () => {
     const fileMessage: Message = {
       ...mockMessage,
-      message_type: 'file',
-      attachment_url: 'https://example.com/document.pdf',
-      attachment_name: 'document.pdf',
+      message_type: "file",
+      attachment_url: "https://example.com/document.pdf",
+      attachment_name: "document.pdf",
     };
 
-    render(
-      <MessageBubble
-        message={fileMessage}
-        isOwn={false}
-      />
-    );
+    render(<MessageBubble message={fileMessage} isOwn={false} />);
 
-    expect(screen.getByText('document.pdf')).toBeInTheDocument();
-    expect(screen.getByText('Click to download')).toBeInTheDocument();
+    expect(screen.getByText("document.pdf")).toBeInTheDocument();
+    expect(screen.getByText("Click to download")).toBeInTheDocument();
   });
 });
 
@@ -491,185 +453,137 @@ describe('MessageBubble', () => {
 // MessageInput Component Tests
 // ============================================================================
 
-describe('MessageInput', () => {
+describe("MessageInput", () => {
   const mockOnSend = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('renders message input', () => {
-    render(
-      <MessageInput
-        conversationId="conv-1"
-        onSend={mockOnSend}
-      />
-    );
+  it("renders message input", () => {
+    render(<MessageInput conversationId="conv-1" onSend={mockOnSend} />);
 
-    expect(screen.getByPlaceholderText('Type a message...')).toBeInTheDocument();
+    expect(
+      screen.getByPlaceholderText("Type a message..."),
+    ).toBeInTheDocument();
   });
 
-  it('sends text message when send button clicked', async () => {
-    render(
-      <MessageInput
-        conversationId="conv-1"
-        onSend={mockOnSend}
-      />
-    );
+  it("sends text message when send button clicked", async () => {
+    render(<MessageInput conversationId="conv-1" onSend={mockOnSend} />);
 
-    const textarea = screen.getByPlaceholderText('Type a message...');
-    await fireEvent.change(textarea, { target: { value: 'Test message' } });
-    
-    const sendButton = screen.getByRole('button', { name: /send/i });
+    const textarea = screen.getByPlaceholderText("Type a message...");
+    await fireEvent.change(textarea, { target: { value: "Test message" } });
+
+    const sendButton = screen.getByRole("button", { name: /send/i });
     await fireEvent.click(sendButton);
 
     await waitFor(() => {
-      expect(mockOnSend).toHaveBeenCalledWith('Test message', 'text');
+      expect(mockOnSend).toHaveBeenCalledWith("Test message", "text");
     });
   });
 
-  it('sends message when Enter key pressed', async () => {
-    render(
-      <MessageInput
-        conversationId="conv-1"
-        onSend={mockOnSend}
-      />
-    );
+  it("sends message when Enter key pressed", async () => {
+    render(<MessageInput conversationId="conv-1" onSend={mockOnSend} />);
 
-    const textarea = screen.getByPlaceholderText('Type a message...');
-    await fireEvent.change(textarea, { target: { value: 'Test message' } });
-    await fireEvent.keyDown(textarea, { key: 'Enter', code: 'Enter' });
+    const textarea = screen.getByPlaceholderText("Type a message...");
+    await fireEvent.change(textarea, { target: { value: "Test message" } });
+    await fireEvent.keyDown(textarea, { key: "Enter", code: "Enter" });
 
     await waitFor(() => {
-      expect(mockOnSend).toHaveBeenCalledWith('Test message', 'text');
+      expect(mockOnSend).toHaveBeenCalledWith("Test message", "text");
     });
   });
 
-  it('does not send empty message', async () => {
-    render(
-      <MessageInput
-        conversationId="conv-1"
-        onSend={mockOnSend}
-      />
-    );
+  it("does not send empty message", async () => {
+    render(<MessageInput conversationId="conv-1" onSend={mockOnSend} />);
 
-    const sendButton = screen.getByRole('button', { name: /send/i });
+    const sendButton = screen.getByRole("button", { name: /send/i });
     await fireEvent.click(sendButton);
 
     expect(mockOnSend).not.toHaveBeenCalled();
   });
 
-  it('opens file picker when attach button clicked', async () => {
-    render(
-      <MessageInput
-        conversationId="conv-1"
-        onSend={mockOnSend}
-      />
-    );
+  it("opens file picker when attach button clicked", async () => {
+    render(<MessageInput conversationId="conv-1" onSend={mockOnSend} />);
 
-    const attachButton = screen.getByTitle('Attach File');
-    const fileInput = screen.getByTestId('file-input') as HTMLInputElement;
-    
+    const attachButton = screen.getByTitle("Attach File");
+    const fileInput = screen.getByTestId("file-input") as HTMLInputElement;
+
     await fireEvent.click(attachButton);
     expect(fileInput).toBeInTheDocument();
   });
 
-  it('shows emoji picker when emoji button clicked', async () => {
-    render(
-      <MessageInput
-        conversationId="conv-1"
-        onSend={mockOnSend}
-      />
-    );
+  it("shows emoji picker when emoji button clicked", async () => {
+    render(<MessageInput conversationId="conv-1" onSend={mockOnSend} />);
 
-    const emojiButton = screen.getByTitle('Emoji');
+    const emojiButton = screen.getByTitle("Emoji");
     await fireEvent.click(emojiButton);
 
-    expect(screen.getByText('😀')).toBeInTheDocument();
+    expect(screen.getByText("😀")).toBeInTheDocument();
   });
 
-  it('adds emoji to message when selected', async () => {
-    render(
-      <MessageInput
-        conversationId="conv-1"
-        onSend={mockOnSend}
-      />
-    );
+  it("adds emoji to message when selected", async () => {
+    render(<MessageInput conversationId="conv-1" onSend={mockOnSend} />);
 
-    const textarea = screen.getByPlaceholderText('Type a message...');
-    await fireEvent.change(textarea, { target: { value: 'Hello' } });
+    const textarea = screen.getByPlaceholderText("Type a message...");
+    await fireEvent.change(textarea, { target: { value: "Hello" } });
 
-    const emojiButton = screen.getByTitle('Emoji');
+    const emojiButton = screen.getByTitle("Emoji");
     await fireEvent.click(emojiButton);
 
-    const emoji = screen.getByText('😀');
+    const emoji = screen.getByText("😀");
     await fireEvent.click(emoji);
 
-    expect(textarea).toHaveValue('Hello😀');
+    expect(textarea).toHaveValue("Hello😀");
   });
 
-  it('disables send button when disabled prop is true', () => {
+  it("disables send button when disabled prop is true", () => {
     render(
       <MessageInput
         conversationId="conv-1"
         onSend={mockOnSend}
         disabled={true}
-      />
+      />,
     );
 
-    const sendButton = screen.getByRole('button', { name: /send/i });
+    const sendButton = screen.getByRole("button", { name: /send/i });
     expect(sendButton).toBeDisabled();
   });
 
-  it('shows upload spinner when uploading', async () => {
-    render(
-      <MessageInput
-        conversationId="conv-1"
-        onSend={mockOnSend}
-      />
-    );
+  it("shows upload spinner when uploading", async () => {
+    render(<MessageInput conversationId="conv-1" onSend={mockOnSend} />);
 
     // Simulate upload state
-    const attachButton = screen.getByTitle('Attach File');
+    const attachButton = screen.getByTitle("Attach File");
     await fireEvent.click(attachButton);
 
     // Upload spinner should appear
-    expect(screen.getByRole('button')).toHaveTextContent('');
+    expect(screen.getByRole("button")).toHaveTextContent("");
   });
 
-  it('clears message after sending', async () => {
-    render(
-      <MessageInput
-        conversationId="conv-1"
-        onSend={mockOnSend}
-      />
-    );
+  it("clears message after sending", async () => {
+    render(<MessageInput conversationId="conv-1" onSend={mockOnSend} />);
 
-    const textarea = screen.getByPlaceholderText('Type a message...');
-    await fireEvent.change(textarea, { target: { value: 'Test message' } });
-    
-    const sendButton = screen.getByRole('button', { name: /send/i });
+    const textarea = screen.getByPlaceholderText("Type a message...");
+    await fireEvent.change(textarea, { target: { value: "Test message" } });
+
+    const sendButton = screen.getByRole("button", { name: /send/i });
     await fireEvent.click(sendButton);
 
     await waitFor(() => {
-      expect(textarea).toHaveValue('');
+      expect(textarea).toHaveValue("");
     });
   });
 
-  it('supports Shift+Enter for new line', async () => {
-    render(
-      <MessageInput
-        conversationId="conv-1"
-        onSend={mockOnSend}
-      />
-    );
+  it("supports Shift+Enter for new line", async () => {
+    render(<MessageInput conversationId="conv-1" onSend={mockOnSend} />);
 
-    const textarea = screen.getByPlaceholderText('Type a message...');
-    await fireEvent.change(textarea, { target: { value: 'Line 1' } });
-    await fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: true });
+    const textarea = screen.getByPlaceholderText("Type a message...");
+    await fireEvent.change(textarea, { target: { value: "Line 1" } });
+    await fireEvent.keyDown(textarea, { key: "Enter", shiftKey: true });
 
     expect(mockOnSend).not.toHaveBeenCalled();
-    expect(textarea).toHaveValue('Line 1');
+    expect(textarea).toHaveValue("Line 1");
   });
 });
 
@@ -677,8 +591,8 @@ describe('MessageInput', () => {
 // useConversations Hook Tests
 // ============================================================================
 
-describe('useConversations', () => {
-  const mockSupabaseData = {
+describe("useConversations", () => {
+  const mockSupabase = {
     data: [],
     error: null,
   };
@@ -689,11 +603,8 @@ describe('useConversations', () => {
     mockSupabase.error = null;
   });
 
-  it('returns empty array when no user ID', async () => {
-    const { result } = renderHook(
-      () => useConversations(null),
-      { wrapper }
-    );
+  it("returns empty array when no user ID", async () => {
+    const { result } = renderHook(() => useConversations(null), { wrapper });
 
     await waitFor(() => {
       expect(result.current.conversations).toEqual([]);
@@ -701,9 +612,9 @@ describe('useConversations', () => {
     expect(result.current.loading).toBe(false);
   });
 
-  it('fetches conversations successfully', async () => {
+  it("fetches conversations successfully", async () => {
     // Mock Supabase responses for all conversation types
-    (supabase.from as any).mockReturnValue({
+    (supabase.from as unknown as any).mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       in: vi.fn().mockReturnThis(),
@@ -712,18 +623,18 @@ describe('useConversations', () => {
       limit: vi.fn().mockResolvedValue({
         data: [
           {
-            id: 'conv-1',
-            last_message: 'Hello',
-            last_message_at: '2026-03-29T10:00:00Z',
+            id: "conv-1",
+            last_message: "Hello",
+            last_message_at: "2026-03-29T10:00:00Z",
             is_archived: false,
-            context: 'general',
+            context: "general",
             participants: [
               {
-                user_id: 'user-2',
+                user_id: "user-2",
                 user: {
-                  user_id: 'user-2',
-                  full_name: 'John Buyer',
-                  account_type: 'customer',
+                  user_id: "user-2",
+                  full_name: "John Buyer",
+                  account_type: "customer",
                 },
               },
             ],
@@ -734,10 +645,9 @@ describe('useConversations', () => {
       }),
     });
 
-    const { result } = renderHook(
-      () => useConversations('user-1'),
-      { wrapper }
-    );
+    const { result } = renderHook(() => useConversations("user-1"), {
+      wrapper,
+    });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -747,9 +657,9 @@ describe('useConversations', () => {
     expect(result.current.error).toBe(null);
   });
 
-  it('handles fetch error gracefully', async () => {
+  it("handles fetch error gracefully", async () => {
     // Mock Supabase error
-    (supabase.from as any).mockReturnValue({
+    (supabase.from as unknown as any).mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       in: vi.fn().mockReturnThis(),
@@ -757,14 +667,13 @@ describe('useConversations', () => {
       order: vi.fn().mockReturnThis(),
       limit: vi.fn().mockResolvedValue({
         data: null,
-        error: new Error('Failed to fetch'),
+        error: new Error("Failed to fetch"),
       }),
     });
 
-    const { result } = renderHook(
-      () => useConversations('user-1'),
-      { wrapper }
-    );
+    const { result } = renderHook(() => useConversations("user-1"), {
+      wrapper,
+    });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -774,10 +683,10 @@ describe('useConversations', () => {
     expect(result.current.conversations).toEqual([]);
   });
 
-  it('refreshes conversations when refresh called', async () => {
+  it("refreshes conversations when refresh called", async () => {
     let callCount = 0;
-    
-    (supabase.from as any).mockReturnValue({
+
+    (supabase.from as unknown as any).mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       in: vi.fn().mockReturnThis(),
@@ -786,16 +695,15 @@ describe('useConversations', () => {
       limit: vi.fn().mockImplementation(() => {
         callCount++;
         return Promise.resolve({
-          data: callCount === 1 ? [] : [{ id: 'conv-1' }],
+          data: callCount === 1 ? [] : [{ id: "conv-1" }],
           error: null,
         });
       }),
     });
 
-    const { result } = renderHook(
-      () => useConversations('user-1'),
-      { wrapper }
-    );
+    const { result } = renderHook(() => useConversations("user-1"), {
+      wrapper,
+    });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -813,13 +721,13 @@ describe('useConversations', () => {
     });
   });
 
-  it('sets loading state during fetch', async () => {
+  it("sets loading state during fetch", async () => {
     let resolvePromise: any;
     const promise = new Promise((resolve) => {
       resolvePromise = resolve;
     });
 
-    (supabase.from as any).mockReturnValue({
+    (supabase.from as unknown as any).mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       in: vi.fn().mockReturnThis(),
@@ -828,10 +736,9 @@ describe('useConversations', () => {
       limit: vi.fn().mockImplementation(() => promise),
     });
 
-    const { result } = renderHook(
-      () => useConversations('user-1'),
-      { wrapper }
-    );
+    const { result } = renderHook(() => useConversations("user-1"), {
+      wrapper,
+    });
 
     // Should be loading initially
     expect(result.current.loading).toBe(true);
@@ -846,7 +753,10 @@ describe('useConversations', () => {
 });
 
 // Helper for renderHook
-function renderHook<T>(renderCallback: () => T, options: { wrapper: React.ComponentType<{ children: React.ReactNode }> }) {
+function renderHook<T>(
+  renderCallback: () => T,
+  options: { wrapper: React.ComponentType<{ children: React.ReactNode }> },
+) {
   const result = { current: null as T | null };
   let unmount: () => void;
 
@@ -859,7 +769,7 @@ function renderHook<T>(renderCallback: () => T, options: { wrapper: React.Compon
     const { unmount: unmountFn } = render(
       <options.wrapper>
         <TestComponent />
-      </options.wrapper>
+      </options.wrapper>,
     );
 
     unmount = unmountFn;
@@ -875,37 +785,36 @@ function renderHook<T>(renderCallback: () => T, options: { wrapper: React.Compon
 // Integration Tests
 // ============================================================================
 
-describe('Chat System Integration', () => {
+describe("Chat System Integration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it('full chat flow: create conversation → send message → receive message', async () => {
+  it("full chat flow: create conversation → send message → receive message", async () => {
     // Mock conversation creation
     (supabase.rpc as any).mockResolvedValue({
-      data: 'conv-new',
+      data: "conv-new",
       error: null,
     });
 
     // Mock message send
-    (supabase.from as any).mockReturnValue({
+    (supabase.from as unknown as any).mockReturnValue({
       insert: vi.fn().mockReturnThis(),
       select: vi.fn().mockReturnThis(),
       single: vi.fn().mockResolvedValue({
         data: {
-          id: 'msg-new',
-          content: 'Hello!',
-          sender_id: 'user-1',
+          id: "msg-new",
+          content: "Hello!",
+          sender_id: "user-1",
         },
         error: null,
       }),
     });
 
     // Simulate full flow
-    const { result } = renderHook(
-      () => useConversations('user-1'),
-      { wrapper }
-    );
+    const { result } = renderHook(() => useConversations("user-1"), {
+      wrapper,
+    });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);
@@ -915,32 +824,31 @@ describe('Chat System Integration', () => {
     expect(result.current.error).toBe(null);
   });
 
-  it('handles multiple conversation types (general, trading, health, services)', async () => {
+  it("handles multiple conversation types (general, trading, health, services)", async () => {
     // Mock different conversation types
-    (supabase.from as any).mockReturnValue({
+    (supabase.from as unknown as any).mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
       in: vi.fn().mockReturnThis(),
       or: vi.fn().mockReturnThis(),
       order: vi.fn().mockReturnThis(),
-      limit: vi.fn().mockImplementation(async function() {
+      limit: vi.fn().mockImplementation(async function () {
         // Return different data based on table
         return {
           data: [
-            { id: 'conv-1', context: 'general' },
-            { id: 'conv-2', context: 'trading' },
-            { id: 'conv-3', context: 'health' },
-            { id: 'conv-4', context: 'services' },
+            { id: "conv-1", context: "general" },
+            { id: "conv-2", context: "trading" },
+            { id: "conv-3", context: "health" },
+            { id: "conv-4", context: "services" },
           ],
           error: null,
         };
       }),
     });
 
-    const { result } = renderHook(
-      () => useConversations('user-1'),
-      { wrapper }
-    );
+    const { result } = renderHook(() => useConversations("user-1"), {
+      wrapper,
+    });
 
     await waitFor(() => {
       expect(result.current.loading).toBe(false);

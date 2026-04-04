@@ -45,6 +45,7 @@ export function AdminOrders() {
 
   useEffect(() => {
     loadOrders();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [statusFilter]);
 
   const loadOrders = async () => {

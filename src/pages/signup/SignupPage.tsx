@@ -31,7 +31,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
-import { toast } from "sonner";
 
 export function SignupPage() {
   const navigate = useNavigate();
@@ -55,18 +54,6 @@ export function SignupPage() {
       setSelectedRole("customer");
     }
   }, [searchParams]);
-
-  // Helper function to get account type for database
-  const getAccountType = (role: UserRole): string => {
-    const accountTypeMap: Record<UserRole, string> = {
-      customer: "customer",
-      seller: "seller",
-      factory: "factory",
-      delivery: "delivery",
-      middleman: "middleman",
-    };
-    return accountTypeMap[role] || "customer";
-  };
 
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);

@@ -9,10 +9,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Calendar,
-  Clock,
   User,
-  Mail,
-  Phone,
   FileText,
   CheckCircle,
   AlertCircle,
@@ -64,7 +61,8 @@ export default function BookingPage() {
     }));
 
     fetchDoctor();
-  }, [doctorId, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doctorId, user, navigate, searchParams, t]);
 
   const fetchDoctor = async () => {
     try {

@@ -1,6 +1,7 @@
 import { createClient, Session } from "@supabase/supabase-js";
 import { escapeRegExp } from "@/utils/sanitize";
 import { SECURITY_CONFIG } from "@/lib/security";
+import { clearCsrfToken } from "@/lib/csrf";
 
 // ── Supabase Credentials ──────────────────────────────────────
 // NEVER hardcode credentials — they must come from environment variables.
@@ -215,9 +216,10 @@ export const onAuthStateChange = (
 export const clearAuthStorage = () => {
   try {
     // Clear CSRF token
-    const { clearCsrfToken } = require("@/lib/csrf");
     clearCsrfToken();
-  } catch {}
+  } catch (error) {
+    console.error("Error clearing CSRF token:", error);
+  }
 
   // Clear auth cookie
   cookieStorage.removeItem(SECURITY_CONFIG.AUTH_COOKIE_NAME);
@@ -226,7 +228,9 @@ export const clearAuthStorage = () => {
   try {
     sessionStorage.removeItem(SECURITY_CONFIG.AUTH_COOKIE_NAME);
     localStorage.removeItem(SECURITY_CONFIG.AUTH_COOKIE_NAME);
-  } catch {}
+  } catch (error) {
+    console.error("Error clearing session storage:", error);
+  }
 };
 
 /**

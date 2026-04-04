@@ -13,10 +13,7 @@ interface UsePublicProfileReturn {
   refresh: () => Promise<void>;
 }
 
-export const usePublicProfile = (
-  userId: string,
-  accountType?: string, // accountType is optional now since RPC returns everything
-): UsePublicProfileReturn => {
+export const usePublicProfile = (userId: string): UsePublicProfileReturn => {
   const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +58,7 @@ export const usePublicProfile = (
 
   useEffect(() => {
     fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   const refresh = async () => {

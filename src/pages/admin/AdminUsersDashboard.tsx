@@ -121,6 +121,7 @@ export function AdminUsersDashboard() {
     if (!adminLoading && isAdmin) {
       loadUsers();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin, adminLoading, filters]);
 
   const loadUsers = async () => {
@@ -259,19 +260,6 @@ export function AdminUsersDashboard() {
     } else {
       setSelectedUsers(new Set(users.map((u) => u.user_id)));
     }
-  };
-
-  const handleBulkAction = async (action: "verify" | "suspend" | "delete") => {
-    if (selectedUsers.size === 0) {
-      toast.error("Please select users first");
-      return;
-    }
-
-    setConfirmDialog({
-      open: true,
-      action,
-      message: `Are you sure you want to ${action} ${selectedUsers.size} user(s)? This action cannot be undone.`,
-    });
   };
 
   const handleUserAction = async (

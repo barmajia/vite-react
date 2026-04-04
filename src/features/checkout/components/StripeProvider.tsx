@@ -13,16 +13,9 @@ import { createPaymentIntent } from "@/lib/payments";
 interface StripeProviderProps {
   children: React.ReactNode;
   orderId: string;
-  amount?: number; // Optional - will be fetched from order
-  customerEmail?: string;
 }
 
-export function StripeProvider({
-  children,
-  orderId,
-  amount,
-  customerEmail,
-}: StripeProviderProps) {
+export function StripeProvider({ children, orderId }: StripeProviderProps) {
   const [clientSecret, setClientSecret] = useState<string>("");
   const [loading, setLoading] = useState(true);
 

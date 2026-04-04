@@ -6,9 +6,11 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Site flow + lag detection", () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const fuzz = (ms: number) => Math.max(ms, 1);
 
   test("public navigation flow should be responsive", async ({ page }) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const baseURL = page.context().baseURL;
 
     const measureLoad = async (url: string) => {
@@ -34,13 +36,11 @@ test.describe("Site flow + lag detection", () => {
     expect(aboutLatency).toBeLessThan(5000);
     await expect(page).toHaveURL(/\/about/);
 
-    test
-      .info()
-      .annotations.push({
-        type: "latency",
-        description: `home=${homeLatency}ms, products=${productsLatency}ms, categories=${categoriesLatency}ms, about=${aboutLatency}ms`,
-        value: "",
-      });
+    test.info().annotations.push({
+      type: "latency",
+      description: `home=${homeLatency}ms, products=${productsLatency}ms, categories=${categoriesLatency}ms, about=${aboutLatency}ms`,
+      value: "",
+    });
   });
 
   test("auth protected route and chat route smoke test", async ({ page }) => {

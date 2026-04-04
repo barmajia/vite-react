@@ -169,7 +169,7 @@ export function AdminDelivery() {
             ]),
           );
         }
-      } catch (e) {
+      } catch (_e) {
         // Tables don't exist yet - that's OK, we'll use metadata fallback
         console.log("Delivery tables not ready, using metadata fallback");
       }
@@ -212,7 +212,7 @@ export function AdminDelivery() {
       if (!error && data) {
         setDrivers(data);
       }
-    } catch (error) {
+    } catch (_error) {
       // Table might not exist yet
       console.log("delivery_profiles not ready");
     }

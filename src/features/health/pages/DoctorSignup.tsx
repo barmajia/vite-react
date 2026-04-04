@@ -11,7 +11,6 @@ import {
   ArrowLeft,
   ArrowRight,
   Shield,
-  Calendar,
   MapPin,
   Phone,
   Mail,
@@ -199,7 +198,7 @@ const DoctorSignup: React.FC = () => {
       const fileExt = file.name.split(".").pop();
       const fileName = `licenses/${Date.now()}_${Math.random().toString(36).substring(2)}.${fileExt}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("health-documents")
         .upload(fileName, file, {
           cacheControl: "3600",

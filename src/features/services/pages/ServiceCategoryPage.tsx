@@ -17,12 +17,10 @@ import {
   Star,
   CheckCircle2,
   Heart,
-  X,
   Loader2,
   Grid3X3,
   List,
   ChevronDown,
-  MapPin,
   Clock,
   ArrowRight,
   Sparkles,
@@ -133,9 +131,6 @@ export function ServiceCategoryPage() {
   // State
   const [listings, setListings] = useState<ServiceListing[]>([]);
   const [category, setCategory] = useState<Category | null>(null);
-  const [selectedSubcategory, setSelectedSubcategory] = useState<
-    string | undefined
-  >(subcategorySlug);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(
     searchParams.get("search") || "",
@@ -175,11 +170,6 @@ export function ServiceCategoryPage() {
     }
     setLoading(categoryLoading || listingsLoading);
   }, [categoryData, listingsData, categoryLoading, listingsLoading]);
-
-  // Update selected subcategory when URL changes
-  useEffect(() => {
-    setSelectedSubcategory(subcategorySlug);
-  }, [subcategorySlug]);
 
   // ============ Data Fetching ============
   const fetchCategory = useCallback(async (slug: string) => {
@@ -271,7 +261,7 @@ export function ServiceCategoryPage() {
         const from = (pageNum - 1) * ITEMS_PER_PAGE;
         const to = from + ITEMS_PER_PAGE - 1;
 
-        const { data, error, count } = await query.range(from, to);
+        const { data, error, count: _count } = await query.range(from, to);
 
         if (error) throw error;
 
@@ -313,6 +303,7 @@ export function ServiceCategoryPage() {
     if (!loading && category?.id) {
       fetchListings(1);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [category?.id]);
 
   // Real-time subscription for new listings in category

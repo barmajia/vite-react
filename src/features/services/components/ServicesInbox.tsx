@@ -48,6 +48,7 @@ export const ServicesInbox = () => {
       setConversations([]);
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, authLoading]);
 
   const fetchConversations = async () => {
@@ -105,23 +106,45 @@ export const ServicesInbox = () => {
       if (error) throw error;
 
       // Map conversations with other user info
-      const conversationsWithUsers = (convos || []).map((conv) => {
-        // Find the other participant (not the current user)
-        const otherParticipant = conv.participants?.find(
-          (p) => p.user_id !== user.id,
-        );
+      const conversationsWithUsers: ServiceConversation[] = (convos || []).map(
+        (conv: any) => {
+          // Find the other participant (not the current user)
+          const otherParticipant = conv.participants?.find(
+            (p: { user_id: string }) => p.user_id !== user.id,
+          );
 
-        return {
-          ...conv,
-          other_user: otherParticipant
-            ? {
-                id: otherParticipant.user_id,
-                full_name: null,
-                avatar_url: null,
-              }
-            : null,
-        } as ServiceConversation;
-      });
+          // Supabase returns nested relations as arrays, extract first item
+          const product = Array.isArray(conv.product)
+            ? conv.product[0]
+            : conv.product;
+
+          return {
+            id: conv.id,
+            product_id: conv.product_id,
+            created_at: conv.created_at,
+            updated_at: conv.updated_at,
+            last_message: conv.last_message,
+            last_message_at: conv.last_message_at,
+            is_archived: conv.is_archived,
+            other_user: otherParticipant
+              ? {
+                  id: otherParticipant.user_id,
+                  full_name: null,
+                  avatar_url: null,
+                }
+              : null,
+            product: product
+              ? {
+                  id: product.id,
+                  title: product.title,
+                  price: product.price,
+                  status: product.status,
+                }
+              : null,
+            participants: conv.participants || [],
+          };
+        },
+      );
 
       setConversations(conversationsWithUsers);
     } catch (error) {

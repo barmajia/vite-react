@@ -10,8 +10,10 @@ export const Chat = () => {
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [hasSession, setHasSession] = useState(false);
-  const [userName, setUserName] = useState<string | null>(null);
-  const [userUuid, setUserUuid] = useState<string | null>(null);
+   
+  const [_userName, setUserName] = useState<string | null>(null);
+   
+  const [_userUuid, setUserUuid] = useState<string | null>(null);
 
   useEffect(() => {
     const checkSession = async () => {
@@ -42,7 +44,7 @@ export const Chat = () => {
     };
 
     checkSession();
-  }, []);
+  }, [navigate, searchParams]);
 
   if (isLoading) {
     return (

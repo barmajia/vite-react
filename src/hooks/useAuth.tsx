@@ -20,15 +20,6 @@ import {
 } from "@/utils/sanitize";
 import { authRateLimiter, signupRateLimiter } from "@/lib/security";
 
-// Json type for Supabase responses
-type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[];
-
 type SignupMetadata = {
   phone?: string;
   location?: string;
@@ -327,7 +318,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       accountType === "delivery_driver" ? "delivery" : accountType;
 
     try {
-      const { error, data } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email: sanitizedEmail,
         password,
         options: {

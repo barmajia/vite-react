@@ -142,6 +142,7 @@ export function AdminProfileEditor() {
     if (!adminLoading && isAdmin && userId) {
       loadProfileData(userId);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, isAdmin, adminLoading]);
 
   const loadProfileData = async (targetUserId: string) => {

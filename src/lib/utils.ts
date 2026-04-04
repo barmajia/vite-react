@@ -111,16 +111,15 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 }
 
 /**
- * Get Supabase URL from environment or use hardcoded fallback
- * This ensures images work both locally and in production (Vercel)
+ * Get Supabase URL from environment
+ * SECURITY: No hardcoded fallbacks to prevent accidental data leaks
  */
 function getSupabaseUrl(): string {
-  // Try environment variable first
   const envUrl = import.meta.env.VITE_SUPABASE_URL;
   if (envUrl) return envUrl;
 
-  // Hardcoded fallback - this ensures production works even without env vars
-  return "https://ofovfxsfazlwvcakpuer.supabase.co";
+  // SECURITY: No hardcoded fallback - return empty string
+  return "";
 }
 
 /**

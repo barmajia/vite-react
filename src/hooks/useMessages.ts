@@ -44,7 +44,7 @@ export function useMessages({
             avatar_url,
             account_type
           )
-        `
+        `,
         )
         .eq("conversation_id", conversationId)
         .eq("is_deleted", false)
@@ -56,7 +56,7 @@ export function useMessages({
         (data || []).map((msg: any) => ({
           ...msg,
           sender: msg.sender?.[0] || msg.sender,
-        }))
+        })),
       );
 
       // Mark messages as read
@@ -85,7 +85,7 @@ export function useMessages({
         console.error("Error marking messages as read:", err);
       }
     },
-    [currentUserId]
+    [currentUserId],
   );
 
   // Send message
@@ -94,7 +94,7 @@ export function useMessages({
       content: string,
       messageType: "text" | "image" | "file" = "text",
       attachmentUrl?: string,
-      attachmentName?: string
+      attachmentName?: string,
     ): Promise<Message | null> => {
       if (!conversationId || !content.trim()) return null;
 
@@ -125,7 +125,7 @@ export function useMessages({
           conversationId,
           content,
           messageType,
-          context
+          context,
         );
 
         return message;
@@ -137,7 +137,7 @@ export function useMessages({
         setSending(false);
       }
     },
-    [conversationId, context, currentUserId]
+    [conversationId, context, currentUserId],
   );
 
   // Update conversation last message
@@ -146,24 +146,24 @@ export function useMessages({
       convId: string,
       content: string,
       messageType: string,
-      contextType: ConversationContext
+      contextType: ConversationContext,
     ) => {
       try {
         const tableName =
           contextType === "trading"
             ? "trading_conversations"
             : contextType === "health"
-            ? "health_conversations"
-            : contextType === "services"
-            ? "services_conversations"
-            : "conversations";
+              ? "health_conversations"
+              : contextType === "services"
+                ? "services_conversations"
+                : "conversations";
 
         const lastMessage =
           messageType === "image"
             ? "📷 Image"
             : messageType === "file"
-            ? "📎 Attachment"
-            : content.substring(0, 100);
+              ? "📎 Attachment"
+              : content.substring(0, 100);
 
         await supabase
           .from(tableName)
@@ -177,7 +177,7 @@ export function useMessages({
         console.error("Error updating conversation:", err);
       }
     },
-    []
+    [],
   );
 
   // Delete message
@@ -195,15 +195,15 @@ export function useMessages({
 
         setMessages((prev) =>
           prev.map((m) =>
-            m.id === messageId ? { ...m, is_deleted: true } : m
-          )
+            m.id === messageId ? { ...m, is_deleted: true } : m,
+          ),
         );
       } catch (err: any) {
         setError(err.message);
         console.error("Error deleting message:", err);
       }
     },
-    [context]
+    [context],
   );
 
   // Realtime subscription for new messages
@@ -230,7 +230,7 @@ export function useMessages({
           if (newMessage.sender_id !== currentUserId) {
             markMessagesAsRead(conversationId, tableName);
           }
-        }
+        },
       )
       .on(
         "postgres_changes",
@@ -243,10 +243,10 @@ export function useMessages({
         (payload) => {
           setMessages((prev) =>
             prev.map((msg) =>
-              msg.id === payload.new.id ? { ...msg, ...payload.new } : msg
-            )
+              msg.id === payload.new.id ? { ...msg, ...payload.new } : msg,
+            ),
           );
-        }
+        },
       )
       .subscribe();
 
@@ -258,7 +258,7 @@ export function useMessages({
   // Initial fetch
   useEffect(() => {
     fetchMessages();
-  }, [fetchMessages]);
+  }, [fetchMessages, markMessagesAsRead, updateConversationLastMessage]);
 
   return {
     messages,
