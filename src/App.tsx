@@ -118,6 +118,8 @@ import { WalletDashboard } from "@/pages/wallet/WalletDashboard";
 import { TransactionHistory } from "@/pages/wallet/TransactionHistory";
 import { PayoutRequest } from "@/pages/wallet/PayoutRequest";
 import { PayoutHistory } from "@/pages/wallet/PayoutHistory";
+import { WalletSetupPage } from "@/pages/wallet/WalletSetupPage";
+import { WalletSettingsPage } from "@/pages/wallet/WalletSettingsPage";
 
 // ==================== Delivery ====================
 import { DeliveryDashboard } from "@/pages/delivery/DeliveryDashboard";
@@ -127,6 +129,33 @@ import { OrderTracking } from "@/pages/customer/OrderTracking";
 
 // ==================== Seller ====================
 import { CommissionReport } from "@/pages/seller/CommissionReport";
+import { BecomeSellerPage } from "@/pages/seller/BecomeSellerPage";
+import { SellerAnalyticsPage } from "@/pages/seller/SellerAnalyticsPage";
+
+// ==================== Messages ====================
+import { MessagesPage } from "@/pages/messages/MessagesPage";
+
+// ==================== Marketplace ====================
+import { MarketplacePage } from "@/pages/marketplace/MarketplacePage";
+
+// ==================== Shops ====================
+import { TemplateCreatorPage } from "@/pages/shops/TemplateCreatorPage";
+import { ShopDashboard } from "@/pages/shops/ShopDashboard";
+import { ShopPublicPage } from "@/pages/shops/ShopPublicPage";
+import { ProtectedShopsRoute } from "@/components/shop-dashboard/ProtectedShopsRoute";
+import { ShopResolver } from "@/components/shop-dashboard/ShopResolver";
+
+// ==================== Services ====================
+import { ProviderStoriesPage } from "@/pages/services/ProviderStoriesPage";
+
+// ==================== Legal ====================
+import { PrivacyPolicyPage } from "@/pages/legal/PrivacyPolicyPage";
+import { TermsOfServicePage } from "@/pages/legal/TermsOfServicePage";
+import { CookiePolicyPage } from "@/pages/legal/CookiePolicyPage";
+
+// ==================== Health ====================
+import { HealthMessagesPage } from "@/features/health/pages/HealthMessagesPage";
+import { PatientAppointmentsPage } from "@/features/health/pages/PatientAppointmentsPage";
 
 // ==================== Error Pages ====================
 import { NotFound } from "@/pages/errors/NotFound";
@@ -203,6 +232,18 @@ function App() {
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/signup/middleman" element={<MiddlemanSignup />} />
                 <Route path="/auth/callback" element={<AuthCallback />} />
+
+                {/* ==================== SHOP PUBLIC PAGE (No Layout - Standalone Storefront) ==================== */}
+                <Route path="/shops/:slug" element={<ShopPublicPage />} />
+
+                {/* ==================== PROTECTED SHOPS (Auth Required - Dynamic Template Rendering) ==================== */}
+                <Route element={<ProtectedShopsRoute />}>
+                  <Route path="/shops/my-shop" element={<ShopResolver />} />
+                  <Route
+                    path="/shops/setup"
+                    element={<TemplateCreatorPage />}
+                  />
+                </Route>
 
                 {/* ==================== MAIN LAYOUT ROUTES ==================== */}
                 <Route path="/" element={<Layout />}>
@@ -307,6 +348,10 @@ function App() {
                     <Route
                       path="provider/:providerId"
                       element={<ProviderProfilePage />}
+                    />
+                    <Route
+                      path="providers/stories"
+                      element={<ProviderStoriesPage />}
                     />
 
                     {/* Services Dashboard */}
@@ -423,6 +468,22 @@ function App() {
                         path="patient/data-export"
                         element={<DataExport />}
                       />
+                      <Route
+                        path="patient/appointments"
+                        element={
+                          <ProtectedRoute>
+                            <PatientAppointmentsPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path="messages"
+                        element={
+                          <ProtectedRoute>
+                            <HealthMessagesPage />
+                          </ProtectedRoute>
+                        }
+                      />
                     </Route>
                   </Route>
 
@@ -473,6 +534,8 @@ function App() {
                     />
                     <Route path="payouts" element={<PayoutRequest />} />
                     <Route path="payout-history" element={<PayoutHistory />} />
+                    <Route path="setup" element={<WalletSetupPage />} />
+                    <Route path="settings" element={<WalletSettingsPage />} />
                   </Route>
 
                   {/* ==================== DELIVERY VERTICAL ==================== */}
@@ -508,6 +571,16 @@ function App() {
                       element={
                         <ProtectedRoute allowedAccountTypes={["seller"]}>
                           <CommissionReport />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="analytics"
+                      element={
+                        <ProtectedRoute
+                          allowedAccountTypes={["seller", "factory"]}
+                        >
+                          <SellerAnalyticsPage />
                         </ProtectedRoute>
                       }
                     />
@@ -567,13 +640,47 @@ function App() {
                   <Route path="about" element={<About />} />
                   <Route path="contact" element={<Contact />} />
                   <Route path="help" element={<Help />} />
+
+                  {/* ==================== LEGAL PAGES ==================== */}
+                  <Route path="privacy" element={<PrivacyPolicyPage />} />
+                  <Route path="terms" element={<TermsOfServicePage />} />
+                  <Route path="cookies" element={<CookiePolicyPage />} />
+
+                  {/* ==================== MESSAGES ==================== */}
+                  <Route
+                    path="messages"
+                    element={
+                      <ProtectedRoute>
+                        <MessagesPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* ==================== MARKETPLACE ==================== */}
+                  <Route path="marketplace" element={<MarketplacePage />} />
+
+                  {/* ==================== SHOPS ==================== */}
+                  <Route path="shops">
+                    <Route index element={<TemplateCreatorPage />} />
+                    <Route
+                      path="dashboard/*"
+                      element={
+                        <ProtectedRoute>
+                          <ShopDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Route>
+
+                  {/* ==================== BECOME SELLER ==================== */}
+                  <Route path="become-seller" element={<BecomeSellerPage />} />
                 </Route>
 
                 {/* ==================== ADMIN ROUTES (No Layout - Full Screen) ==================== */}
                 <Route
                   path="admin"
                   element={
-                    <ProtectedRoute>
+                    <ProtectedRoute allowedAccountTypes={["admin"]}>
                       <AdminLayout />
                     </ProtectedRoute>
                   }
@@ -616,12 +723,8 @@ function App() {
                     path="analytics"
                     element={<ComingSoon title="Analytics" />}
                   />
-                  <Route
-                    path="settings"
-                    element={<ComingSoon title="Admin Settings" />}
-                  />
                 </Route>
-                <Route path="Chat" element={<Chat />}></Route>
+                <Route path="chat" element={<Chat />} />
 
                 {/* ==================== ERROR ROUTES ==================== */}
                 <Route path="error" element={<ServerError />} />

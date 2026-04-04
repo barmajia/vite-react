@@ -11,7 +11,9 @@
       "Bash(select-object *)",
       "Bash(dir *)",
       "Bash(@echo *)",
-      "Bash(wc *)"
+      "Bash(wc *)",
+      "Bash(del *)",
+      "Bash(mkdir *)"
     ]
   },
   "$version": 3

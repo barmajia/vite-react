@@ -733,7 +733,7 @@ export function ProfilePage() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => navigate("/wallet/payouts/history")}
+                onClick={() => navigate("/wallet/payout-history")}
               >
                 Payout History
               </Button>

@@ -92,8 +92,8 @@ export const SUPPORTED_LANGUAGES = [
     currency: "TRY",
   },
   {
-    code: "eg",
-    name: "Egyptian",
+    code: "ar-EG",
+    name: "Egyptian Arabic",
     nativeName: "المصرية",
     flag: "🇪🇬",
     currency: "EGP",

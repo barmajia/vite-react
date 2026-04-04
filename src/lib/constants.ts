@@ -19,6 +19,8 @@ export const ROUTES = {
   BRAND_PRODUCTS: "/brand/:id",
   SERVICES: "/services",
   SERVICES_ONBOARDING: "/services/onboarding",
+  SHOPS: "/shops",
+  SHOP_TEMPLATE_CREATOR: "/shops",
   ABOUT: "/about",
   CONTACT: "/contact",
   HELP: "/help",

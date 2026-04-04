@@ -28,7 +28,7 @@ export interface UserProfile {
   phone: string | null;
   avatar_url: string | null;
   account_type: AccountType;
-  preferred_language: string; // default 'eg'
+  preferred_language: string; // default 'ar-EG'
   preferred_currency: string; // default 'EGP'
   theme_preference: "light" | "dark" | "system";
   sidebar_state: { collapsed: boolean }; // JSONB
@@ -102,7 +102,7 @@ export function useProfile() {
     full_name: user?.user_metadata?.full_name || "",
     phone: user?.phone || "",
     avatar_url: user?.user_metadata?.avatar_url || "",
-    preferred_language: "eg",
+    preferred_language: "ar-EG",
     preferred_currency: "EGP",
     theme_preference: "light",
     sidebar_collapsed: false,
@@ -138,7 +138,7 @@ export function useProfile() {
           full_name: profile.full_name || prev.full_name,
           phone: profile.phone || prev.phone,
           avatar_url: profile.avatar_url || prev.avatar_url,
-          preferred_language: profile.preferred_language || "eg",
+          preferred_language: profile.preferred_language || "ar-EG",
           preferred_currency: profile.preferred_currency || "EGP",
           theme_preference:
             (profile.theme_preference as "light" | "dark" | "system") ||
