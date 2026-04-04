@@ -9,7 +9,8 @@
       "Bash(npm run *)",
       "Bash(vite *)",
       "Bash(select-object *)",
-      "Bash(dir *)"
+      "Bash(dir *)",
+      "Bash(git rm *)"
     ]
   },
   "$version": 3
