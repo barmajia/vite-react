@@ -15,7 +15,7 @@ import {
 } from "@/components/ui";
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui";
-import { Label } // Removed - use Label component from ui if needed;
+import { Label } from "@/components/ui";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
