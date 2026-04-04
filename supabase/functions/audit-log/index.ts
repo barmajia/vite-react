@@ -7,7 +7,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 // Security event types that should be logged
@@ -63,10 +64,10 @@ serve(async (req) => {
   try {
     // Only accept POST requests
     if (req.method !== "POST") {
-      return new Response(
-        JSON.stringify({ error: "Method not allowed" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 405 }
-      );
+      return new Response(JSON.stringify({ error: "Method not allowed" }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 405,
+      });
     }
 
     // Parse request body
@@ -76,11 +77,14 @@ serve(async (req) => {
     // Validate required fields
     if (!event || !severity || !description) {
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: "Missing required fields",
-          required: ["event", "severity", "description"]
+          required: ["event", "severity", "description"],
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        },
       );
     }
 
@@ -88,28 +92,34 @@ serve(async (req) => {
     const validSeverities = ["low", "medium", "high", "critical"];
     if (!validSeverities.includes(severity)) {
       return new Response(
-        JSON.stringify({ 
+        JSON.stringify({
           error: "Invalid severity level",
-          valid: validSeverities
+          valid: validSeverities,
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 400,
+        },
       );
     }
 
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    
+
     if (!supabaseUrl || !supabaseServiceKey) {
       console.error("Missing Supabase credentials");
       return new Response(
         JSON.stringify({ error: "Server configuration error" }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 500,
+        },
       );
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false }
+      auth: { persistSession: false },
     });
 
     // Extract user information from auth header if present
@@ -118,7 +128,9 @@ serve(async (req) => {
     if (authHeader) {
       const token = authHeader.replace("Bearer ", "");
       try {
-        const { data: { user } } = await supabase.auth.getUser(token);
+        const {
+          data: { user },
+        } = await supabase.auth.getUser(token);
         userId = user?.id;
       } catch (error) {
         // Token might be invalid or expired - continue without user info
@@ -127,7 +139,7 @@ serve(async (req) => {
     }
 
     // Extract IP address from headers (may be set by proxy/load balancer)
-    const ipAddress = 
+    const ipAddress =
       req.headers.get("X-Forwarded-For")?.split(",")[0]?.trim() ||
       req.headers.get("X-Real-IP") ||
       "unknown";
@@ -158,15 +170,18 @@ serve(async (req) => {
     if (rateLimitData && rateLimitData.count > 100) {
       // Too many audit logs from this IP - log to console but don't store
       console.warn(`Rate limit exceeded for audit logs from IP: ${ipAddress}`);
-      
+
       // Still return success to client to avoid errors
       return new Response(
-        JSON.stringify({ 
-          success: true, 
+        JSON.stringify({
+          success: true,
           message: "Audit logged (rate limited)",
-          rate_limited: true
+          rate_limited: true,
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        },
       );
     }
 
@@ -179,23 +194,23 @@ serve(async (req) => {
 
     if (error) {
       console.error("Error storing audit log:", error);
-      
+
       // If table doesn't exist, create it on the fly (first-time setup)
       if (error.code === "42P01") {
         console.log("Audit logs table doesn't exist, creating...");
         await createAuditLogsTable(supabase);
-        
+
         // Retry insert
         const retryResult = await supabase
           .from("audit_logs")
           .insert(auditEntry)
           .select()
           .single();
-        
+
         if (retryResult.error) {
           throw retryResult.error;
         }
-        
+
         data = retryResult.data;
       } else {
         throw error;
@@ -215,9 +230,11 @@ serve(async (req) => {
         severity,
         timestamp: data?.created_at,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      },
     );
-
   } catch (error) {
     console.error("Error in audit-log function:", error);
     return new Response(
@@ -226,7 +243,10 @@ serve(async (req) => {
         error: error.message,
         details: error.toString(),
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      },
     );
   }
 });
@@ -234,35 +254,8 @@ serve(async (req) => {
 /**
  * Create audit_logs table if it doesn't exist
  */
-async function createAuditLogsTable(supabase: any) {
-  const createTableSQL = `
-    CREATE TABLE IF NOT EXISTS audit_logs (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      event TEXT NOT NULL,
-      user_id UUID REFERENCES auth.users(id),
-      ip_address TEXT,
-      user_agent TEXT,
-      severity TEXT NOT NULL CHECK (severity IN ('low', 'medium', 'high', 'critical')),
-      description TEXT NOT NULL,
-      metadata JSONB DEFAULT '{}',
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    );
-    
-    CREATE INDEX IF NOT EXISTS idx_audit_logs_event ON audit_logs(event);
-    CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON audit_logs(user_id);
-    CREATE INDEX IF NOT EXISTS idx_audit_logs_severity ON audit_logs(severity);
-    CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs(created_at DESC);
-    CREATE INDEX IF NOT EXISTS idx_audit_logs_ip_address ON audit_logs(ip_address);
-    
-    ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
-    
-    -- Only service role can access audit logs
-    CREATE POLICY "audit_logs_service_only" ON audit_logs FOR ALL TO service_role USING (true);
-    CREATE POLICY "audit_logs_no_user_access" ON audit_logs FOR SELECT TO authenticated USING (false);
-  `;
-
-  // Execute SQL via Supabase RPC or direct connection
-  // Note: This is a simplified approach - in production, use a migration
+async function createAuditLogsTable(_supabase: any) {
+  // Note: Table creation should be done via migrations in production
   console.log("Creating audit_logs table...");
 }
 
@@ -305,7 +298,7 @@ async function getAdminUserId(supabase: any): Promise<string | null> {
       .eq("is_active", true)
       .limit(1)
       .single();
-    
+
     return data?.user_id || null;
   } catch {
     return null;

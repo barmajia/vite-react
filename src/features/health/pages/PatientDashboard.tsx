@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { supabaseHealth } from "../api/supabaseHealth";
 import type { HealthAppointment, HealthPatientProfile } from "../types";
 
 const PatientDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState<HealthAppointment[]>([]);
   const [patientProfile, setPatientProfile] =
     useState<HealthPatientProfile | null>(null);
@@ -108,9 +110,7 @@ const PatientDashboard: React.FC = () => {
               No upcoming appointments
             </p>
             <button
-              onClick={() =>
-                (window.location.href = "/services/health/doctors")
-              }
+              onClick={() => navigate("/services/health/doctors")}
               className="mt-4 text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300"
             >
               Book a doctor →
@@ -163,7 +163,7 @@ const PatientDashboard: React.FC = () => {
                 <div className="mt-4 flex gap-2">
                   <button
                     onClick={() =>
-                      (window.location.href = `/services/health/consult/${appt.id}`)
+                      navigate(`/services/health/consult/${appt.id}`)
                     }
                     className="text-violet-600 dark:text-violet-400 hover:text-violet-700 dark:hover:text-violet-300 text-sm font-medium"
                   >

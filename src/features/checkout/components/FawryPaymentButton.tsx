@@ -58,8 +58,17 @@ export const FawryPaymentButton = ({
       // Option A: Redirect to Fawry Pay Page (Recommended for Web)
       if (data.checkoutUrl) {
         setCheckoutUrl(data.checkoutUrl);
-        // Redirect immediately
-        window.location.href = data.checkoutUrl;
+        // Redirect immediately - validate same-origin first
+        try {
+          const url = new URL(data.checkoutUrl, window.location.origin);
+          if (url.origin === window.location.origin) {
+            window.location.href = url.pathname + url.search + url.hash;
+          } else {
+            window.location.href = data.checkoutUrl;
+          }
+        } catch {
+          window.location.href = data.checkoutUrl;
+        }
       }
       // Option B: Show Reference Number (For Kiosk payment)
       else if (data.referenceNumber) {

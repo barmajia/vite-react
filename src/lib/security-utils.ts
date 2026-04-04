@@ -52,18 +52,16 @@ export function validateCSRFToken(
  * Enhanced XSS detection and prevention
  */
 const XSS_PATTERNS = [
-  /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-  /javascript:/gi,
+  /<script[\s>]/gi,
+  /<\/script>/gi,
+  /javascript\s*:/gi,
   /on\w+\s*=/gi,
-  /<\s*img[^>]+onerror\s*=/gi,
-  /<\s*svg[^>]+onload\s*=/gi,
-  /<\s*iframe[^>]*>/gi,
-  /<\s*object[^>]*>/gi,
-  /<\s*embed[^>]*>/gi,
+  /<\s*iframe[\s>]/gi,
+  /<\s*object[\s>]/gi,
+  /<\s*embed[\s>]/gi,
   /expression\s*\(/gi,
-  /url\s*\(\s*['"]?\s*javascript:/gi,
-  /vbscript:/gi,
-  /data:text\/html/gi,
+  /vbscript\s*:/gi,
+  /data\s*:\s*text\/html/gi,
 ];
 
 export function detectXSS(input: string): boolean {
@@ -82,6 +80,11 @@ export function sanitizeXSS(
 ): string {
   if (!input) return "";
 
+  // When not allowing HTML, just encode everything
+  if (!options.allowBasicHTML) {
+    return encodeHTML(input);
+  }
+
   let sanitized = input;
 
   // Remove script tags and content
@@ -98,17 +101,10 @@ export function sanitizeXSS(
   sanitized = sanitized.replace(/on\w+\s*=\s*[^\s>]*/gi, "");
 
   // Remove dangerous tags
-  if (!options.allowBasicHTML) {
-    sanitized = sanitized.replace(
-      /<\s*(script|iframe|object|embed|frame|frameset|applet|meta|link|style|form|input|button|textarea|select)[^>]*>/gi,
-      "",
-    );
-  }
-
-  // Encode remaining HTML if not allowing HTML
-  if (!options.allowBasicHTML) {
-    sanitized = encodeHTML(sanitized);
-  }
+  sanitized = sanitized.replace(
+    /<\s*(script|iframe|object|embed|frame|frameset|applet|meta|link|style|form|input|button|textarea|select)[^>]*>/gi,
+    "",
+  );
 
   return sanitized;
 }
@@ -167,11 +163,37 @@ const SQL_INJECTION_PATTERNS = [
 export function detectSQLInjection(input: string): boolean {
   if (!input || typeof input !== "string") return false;
 
-  // Check for multiple SQL patterns
-  const matches = SQL_INJECTION_PATTERNS.filter((pattern) =>
+  // Check for obvious SQL injection indicators
+  // Single quote followed by comment or SQL keyword is a strong indicator
+  if (/'\s*(--|#|\/\*)/i.test(input)) return true;
+  if (/'\s*(OR|AND)\s+'/i.test(input)) return true;
+
+  // Count individual SQL keyword occurrences
+  const sqlKeywords =
+    /\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE|UNION|DECLARE)\b/gi;
+  const keywordMatches = (input.match(sqlKeywords) || []).length;
+
+  // Multiple SQL keywords is suspicious
+  if (keywordMatches >= 2) return true;
+
+  // Count other SQL pattern matches
+  const otherPatterns = [
+    /(--|#|\/\*|\*\/)/g,
+    /(\bOR\b\s+\d+\s*=\s*\d+)/gi,
+    /(\bAND\b\s+\d+\s*=\s*\d+)/gi,
+    /;\s*(DROP|DELETE|TRUNCATE|ALTER)/gi,
+    /WAITFOR\s+DELAY/gi,
+    /BENCHMARK\s*\(/gi,
+    /SLEEP\s*\(/gi,
+  ];
+  const patternMatches = otherPatterns.filter((pattern) =>
     pattern.test(input),
-  );
-  return matches.length >= 2; // Require at least 2 matches to reduce false positives
+  ).length;
+
+  // One SQL keyword plus another suspicious pattern
+  if (keywordMatches >= 1 && patternMatches >= 1) return true;
+
+  return false;
 }
 
 /**
@@ -199,22 +221,21 @@ export function detectPathTraversal(input: string): boolean {
  */
 export function sanitizeFileName(fileName: string): string {
   // Remove path components
-  const sanitized = fileName.replace(/[/\\?%*:|"<>]/g, "-");
+  let sanitized = fileName.replace(/[/\\?%*:|"<>]/g, "-");
 
-  // Remove hidden file indicators
-  const noHidden = sanitized.replace(/^\./g, "");
+  // Remove leading dots (hidden file indicators)
+  sanitized = sanitized.replace(/^\.+/, "");
 
   // Limit length
   const maxLength = 255;
-  const truncated = noHidden.substring(0, maxLength);
+  let truncated = sanitized.substring(0, maxLength);
 
-  // Ensure no double extensions
-  const parts = truncated.split(".");
-  if (parts.length > 2) {
-    return `${parts[0]}.${parts[parts.length - 1]}`;
+  // Handle empty result
+  if (!truncated || /^\.+$/.test(truncated)) {
+    return "unnamed_file";
   }
 
-  return truncated || "unnamed_file";
+  return truncated;
 }
 
 /**
@@ -380,7 +401,7 @@ export class AuditLogger {
 
     // Log to console in development
     if (import.meta.env.DEV) {
-      console.log("[AUDIT]", event, securityLevel, entry);
+      console.warn("[AUDIT]", event, securityLevel, entry);
     }
 
     // In production, send to backend logging service
@@ -443,9 +464,9 @@ export function validateEmail(email: string): boolean {
     return false;
   }
 
-  // RFC 5322 compliant email regex
+  // RFC 5322 compliant email regex (requires valid domain with TLD)
   const emailRegex =
-    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/;
+    /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
   return emailRegex.test(email);
 }

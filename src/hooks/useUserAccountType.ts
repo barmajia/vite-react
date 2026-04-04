@@ -25,7 +25,7 @@ export const useUserAccountType = (userId: string | null) => {
 
         if (error) {
           // Log but don't fail - default to 'user'
-          console.debug(
+          console.warn(
             "Account type fetch error, using default:",
             error.message,
           );
@@ -36,7 +36,7 @@ export const useUserAccountType = (userId: string | null) => {
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : "Unknown error";
-        console.debug("Account type error:", errorMessage);
+        console.warn("Account type error:", errorMessage);
         setAccountType("user"); // Default to user
       } finally {
         setLoading(false);

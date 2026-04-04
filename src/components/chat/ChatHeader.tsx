@@ -88,7 +88,6 @@ export function ChatHeader({
     e.preventDefault();
     if (searchQuery.trim()) {
       // Navigate to search within chats or filter conversations
-      console.log("Searching chats for:", searchQuery);
     }
   };
 

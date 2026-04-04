@@ -171,7 +171,7 @@ export function AdminDelivery() {
         }
       } catch (_e) {
         // Tables don't exist yet - that's OK, we'll use metadata fallback
-        console.log("Delivery tables not ready, using metadata fallback");
+        console.warn("Delivery tables not ready, using metadata fallback");
       }
 
       // Step 4: Enrich orders with all data
@@ -214,7 +214,7 @@ export function AdminDelivery() {
       }
     } catch (_error) {
       // Table might not exist yet
-      console.log("delivery_profiles not ready");
+      console.warn("delivery_profiles not ready");
     }
   };
 

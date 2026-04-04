@@ -137,8 +137,6 @@ export function AdminProductNew() {
         is_local_brand: formData.is_local_brand,
       };
 
-      console.log("📤 Inserting product:", insertData);
-
       const { data, error } = await supabase
         .from("products")
         .insert(insertData)
@@ -165,7 +163,6 @@ export function AdminProductNew() {
         return;
       }
 
-      console.log("✅ Product created:", data);
       toast.success("Product created successfully!");
 
       setTimeout(() => {

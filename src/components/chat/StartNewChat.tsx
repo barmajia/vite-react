@@ -75,11 +75,8 @@ export function StartNewChat({ open, onOpenChange }: StartNewChatProps) {
   useEffect(() => {
     const run = async () => {
       if (!currentUserId) {
-        console.log("No current user ID available");
         return;
       }
-
-      console.log("Fetching account_type for user:", currentUserId);
 
       // Get account_type from public.users (now properly synced by triggers)
       const { data: profileData, error: profileError } = await supabase
@@ -101,10 +98,6 @@ export function StartNewChat({ open, onOpenChange }: StartNewChatProps) {
         user?.user_metadata?.account_type ||
         "customer";
 
-      console.log("Current user account_type:", accountType, {
-        fromDB: profileData?.account_type,
-        fromMeta: user?.user_metadata?.account_type,
-      });
       setCurrentUserAccountType(accountType);
     };
 
@@ -116,25 +109,17 @@ export function StartNewChat({ open, onOpenChange }: StartNewChatProps) {
     const abortController = new AbortController();
 
     const searchUsers = async () => {
-      console.log("Search triggered:", {
-        query: searchQuery,
-        queryLength: searchQuery?.length,
-        hasUser: !!currentUserId,
-      });
-
       if (!searchQuery.trim() || searchQuery.length < 2 || !currentUserId) {
         setSearchResults([]);
         return;
       }
 
-      console.log("Starting search for:", searchQuery);
       setIsSearching(true);
 
       try {
         const q = searchQuery.trim();
 
         // Try new search_users() RPC first
-        console.log("Attempting search_users RPC with query:", q);
         const { data: rpcResults, error: rpcError } = await supabase.rpc(
           "search_users",
           {
@@ -145,12 +130,6 @@ export function StartNewChat({ open, onOpenChange }: StartNewChatProps) {
         );
 
         if (!rpcError && rpcResults && rpcResults.length > 0) {
-          console.log(
-            "✓ RPC search successful, found:",
-            rpcResults.length,
-            "users",
-          );
-
           const mappedResults: UserResult[] = rpcResults.map((r: any) => ({
             id: r.id,
             user_id: r.user_id,
@@ -171,7 +150,6 @@ export function StartNewChat({ open, onOpenChange }: StartNewChatProps) {
         }
 
         // FALLBACK: Direct query to public.users table (works before SQL applied)
-        console.log("Using fallback direct query...");
         const { data: directResults, error: directError } = await supabase
           .from("users")
           .select("id, user_id, email, full_name, avatar_url, account_type")
@@ -185,12 +163,6 @@ export function StartNewChat({ open, onOpenChange }: StartNewChatProps) {
           setSearchResults([]);
           return;
         }
-
-        console.log(
-          "✓ Direct query successful, found:",
-          directResults?.length || 0,
-          "users",
-        );
 
         const mappedResults: UserResult[] = (directResults || []).map(
           (r: any) => ({
@@ -229,13 +201,6 @@ export function StartNewChat({ open, onOpenChange }: StartNewChatProps) {
     setIsCreating(true);
 
     try {
-      console.log(
-        "Creating conversation between",
-        currentUserId,
-        "and",
-        selectedUser.user_id,
-      );
-
       // Try new get_or_create_direct_conversation_v2 RPC first
       let conversationId: string | null = null;
       const { data: rpcData, error: rpcError } = await supabase.rpc(
@@ -250,7 +215,6 @@ export function StartNewChat({ open, onOpenChange }: StartNewChatProps) {
       );
 
       if (!rpcError && rpcData?.success) {
-        console.log("✓ RPC conversation creation successful");
         conversationId = rpcData.conversation_id;
       } else if (rpcError) {
         console.warn(
@@ -306,7 +270,6 @@ export function StartNewChat({ open, onOpenChange }: StartNewChatProps) {
 
           if (partError) throw partError;
 
-          console.log("✓ Fallback conversation creation successful");
           conversationId = newConversationId;
         } catch (fallbackError) {
           console.error(
@@ -320,8 +283,6 @@ export function StartNewChat({ open, onOpenChange }: StartNewChatProps) {
       if (!conversationId) {
         throw new Error("Failed to create or find conversation");
       }
-
-      console.log("Conversation ready:", conversationId);
 
       // Navigate with query params
       onOpenChange(false);

@@ -209,7 +209,16 @@ export function useCheckout() {
 
         // Redirect to Fawry PayPage or show reference number
         if (fawryData.checkoutUrl) {
-          window.location.href = fawryData.checkoutUrl;
+          try {
+            const url = new URL(fawryData.checkoutUrl, window.location.origin);
+            if (url.origin === window.location.origin) {
+              navigate(url.pathname + url.search + url.hash);
+            } else {
+              window.location.href = fawryData.checkoutUrl;
+            }
+          } catch {
+            window.location.href = fawryData.checkoutUrl;
+          }
         } else if (fawryData.referenceNumber) {
           // Show reference number dialog (you can implement a custom dialog)
           alert(

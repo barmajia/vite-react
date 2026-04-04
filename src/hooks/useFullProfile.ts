@@ -31,6 +31,10 @@ export function useFullProfile(userId?: string) {
             avatar_url: authUser?.user_metadata?.avatar_url || null,
             account_type:
               (authUser?.user_metadata?.account_type as any) || "user",
+            preferred_language: "eg",
+            preferred_currency: "EGP",
+            theme_preference: "light" as const,
+            sidebar_state: { collapsed: false },
             created_at: authUser?.created_at || new Date().toISOString(),
             updated_at: new Date().toISOString(),
             location: null,

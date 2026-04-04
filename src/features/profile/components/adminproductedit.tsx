@@ -70,10 +70,9 @@ export function AdminProductEdit() {
   useEffect(() => {
     const getUser = async () => {
       if (!user) {
-        console.warn("⚠️ User not authenticated, waiting...");
+        console.warn("User not authenticated, waiting...");
         return;
       }
-      console.log("✅ Authenticated user:", user.id);
       setCurrentUser(user.id);
 
       // Check if user is admin by checking admin_users table
@@ -85,11 +84,6 @@ export function AdminProductEdit() {
 
       const isUserAdmin = !!adminData;
       setIsAdmin(isUserAdmin);
-      console.log(
-        "👑 Is admin:",
-        isUserAdmin,
-        adminData ? "(found in admin_users)" : "(not in admin_users table)",
-      );
 
       fetchProduct();
     };
@@ -100,8 +94,6 @@ export function AdminProductEdit() {
   // 2️⃣ Fetch product - Admin can view any product
   const fetchProduct = async () => {
     try {
-      console.log("🔍 Fetching product:", id);
-
       const { data, error } = await supabase
         .from("products")
         .select("*")
@@ -110,7 +102,7 @@ export function AdminProductEdit() {
         .single();
 
       if (error) {
-        console.error("❌ Supabase fetch error:", error);
+        console.error("Supabase fetch error:", error);
         if (error.code === "PGRST116") {
           toast.error("Product not found or has been deleted");
         } else {
@@ -126,21 +118,11 @@ export function AdminProductEdit() {
         return;
       }
 
-      console.log("✅ Product loaded:", data);
-      console.log("👤 Product seller_id:", data.seller_id);
-      console.log("👤 Current user:", currentUser);
-      console.log("🖼️ Raw images from DB:", data.images);
-      console.log(
-        "🖼️ Images type:",
-        typeof data.images,
-        Array.isArray(data.images),
-      );
-
       // Normalize images to handle both string[] and object[] formats
       const normalizeImages = (raw: any) => {
         if (!raw) return [];
         if (!Array.isArray(raw)) {
-          console.warn("⚠️ Images is not an array:", raw);
+          console.warn("Images is not an array:", raw);
           return [];
         }
         return raw
@@ -183,7 +165,7 @@ export function AdminProductEdit() {
         is_local_brand: data.is_local_brand || false,
       });
     } catch (err) {
-      console.error("💥 Unexpected error fetching product:", err);
+      console.error("Unexpected error fetching product:", err);
       toast.error("Failed to load product");
       navigate("/admin/products");
     } finally {
@@ -242,12 +224,11 @@ export function AdminProductEdit() {
 
     if (!currentUser) {
       toast.error("Authentication required");
-      console.error("❌ Cannot save: User not authenticated");
+      console.error("Cannot save: User not authenticated");
       return;
     }
 
     setSaving(true);
-    console.log("💾 Saving product:", id, "isAdmin:", isAdmin);
 
     try {
       const updateData = {
@@ -269,8 +250,6 @@ export function AdminProductEdit() {
         updated_at: new Date().toISOString(),
       };
 
-      console.log("📤 Update data:", updateData);
-
       // Build update query
       let updateQuery = supabase
         .from("products")
@@ -280,16 +259,13 @@ export function AdminProductEdit() {
       // Only apply seller_id filter for non-admins
       if (!isAdmin) {
         updateQuery = updateQuery.eq("seller_id", currentUser);
-        console.log("🔒 Non-admin: filtering by seller_id");
-      } else {
-        console.log("👑 Admin: bypassing seller_id filter");
       }
 
-      // ✅ Execute with minimal select to avoid 406 + confirm success
+      // Execute with minimal select to avoid 406 + confirm success
       const { data, error } = await updateQuery.select("id").maybeSingle();
 
       if (error) {
-        console.error("❌ Supabase update error:", error);
+        console.error("Supabase update error:", error);
 
         if (error.code === "42501" || error.message?.includes("policy")) {
           toast.error("Permission denied: Check RLS policies");
@@ -303,20 +279,19 @@ export function AdminProductEdit() {
 
       if (!data) {
         console.warn(
-          "⚠️ Update returned no data - check RLS or product existence",
+          "Update returned no data - check RLS or product existence",
         );
         toast.error("Product not found or permission denied");
         return;
       }
 
-      console.log("✅ Update successful:", data);
       toast.success("Product updated successfully!");
 
       setTimeout(() => {
         navigate("/admin/products");
       }, 1000);
     } catch (err) {
-      console.error("💥 JavaScript error:", err);
+      console.error("JavaScript error:", err);
       toast.error("Unexpected error: " + (err as Error).message);
     } finally {
       setSaving(false);

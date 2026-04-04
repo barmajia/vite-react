@@ -25,16 +25,10 @@ export const useConversations = (currentUserId: string) => {
       setError(null);
 
       // STEP 1: Get conversation IDs user participates in (SIMPLE QUERY)
-      console.log("Fetching conversations for user:", currentUserId);
       const { data: participantData, error: participantError } = await supabase
         .from("conversation_participants")
         .select("conversation_id")
         .eq("user_id", currentUserId);
-
-      console.log("Participant query result:", {
-        data: participantData,
-        error: participantError,
-      });
 
       if (participantError) {
         console.error("Participant query error:", participantError);
@@ -44,10 +38,7 @@ export const useConversations = (currentUserId: string) => {
       const conversationIds =
         participantData?.map((p) => p.conversation_id) || [];
 
-      console.log("Conversation IDs found:", conversationIds.length);
-
       if (conversationIds.length === 0) {
-        console.log("No conversations found for this user");
         setConversations([]);
         setLoading(false);
         return;

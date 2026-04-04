@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import {
   supabaseHealth,
@@ -9,6 +9,7 @@ import {
 import type { HealthAppointment, HealthDoctorProfile } from "../types";
 
 const DoctorDashboard: React.FC = () => {
+  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [doctorProfile, setDoctorProfile] =
     useState<HealthDoctorProfile | null>(null);
@@ -70,9 +71,7 @@ const DoctorDashboard: React.FC = () => {
           You need to create a doctor profile to access the dashboard.
         </p>
         <button
-          onClick={() =>
-            (window.location.href = "/services/health/doctor/signup")
-          }
+          onClick={() => navigate("/services/health/doctor/signup")}
           className="bg-violet-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-violet-700"
         >
           Create Profile
@@ -261,7 +260,7 @@ const DoctorDashboard: React.FC = () => {
                       </button>
                       <button
                         onClick={() =>
-                          (window.location.href = `/services/health/consult/${appt.id}`)
+                          navigate(`/services/health/consult/${appt.id}`)
                         }
                         className="bg-violet-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-violet-700"
                       >
@@ -272,7 +271,7 @@ const DoctorDashboard: React.FC = () => {
                   {appt.status === "completed" && (
                     <button
                       onClick={() =>
-                        (window.location.href = `/services/health/consult/${appt.id}`)
+                        navigate(`/services/health/consult/${appt.id}`)
                       }
                       className="bg-gray-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700"
                     >

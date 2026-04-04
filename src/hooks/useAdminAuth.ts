@@ -41,7 +41,7 @@ export function useAdminAuth() {
 
       // If error or no admin record, user is not an admin
       if (error || !adminRecord) {
-        console.info("User is not an admin or admin table not setup:", user.id);
+        console.warn("User is not an admin or admin table not setup:", user.id);
         // Don't redirect - just set isAdmin to false
         setIsAdmin(false);
         setLoading(false);

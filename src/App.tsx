@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Outlet } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { AuthProvider } from "@/hooks/useAuth";
 import { PreferencesProvider } from "@/context/PreferencesContext";
@@ -360,6 +360,7 @@ function App() {
 
                     {/* ==================== HEALTHCARE SUB-VERTICAL ==================== */}
                     <Route path="health" element={<HealthLayout />}>
+                      {/* Public pages - NO protection */}
                       <Route index element={<HealthLanding />} />
                       <Route path="doctors" element={<DoctorList />} />
                       <Route path="doctor/signup" element={<DoctorSignup />} />
@@ -367,24 +368,51 @@ function App() {
                         path="doctor/pending-approval"
                         element={<DoctorPendingApproval />}
                       />
-                      <Route path="book/:id" element={<BookingPage />} />
+                      <Route path="pharmacies" element={<PharmacyList />} />
+
+                      {/* Protected pages - REQUIRE auth */}
+                      <Route
+                        path="book/:id"
+                        element={
+                          <ProtectedRoute>
+                            <BookingPage />
+                          </ProtectedRoute>
+                        }
+                      />
                       <Route
                         path="patient/dashboard"
-                        element={<PatientDashboard />}
+                        element={
+                          <ProtectedRoute>
+                            <PatientDashboard />
+                          </ProtectedRoute>
+                        }
                       />
                       <Route
                         path="doctor/dashboard"
-                        element={<DoctorDashboard />}
+                        element={
+                          <ProtectedRoute
+                            allowedAccountTypes={["doctor", "admin"]}
+                          >
+                            <DoctorDashboard />
+                          </ProtectedRoute>
+                        }
                       />
                       <Route
                         path="admin/verify"
-                        element={<AdminVerification />}
+                        element={
+                          <ProtectedRoute allowedAccountTypes={["admin"]}>
+                            <AdminVerification />
+                          </ProtectedRoute>
+                        }
                       />
                       <Route
                         path="consult/:id"
-                        element={<ConsultationRoom />}
+                        element={
+                          <ProtectedRoute>
+                            <ConsultationRoom />
+                          </ProtectedRoute>
+                        }
                       />
-                      <Route path="pharmacies" element={<PharmacyList />} />
 
                       {/* Healthcare Compliance */}
                       <Route
@@ -399,7 +427,14 @@ function App() {
                   </Route>
 
                   {/* ==================== MIDDLEMAN VERTICAL ==================== */}
-                  <Route path="middleman">
+                  <Route
+                    path="middleman"
+                    element={
+                      <ProtectedRoute allowedAccountTypes={["middleman"]}>
+                        <Outlet />
+                      </ProtectedRoute>
+                    }
+                  >
                     <Route index element={<MiddlemanDashboard />} />
                     <Route path="dashboard" element={<MiddlemanDashboard />} />
                     <Route path="deals" element={<MiddlemanDeals />} />
@@ -479,7 +514,14 @@ function App() {
                   </Route>
 
                   {/* ==================== FACTORY VERTICAL ==================== */}
-                  <Route path="factory">
+                  <Route
+                    path="factory"
+                    element={
+                      <ProtectedRoute allowedAccountTypes={["factory"]}>
+                        <Outlet />
+                      </ProtectedRoute>
+                    }
+                  >
                     <Route index element={<FactoryDashboardPage />} />
                     <Route
                       path="production"
@@ -490,14 +532,7 @@ function App() {
                       path="connections"
                       element={<FactoryConnectionsPage />}
                     />
-                    <Route
-                      path="start-chat"
-                      element={
-                        <ProtectedRoute>
-                          <FactoryStartChat />
-                        </ProtectedRoute>
-                      }
-                    />
+                    <Route path="start-chat" element={<FactoryStartChat />} />
                   </Route>
 
                   {/* ==================== PROFILE & SOCIAL (Cross-Vertical) ==================== */}
@@ -535,7 +570,14 @@ function App() {
                 </Route>
 
                 {/* ==================== ADMIN ROUTES (No Layout - Full Screen) ==================== */}
-                <Route path="admin" element={<AdminLayout />}>
+                <Route
+                  path="admin"
+                  element={
+                    <ProtectedRoute>
+                      <AdminLayout />
+                    </ProtectedRoute>
+                  }
+                >
                   <Route index element={<AdminDashboard />} />
                   <Route path="users" element={<AdminUsersDashboard />} />
                   <Route path="users/:userId" element={<AdminUserDetail />} />

@@ -126,7 +126,9 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
       if (error) {
         // 406 means columns don't exist - silently use localStorage
         if (error.code === "406" || error.message.includes("Cannot coerce")) {
-          console.log("Database preferences not available, using localStorage");
+          console.warn(
+            "Database preferences not available, using localStorage",
+          );
         } else {
           console.warn("Database preference error:", error.message);
         }
@@ -150,7 +152,7 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
       // Silently fail - localStorage preferences will be used
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
-      console.debug("Using localStorage preferences:", errorMessage);
+      console.warn("Using localStorage preferences:", errorMessage);
     }
   };
 

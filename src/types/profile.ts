@@ -25,6 +25,10 @@ export interface UserProfile {
   phone: string | null;
   avatar_url: string | null;
   account_type: AccountType;
+  preferred_language: string;
+  preferred_currency: string;
+  theme_preference: "light" | "dark" | "system";
+  sidebar_state: { collapsed: boolean };
   created_at: string;
   updated_at: string;
   // Additional fields from sellers/factories tables

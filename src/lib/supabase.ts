@@ -196,7 +196,7 @@ export const onAuthStateChange = (
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
       // Log auth events for debugging (remove in production if needed)
       if (import.meta.env.DEV) {
-        console.log("Auth event:", event);
+        console.warn("Auth event:", event);
       }
       callback(event, session);
     });

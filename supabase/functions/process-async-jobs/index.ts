@@ -7,11 +7,12 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
 };
 
 // Job types supported by the queue
-type JobType = 
+type JobType =
   | "send_email"
   | "generate_pdf"
   | "process_image"
@@ -49,13 +50,13 @@ serve(async (req) => {
     // Initialize Supabase client with SERVICE ROLE
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-    
+
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error("Missing Supabase credentials");
     }
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey, {
-      auth: { persistSession: false }
+      auth: { persistSession: false },
     });
 
     // Get queue name from query params (default: "default")
@@ -86,7 +87,10 @@ serve(async (req) => {
           queue: queueName,
           processed: 0,
         }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+        {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 200,
+        },
       );
     }
 
@@ -127,12 +131,12 @@ serve(async (req) => {
         results.success++;
         results.jobs.push({ id: job.id, status: "completed" });
         console.log(`Job ${job.id} completed successfully`);
-
       } catch (error) {
         console.error(`Job ${job.id} failed:`, error);
-        
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        
+
+        const errorMessage =
+          error instanceof Error ? error.message : "Unknown error";
+
         // Check if we should retry
         const maxRetries = job.payload.max_retries || 3;
         const newAttempts = job.attempts + 1;
@@ -153,12 +157,14 @@ serve(async (req) => {
             })
             .eq("id", job.id);
 
-          results.jobs.push({ 
-            id: job.id, 
-            status: "retry_scheduled", 
+          results.jobs.push({
+            id: job.id,
+            status: "retry_scheduled",
             error: errorMessage,
           });
-          console.log(`Job ${job.id} scheduled for retry at ${nextAttempt.toISOString()}`);
+          console.log(
+            `Job ${job.id} scheduled for retry at ${nextAttempt.toISOString()}`,
+          );
         } else {
           // Max retries exceeded - mark as failed
           await supabase
@@ -172,8 +178,12 @@ serve(async (req) => {
             .eq("id", job.id);
 
           results.failed++;
-          results.jobs.push({ id: job.id, status: "failed", error: errorMessage });
-          
+          results.jobs.push({
+            id: job.id,
+            status: "failed",
+            error: errorMessage,
+          });
+
           // Log failed job for manual review
           await supabase.from("audit_logs").insert({
             event: "JOB_FAILED",
@@ -198,9 +208,11 @@ serve(async (req) => {
         processed: results.total,
         results,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      },
     );
-
   } catch (error) {
     console.error("Error in process-async-jobs:", error);
     return new Response(
@@ -209,7 +221,10 @@ serve(async (req) => {
         error: error.message,
         details: error.toString(),
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      },
     );
   }
 });
@@ -224,39 +239,39 @@ async function executeJob(supabase: any, job: AsyncJob) {
     case "send_email":
       await executeSendEmail(supabase, data);
       break;
-    
+
     case "send_notification":
       await executeSendNotification(supabase, data);
       break;
-    
+
     case "generate_pdf":
       await executeGeneratePdf(supabase, data);
       break;
-    
+
     case "process_image":
       await executeProcessImage(supabase, data);
       break;
-    
+
     case "sync_inventory":
       await executeSyncInventory(supabase, data);
       break;
-    
+
     case "export_data":
       await executeExportData(supabase, data);
       break;
-    
+
     case "cleanup_data":
       await executeCleanupData(supabase, data);
       break;
-    
+
     case "webhook_delivery":
       await executeWebhookDelivery(supabase, data);
       break;
-    
+
     case "analytics_update":
       await executeAnalyticsUpdate(supabase, data);
       break;
-    
+
     default:
       throw new Error(`Unknown job type: ${type}`);
   }
@@ -266,11 +281,11 @@ async function executeJob(supabase: any, job: AsyncJob) {
  * Send email job
  */
 async function executeSendEmail(supabase: any, data: Record<string, unknown>) {
-  const { to, subject, body, html } = data;
-  
+  const { to, subject, body: _body, html: _html } = data;
+
   // In production, integrate with SendGrid, Resend, or AWS SES
   console.log(`Sending email to ${to}: ${subject}`);
-  
+
   // Example with Resend API:
   // const resendKey = Deno.env.get("RESEND_API_KEY");
   // await fetch("https://api.resend.com/emails", {
@@ -291,9 +306,12 @@ async function executeSendEmail(supabase: any, data: Record<string, unknown>) {
 /**
  * Send notification job
  */
-async function executeSendNotification(supabase: any, data: Record<string, unknown>) {
+async function executeSendNotification(
+  supabase: any,
+  data: Record<string, unknown>,
+) {
   const { user_id, title, message, type, metadata } = data;
-  
+
   await supabase.from("notifications").insert({
     user_id,
     type: type || "system",
@@ -307,12 +325,15 @@ async function executeSendNotification(supabase: any, data: Record<string, unkno
 /**
  * Generate PDF job (invoices, reports, etc.)
  */
-async function executeGeneratePdf(supabase: any, data: Record<string, unknown>) {
-  const { type, orderId, userId } = data;
-  
+async function executeGeneratePdf(
+  supabase: any,
+  data: Record<string, unknown>,
+) {
+  const { type, orderId, userId: _userId } = data;
+
   // In production, use a PDF generation library or service
   console.log(`Generating PDF: ${type} for order ${orderId}`);
-  
+
   // Example: Generate invoice PDF and upload to Supabase Storage
   // const pdfBytes = await generateInvoicePDF(orderId);
   // await supabase.storage.from("invoices").upload(`invoice_${orderId}.pdf`, pdfBytes);
@@ -321,22 +342,28 @@ async function executeGeneratePdf(supabase: any, data: Record<string, unknown>) 
 /**
  * Process image job (resize, optimize, etc.)
  */
-async function executeProcessImage(supabase: any, data: Record<string, unknown>) {
-  const { imageUrl, operations } = data;
-  
+async function executeProcessImage(
+  supabase: any,
+  data: Record<string, unknown>,
+) {
+  const { imageUrl, operations: _operations } = data;
+
   console.log(`Processing image: ${imageUrl}`);
-  
+
   // In production, use Imgix, Cloudinary, or Sharp
 }
 
 /**
  * Sync inventory job
  */
-async function executeSyncInventory(supabase: any, data: Record<string, unknown>) {
-  const { sellerId, products } = data;
-  
+async function executeSyncInventory(
+  supabase: any,
+  data: Record<string, unknown>,
+) {
+  const { sellerId, products: _products } = data;
+
   console.log(`Syncing inventory for seller ${sellerId}`);
-  
+
   // Update product quantities based on external system
 }
 
@@ -345,9 +372,9 @@ async function executeSyncInventory(supabase: any, data: Record<string, unknown>
  */
 async function executeExportData(supabase: any, data: Record<string, unknown>) {
   const { userId, exportType } = data;
-  
+
   console.log(`Exporting data for user ${userId}: ${exportType}`);
-  
+
   // Gather user data and create export file
   // Upload to storage and send download link via email
 }
@@ -355,22 +382,28 @@ async function executeExportData(supabase: any, data: Record<string, unknown>) {
 /**
  * Cleanup data job
  */
-async function executeCleanupData(supabase: any, data: Record<string, unknown>) {
+async function executeCleanupData(
+  supabase: any,
+  data: Record<string, unknown>,
+) {
   const { targetType, olderThan } = data;
-  
+
   console.log(`Cleaning up ${targetType} older than ${olderThan}`);
-  
+
   // Delete old temporary data
 }
 
 /**
  * Webhook delivery job
  */
-async function executeWebhookDelivery(supabase: any, data: Record<string, unknown>) {
+async function executeWebhookDelivery(
+  supabase: any,
+  data: Record<string, unknown>,
+) {
   const { url, payload, headers } = data;
-  
+
   console.log(`Delivering webhook to ${url}`);
-  
+
   await fetch(url as string, {
     method: "POST",
     headers: headers as Record<string, string>,
@@ -381,11 +414,14 @@ async function executeWebhookDelivery(supabase: any, data: Record<string, unknow
 /**
  * Analytics update job
  */
-async function executeAnalyticsUpdate(supabase: any, data: Record<string, unknown>) {
-  const { sellerId, period } = data;
-  
+async function executeAnalyticsUpdate(
+  supabase: any,
+  data: Record<string, unknown>,
+) {
+  const { sellerId, period: _period } = data;
+
   console.log(`Updating analytics for seller ${sellerId}`);
-  
+
   // Call analytics function to refresh materialized views
   // await supabase.rpc("refresh_seller_analytics", { seller_id: sellerId });
 }

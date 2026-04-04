@@ -3,7 +3,6 @@
  * Tests for XSS, SQL injection, CSRF, and other security functions
  */
 
-import { describe, it, expect, vi } from "vitest";
 import {
   generateSecureToken,
   generateCSRFToken,
@@ -69,9 +68,10 @@ describe("Security Utilities", () => {
     });
 
     it("should reject expired tokens", () => {
-      const token = generateCSRFToken();
-      // Token is 1 hour old (3600000ms)
-      expect(validateCSRFToken(token, 1000)).toBe(false);
+      // Create a token with an old timestamp (1 hour ago)
+      const oldTimestamp = Date.now() - 3600000;
+      const oldToken = `${oldTimestamp}.${"a".repeat(64)}`;
+      expect(validateCSRFToken(oldToken, 1000)).toBe(false);
     });
 
     it("should reject invalid tokens", () => {
@@ -162,7 +162,9 @@ describe("Security Utilities", () => {
     it("should encode multiple characters", () => {
       const input = "<script>&\"'</script>";
       const encoded = encodeHTML(input);
-      expect(encoded).toBe("&lt;script&gt;&amp;&quot;&#39;&lt;/script&gt;");
+      expect(encoded).toBe(
+        "&lt;script&gt;&amp;&quot;&#39;&lt;&#x2F;script&gt;",
+      );
     });
 
     it("should handle empty string", () => {
@@ -350,7 +352,7 @@ describe("Security Utilities", () => {
     });
 
     it("should mask SSN", () => {
-      expect(maskSensitiveData("123-45-6789", "ssn")).toBe("***-**6789");
+      expect(maskSensitiveData("123-45-6789", "ssn")).toBe("***-**-6789");
     });
   });
 

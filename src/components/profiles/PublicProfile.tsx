@@ -2,6 +2,7 @@
 // Universal Public Profile Component for all account types
 
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { usePublicProfile } from "../../hooks/usePublicProfile";
 import { PROFILE_CONFIG } from "../../lib/profileConfig";
 import { AccountType, ProfileTab } from "../../types/public-profile";
@@ -63,6 +64,7 @@ export const PublicProfile: React.FC<PublicProfileProps> = ({
   currentUserId,
   className = "",
 }) => {
+  const navigate = useNavigate();
   const { profile, loading, error } = usePublicProfile(userId, accountType);
   const [activeTab, setActiveTab] = useState<ProfileTab>("overview");
 
@@ -138,7 +140,7 @@ export const PublicProfile: React.FC<PublicProfileProps> = ({
       return (
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => (window.location.href = `/profile/${userId}/edit`)}
+            onClick={() => navigate(`/profile/${userId}/edit`)}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             <Edit size={18} />

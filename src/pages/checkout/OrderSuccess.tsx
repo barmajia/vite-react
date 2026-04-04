@@ -1,7 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { CheckCircle, Copy, Shield, Truck, Package, Home } from 'lucide-react';
-import { toast } from 'sonner';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { CheckCircle, Copy, Shield, Truck, Package, Home } from "lucide-react";
+import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface OrderSuccessProps {
   orderId: string;
@@ -9,10 +10,15 @@ interface OrderSuccessProps {
   total: number;
 }
 
-export default function OrderSuccess({ orderId, verificationCode, total }: OrderSuccessProps) {
+export default function OrderSuccess({
+  orderId,
+  verificationCode,
+  total,
+}: OrderSuccessProps) {
+  const navigate = useNavigate();
   const copyCode = () => {
     navigator.clipboard.writeText(verificationCode);
-    toast.success('Verification code copied!');
+    toast.success("Verification code copied!");
   };
 
   return (
@@ -23,7 +29,9 @@ export default function OrderSuccess({ orderId, verificationCode, total }: Order
 
       <div>
         <h2 className="text-2xl font-bold">Order Placed Successfully!</h2>
-        <p className="text-gray-600">Order ID: {orderId.slice(0, 8).toUpperCase()}...</p>
+        <p className="text-gray-600">
+          Order ID: {orderId.slice(0, 8).toUpperCase()}...
+        </p>
       </div>
 
       {/* Verification Code Card */}
@@ -47,7 +55,9 @@ export default function OrderSuccess({ orderId, verificationCode, total }: Order
           </Button>
 
           <div className="text-sm text-blue-800 space-y-2">
-            <p>⚠️ <strong>Important:</strong></p>
+            <p>
+              ⚠️ <strong>Important:</strong>
+            </p>
             <ul className="text-left list-disc list-inside space-y-1">
               <li>Save this code safely</li>
               <li>Share with delivery driver upon arrival</li>
@@ -68,7 +78,9 @@ export default function OrderSuccess({ orderId, verificationCode, total }: Order
               <ol className="text-sm text-gray-600 list-decimal list-inside space-y-1">
                 <li>Seller prepares your order</li>
                 <li>Driver picks up and delivers</li>
-                <li>You pay cash: <strong>{total.toFixed(2)} EGP</strong></li>
+                <li>
+                  You pay cash: <strong>{total.toFixed(2)} EGP</strong>
+                </li>
                 <li>Give verification code to driver</li>
                 <li>Driver verifies code in app</li>
                 <li>Order marked as delivered ✅</li>
@@ -92,11 +104,15 @@ export default function OrderSuccess({ orderId, verificationCode, total }: Order
 
       {/* Action Buttons */}
       <div className="flex gap-4">
-        <Button onClick={() => window.location.href = '/orders'} className="flex-1">
+        <Button onClick={() => navigate("/orders")} className="flex-1">
           <Package className="h-4 w-4 mr-2" />
           Track Order
         </Button>
-        <Button onClick={() => window.location.href = '/'} variant="outline" className="flex-1">
+        <Button
+          onClick={() => navigate("/")}
+          variant="outline"
+          className="flex-1"
+        >
           <Home className="h-4 w-4 mr-2" />
           Continue Shopping
         </Button>

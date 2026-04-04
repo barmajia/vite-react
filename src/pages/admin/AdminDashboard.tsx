@@ -2,6 +2,7 @@
 // Admin Dashboard - Main analytics and platform overview
 
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -61,6 +62,7 @@ interface TopSeller {
 }
 
 export function AdminDashboard() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
@@ -365,7 +367,7 @@ export function AdminDashboard() {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => (window.location.href = "/admin/orders")}
+              onClick={() => navigate("/admin/orders")}
             >
               <Eye className="h-4 w-4 mr-2" />
               View All
