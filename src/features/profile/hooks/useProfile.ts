@@ -122,23 +122,7 @@ export function useProfile() {
       // Fetch from users table (RLS: users can view own profile)
       const { data: profile, error: profileError } = await supabase
         .from("users")
-        .select(
-          `
-          id,
-          user_id,
-          email,
-          full_name,
-          phone,
-          avatar_url,
-          account_type,
-          preferred_language,
-          preferred_currency,
-          theme_preference,
-          sidebar_state,
-          created_at,
-          updated_at
-        `,
-        )
+        .select("*")
         .eq("user_id", userId)
         .maybeSingle();
 
@@ -179,19 +163,7 @@ export function useProfile() {
     try {
       const { data: seller, error } = await supabase
         .from("sellers")
-        .select(
-          `
-          user_id,
-          location,
-          bio,
-          allow_product_chats,
-          allow_custom_requests,
-          store_name,
-          is_verified,
-          latitude,
-          longitude
-        `,
-        )
+        .select("*")
         .eq("user_id", userId)
         .maybeSingle();
 
