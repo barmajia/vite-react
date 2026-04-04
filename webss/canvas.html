@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, user-scalable=no"
+    />
+    <title>Database Schema Canvas – Interactive ER Diagram</title>
+    <!-- vis-network styles and script -->
+    <script
+      type="text/javascript"
+      src="https://unpkg.com/vis-network@9.1.2/dist/vis-network.min.js"
+    ></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        overflow: hidden;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      .toolbar {
+        background: #1e293b;
+        color: white;
+        padding: 12px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        z-index: 10;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+      }
+      .toolbar h1 {
+        font-size: 1.3rem;
+        font-weight: 500;
+      }
+      .toolbar button {
+        background: #3b82f6;
+        border: none;
+        padding: 6px 14px;
+        border-radius: 30px;
+        color: white;
+        cursor: pointer;
+        font-size: 0.8rem;
+        transition: background 0.2s;
+      }
+      .toolbar button:hover {
+        background: #2563eb;
+      }
+      .toolbar a {
+        display: inline-block;
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+        text-decoration: none;
+        padding: 6px 14px;
+        border-radius: 30px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+      }
+      .toolbar a:hover {
+        background: linear-gradient(135deg, #059669, #047857);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.4);
+      }
+      .legend {
+        background: rgba(0, 0, 0, 0.7);
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        padding: 10px 15px;
+        border-radius: 12px;
+        color: white;
+        font-size: 0.7rem;
+        backdrop-filter: blur(4px);
+        z-index: 20;
+        pointer-events: none;
+      }
+      .legend span {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 2px;
+        margin-right: 6px;
+      }
+      #network {
+        width: 100%;
+        height: 100%;
+        background: #f8fafc;
+        flex: 1;
+      }
+      .node-detail {
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        width: 280px;
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+        padding: 15px;
+        display: none;
+        z-index: 30;
+        border-left: 5px solid #3b82f6;
+        pointer-events: auto;
+      }
+      .node-detail h4 {
+        margin-bottom: 8px;
+        color: #0f172a;
+      }
+      .node-detail ul {
+        margin-left: 18px;
+        font-size: 0.8rem;
+        color: #334155;
+      }
+      .node-detail button {
+        margin-top: 10px;
+        background: #e2e8f0;
+        border: none;
+        padding: 4px 12px;
+        border-radius: 20px;
+        cursor: pointer;
+        font-size: 0.7rem;
+      }
+      .close-detail {
+        float: right;
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: #64748b;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="toolbar">
+      <h1>🗄️ Database Schema Canvas — ER Diagram (interactive)</h1>
+      <div style="display: flex; gap: 10px; align-items: center">
+        <button id="fitBtn">🔍 Fit to screen</button>
+        <button id="resetBtn">🔄 Reset view</button>
+        <a href="index.html">📋 Schema Explorer</a>
+      </div>
+    </div>
+    <div id="network"></div>
+    <div class="legend">
+      <span style="background: #3b82f6"></span> Core &nbsp;&nbsp;
+      <span style="background: #10b981"></span> Commerce &nbsp;&nbsp;
+      <span style="background: #f59e0b"></span> FK Edge &nbsp;&nbsp;
+      <span style="background: #8b5cf6"></span> Payment &nbsp;&nbsp;
+      <span style="background: #ef4444"></span> Health &nbsp;&nbsp;
+      <span style="background: #06b6d4"></span> Services &nbsp;&nbsp;
+      <span style="background: #ec4899"></span> Delivery
+    </div>
+    <div id="nodeDetail" class="node-detail">
+      <button
+        class="close-detail"
+        onclick="document.getElementById('nodeDetail').style.display = 'none'"
+      >
+        ×
+      </button>
+      <h4 id="detailTitle">Table</h4>
+      <div id="detailColumns"></div>
+      <button
+        onclick="document.getElementById('nodeDetail').style.display = 'none'"
+      >
+        Close
+      </button>
+    </div>
+
+    <script>
+      // ------------------------------------------------------------------
+      // 1. Define nodes (tables) with columns and display labels
+      // ------------------------------------------------------------------
+      const tables = [
+        {
+          id: "users",
+          label: "users",
+          columns: [
+            "id (PK)",
+            "user_id (FK→auth.users)",
+            "email",
+            "full_name",
+            "phone",
+            "account_type",
+            "created_at",
+            "updated_at",
+          ],
+          group: "core",
+        },
+        {
+          id: "sellers",
+          label: "sellers",
+          columns: [
+            "user_id (PK/FK)",
+            "email",
+            "full_name",
+            "location",
+            "currency",
+            "is_verified",
+            "latitude",
+            "longitude",
+            "is_factory",
+            "wholesale_discount",
+          ],
+          group: "core",
+        },
+        {
+          id: "products",
+          label: "products",
+          columns: [
+            "id (PK)",
+            "asin (unique)",
+            "seller_id (FK)",
+            "title",
+            "description",
+            "brand",
+            "price",
+            "quantity",
+            "status",
+            "category",
+            "subcategory",
+            "images (jsonb)",
+          ],
+          group: "commerce",
+        },
+        {
+          id: "orders",
+          label: "orders",
+          columns: [
+            "id (PK)",
+            "user_id (FK)",
+            "seller_id (FK)",
+            "status",
+            "subtotal",
+            "total",
+            "payment_method",
+            "payment_status",
+            "delivery_id (FK)",
+            "deal_id (FK)",
+            "delivery_status",
+          ],
+          group: "commerce",
+        },
+        {
+          id: "order_items",
+          label: "order_items",
+          columns: [
+            "id (PK)",
+            "order_id (FK)",
+            "product_id (FK)",
+            "asin",
+            "product_name",
+            "quantity",
+            "unit_price",
+            "total_price",
+          ],
+          group: "commerce",
+        },
+        {
+          id: "sales",
+          label: "sales",
+          columns: [
+            "id (PK)",
+            "seller_id (FK)",
+            "customer_id (FK)",
+            "product_id (FK)",
+            "quantity",
+            "unit_price",
+            "total_price",
+            "sale_date",
+          ],
+          group: "analytics",
+        },
+        {
+          id: "customers",
+          label: "customers",
+          columns: [
+            "id (PK)",
+            "user_id (FK)",
+            "name",
+            "phone",
+            "email",
+            "total_orders",
+            "total_spent",
+            "last_purchase_date",
+          ],
+          group: "core",
+        },
+        {
+          id: "delivery_profiles",
+          label: "delivery_profiles",
+          columns: [
+            "user_id (PK/FK)",
+            "vehicle_type",
+            "vehicle_number",
+            "is_verified",
+            "is_active",
+            "latitude",
+            "longitude",
+            "rating",
+            "commission_rate",
+          ],
+          group: "delivery",
+        },
+        {
+          id: "delivery_assignments",
+          label: "delivery_assignments",
+          columns: [
+            "id (PK)",
+            "order_id (FK)",
+            "driver_id (FK)",
+            "assigned_at",
+            "picked_up_at",
+            "delivered_at",
+            "status",
+            "delivery_fee",
+          ],
+          group: "delivery",
+        },
+        {
+          id: "deals",
+          label: "deals",
+          columns: [
+            "id (PK)",
+            "middleman_id (FK)",
+            "party_a_id (FK)",
+            "party_b_id (FK)",
+            "product_id (FK)",
+            "commission_rate",
+            "status",
+          ],
+          group: "commerce",
+        },
+        {
+          id: "conversations",
+          label: "conversations",
+          columns: [
+            "id (PK)",
+            "product_id (FK)",
+            "last_message",
+            "last_message_at",
+            "is_archived",
+          ],
+          group: "social",
+        },
+        {
+          id: "conversation_participants",
+          label: "conv_participants",
+          columns: [
+            "id (PK)",
+            "conversation_id (FK)",
+            "user_id (FK)",
+            "role",
+            "last_read_message_id (FK)",
+          ],
+          group: "social",
+        },
+        {
+          id: "messages",
+          label: "messages",
+          columns: [
+            "id (PK)",
+            "conversation_id (FK)",
+            "sender_id (FK)",
+            "content",
+            "message_type",
+            "attachment_url",
+            "is_deleted",
+            "read_at",
+          ],
+          group: "social",
+        },
+        {
+          id: "reviews",
+          label: "reviews",
+          columns: [
+            "id (PK)",
+            "user_id (FK)",
+            "asin",
+            "order_id (FK)",
+            "rating",
+            "comment",
+            "is_verified_purchase",
+          ],
+          group: "commerce",
+        },
+        {
+          id: "cart",
+          label: "cart",
+          columns: ["id (PK)", "user_id (FK)", "asin", "quantity"],
+          group: "commerce",
+        },
+        {
+          id: "wishlist",
+          label: "wishlist",
+          columns: ["id (PK)", "user_id (FK)", "asin"],
+          group: "commerce",
+        },
+        {
+          id: "shipping_addresses",
+          label: "shipping_addresses",
+          columns: [
+            "id (PK)",
+            "user_id (FK)",
+            "full_name",
+            "address_line1",
+            "city",
+            "postal_code",
+            "country",
+            "phone",
+            "is_default",
+          ],
+          group: "commerce",
+        },
+        {
+          id: "notifications",
+          label: "notifications",
+          columns: [
+            "id (PK)",
+            "user_id (FK)",
+            "type",
+            "title",
+            "message",
+            "is_read",
+            "metadata",
+          ],
+          group: "system",
+        },
+        {
+          id: "analytics_snapshots",
+          label: "analytics_snapshots",
+          columns: [
+            "id (PK)",
+            "seller_id (FK)",
+            "period_type",
+            "period_start",
+            "period_end",
+            "analytics_data",
+            "is_current",
+          ],
+          group: "analytics",
+        },
+        {
+          id: "factory_connections",
+          label: "factory_connections",
+          columns: [
+            "id (PK)",
+            "factory_id (FK→sellers)",
+            "seller_id (FK→sellers)",
+            "status",
+            "requested_at",
+            "accepted_at",
+          ],
+          group: "commerce",
+        },
+        {
+          id: "factory_ratings",
+          label: "factory_ratings",
+          columns: [
+            "id (PK)",
+            "factory_id (FK)",
+            "seller_id (FK)",
+            "rating",
+            "delivery_rating",
+            "quality_rating",
+            "communication_rating",
+          ],
+          group: "commerce",
+        },
+        {
+          id: "categories",
+          label: "categories",
+          columns: ["id (PK)", "name", "parent_id (FK)", "slug", "is_active"],
+          group: "catalog",
+        },
+        {
+          id: "subcategories",
+          label: "subcategories",
+          columns: ["id (PK)", "category_id (FK)", "name", "attribute_schema"],
+          group: "catalog",
+        },
+        {
+          id: "payment_intentions",
+          label: "payment_intentions",
+          columns: [
+            "id (PK)",
+            "order_id (FK)",
+            "user_id (FK)",
+            "amount",
+            "status",
+            "payment_intent_id",
+          ],
+          group: "payment",
+        },
+        {
+          id: "business_profiles",
+          label: "business_profiles",
+          columns: [
+            "user_id (PK/FK)",
+            "role (enum)",
+            "company_name",
+            "location",
+            "latitude",
+            "longitude",
+            "currency",
+            "is_verified",
+          ],
+          group: "core",
+        },
+        {
+          id: "user_wallets",
+          label: "user_wallets",
+          columns: [
+            "id (PK)",
+            "user_id (unique FK)",
+            "available_balance",
+            "total_earned",
+            "total_spent",
+            "currency",
+            "updated_at",
+          ],
+          group: "payment",
+        },
+        {
+          id: "wallet_transactions",
+          label: "wallet_transactions",
+          columns: [
+            "id (PK)",
+            "user_id (FK)",
+            "transaction_type",
+            "amount",
+            "description",
+            "reference_type",
+            "reference_id",
+            "balance_after",
+          ],
+          group: "payment",
+        },
+        {
+          id: "commissions",
+          label: "commissions",
+          columns: [
+            "id (PK)",
+            "middle_man_id (FK)",
+            "order_id (FK)",
+            "deal_id (FK)",
+            "amount",
+            "commission_rate",
+            "status",
+          ],
+          group: "payment",
+        },
+        {
+          id: "middle_men",
+          label: "middle_men",
+          columns: [
+            "user_id (PK/FK)",
+            "pending_earnings",
+            "total_earnings",
+            "verified",
+            "created_at",
+          ],
+          group: "commerce",
+        },
+        {
+          id: "middle_man_deals",
+          label: "middle_man_deals",
+          columns: [
+            "id (PK)",
+            "middle_man_id (FK)",
+            "product_asin",
+            "commission_rate",
+            "margin_amount",
+            "conversions",
+            "total_revenue",
+          ],
+          group: "commerce",
+        },
+        {
+          id: "deal_proposals",
+          label: "deal_proposals",
+          columns: [
+            "id (PK)",
+            "proposer_id (FK)",
+            "target_user_id (FK)",
+            "product_id (FK)",
+            "proposed_commission",
+            "status",
+            "message",
+          ],
+          group: "commerce",
+        },
+        {
+          id: "svc_providers",
+          label: "svc_providers",
+          columns: [
+            "id (PK)",
+            "user_id (FK)",
+            "category (enum)",
+            "title",
+            "description",
+            "hourly_rate",
+            "engagement_model (enum)",
+            "rating",
+            "is_verified",
+          ],
+          group: "services",
+        },
+        {
+          id: "service_bookings",
+          label: "service_bookings",
+          columns: [
+            "id (PK)",
+            "customer_id (FK)",
+            "provider_id (FK)",
+            "booking_date",
+            "status",
+            "agreed_price",
+            "completion_notes",
+          ],
+          group: "services",
+        },
+        {
+          id: "booking_milestones",
+          label: "booking_milestones",
+          columns: [
+            "id (PK)",
+            "booking_id (FK)",
+            "title",
+            "amount",
+            "status",
+            "completed_at",
+          ],
+          group: "services",
+        },
+        {
+          id: "health_doctor_profiles",
+          label: "health_doctor_profiles",
+          columns: [
+            "user_id (PK/FK)",
+            "specialization",
+            "license_number",
+            "experience_years",
+            "consultation_fee",
+            "rating",
+            "is_available",
+          ],
+          group: "health",
+        },
+        {
+          id: "health_patient_profiles",
+          label: "health_patients",
+          columns: [
+            "user_id (PK/FK)",
+            "date_of_birth",
+            "blood_type",
+            "allergies (jsonb)",
+            "chronic_conditions (jsonb)",
+            "emergency_contact (jsonb)",
+          ],
+          group: "health",
+        },
+        {
+          id: "health_medicines",
+          label: "health_medicines",
+          columns: [
+            "id (PK)",
+            "pharmacy_id (FK)",
+            "name",
+            "generic_name",
+            "brand",
+            "dosage_form",
+            "strength",
+            "price",
+            "quantity_in_stock",
+            "requires_prescription",
+          ],
+          group: "health",
+        },
+        {
+          id: "health_prescriptions_digital",
+          label: "health_prescriptions",
+          columns: [
+            "id (PK)",
+            "doctor_id (FK)",
+            "patient_id (FK)",
+            "diagnosis",
+            "notes",
+            "status",
+            "valid_until",
+          ],
+          group: "health",
+        },
+        {
+          id: "health_appointments",
+          label: "health_appointments",
+          columns: [
+            "id (PK)",
+            "doctor_id (FK)",
+            "patient_id (FK)",
+            "appointment_date",
+            "status",
+            "consultation_type",
+            "notes",
+          ],
+          group: "health",
+        },
+        {
+          id: "freelancer_profiles",
+          label: "freelancer_profiles",
+          columns: [
+            "user_id (PK/FK)",
+            "title",
+            "skills (jsonb)",
+            "hourly_rate",
+            "engagement_model (enum)",
+            "rating",
+            "total_jobs",
+          ],
+          group: "services",
+        },
+        {
+          id: "factory_production_logs",
+          label: "factory_production",
+          columns: [
+            "id (PK)",
+            "factory_id (FK)",
+            "product_id (FK)",
+            "quantity",
+            "production_date",
+            "status",
+            "quality_notes",
+          ],
+          group: "commerce",
+        },
+        {
+          id: "factory_quotes",
+          label: "factory_quotes",
+          columns: [
+            "id (PK)",
+            "seller_id (FK)",
+            "factory_id (FK)",
+            "product_details (jsonb)",
+            "quantity",
+            "quoted_price",
+            "status",
+          ],
+          group: "commerce",
+        },
+        {
+          id: "cod_collections",
+          label: "cod_collections",
+          columns: [
+            "id (PK)",
+            "order_id (FK)",
+            "delivery_id (FK)",
+            "amount",
+            "status",
+            "collected_at",
+            "remitted_at",
+          ],
+          group: "delivery",
+        },
+        {
+          id: "brands",
+          label: "brands",
+          columns: [
+            "id (PK)",
+            "name",
+            "slug (unique)",
+            "logo_url",
+            "description",
+            "is_verified",
+          ],
+          group: "catalog",
+        },
+        {
+          id: "calls",
+          label: "calls",
+          columns: [
+            "id (PK)",
+            "conversation_id (FK)",
+            "caller_id (FK)",
+            "callee_id (FK)",
+            "call_type",
+            "started_at",
+            "ended_at",
+            "duration_seconds",
+            "status",
+          ],
+          group: "social",
+        },
+      ];
+
+      // ------------------------------------------------------------------
+      // 2. Define edges (foreign key relationships)
+      //    from: source table, to: target table
+      // ------------------------------------------------------------------
+      const edges = [
+        { from: "sellers", to: "users", label: "user_id" },
+        { from: "products", to: "sellers", label: "seller_id" },
+        { from: "orders", to: "users", label: "user_id" },
+        { from: "orders", to: "sellers", label: "seller_id" },
+        { from: "orders", to: "delivery_profiles", label: "delivery_id" },
+        { from: "orders", to: "deals", label: "deal_id" },
+        { from: "order_items", to: "orders", label: "order_id" },
+        { from: "order_items", to: "products", label: "product_id" },
+        { from: "sales", to: "sellers", label: "seller_id" },
+        { from: "sales", to: "customers", label: "customer_id" },
+        { from: "sales", to: "products", label: "product_id" },
+        { from: "customers", to: "users", label: "user_id" },
+        { from: "delivery_assignments", to: "orders", label: "order_id" },
+        {
+          from: "delivery_assignments",
+          to: "delivery_profiles",
+          label: "driver_id",
+        },
+        { from: "deals", to: "users", label: "middleman_id" },
+        { from: "deals", to: "users", label: "party_a_id" },
+        { from: "deals", to: "users", label: "party_b_id" },
+        { from: "deals", to: "products", label: "product_id" },
+        { from: "conversations", to: "products", label: "product_id" },
+        {
+          from: "conversation_participants",
+          to: "conversations",
+          label: "conversation_id",
+        },
+        { from: "conversation_participants", to: "users", label: "user_id" },
+        {
+          from: "conversation_participants",
+          to: "messages",
+          label: "last_read_message_id",
+        },
+        { from: "messages", to: "conversations", label: "conversation_id" },
+        { from: "messages", to: "users", label: "sender_id" },
+        { from: "reviews", to: "users", label: "user_id" },
+        { from: "reviews", to: "orders", label: "order_id" },
+        { from: "cart", to: "users", label: "user_id" },
+        { from: "wishlist", to: "users", label: "user_id" },
+        { from: "shipping_addresses", to: "users", label: "user_id" },
+        { from: "notifications", to: "users", label: "user_id" },
+        { from: "analytics_snapshots", to: "users", label: "seller_id" },
+        { from: "factory_connections", to: "sellers", label: "factory_id" },
+        { from: "factory_connections", to: "sellers", label: "seller_id" },
+        { from: "factory_ratings", to: "sellers", label: "factory_id" },
+        { from: "factory_ratings", to: "sellers", label: "seller_id" },
+        { from: "categories", to: "categories", label: "parent_id" },
+        { from: "subcategories", to: "categories", label: "category_id" },
+        { from: "payment_intentions", to: "orders", label: "order_id" },
+        { from: "payment_intentions", to: "users", label: "user_id" },
+        { from: "business_profiles", to: "users", label: "user_id" },
+        { from: "user_wallets", to: "users", label: "user_id" },
+        { from: "wallet_transactions", to: "users", label: "user_id" },
+        { from: "commissions", to: "users", label: "middle_man_id" },
+        { from: "commissions", to: "orders", label: "order_id" },
+        { from: "commissions", to: "deals", label: "deal_id" },
+        { from: "middle_men", to: "users", label: "user_id" },
+        { from: "middle_man_deals", to: "users", label: "middle_man_id" },
+        { from: "deal_proposals", to: "users", label: "proposer_id" },
+        { from: "deal_proposals", to: "products", label: "product_id" },
+        { from: "svc_providers", to: "users", label: "user_id" },
+        { from: "service_bookings", to: "customers", label: "customer_id" },
+        { from: "service_bookings", to: "svc_providers", label: "provider_id" },
+        {
+          from: "booking_milestones",
+          to: "service_bookings",
+          label: "booking_id",
+        },
+        { from: "health_doctor_profiles", to: "users", label: "user_id" },
+        { from: "health_patient_profiles", to: "users", label: "user_id" },
+        { from: "health_medicines", to: "users", label: "pharmacy_id" },
+        {
+          from: "health_prescriptions_digital",
+          to: "health_doctor_profiles",
+          label: "doctor_id",
+        },
+        {
+          from: "health_prescriptions_digital",
+          to: "health_patient_profiles",
+          label: "patient_id",
+        },
+        {
+          from: "health_appointments",
+          to: "health_doctor_profiles",
+          label: "doctor_id",
+        },
+        {
+          from: "health_appointments",
+          to: "health_patient_profiles",
+          label: "patient_id",
+        },
+        { from: "freelancer_profiles", to: "users", label: "user_id" },
+        { from: "factory_production_logs", to: "sellers", label: "factory_id" },
+        {
+          from: "factory_production_logs",
+          to: "products",
+          label: "product_id",
+        },
+        { from: "factory_quotes", to: "sellers", label: "seller_id" },
+        { from: "factory_quotes", to: "sellers", label: "factory_id" },
+        { from: "cod_collections", to: "orders", label: "order_id" },
+        {
+          from: "cod_collections",
+          to: "delivery_profiles",
+          label: "delivery_id",
+        },
+        { from: "calls", to: "conversations", label: "conversation_id" },
+        { from: "calls", to: "users", label: "caller_id" },
+        { from: "calls", to: "users", label: "callee_id" },
+      ];
+
+      // Build nodes array for vis-network
+      const nodes = tables.map((t) => ({
+        id: t.id,
+        label: t.label,
+        title: `${t.label}\n${t.columns.slice(0, 4).join("\n")}${t.columns.length > 4 ? "…" : ""}`,
+        group: t.group,
+        font: { size: 14, face: "Segoe UI" },
+        shape: "box",
+        color: {
+          background: "#ffffff",
+          border: "#3b82f6",
+          highlight: { background: "#e0e7ff", border: "#2563eb" },
+        },
+        margin: 10,
+        widthConstraint: { minimum: 100, maximum: 180 },
+      }));
+
+      // Build edges
+      const networkEdges = edges.map((e) => ({
+        from: e.from,
+        to: e.to,
+        label: e.label,
+        arrows: { to: { enabled: true, scaleFactor: 0.8 } },
+        color: { color: "#eab308", highlight: "#f59e0b" },
+        font: { size: 10, align: "middle" },
+        smooth: { type: "curvedCW", roundness: 0.2 },
+      }));
+
+      // ------------------------------------------------------------------
+      // 3. Render network
+      // ------------------------------------------------------------------
+      const container = document.getElementById("network");
+      const data = {
+        nodes: new vis.DataSet(nodes),
+        edges: new vis.DataSet(networkEdges),
+      };
+      const options = {
+        nodes: { shape: "box", margin: 10, widthConstraint: { minimum: 120 } },
+        edges: { smooth: true, arrows: { to: true }, font: { size: 10 } },
+        physics: {
+          enabled: true,
+          stabilization: true,
+          solver: "forceAtlas2Based",
+        },
+        interaction: {
+          hover: true,
+          tooltipDelay: 200,
+          zoomView: true,
+          dragView: true,
+        },
+        layout: { improvedLayout: true },
+      };
+      const network = new vis.Network(container, data, options);
+
+      // Fit and reset buttons
+      document
+        .getElementById("fitBtn")
+        .addEventListener("click", () => network.fit());
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        network.setOptions({ physics: true });
+        network.fit();
+        setTimeout(() => network.setOptions({ physics: true }), 500);
+      });
+
+      // Click on node: show column details
+      network.on("click", function (params) {
+        if (params.nodes.length > 0) {
+          const nodeId = params.nodes[0];
+          const table = tables.find((t) => t.id === nodeId);
+          if (table) {
+            document.getElementById("detailTitle").innerText =
+              `📋 ${table.label}`;
+            const colList = table.columns
+              .map((col) => `<li>${col}</li>`)
+              .join("");
+            document.getElementById("detailColumns").innerHTML =
+              `<ul>${colList}</ul>`;
+            document.getElementById("nodeDetail").style.display = "block";
+          }
+        } else {
+          // optional: hide on background click? we keep open until close button
+        }
+      });
+
+      // Prevent detail from closing when clicking inside
+      document
+        .getElementById("nodeDetail")
+        .addEventListener("click", (e) => e.stopPropagation());
+    </script>
+  </body>
+</html>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aurora E-Commerce — Project Documentation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #eef2f5;
+            color: #1e293b;
+            line-height: 1.7;
+        }
+
+        .hero {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+            color: white;
+            padding: 60px 30px 50px;
+            text-align: center;
+        }
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+        .hero p {
+            font-size: 1.1rem;
+            opacity: 0.85;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        .nav-links {
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        .nav-links a {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 0.85rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .nav-blue { background: #3b82f6; color: white; }
+        .nav-blue:hover { background: #2563eb; transform: translateY(-1px); }
+        .nav-green { background: #10b981; color: white; }
+        .nav-green:hover { background: #059669; transform: translateY(-1px); }
+
+        .container {
+            max-width: 960px;
+            margin: -30px auto 40px;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+            padding: 32px;
+            margin-bottom: 28px;
+        }
+        .card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 18px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .card h3 {
+            font-size: 1.15rem;
+            margin: 20px 0 10px;
+            color: #334155;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 14px 0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        thead { background: #f1f5f9; }
+        th {
+            text-align: left;
+            padding: 12px 16px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        td {
+            padding: 10px 16px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.92rem;
+        }
+        code {
+            background: #f1f5f9;
+            padding: 2px 7px;
+            border-radius: 5px;
+            font-family: 'Consolas', monospace;
+            font-size: 0.88rem;
+            color: #e11d48;
+        }
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 18px;
+            border-radius: 14px;
+            overflow-x: auto;
+            font-family: 'Consolas', monospace;
+            font-size: 0.85rem;
+            margin: 14px 0;
+            white-space: pre;
+            line-height: 1.6;
+        }
+        .tree {
+            font-family: 'Consolas', monospace;
+            font-size: 0.88rem;
+            background: #f8fafc;
+            padding: 18px;
+            border-radius: 12px;
+            line-height: 1.8;
+            color: #334155;
+        }
+
+        .badge-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin: 14px 0;
+        }
+        .badge-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 14px;
+            transition: all 0.2s;
+        }
+        .badge-item:hover {
+            border-color: #93c5fd;
+            background: #eff6ff;
+        }
+        .badge-item strong {
+            display: block;
+            margin-bottom: 4px;
+            color: #1e40af;
+        }
+        .badge-item span {
+            font-size: 0.82rem;
+            color: #64748b;
+        }
+
+        .cmd {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 10px 14px;
+            margin: 8px 0;
+            font-family: 'Consolas', monospace;
+            font-size: 0.88rem;
+        }
+        .cmd strong {
+            color: #3b82f6;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: #64748b;
+            font-size: 0.8rem;
+            border-top: 1px solid #e2e8f0;
+            background: white;
+        }
+
+        @media (max-width: 600px) {
+            .hero h1 { font-size: 1.8rem; }
+            .card { padding: 22px; }
+            table { font-size: 0.82rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="hero">
+    <h1>🌌 Aurora E-Commerce Platform</h1>
+    <p>A full-stack marketplace application built with React + TypeScript + Vite, styled with Tailwind CSS, and backed by Supabase (PostgreSQL + Auth + RLS).</p>
+    <div class="nav-links">
+        <a href="index.html" class="nav-blue">📋 Schema Explorer</a>
+        <a href="canvas.html" class="nav-green">🗺️ ER Diagram Canvas</a>
+    </div>
+</div>
+
+<div class="container">
+
+    <div class="card">
+        <h2>🏗️ Tech Stack</h2>
+        <table>
+            <thead><tr><th>Layer</th><th>Technology</th></tr></thead>
+            <tbody>
+                <tr><td><strong>Frontend</strong></td><td>React 18, TypeScript, Vite 5</td></tr>
+                <tr><td><strong>Styling</strong></td><td>Tailwind CSS, Radix UI, Lucide Icons</td></tr>
+                <tr><td><strong>State</strong></td><td>Zustand, TanStack Query</td></tr>
+                <tr><td><strong>Backend</strong></td><td>Supabase (PostgreSQL, Auth, Realtime)</td></tr>
+                <tr><td><strong>Payments</strong></td><td>Stripe</td></tr>
+                <tr><td><strong>Testing</strong></td><td>Vitest, Playwright</td></tr>
+                <tr><td><strong>Deployment</strong></td><td>Vercel</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>📂 Project Structure</h2>
+        <div class="tree">
+├── src/
+│   ├── components/     # Reusable UI components
+│   ├── hooks/          # Custom React hooks
+│   ├── lib/            # Supabase client, utilities
+│   ├── pages/          # Route pages (admin, shops, auth, etc.)
+│   ├── store/          # Zustand stores
+│   ├── types/          # TypeScript type definitions
+│   └── i18n/           # Internationalization
+├── webss/
+│   ├── index.html      # 📋 Schema Explorer
+│   ├── canvas.html     # 🗺️ ER Diagram Canvas
+│   └── readme.html     # 📖 This page
+├── atall.sql           # Full database schema dump
+└── e2e/                # Playwright end-to-end tests</div>
+    </div>
+
+    <div class="card">
+        <h2>🗄️ Database Schema Overview</h2>
+        <p style="margin-bottom:16px;color:#475569;">The platform includes <strong>55+ tables</strong> covering these domains:</p>
+        <div class="badge-grid">
+            <div class="badge-item"><strong>👤 Core</strong><span>users, sellers, customers, business_profiles</span></div>
+            <div class="badge-item"><strong>🛒 Commerce</strong><span>products, orders, order_items, sales, deals, commissions</span></div>
+            <div class="badge-item"><strong>💰 Payments</strong><span>user_wallets, wallet_transactions, payment_intentions</span></div>
+            <div class="badge-item"><strong>🚚 Delivery</strong><span>delivery_profiles, delivery_assignments, cod_collections</span></div>
+            <div class="badge-item"><strong>💬 Chat</strong><span>conversations, messages, participants, calls</span></div>
+            <div class="badge-item"><strong>🏥 Health</strong><span>doctors, patients, medicines, prescriptions, appointments</span></div>
+            <div class="badge-item"><strong>🔧 Services</strong><span>svc_providers, service_bookings, freelancer_profiles</span></div>
+            <div class="badge-item"><strong>📦 Catalog</strong><span>categories, subcategories, brands</span></div>
+            <div class="badge-item"><strong>📊 Analytics</strong><span>analytics_snapshots, sales metrics</span></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>🚀 Getting Started</h2>
+
+        <h3>1. Install dependencies</h3>
+        <div class="cmd"><strong>npm install</strong></div>
+
+        <h3>2. Configure environment</h3>
+        <p style="color:#475569;margin-bottom:8px;">Copy <code>.env.example</code> to <code>.env.local</code> and fill in your keys:</p>
+        <div class="code-block">VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_key</div>
+
+        <h3>3. Start development server</h3>
+        <div class="cmd"><strong>npm run dev</strong></div>
+
+        <h3>4. Build for production</h3>
+        <div class="cmd"><strong>npm run build</strong></div>
+    </div>
+
+    <div class="card">
+        <h2>🧪 Testing</h2>
+        <table>
+            <thead><tr><th>Command</th><th>Description</th></tr></thead>
+            <tbody>
+                <tr><td><code>npm run test</code></td><td>Watch mode (Vitest)</td></tr>
+                <tr><td><code>npm run test:run</code></td><td>Run unit & component tests</td></tr>
+                <tr><td><code>npm run test:e2e</code></td><td>Playwright E2E tests</td></tr>
+                <tr><td><code>npm run test:all</code></td><td>All tests (unit + E2E)</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>📊 Schema Documentation</h2>
+        <p style="color:#475569;margin-bottom:14px;">Interactive documentation for the database:</p>
+        <div class="badge-grid">
+            <div class="badge-item" style="cursor:pointer" onclick="location.href='index.html'">
+                <strong>📋 Schema Explorer</strong>
+                <span>Browse tables, functions, enums with TypeScript examples</span>
+            </div>
+            <div class="badge-item" style="cursor:pointer" onclick="location.href='canvas.html'">
+                <strong>🗺️ ER Diagram Canvas</strong>
+                <span>Interactive node-based relationship visualization</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<div class="footer">
+    Private — All rights reserved.
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1586 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Database Schema Explorer – with TypeScript Examples</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background: #eef2f5;
+        color: #1e293b;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(135deg, #0f172a, #1e293b);
+        color: white;
+        padding: 20px 30px;
+        flex-shrink: 0;
+      }
+      .header h1 {
+        font-size: 1.8rem;
+        margin-bottom: 8px;
+      }
+      .header p {
+        font-size: 0.9rem;
+        opacity: 0.8;
+      }
+      .stats {
+        display: flex;
+        gap: 20px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      .stat {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 5px 14px;
+        border-radius: 30px;
+        font-size: 0.85rem;
+      }
+
+      .main {
+        display: flex;
+        flex: 1;
+        overflow: hidden;
+      }
+
+      .sidebar {
+        width: 300px;
+        background: white;
+        border-right: 1px solid #cbd5e1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        flex-shrink: 0;
+      }
+      .search-box {
+        padding: 15px;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      .search-box input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #cbd5e1;
+        border-radius: 30px;
+        font-size: 0.9rem;
+        outline: none;
+      }
+      .object-tabs {
+        display: flex;
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fafc;
+      }
+      .tab-btn {
+        flex: 1;
+        padding: 10px;
+        background: none;
+        border: none;
+        cursor: pointer;
+        font-weight: 500;
+        color: #475569;
+        transition: all 0.2s;
+      }
+      .tab-btn.active {
+        color: #2563eb;
+        border-bottom: 2px solid #2563eb;
+        background: white;
+      }
+      .object-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 10px;
+      }
+      .object-item {
+        padding: 10px 12px;
+        margin-bottom: 6px;
+        border-radius: 10px;
+        cursor: pointer;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        transition: all 0.2s;
+        font-size: 0.9rem;
+      }
+      .object-item:hover {
+        background: #eef2ff;
+        border-color: #a5b4fc;
+      }
+      .object-item.active {
+        background: #e0e7ff;
+        border-color: #6366f1;
+        color: #1e40af;
+        font-weight: 500;
+      }
+      .object-type {
+        font-size: 0.7rem;
+        color: #64748b;
+        margin-top: 4px;
+      }
+
+      .content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 25px 30px;
+        background: #f9fafb;
+      }
+      .detail-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        padding: 25px;
+        margin-bottom: 25px;
+      }
+      .detail-title {
+        font-size: 1.8rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .detail-badge {
+        background: #e2e8f0;
+        padding: 4px 12px;
+        border-radius: 40px;
+        font-size: 0.75rem;
+        font-weight: normal;
+        color: #1e293b;
+      }
+      .detail-desc {
+        color: #475569;
+        margin-bottom: 20px;
+        border-left: 3px solid #3b82f6;
+        padding-left: 16px;
+        font-size: 0.95rem;
+      }
+      .section-header {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin: 20px 0 12px 0;
+        border-bottom: 2px solid #e2e8f0;
+        padding-bottom: 6px;
+      }
+      .columns-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 12px;
+        margin: 15px 0;
+      }
+      .column-card {
+        background: #f1f5f9;
+        padding: 10px 14px;
+        border-radius: 12px;
+        font-family: monospace;
+        font-size: 0.85rem;
+      }
+      .column-name {
+        font-weight: 700;
+        color: #0f172a;
+      }
+      .column-type {
+        color: #475569;
+      }
+      .sql-block,
+      .ts-block {
+        background: #1e293b;
+        color: #e2e8f0;
+        padding: 16px;
+        border-radius: 16px;
+        overflow-x: auto;
+        font-family: "Consolas", monospace;
+        font-size: 0.8rem;
+        margin: 15px 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      button {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 30px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        margin-right: 12px;
+        margin-top: 8px;
+        transition: background 0.2s;
+      }
+      button:hover {
+        background: #2563eb;
+      }
+      .footer {
+        text-align: center;
+        padding: 15px;
+        color: #64748b;
+        font-size: 0.75rem;
+        border-top: 1px solid #e2e8f0;
+        background: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+      }
+      .canvas-link-btn {
+        background: linear-gradient(135deg, #3b82f6, #6366f1);
+        color: white;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 30px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+      }
+      .canvas-link-btn:hover {
+        background: linear-gradient(135deg, #2563eb, #4f46e5);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+      }
+      .readme-link-btn {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        border: none;
+        padding: 8px 20px;
+        border-radius: 30px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 500;
+        transition: all 0.2s;
+        box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+      }
+      .readme-link-btn:hover {
+        background: linear-gradient(135deg, #d97706, #b45309);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+      }
+      @media (max-width: 768px) {
+        .sidebar {
+          width: 260px;
+        }
+        .detail-title {
+          font-size: 1.4rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>📊 Marketplace Platform – Schema + TypeScript Examples</h1>
+      <p>
+        Explore every table, function, enum, extension, and RLS policy with SQL
+        and TypeScript (Supabase) usage.
+      </p>
+      <div class="stats">
+        <div class="stat">🗃️ 55+ Tables</div>
+        <div class="stat">⚙️ 50+ Functions</div>
+        <div class="stat">🏷️ 7 Enums</div>
+        <div class="stat">📦 9 Extensions</div>
+        <div class="stat">🛡️ RLS Policies</div>
+      </div>
+    </div>
+    <div class="main">
+      <div class="sidebar">
+        <div class="search-box">
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="🔍 Filter objects..."
+          />
+        </div>
+        <div class="object-tabs">
+          <button class="tab-btn active" data-tab="tables">📋 Tables</button>
+          <button class="tab-btn" data-tab="functions">🔧 Functions</button>
+          <button class="tab-btn" data-tab="enums">🏷️ Enums</button>
+          <button class="tab-btn" data-tab="extensions">📦 Extensions</button>
+          <button class="tab-btn" data-tab="policies">🛡️ Policies</button>
+        </div>
+        <div id="objectList" class="object-list"></div>
+      </div>
+      <div class="content" id="detailContent">
+        <div class="detail-card">
+          <div class="detail-title">Welcome</div>
+          <div class="detail-desc">
+            Select any object from the sidebar to see its purpose, structure,
+            SQL definition, and TypeScript code examples.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="footer">
+      <span
+        >Click any item → view SQL & TypeScript snippets. Use the copy buttons
+        to grab the code.</span
+      >
+      <a
+        href="canvas.html"
+        class="canvas-link-btn"
+        style="text-decoration: none"
+        >🗺️ View ER Diagram Canvas</a
+      >
+      <a
+        href="readme.html"
+        class="readme-link-btn"
+        style="text-decoration: none"
+        >📖 Project README</a
+      >
+    </div>
+
+    <script>
+      // ============================================================
+      // DATABASE METADATA (same as before, truncated for brevity)
+      // ============================================================
+      const schemaData = {
+        tables: [
+          {
+            name: "users",
+            desc: "Central user account registry.",
+            columns: [
+              "id (uuid PK)",
+              "user_id (uuid unique)",
+              "email (text)",
+              "full_name (text)",
+              "phone (text)",
+              "avatar_url (text)",
+              "account_type (text)",
+              "created_at",
+              "updated_at",
+            ],
+            sql: `CREATE TABLE public.users ( ... );`,
+          },
+          {
+            name: "sellers",
+            desc: "Extended profile for sellers/factories.",
+            columns: [
+              "user_id (uuid PK)",
+              "email",
+              "full_name",
+              "phone",
+              "location",
+              "currency",
+              "is_verified",
+              "latitude",
+              "longitude",
+            ],
+            sql: `CREATE TABLE public.sellers ( ... );`,
+          },
+          {
+            name: "products",
+            desc: "Product catalog.",
+            columns: [
+              "id (uuid PK)",
+              "asin (unique)",
+              "seller_id",
+              "title",
+              "description",
+              "brand",
+              "price",
+              "quantity",
+              "status",
+              "category",
+              "subcategory",
+              "images (jsonb)",
+              "average_rating",
+            ],
+            sql: `CREATE TABLE public.products ( ... );`,
+          },
+          {
+            name: "orders",
+            desc: "Customer orders.",
+            columns: [
+              "id (uuid PK)",
+              "user_id",
+              "seller_id",
+              "status",
+              "subtotal",
+              "total",
+              "payment_method",
+              "payment_status",
+              "delivery_id",
+              "deal_id",
+            ],
+            sql: `CREATE TABLE public.orders ( ... );`,
+          },
+          {
+            name: "order_items",
+            desc: "Line items within an order.",
+            columns: [
+              "id (uuid PK)",
+              "order_id",
+              "product_id",
+              "asin",
+              "product_name",
+              "quantity",
+              "unit_price",
+              "total_price",
+            ],
+            sql: `CREATE TABLE public.order_items ( ... );`,
+          },
+          {
+            name: "sales",
+            desc: "Denormalized sales records.",
+            columns: [
+              "id (uuid PK)",
+              "seller_id",
+              "customer_id",
+              "product_id",
+              "quantity",
+              "unit_price",
+              "total_price",
+              "sale_date",
+            ],
+            sql: `CREATE TABLE public.sales ( ... );`,
+          },
+          {
+            name: "customers",
+            desc: "Customer profiles.",
+            columns: [
+              "id (uuid PK)",
+              "user_id",
+              "name",
+              "phone",
+              "email",
+              "total_orders",
+              "total_spent",
+              "last_purchase_date",
+            ],
+            sql: `CREATE TABLE public.customers ( ... );`,
+          },
+          {
+            name: "delivery_profiles",
+            desc: "Delivery driver profiles.",
+            columns: [
+              "user_id (uuid PK)",
+              "vehicle_type",
+              "vehicle_number",
+              "is_verified",
+              "is_active",
+              "latitude",
+              "longitude",
+              "rating",
+            ],
+            sql: `CREATE TABLE public.delivery_profiles ( ... );`,
+          },
+          {
+            name: "delivery_assignments",
+            desc: "Links orders to drivers.",
+            columns: [
+              "id (uuid PK)",
+              "order_id",
+              "driver_id",
+              "assigned_at",
+              "picked_up_at",
+              "delivered_at",
+              "status",
+              "delivery_fee",
+            ],
+            sql: `CREATE TABLE public.delivery_assignments ( ... );`,
+          },
+          {
+            name: "deals",
+            desc: "Middleman deals.",
+            columns: [
+              "id (uuid PK)",
+              "middleman_id",
+              "party_a_id",
+              "party_b_id",
+              "product_id",
+              "commission_rate",
+              "status",
+            ],
+            sql: `CREATE TABLE public.deals ( ... );`,
+          },
+          {
+            name: "conversations",
+            desc: "Chat threads.",
+            columns: [
+              "id (uuid PK)",
+              "product_id",
+              "last_message",
+              "last_message_at",
+              "is_archived",
+            ],
+            sql: `CREATE TABLE public.conversations ( ... );`,
+          },
+          {
+            name: "conversation_participants",
+            desc: "Users in a conversation.",
+            columns: [
+              "id (uuid PK)",
+              "conversation_id",
+              "user_id",
+              "role (user_role)",
+              "last_read_message_id",
+            ],
+            sql: `CREATE TABLE public.conversation_participants ( ... );`,
+          },
+          {
+            name: "messages",
+            desc: "Individual chat messages.",
+            columns: [
+              "id (uuid PK)",
+              "conversation_id",
+              "sender_id",
+              "content",
+              "message_type",
+              "attachment_url",
+              "is_deleted",
+              "read_at",
+              "content_tsvector",
+            ],
+            sql: `CREATE TABLE public.messages ( ... );`,
+          },
+          {
+            name: "notifications",
+            desc: "In-app notifications.",
+            columns: [
+              "id (uuid PK)",
+              "user_id",
+              "type",
+              "title",
+              "message",
+              "is_read",
+              "metadata",
+            ],
+            sql: `CREATE TABLE public.notifications ( ... );`,
+          },
+          {
+            name: "reviews",
+            desc: "Product reviews.",
+            columns: [
+              "id (uuid PK)",
+              "user_id",
+              "asin",
+              "order_id",
+              "rating",
+              "comment",
+              "is_verified_purchase",
+            ],
+            sql: `CREATE TABLE public.reviews ( ... );`,
+          },
+          {
+            name: "cart",
+            desc: "Shopping cart items.",
+            columns: ["id (uuid PK)", "user_id", "asin", "quantity"],
+            sql: `CREATE TABLE public.cart ( ... );`,
+          },
+          {
+            name: "wishlist",
+            desc: "User wishlist.",
+            columns: ["id (uuid PK)", "user_id", "asin"],
+            sql: `CREATE TABLE public.wishlist ( ... );`,
+          },
+          {
+            name: "shipping_addresses",
+            desc: "Saved addresses.",
+            columns: [
+              "id (uuid PK)",
+              "user_id",
+              "full_name",
+              "address_line1",
+              "city",
+              "state",
+              "postal_code",
+              "country",
+              "phone",
+              "is_default",
+            ],
+            sql: `CREATE TABLE public.shipping_addresses ( ... );`,
+          },
+          {
+            name: "analytics_snapshots",
+            desc: "Cached seller analytics.",
+            columns: [
+              "id (uuid PK)",
+              "seller_id",
+              "period_type",
+              "period_start",
+              "period_end",
+              "analytics_data (jsonb)",
+              "is_current",
+            ],
+            sql: `CREATE TABLE public.analytics_snapshots ( ... );`,
+          },
+          {
+            name: "async_jobs",
+            desc: "Background job queue.",
+            columns: [
+              "id (uuid PK)",
+              "queue_name",
+              "payload (jsonb)",
+              "status",
+              "attempts",
+              "scheduled_for",
+            ],
+            sql: `CREATE TABLE public.async_jobs ( ... );`,
+          },
+          {
+            name: "idempotency_keys",
+            desc: "Prevents duplicate requests.",
+            columns: [
+              "id (uuid PK)",
+              "key (unique)",
+              "response (jsonb)",
+              "user_id",
+              "expires_at",
+            ],
+            sql: `CREATE TABLE public.idempotency_keys ( ... );`,
+          },
+          {
+            name: "factory_connections",
+            desc: "Links factories and sellers.",
+            columns: [
+              "id (uuid PK)",
+              "factory_id",
+              "seller_id",
+              "status",
+              "requested_at",
+              "accepted_at",
+            ],
+            sql: `CREATE TABLE public.factory_connections ( ... );`,
+          },
+          {
+            name: "factory_ratings",
+            desc: "Ratings given to factories.",
+            columns: [
+              "id (uuid PK)",
+              "factory_id",
+              "seller_id",
+              "rating",
+              "delivery_rating",
+              "quality_rating",
+              "communication_rating",
+            ],
+            sql: `CREATE TABLE public.factory_ratings ( ... );`,
+          },
+          {
+            name: "categories",
+            desc: "Product categories.",
+            columns: ["id (uuid PK)", "name", "parent_id", "slug", "is_active"],
+            sql: `CREATE TABLE public.categories ( ... );`,
+          },
+          {
+            name: "subcategories",
+            desc: "Subcategories with attribute schemas.",
+            columns: [
+              "id (uuid PK)",
+              "category_id",
+              "name",
+              "attribute_schema (jsonb)",
+            ],
+            sql: `CREATE TABLE public.subcategories ( ... );`,
+          },
+          {
+            name: "payment_intentions",
+            desc: "Payment gateway tracking.",
+            columns: [
+              "id (uuid PK)",
+              "order_id",
+              "user_id",
+              "amount",
+              "status",
+              "payment_intent_id",
+            ],
+            sql: `CREATE TABLE public.payment_intentions ( ... );`,
+          },
+          {
+            name: "business_profiles",
+            desc: "Generic business profile.",
+            columns: [
+              "user_id (PK)",
+              "role (user_role)",
+              "company_name",
+              "location",
+              "latitude",
+              "longitude",
+              "currency",
+              "is_verified",
+            ],
+            sql: `CREATE TABLE public.business_profiles ( ... );`,
+          },
+          {
+            name: "user_wallets",
+            desc: "User wallet balances and earnings tracking.",
+            columns: [
+              "id (uuid PK)",
+              "user_id (unique)",
+              "available_balance (numeric)",
+              "total_earned (numeric)",
+              "total_spent (numeric)",
+              "currency (text)",
+              "updated_at",
+            ],
+            sql: `CREATE TABLE public.user_wallets ( ... );`,
+          },
+          {
+            name: "wallet_transactions",
+            desc: "Audit log for wallet credits/debits.",
+            columns: [
+              "id (uuid PK)",
+              "user_id",
+              "transaction_type (credit/debit)",
+              "amount (numeric)",
+              "description (text)",
+              "reference_type (text)",
+              "reference_id (uuid)",
+              "balance_after (numeric)",
+              "created_at",
+            ],
+            sql: `CREATE TABLE public.wallet_transactions ( ... );`,
+          },
+          {
+            name: "commissions",
+            desc: "Middleman commission tracking.",
+            columns: [
+              "id (uuid PK)",
+              "middle_man_id",
+              "order_id",
+              "deal_id",
+              "amount (numeric)",
+              "commission_rate (numeric)",
+              "status (pending/paid/withdrawn)",
+              "created_at",
+              "paid_at",
+            ],
+            sql: `CREATE TABLE public.commissions ( ... );`,
+          },
+          {
+            name: "middle_men",
+            desc: "Middleman profiles and earnings.",
+            columns: [
+              "user_id (uuid PK)",
+              "pending_earnings (numeric)",
+              "total_earnings (numeric)",
+              "verified (boolean)",
+              "created_at",
+            ],
+            sql: `CREATE TABLE public.middle_men ( ... );`,
+          },
+          {
+            name: "middle_man_deals",
+            desc: "Deal configurations for middlemen.",
+            columns: [
+              "id (uuid PK)",
+              "middle_man_id",
+              "product_asin",
+              "commission_rate (numeric)",
+              "margin_amount (numeric)",
+              "conversions (integer)",
+              "total_revenue (numeric)",
+              "updated_at",
+            ],
+            sql: `CREATE TABLE public.middle_man_deals ( ... );`,
+          },
+          {
+            name: "deal_proposals",
+            desc: "Proposed deals between parties.",
+            columns: [
+              "id (uuid PK)",
+              "proposer_id",
+              "target_user_id",
+              "product_id",
+              "proposed_commission (numeric)",
+              "status (pending/accepted/rejected)",
+              "message (text)",
+              "created_at",
+            ],
+            sql: `CREATE TABLE public.deal_proposals ( ... );`,
+          },
+          {
+            name: "svc_providers",
+            desc: "Service provider profiles (health, freelance, etc.).",
+            columns: [
+              "id (uuid PK)",
+              "user_id",
+              "category (provider_category)",
+              "title (text)",
+              "description (text)",
+              "hourly_rate (numeric)",
+              "engagement_model (engagement_model)",
+              "rating (numeric)",
+              "is_verified (boolean)",
+              "created_at",
+            ],
+            sql: `CREATE TABLE public.svc_providers ( ... );`,
+          },
+          {
+            name: "service_bookings",
+            desc: "Service booking orders.",
+            columns: [
+              "id (uuid PK)",
+              "customer_id",
+              "provider_id",
+              "booking_date (timestamptz)",
+              "status (text)",
+              "agreed_price (numeric)",
+              "completion_notes (text)",
+              "created_at",
+            ],
+            sql: `CREATE TABLE public.service_bookings ( ... );`,
+          },
+          {
+            name: "booking_milestones",
+            desc: "Milestone-based payment tracking.",
+            columns: [
+              "id (uuid PK)",
+              "booking_id",
+              "title (text)",
+              "amount (numeric)",
+              "status (pending/completed)",
+              "completed_at",
+            ],
+            sql: `CREATE TABLE public.booking_milestones ( ... );`,
+          },
+          {
+            name: "health_doctor_profiles",
+            desc: "Doctor professional profiles.",
+            columns: [
+              "user_id (uuid PK)",
+              "specialization (text)",
+              "license_number (text)",
+              "experience_years (integer)",
+              "consultation_fee (numeric)",
+              "rating (numeric)",
+              "is_available (boolean)",
+            ],
+            sql: `CREATE TABLE public.health_doctor_profiles ( ... );`,
+          },
+          {
+            name: "health_patient_profiles",
+            desc: "Patient medical profiles.",
+            columns: [
+              "user_id (uuid PK)",
+              "date_of_birth (date)",
+              "blood_type (text)",
+              "allergies (jsonb)",
+              "chronic_conditions (jsonb)",
+              "emergency_contact (jsonb)",
+            ],
+            sql: `CREATE TABLE public.health_patient_profiles ( ... );`,
+          },
+          {
+            name: "health_medicines",
+            desc: "Medicine catalog with inventory.",
+            columns: [
+              "id (uuid PK)",
+              "pharmacy_id",
+              "name (text)",
+              "generic_name (text)",
+              "brand (text)",
+              "dosage_form (text)",
+              "strength (text)",
+              "price (numeric)",
+              "quantity_in_stock (integer)",
+              "requires_prescription (boolean)",
+              "is_available (boolean)",
+            ],
+            sql: `CREATE TABLE public.health_medicines ( ... );`,
+          },
+          {
+            name: "health_prescriptions_digital",
+            desc: "Digital prescriptions.",
+            columns: [
+              "id (uuid PK)",
+              "doctor_id",
+              "patient_id",
+              "diagnosis (text)",
+              "notes (text)",
+              "status (active/completed/expired)",
+              "valid_until (timestamptz)",
+              "created_at",
+            ],
+            sql: `CREATE TABLE public.health_prescriptions_digital ( ... );`,
+          },
+          {
+            name: "health_prescription_medicines_digital",
+            desc: "Medicines linked to digital prescriptions.",
+            columns: [
+              "id (uuid PK)",
+              "prescription_id",
+              "medicine_id",
+              "medicine_name (text)",
+              "dosage_amount (text)",
+              "frequency (text)",
+              "duration_days (integer)",
+              "total_quantity (integer)",
+              "instructions (text)",
+              "unit_price (numeric)",
+              "total_price (numeric)",
+            ],
+            sql: `CREATE TABLE public.health_prescription_medicines_digital ( ... );`,
+          },
+          {
+            name: "health_appointments",
+            desc: "Medical appointment scheduling.",
+            columns: [
+              "id (uuid PK)",
+              "doctor_id",
+              "patient_id",
+              "appointment_date (timestamptz)",
+              "status (scheduled/completed/cancelled)",
+              "consultation_type (text)",
+              "notes (text)",
+              "created_at",
+            ],
+            sql: `CREATE TABLE public.health_appointments ( ... );`,
+          },
+          {
+            name: "appointments",
+            desc: "General appointment scheduling.",
+            columns: [
+              "id (uuid PK)",
+              "provider_id",
+              "customer_id",
+              "scheduled_at (timestamptz)",
+              "status (text)",
+              "meeting_url (text)",
+              "notes (text)",
+            ],
+            sql: `CREATE TABLE public.appointments ( ... );`,
+          },
+          {
+            name: "freelancer_profiles",
+            desc: "Freelancer service profiles.",
+            columns: [
+              "user_id (uuid PK)",
+              "title (text)",
+              "skills (jsonb)",
+              "hourly_rate (numeric)",
+              "engagement_model (engagement_model)",
+              "rating (numeric)",
+              "total_jobs (integer)",
+            ],
+            sql: `CREATE TABLE public.freelancer_profiles ( ... );`,
+          },
+          {
+            name: "freelancer_portfolio",
+            desc: "Freelancer portfolio items.",
+            columns: [
+              "id (uuid PK)",
+              "freelancer_id",
+              "title (text)",
+              "description (text)",
+              "project_url (text)",
+              "images (jsonb)",
+              "created_at",
+            ],
+            sql: `CREATE TABLE public.freelancer_portfolio ( ... );`,
+          },
+          {
+            name: "factory_production_logs",
+            desc: "Production tracking for factories.",
+            columns: [
+              "id (uuid PK)",
+              "factory_id",
+              "product_id",
+              "quantity (integer)",
+              "production_date (date)",
+              "status (text)",
+              "quality_notes (text)",
+            ],
+            sql: `CREATE TABLE public.factory_production_logs ( ... );`,
+          },
+          {
+            name: "factory_quotes",
+            desc: "Custom factory quote requests.",
+            columns: [
+              "id (uuid PK)",
+              "seller_id",
+              "factory_id",
+              "product_details (jsonb)",
+              "quantity (integer)",
+              "quoted_price (numeric)",
+              "status (text)",
+              "created_at",
+            ],
+            sql: `CREATE TABLE public.factory_quotes ( ... );`,
+          },
+          {
+            name: "cod_collections",
+            desc: "Cash on delivery collection tracking.",
+            columns: [
+              "id (uuid PK)",
+              "order_id",
+              "delivery_id",
+              "amount (numeric)",
+              "status (pending/collected/remitted)",
+              "collected_at",
+              "remitted_at",
+            ],
+            sql: `CREATE TABLE public.cod_collections ( ... );`,
+          },
+          {
+            name: "brands",
+            desc: "Brand registry.",
+            columns: [
+              "id (uuid PK)",
+              "name (text)",
+              "slug (unique)",
+              "logo_url (text)",
+              "description (text)",
+              "is_verified (boolean)",
+            ],
+            sql: `CREATE TABLE public.brands ( ... );`,
+          },
+          {
+            name: "calls",
+            desc: "Voice/video call records.",
+            columns: [
+              "id (uuid PK)",
+              "conversation_id",
+              "caller_id",
+              "callee_id",
+              "call_type (voice/video)",
+              "started_at",
+              "ended_at",
+              "duration_seconds (integer)",
+              "status (completed/missed/declined)",
+            ],
+            sql: `CREATE TABLE public.calls ( ... );`,
+          },
+        ],
+        functions: [
+          {
+            name: "assign_delivery_to_driver",
+            desc: "Assigns nearest driver to order.",
+            sql: `CREATE OR REPLACE FUNCTION assign_delivery_to_driver(...) RETURNS uuid ...`,
+          },
+          {
+            name: "calculate_distance",
+            desc: "Haversine distance in km.",
+            sql: `CREATE OR REPLACE FUNCTION calculate_distance(...) RETURNS numeric ...`,
+          },
+          {
+            name: "calculate_order_commission",
+            desc: "Trigger to compute commission.",
+            sql: `CREATE OR REPLACE FUNCTION calculate_order_commission() RETURNS trigger ...`,
+          },
+          {
+            name: "calculate_seller_analytics",
+            desc: "Generates JSON analytics for seller.",
+            sql: `CREATE OR REPLACE FUNCTION calculate_seller_analytics(...) RETURNS jsonb ...`,
+          },
+          {
+            name: "can_start_conversation",
+            desc: "Checks if two users can chat.",
+            sql: `CREATE OR REPLACE FUNCTION can_start_conversation(...) RETURNS boolean ...`,
+          },
+          {
+            name: "cleanup_expired_idempotency_keys",
+            desc: "Deletes expired keys.",
+            sql: `CREATE OR REPLACE FUNCTION cleanup_expired_idempotency_keys() RETURNS void ...`,
+          },
+          {
+            name: "create_analytics_snapshot",
+            desc: "Creates cached analytics snapshot.",
+            sql: `CREATE OR REPLACE FUNCTION create_analytics_snapshot(...) RETURNS uuid ...`,
+          },
+          {
+            name: "decrement_product_inventory",
+            desc: "Reduces inventory on order item insert.",
+            sql: `CREATE OR REPLACE FUNCTION decrement_product_inventory() RETURNS trigger ...`,
+          },
+          {
+            name: "dequeue_job",
+            desc: "Pops next pending job.",
+            sql: `CREATE OR REPLACE FUNCTION dequeue_job(...) RETURNS TABLE(...) ...`,
+          },
+          {
+            name: "enqueue_job",
+            desc: "Adds a job to the queue.",
+            sql: `CREATE OR REPLACE FUNCTION enqueue_job(...) RETURNS uuid ...`,
+          },
+          {
+            name: "find_nearby_drivers",
+            desc: "Returns drivers within radius.",
+            sql: `CREATE OR REPLACE FUNCTION find_nearby_drivers(...) RETURNS TABLE(...) ...`,
+          },
+          {
+            name: "find_nearby_factories",
+            desc: "Finds factories near seller.",
+            sql: `CREATE OR REPLACE FUNCTION find_nearby_factories(...) RETURNS TABLE(...) ...`,
+          },
+          {
+            name: "generate_product_description",
+            desc: "Auto‑generates product description.",
+            sql: `CREATE OR REPLACE FUNCTION generate_product_description() RETURNS trigger ...`,
+          },
+          {
+            name: "get_factory_rating",
+            desc: "Returns average rating for factory.",
+            sql: `CREATE OR REPLACE FUNCTION get_factory_rating(...) RETURNS TABLE(...) ...`,
+          },
+          {
+            name: "get_low_stock_products",
+            desc: "Lists products below threshold.",
+            sql: `CREATE OR REPLACE FUNCTION get_low_stock_products(...) RETURNS TABLE(...) ...`,
+          },
+          {
+            name: "get_seller_kpis",
+            desc: "Returns seller KPIs (cached or live).",
+            sql: `CREATE OR REPLACE FUNCTION get_seller_kpis(...) RETURNS jsonb ...`,
+          },
+          {
+            name: "get_seller_product_count",
+            desc: "Count of seller's products.",
+            sql: `CREATE OR REPLACE FUNCTION get_seller_product_count(...) RETURNS integer ...`,
+          },
+          {
+            name: "get_seller_sales_count",
+            desc: "Number of sales in date range.",
+            sql: `CREATE OR REPLACE FUNCTION get_seller_sales_count(...) RETURNS integer ...`,
+          },
+          {
+            name: "get_seller_total_customers",
+            desc: "Total customers for seller.",
+            sql: `CREATE OR REPLACE FUNCTION get_seller_total_customers(...) RETURNS integer ...`,
+          },
+          {
+            name: "get_seller_total_revenue",
+            desc: "Sum of all sales revenue.",
+            sql: `CREATE OR REPLACE FUNCTION get_seller_total_revenue(...) RETURNS numeric ...`,
+          },
+          {
+            name: "handle_new_user",
+            desc: "Trigger to create user profile on signup.",
+            sql: `CREATE OR REPLACE FUNCTION handle_new_user() RETURNS trigger ...`,
+          },
+          {
+            name: "haversine_distance",
+            desc: "Immutable distance calculator.",
+            sql: `CREATE OR REPLACE FUNCTION haversine_distance(...) RETURNS double precision ...`,
+          },
+          {
+            name: "messages_tsvector_trigger",
+            desc: "Updates search vector on messages.",
+            sql: `CREATE OR REPLACE FUNCTION messages_tsvector_trigger() RETURNS trigger ...`,
+          },
+          {
+            name: "products_tsvector_trigger",
+            desc: "Updates product search vector.",
+            sql: `CREATE OR REPLACE FUNCTION products_tsvector_trigger() RETURNS trigger ...`,
+          },
+          {
+            name: "update_conversation_on_message",
+            desc: "Updates conversation last_message.",
+            sql: `CREATE OR REPLACE FUNCTION update_conversation_on_message() RETURNS trigger ...`,
+          },
+          {
+            name: "update_customer_stats_on_sale",
+            desc: "Increments customer totals.",
+            sql: `CREATE OR REPLACE FUNCTION update_customer_stats_on_sale() RETURNS trigger ...`,
+          },
+          {
+            name: "update_order_status_timestamps",
+            desc: "Sets status timestamps.",
+            sql: `CREATE OR REPLACE FUNCTION update_order_status_timestamps() RETURNS trigger ...`,
+          },
+          {
+            name: "update_updated_at_column",
+            desc: "Generic updated_at trigger.",
+            sql: `CREATE OR REPLACE FUNCTION update_updated_at_column() RETURNS trigger ...`,
+          },
+        ],
+        enums: [
+          {
+            name: "user_role",
+            values: ["factory", "seller", "middleman", "customer", "delivery"],
+            desc: "Defines user account type.",
+            sql: `CREATE TYPE public.user_role AS ENUM ('factory', 'seller', 'middleman', 'customer', 'delivery');`,
+          },
+          {
+            name: "provider_category",
+            values: [
+              "health",
+              "freelance",
+              "home_service",
+              "professional",
+              "education",
+            ],
+            desc: "Categories for service providers.",
+            sql: `CREATE TYPE public.provider_category AS ENUM ('health', 'freelance', 'home_service', 'professional', 'education');`,
+          },
+          {
+            name: "engagement_model",
+            values: [
+              "online_only",
+              "offline_only",
+              "hybrid",
+              "project_based",
+              "hourly",
+            ],
+            desc: "Service engagement pricing models.",
+            sql: `CREATE TYPE public.engagement_model AS ENUM ('online_only', 'offline_only', 'hybrid', 'project_based', 'hourly');`,
+          },
+          {
+            name: "trading_conv_type",
+            values: [
+              "product_inquiry",
+              "custom_request",
+              "b2b_sourcing",
+              "middleman_restock",
+            ],
+            desc: "Types of trading conversations.",
+            sql: `CREATE TYPE public.trading_conv_type AS ENUM ('product_inquiry', 'custom_request', 'b2b_sourcing', 'middleman_restock');`,
+          },
+          {
+            name: "trading_msg_type",
+            values: ["text", "image", "file", "system_notification"],
+            desc: "Trading message types.",
+            sql: `CREATE TYPE public.trading_msg_type AS ENUM ('text', 'image', 'file', 'system_notification');`,
+          },
+          {
+            name: "factory_order_status",
+            values: [
+              "pending",
+              "in_production",
+              "quality_check",
+              "ready_to_ship",
+              "shipped",
+              "delivered",
+              "cancelled",
+            ],
+            desc: "Factory order lifecycle statuses.",
+            sql: `CREATE TYPE public.factory_order_status AS ENUM ('pending', 'in_production', 'quality_check', 'ready_to_ship', 'shipped', 'delivered', 'cancelled');`,
+          },
+          {
+            name: "notification_type",
+            values: [
+              "order",
+              "message",
+              "deal",
+              "product",
+              "system",
+              "payment",
+              "shipping",
+              "review",
+            ],
+            desc: "Notification categories.",
+            sql: `CREATE TYPE public.notification_type AS ENUM ('order', 'message', 'deal', 'product', 'system', 'payment', 'shipping', 'review');`,
+          },
+          {
+            name: "notification_priority",
+            values: ["low", "medium", "high", "urgent"],
+            desc: "Notification urgency levels.",
+            sql: `CREATE TYPE public.notification_priority AS ENUM ('low', 'medium', 'high', 'urgent');`,
+          },
+        ],
+        extensions: [
+          {
+            name: "pg_cron",
+            desc: "Schedule SQL jobs.",
+            sql: `CREATE EXTENSION IF NOT EXISTS "pg_cron" WITH SCHEMA "pg_catalog";`,
+          },
+          {
+            name: "hypopg",
+            desc: "Hypothetical indexes.",
+            sql: `CREATE EXTENSION IF NOT EXISTS "hypopg" WITH SCHEMA "extensions";`,
+          },
+          {
+            name: "index_advisor",
+            desc: "Index recommendations.",
+            sql: `CREATE EXTENSION IF NOT EXISTS "index_advisor" WITH SCHEMA "extensions";`,
+          },
+          {
+            name: "pg_graphql",
+            desc: "GraphQL API.",
+            sql: `CREATE EXTENSION IF NOT EXISTS "pg_graphql" WITH SCHEMA "graphql";`,
+          },
+          {
+            name: "pg_stat_statements",
+            desc: "Statement statistics.",
+            sql: `CREATE EXTENSION IF NOT EXISTS "pg_stat_statements" WITH SCHEMA "extensions";`,
+          },
+          {
+            name: "pgcrypto",
+            desc: "Cryptographic functions.",
+            sql: `CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA "extensions";`,
+          },
+          {
+            name: "pgmq",
+            desc: "Message queue.",
+            sql: `CREATE EXTENSION IF NOT EXISTS "pgmq";`,
+          },
+          {
+            name: "supabase_vault",
+            desc: "Secrets storage.",
+            sql: `CREATE EXTENSION IF NOT EXISTS "supabase_vault" WITH SCHEMA "vault";`,
+          },
+          {
+            name: "uuid-ossp",
+            desc: "UUID generation.",
+            sql: `CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA "extensions";`,
+          },
+        ],
+        policies: [
+          {
+            name: "Users view own profile",
+            desc: "SELECT on users where user_id = auth.uid()",
+            sql: `CREATE POLICY "Users can view own profile" ON public.users FOR SELECT USING (auth.uid() = user_id);`,
+          },
+          {
+            name: "Sellers manage own products",
+            desc: "All operations on products where seller_id = auth.uid()",
+            sql: `CREATE POLICY "sellers_manage_own_products" ON public.products TO authenticated USING (seller_id = auth.uid()) WITH CHECK (seller_id = auth.uid());`,
+          },
+          {
+            name: "Delivery view assigned orders",
+            desc: "Orders where delivery_id = auth.uid()",
+            sql: `CREATE POLICY "delivery_view_assigned_orders" ON public.orders FOR SELECT TO authenticated USING (delivery_id = auth.uid());`,
+          },
+          {
+            name: "Participants view conversation messages",
+            desc: "Messages in conversations user participates in",
+            sql: `CREATE POLICY "messages_view_own" ON public.messages FOR SELECT TO authenticated USING (conversation_id IN (SELECT conversation_id FROM conversation_participants WHERE user_id = auth.uid()));`,
+          },
+        ],
+      };
+
+      // Helper: generate TypeScript example for a table
+      function generateTsForTable(table) {
+        const tableName = table.name;
+        const sampleCols = table.columns
+          .slice(0, 3)
+          .map((c) => c.split(" ")[0])
+          .filter(
+            (c) => c !== "id" && c !== "created_at" && c !== "updated_at",
+          );
+        const insertCols = sampleCols.length ? sampleCols : ["id"];
+        const insertValues = insertCols
+          .map((c) =>
+            c === "user_id"
+              ? "some-uuid"
+              : c === "email"
+                ? "user@example.com"
+                : `'example_${c}'`,
+          )
+          .join(", ");
+        return `
+// SELECT all rows
+const { data, error } = await supabase
+  .from('${tableName}')
+  .select('*');
+
+// SELECT by id
+const { data: item, error: selectError } = await supabase
+  .from('${tableName}')
+  .select('*')
+  .eq('id', 'your-uuid')
+  .single();
+
+// INSERT a new record
+const { data: newRecord, error: insertError } = await supabase
+  .from('${tableName}')
+  .insert({ ${insertCols.map((c, i) => `${c}: ${insertValues.split(", ")[i]}`).join(", ")} })
+  .select()
+  .single();
+
+// UPDATE a record
+const { error: updateError } = await supabase
+  .from('${tableName}')
+  .update({ ${sampleCols[0] || "field"}: 'new_value' })
+  .eq('id', 'your-uuid');
+
+// DELETE a record
+const { error: deleteError } = await supabase
+  .from('${tableName}')
+  .delete()
+  .eq('id', 'your-uuid');
+`;
+      }
+
+      function generateTsForFunction(func) {
+        return `
+// Call a PostgreSQL function using supabase.rpc()
+const { data, error } = await supabase.rpc('${func.name}', {
+  // parameters go here, for example:
+  // p_order_id: 'some-uuid',
+  // p_seller_latitude: 30.0444,
+  // p_seller_longitude: 31.2357
+});
+
+if (error) console.error(error);
+else console.log('Result:', data);
+`;
+      }
+
+      function generateTsForEnum(enumObj) {
+        return `
+// In TypeScript, you can define the enum type as:
+type UserRole = 'factory' | 'seller' | 'middleman' | 'customer' | 'delivery';
+
+// Then use it in your Supabase queries:
+const { data, error } = await supabase
+  .from('users')
+  .select('account_type')
+  .eq('account_type', 'seller' as UserRole);
+`;
+      }
+
+      function generateTsForExtension(ext) {
+        return `
+// Extensions are enabled at the database level.
+// To use features like pgcrypto for hashing, you can call SQL functions via supabase.rpc():
+const { data, error } = await supabase.rpc('gen_random_uuid'); // example
+
+// For pg_cron, you would typically schedule jobs via SQL migrations.
+`;
+      }
+
+      function generateTsForPolicy(policy) {
+        return `
+// RLS policies are automatically enforced by Supabase.
+// In your TypeScript code, simply query as the authenticated user:
+const { data, error } = await supabase
+  .from('users')
+  .select('*')
+  .eq('user_id', (await supabase.auth.getUser()).data.user?.id);
+// The policy will restrict results to the user's own data.
+`;
+      }
+
+      // UI logic (same as before, extended with TypeScript button)
+      let currentTab = "tables";
+      let currentSearch = "";
+      let currentObject = null;
+
+      function renderObjectList() {
+        const container = document.getElementById("objectList");
+        let items = [];
+        if (currentTab === "tables") items = schemaData.tables;
+        else if (currentTab === "functions") items = schemaData.functions;
+        else if (currentTab === "enums") items = schemaData.enums;
+        else if (currentTab === "extensions") items = schemaData.extensions;
+        else if (currentTab === "policies") items = schemaData.policies;
+
+        if (currentSearch) {
+          const lower = currentSearch.toLowerCase();
+          items = items.filter(
+            (item) =>
+              item.name.toLowerCase().includes(lower) ||
+              (item.desc && item.desc.toLowerCase().includes(lower)),
+          );
+        }
+
+        container.innerHTML = items
+          .map(
+            (item) => `
+            <div class="object-item" data-name="${item.name}">
+                <div>${item.name}</div>
+                <div class="object-type">${item.desc ? item.desc.substring(0, 60) + "…" : ""}</div>
+            </div>
+        `,
+          )
+          .join("");
+
+        document.querySelectorAll(".object-item").forEach((el) => {
+          el.addEventListener("click", () => {
+            document
+              .querySelectorAll(".object-item")
+              .forEach((e) => e.classList.remove("active"));
+            el.classList.add("active");
+            const name = el.dataset.name;
+            const obj = items.find((i) => i.name === name);
+            if (obj) showDetail(obj);
+          });
+        });
+      }
+
+      function showDetail(obj) {
+        const container = document.getElementById("detailContent");
+        if (!obj) return;
+        let columnsHtml = "";
+        if (obj.columns) {
+          columnsHtml =
+            `<div class="section-header">📋 Columns</div><div class="columns-grid">` +
+            obj.columns
+              .map(
+                (col) =>
+                  `<div class="column-card"><span class="column-name">${col.split(" ")[0]}</span> <span class="column-type">${col.substring(col.indexOf(" ") + 1)}</span></div>`,
+              )
+              .join("") +
+            `</div>`;
+        }
+        let tsExample = "";
+        if (currentTab === "tables") tsExample = generateTsForTable(obj);
+        else if (currentTab === "functions")
+          tsExample = generateTsForFunction(obj);
+        else if (currentTab === "enums") tsExample = generateTsForEnum(obj);
+        else if (currentTab === "extensions")
+          tsExample = generateTsForExtension(obj);
+        else if (currentTab === "policies")
+          tsExample = generateTsForPolicy(obj);
+
+        const sqlBlock = `<div class="section-header">📜 SQL Definition</div><div class="sql-block" id="sqlBlock">${escapeHtml(obj.sql)}</div><button class="copy-btn" onclick="copySQL()">📋 Copy SQL</button>`;
+        const tsBlock = `<div class="section-header">💻 TypeScript Example (Supabase)</div><div class="ts-block" id="tsBlock">${escapeHtml(tsExample)}</div><button class="copy-btn" onclick="copyTS()">📋 Copy TypeScript</button>`;
+
+        container.innerHTML = `
+            <div class="detail-card">
+                <div class="detail-title">${obj.name} <span class="detail-badge">${currentTab.slice(0, -1)}</span></div>
+                <div class="detail-desc">${obj.desc || "No description available."}</div>
+                ${columnsHtml}
+                ${sqlBlock}
+                ${tsBlock}
+            </div>
+        `;
+        window.currentSQL = obj.sql;
+        window.currentTS = tsExample;
+      }
+
+      function escapeHtml(str) {
+        return str.replace(/[&<>]/g, function (m) {
+          if (m === "&") return "&amp;";
+          if (m === "<") return "&lt;";
+          if (m === ">") return "&gt;";
+          return m;
+        });
+      }
+
+      window.copySQL = function () {
+        if (window.currentSQL) {
+          navigator.clipboard.writeText(window.currentSQL);
+          alert("SQL copied to clipboard!");
+        }
+      };
+      window.copyTS = function () {
+        if (window.currentTS) {
+          navigator.clipboard.writeText(window.currentTS);
+          alert("TypeScript code copied to clipboard!");
+        }
+      };
+
+      // Tab switching
+      document.querySelectorAll(".tab-btn").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          document
+            .querySelectorAll(".tab-btn")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentTab = btn.dataset.tab;
+          currentSearch = "";
+          document.getElementById("searchInput").value = "";
+          renderObjectList();
+          document.getElementById("detailContent").innerHTML =
+            `<div class="detail-card"><div class="detail-title">Select an item</div><div class="detail-desc">Choose any table, function, enum, extension or policy from the left panel.</div></div>`;
+        });
+      });
+
+      document.getElementById("searchInput").addEventListener("input", (e) => {
+        currentSearch = e.target.value;
+        renderObjectList();
+      });
+
+      renderObjectList();
+    </script>
+  </body>
+</html>
