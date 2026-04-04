@@ -5,9 +5,9 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+} from "@/components/ui";
+import { Button } from "@/components/ui";
+import { Label } // Removed - use Label component from ui if needed;
 import {
   Select,
   SelectContent,

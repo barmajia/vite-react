@@ -1,8 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui";
+import { Card, CardContent } from "@/components/ui";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { Label } // Removed - use Label component from ui if needed;
+import { Input } from "@/components/ui";
 import { Banknote, CreditCard, Wallet, Shield, Truck } from "lucide-react";
 
 interface PaymentMethodProps {

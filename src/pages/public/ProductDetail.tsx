@@ -9,7 +9,7 @@ import {
   Shield,
   RotateCcw,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ProductGallery } from "@/components/products/ProductGallery";
@@ -36,7 +36,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+import { Label } // Removed - use Label component from ui if needed;
 
 export function ProductDetail() {
   const { t } = useTranslation();
