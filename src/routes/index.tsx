@@ -1,0 +1,113 @@
+import { RouteObject, useRoutes } from 'react-router-dom';
+import { Layout } from '@/components/layout/Layout';
+import { AdminLayout } from '@/pages/admin/AdminLayout';
+import { DashboardLayout } from '@/features/services/dashboard/components/layout/DashboardLayout';
+import HealthLayout from '@/features/health/layouts/HealthLayout';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+
+// Import route modules
+import { authRoutes } from './auth.routes';
+import { productRoutes } from './products.routes';
+import { servicesRoutes } from './services.routes';
+import { middlemanRoutes } from './middleman.routes';
+import { walletRoutes } from './wallet.routes';
+import { factoryRoutes } from './factory.routes';
+import { profileRoutes } from './profile.routes';
+import { adminRoutes } from './admin.routes';
+import { publicRoutes } from './public.routes';
+
+// Lazy load error pages
+import { lazy, Suspense } from 'react';
+const NotFound = lazy(() => import('@/pages/errors/NotFound').then(m => ({ default: m.NotFound })));
+const ServerError = lazy(() => import('@/pages/errors/ServerError').then(m => ({ default: m.ServerError })));
+const Chat = lazy(() => import('@/chats/chat').then(m => ({ default: m.Chat })));
+
+const RouteSkeleton = () => (
+  <div className="flex items-center justify-center min-h-[400px]">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+  </div>
+);
+
+// Main application routes with Layout
+const mainRoutes: RouteObject = {
+  path: '/',
+  element: <Layout />,
+  children: [
+    // Home
+    {
+      index: true,
+      element: (
+        <Suspense fallback={<RouteSkeleton />}>
+          {lazy(() => import('@/pages/public/ServicesGateway').then(m => ({ default: m.ServicesGateway })))}
+        </Suspense>
+      ),
+    },
+    // Product routes
+    ...productRoutes,
+    // Services routes
+    ...servicesRoutes,
+    // Middleman routes
+    ...middlemanRoutes,
+    // Wallet routes
+    ...walletRoutes,
+    // Factory routes
+    ...factoryRoutes,
+    // Profile routes
+    ...profileRoutes,
+    // Public info pages
+    ...publicRoutes,
+  ],
+};
+
+// Admin routes with AdminLayout
+const adminRoute: RouteObject = {
+  path: '/admin',
+  element: <AdminLayout />,
+  children: adminRoutes,
+};
+
+// Chat route (standalone)
+const chatRoute: RouteObject = {
+  path: '/Chat',
+  element: (
+    <Suspense fallback={<RouteSkeleton />}>
+      <Chat />
+    </Suspense>
+  ),
+};
+
+// Error routes
+const errorRoutes: RouteObject[] = [
+  {
+    path: '/error',
+    element: (
+      <Suspense fallback={<RouteSkeleton />}>
+        <ServerError />
+      </Suspense>
+    ),
+  },
+  {
+    path: '*',
+    element: (
+      <Suspense fallback={<RouteSkeleton />}>
+        <NotFound />
+      </Suspense>
+    ),
+  },
+];
+
+// Combine all routes
+export const appRoutes: RouteObject[] = [
+  ...authRoutes, // Auth routes (no layout)
+  mainRoutes,
+  adminRoute,
+  chatRoute,
+  ...errorRoutes,
+];
+
+// Hook to use routes in App component
+export function useAppRoutes() {
+  return useRoutes(appRoutes);
+}
+
+export default appRoutes;

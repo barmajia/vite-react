@@ -12,10 +12,9 @@ import {
   Chrome,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui";
+import { Input } from "@/components/ui";
+import { Card, CardContent } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { supabase } from "@/lib/supabase";

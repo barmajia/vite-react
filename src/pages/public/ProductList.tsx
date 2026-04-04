@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Grid, List, SlidersHorizontal, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui";
 import {
   Select,
   SelectContent,

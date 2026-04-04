@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Mail, Phone, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui";
+import { Input } from "@/components/ui";
+import { Label } // Removed - use Label component from ui if needed;
 import { Textarea } from "@/components/ui/textarea";
 import {
   Card,
@@ -11,7 +11,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/components/ui";
 import { CONTACT } from "@/lib/constants";
 import { toast } from "sonner";
 

@@ -8,7 +8,7 @@ import {
   ImageOff,
   MessageSquare,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
 import { useCart } from "@/hooks/useCart";
 import { toast } from "sonner";

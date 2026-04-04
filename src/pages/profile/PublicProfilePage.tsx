@@ -4,7 +4,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { PublicProfile as UniversalPublicProfile } from "@/components/profiles/PublicProfile";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui";
 import { ArrowLeft } from "lucide-react";
 
 export const PublicProfilePage = () => {

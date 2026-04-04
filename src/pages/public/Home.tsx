@@ -12,18 +12,12 @@ import {
   Package,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Button } from "@/components/ui";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { useFeaturedProducts } from "@/hooks/useProducts";
 import { ROUTES } from "@/lib/constants";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton, ProductCardSkeleton } from "@/components/ui";
 
 export function Home() {
   const { t } = useTranslation();
@@ -211,16 +205,8 @@ export function Home() {
         </div>
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="space-y-3">
-                <Skeleton className="aspect-square rounded-lg" />
-                <Skeleton className="h-4 w-3/4" />
-                <Skeleton className="h-4 w-1/2" />
-                <div className="flex justify-between">
-                  <Skeleton className="h-6 w-20" />
-                  <Skeleton className="h-8 w-8 rounded-full" />
-                </div>
-              </div>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <ProductCardSkeleton key={i} />
             ))}
           </div>
         ) : (

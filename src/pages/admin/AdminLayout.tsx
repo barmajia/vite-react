@@ -5,10 +5,11 @@ import { useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useTheme } from "@/hooks/useTheme";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui";
 import { Avatar } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import {
   Users,
   Package,
@@ -35,7 +36,7 @@ interface MenuItem {
   badge?: string;
 }
 
-export function AdminLayout() {
+function AdminLayoutContent() {
   const navigate = useNavigate();
   const location = useLocation();
   const { adminData, signOut } = useAdminAuth();
@@ -195,5 +196,13 @@ export function AdminLayout() {
         <Outlet />
       </main>
     </div>
+  );
+}
+
+export function AdminLayout() {
+  return (
+    <ProtectedRoute allowedAccountTypes={['admin']}>
+      <AdminLayoutContent />
+    </ProtectedRoute>
   );
 }

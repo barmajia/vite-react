@@ -11,7 +11,7 @@ import {
   CardContent,
   CardDescription,
   CardTitle,
-} from "@/components/ui/card";
+} from "@/components/ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertCircle,
@@ -28,7 +28,7 @@ import {
   Truck,
   ChevronRight,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui";
 import { useTheme } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";

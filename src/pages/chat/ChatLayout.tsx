@@ -6,8 +6,8 @@ import { ChatWindow } from "./ChatWindow";
 import { ConversationItem } from "@/components/chat/ConversationItem";
 import { ChatHeader } from "@/components/chat/ChatHeader";
 import { StartNewChat } from "@/components/chat/StartNewChat";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar } from "@/components/ui/avatar";
 import {
