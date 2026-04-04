@@ -26,7 +26,7 @@ export const Card: React.FC<CardProps> = ({
   };
 
   const shadowStyles = {
-    none: "",
+    none: " ",
     sm: "shadow-sm",
     md: "shadow-md",
     lg: "shadow-lg",
