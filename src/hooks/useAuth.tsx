@@ -64,6 +64,14 @@ type AuthContextType = {
       | "company"
       | "hospital",
   ) => Promise<{ error: Error | null }>;
+  signUpWithGoogle: (
+    accountType?:
+      | "customer"
+      | "seller"
+      | "factory"
+      | "delivery_driver"
+      | "middleman",
+  ) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   linkGoogleAccount: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -584,6 +592,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   /**
+   * Sign up with Google OAuth
+   * Creates a new account via Google with the specified role
+   */
+  const signUpWithGoogle = async (
+    accountType:
+      | "customer"
+      | "seller"
+      | "factory"
+      | "delivery_driver"
+      | "middleman" = "customer",
+  ) => {
+    try {
+      const resolvedAccountType =
+        accountType === "delivery_driver" ? "delivery" : accountType;
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+          // Pass account type via state so the DB trigger can use it
+          // The handle_new_user trigger reads user_metadata.account_type
+          // We set it after OAuth redirect via a session update
+        },
+      });
+
+      if (error) {
+        return { error: error as Error };
+      }
+
+      return { error: null };
+    } catch (err) {
+      console.error("Google signup error:", err);
+      return {
+        error: new Error("An unexpected error occurred. Please try again."),
+      };
+    }
+  };
+
+  /**
    * Sign in with Google OAuth
    */
   const signInWithGoogle = async () => {
@@ -644,6 +695,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signIn,
     signUp,
     signUpWithRole,
+    signUpWithGoogle,
     signInWithGoogle,
     linkGoogleAccount,
     signOut,

@@ -35,7 +35,7 @@ import { useAuth } from "@/hooks/useAuth";
 export function SignupPage() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
-  const { signUp } = useAuth();
+  const { signUp, signUpWithGoogle } = useAuth();
   const [searchParams] = useSearchParams();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(false);
@@ -68,6 +68,31 @@ export function SignupPage() {
   const handleSignupComplete = (email?: string) => {
     if (email) setCreatedEmail(email);
     setSuccess(true);
+  };
+
+  const handleGoogleSignup = async () => {
+    if (!selectedRole) return;
+    setLoading(true);
+    try {
+      const roleMap: Record<
+        UserRole,
+        "customer" | "seller" | "factory" | "delivery_driver" | "middleman"
+      > = {
+        customer: "customer",
+        seller: "seller",
+        factory: "factory",
+        delivery: "delivery_driver",
+        middleman: "middleman",
+      };
+      const { error } = await signUpWithGoogle(roleMap[selectedRole]);
+      if (error) setError(error.message);
+      // OAuth redirects, so we don't need to handle success here
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const roleIcons: Record<UserRole | "admin", React.ElementType> = {
@@ -435,6 +460,7 @@ export function SignupPage() {
                         }
                       }}
                       onBack={handleBack}
+                      onGoogleSignup={handleGoogleSignup}
                       loading={loading}
                     />
                   )}
@@ -474,6 +500,7 @@ export function SignupPage() {
                         }
                       }}
                       onBack={handleBack}
+                      onGoogleSignup={handleGoogleSignup}
                       loading={loading}
                     />
                   )}
@@ -517,6 +544,7 @@ export function SignupPage() {
                         }
                       }}
                       onBack={handleBack}
+                      onGoogleSignup={handleGoogleSignup}
                       loading={loading}
                     />
                   )}
@@ -549,6 +577,7 @@ export function SignupPage() {
                         }
                       }}
                       onBack={handleBack}
+                      onGoogleSignup={handleGoogleSignup}
                       loading={loading}
                     />
                   )}
