@@ -5,7 +5,7 @@
 
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { auditLogger } from "@/lib/security-utils";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, RefreshCw, Shield } from "lucide-react";
 
@@ -119,9 +119,9 @@ export class SecurityBoundary extends Component<
           <CardHeader className="pb-3">
             <div className="flex items-center gap-3">
               <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
-              <h3 className="text-lg font-semibold text-red-800 dark:text-red-200">
+              <CardTitle className="text-red-800 dark:text-red-200">
                 Security Alert
-              </h3>
+              </CardTitle>
             </div>
           </CardHeader>
           <CardContent>
