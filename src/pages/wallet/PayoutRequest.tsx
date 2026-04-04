@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui";
-import { Label } // Removed - use Label component from ui if needed;
+import { Label } from "@/components/ui";
 import {
   Select,
   SelectContent,

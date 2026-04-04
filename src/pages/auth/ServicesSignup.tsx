@@ -12,7 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui";
-import { Label } // Removed - use Label component from ui if needed;
+import { Label } from "@/components/ui";
 import { Card, CardContent } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";

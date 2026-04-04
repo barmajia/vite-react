@@ -7,7 +7,7 @@ import {
   CardTitle,
 } from "@/components/ui";
 import { Button } from "@/components/ui";
-import { Label } // Removed - use Label component from ui if needed;
+import { Label } from "@/components/ui";
 import {
   Select,
   SelectContent,

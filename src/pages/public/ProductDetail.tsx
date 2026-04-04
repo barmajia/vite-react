@@ -36,7 +36,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Label } // Removed - use Label component from ui if needed;
+import { Label } from "@/components/ui";
 
 export function ProductDetail() {
   const { t } = useTranslation();

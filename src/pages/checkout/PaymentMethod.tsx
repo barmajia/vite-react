@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui";
 import { Card, CardContent } from "@/components/ui";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } // Removed - use Label component from ui if needed;
+import { Label } from "@/components/ui";
 import { Input } from "@/components/ui";
 import { Banknote, CreditCard, Wallet, Shield, Truck } from "lucide-react";
 
