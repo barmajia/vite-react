@@ -6,7 +6,7 @@ export {
   CardFooter,
   CardTitle,
   CardDescription,
-} from "./Card";
+} from "./card";
 export { Input, TextArea } from "./Input";
 export {
   Skeleton,
