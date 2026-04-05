@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
-import { useAdminAuth } from "@/hooks/useAdminAuth";
+
 import { Card, CardContent } from "@/components/ui";
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui";
@@ -92,7 +92,6 @@ interface FilterState {
 
 export function AdminUsersDashboard() {
   const navigate = useNavigate();
-  const { isAdmin, loading: adminLoading } = useAdminAuth();
 
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -118,10 +117,8 @@ export function AdminUsersDashboard() {
   }>({ open: false, action: "", message: "" });
 
   useEffect(() => {
-    if (!adminLoading && isAdmin) {
-      loadUsers();
-    }
-  }, [isAdmin, adminLoading, filters]);
+    loadUsers();
+  }, [filters]);
 
   const loadUsers = async () => {
     try {
@@ -384,27 +381,6 @@ export function AdminUsersDashboard() {
   const pendingCount = users.filter((u) => !u.is_verified).length;
   const adminCount = users.filter((u) => u.account_type === "admin").length;
 
-  if (adminLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="animate-spin h-8 w-8" />
-      </div>
-    );
-  }
-
-  if (!isAdmin) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <Shield className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-lg font-medium">Admin Access Required</p>
-          <p className="text-muted-foreground">
-            You don't have permission to access this page
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-6">
@@ -711,7 +687,7 @@ export function AdminUsersDashboard() {
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="sm">
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -836,7 +812,7 @@ export function AdminUsersDashboard() {
             </Button>
             <Button
               variant={
-                confirmDialog.action === "delete" ? "destructive" : "default"
+                confirmDialog.action === "delete" ? "danger" : "primary"
               }
               onClick={confirmAction}
             >

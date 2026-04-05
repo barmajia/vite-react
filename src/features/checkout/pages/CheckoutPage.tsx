@@ -25,9 +25,10 @@ export function CheckoutPage() {
 
   if (authLoading) {
     return (
-      <div className="max-w-4xl mx-auto py-16">
-        <div className="flex justify-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent"></div>
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+          <p className="text-muted-foreground animate-pulse">Preparing your secure checkout...</p>
         </div>
       </div>
     );
@@ -35,38 +36,52 @@ export function CheckoutPage() {
 
   if (!user) {
     return (
-      <div className="max-w-2xl mx-auto text-center py-16">
-        <h2 className="text-2xl font-bold mb-4">Sign in to checkout</h2>
-        <p className="text-muted-foreground mb-6">
-          Please sign in to complete your purchase.
-        </p>
-        <button
-          onClick={() => navigate('/login')}
-          className="px-6 py-2 bg-accent text-white rounded-md hover:opacity-90"
-        >
-          Sign In
-        </button>
+      <div className="max-w-2xl mx-auto text-center py-20 px-4">
+        <div className="glass-card p-12 border-slate-200/50 dark:border-slate-800/50">
+          <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6 text-primary">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </div>
+          <h2 className="text-3xl font-bold mb-4 tracking-tight">Sign in to checkout</h2>
+          <p className="text-muted-foreground mb-8 text-lg">
+            Please sign in to your Aurora account to complete your purchase securely.
+          </p>
+          <button
+            onClick={() => navigate('/login')}
+            className="w-full sm:w-auto px-10 py-4 bg-primary text-primary-foreground rounded-2xl font-bold hover:opacity-90 shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            Sign In to Continue
+          </button>
+        </div>
       </div>
     );
   }
 
   if (items.length === 0) {
     return (
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto py-12 px-4">
         <CartEmpty />
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-8">Checkout</h1>
+    <div className="max-w-6xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+      <div className="mb-10 text-center lg:text-left">
+        <h1 className="text-4xl md:text-5xl font-black mb-3 tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-gray-900 to-gray-500 dark:from-white dark:to-gray-400">
+          Secure Checkout
+        </h1>
+        <p className="text-muted-foreground text-lg">
+          Complete your purchase using our protected payment system.
+        </p>
+      </div>
       
-      <CheckoutSteps currentStep={1} />
+      <div className="mb-10">
+        <CheckoutSteps currentStep={1} />
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
         {/* Shipping Information */}
-        <div className="lg:col-span-2">
+        <div className="lg:col-span-2 space-y-8">
           <CheckoutForm
             formData={formData}
             updateFormData={updateFormData}
@@ -74,7 +89,7 @@ export function CheckoutPage() {
         </div>
 
         {/* Order Review */}
-        <div>
+        <div className="sticky top-24">
           <OrderReview
             items={items}
             subtotal={subtotal}

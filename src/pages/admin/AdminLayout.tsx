@@ -26,6 +26,7 @@ import {
   Factory,
   Moon,
   Sun,
+  Store,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +48,7 @@ function AdminLayoutContent() {
     { icon: Home, label: "Dashboard", path: "/admin" },
     { icon: Users, label: "Users", path: "/admin/users", badge: "New" },
     { icon: Package, label: "Products", path: "/admin/products" },
+    { icon: Store, label: "Marketplace", path: "/admin/marketplace" },
     { icon: ShoppingCart, label: "Orders", path: "/admin/orders" },
     { icon: Factory, label: "Factories", path: "/admin/factories" },
     { icon: Handshake, label: "Middlemen", path: "/admin/middlemen" },
@@ -201,7 +203,7 @@ function AdminLayoutContent() {
 
 export function AdminLayout() {
   return (
-    <ProtectedRoute allowedAccountTypes={['admin']}>
+    <ProtectedRoute allowedAccountTypes={["admin"]}>
       <AdminLayoutContent />
     </ProtectedRoute>
   );

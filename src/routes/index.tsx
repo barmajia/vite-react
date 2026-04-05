@@ -12,6 +12,8 @@ import { factoryRoutes } from "./factory.routes";
 import { profileRoutes } from "./profile.routes";
 import { adminRoutes } from "./admin.routes";
 import { publicRoutes } from "./public.routes";
+import { marketplaceRoutes } from "./marketplace.routes";
+import { storefrontRoutes } from "./storefront.routes";
 
 // Lazy load error pages
 import { lazy, Suspense } from "react";
@@ -58,6 +60,8 @@ const mainRoutes: RouteObject = {
     ...middlemanRoutes,
     // Wallet routes
     ...walletRoutes,
+    // Marketplace routes
+    ...marketplaceRoutes,
     // Factory routes
     ...factoryRoutes,
     // Profile routes
@@ -110,6 +114,8 @@ export const appRoutes: RouteObject[] = [
   mainRoutes,
   adminRoute,
   chatRoute,
+  // Storefront routes (must be last to avoid catching other routes)
+  ...storefrontRoutes,
   ...errorRoutes,
 ];
 

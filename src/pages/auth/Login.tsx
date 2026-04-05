@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui";
-import { Input } from "@/components/ui";
+import { Input, Label } from "@/components/ui";
 import { Card, CardContent } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
@@ -93,20 +93,24 @@ export function Login() {
 
         // Check for Service Provider Profile
         if (data?.user) {
-          const { data: provider } = await supabase
-            .from("svc_providers")
-            .select("id, status")
-            .eq("user_id", data.user.id)
-            .single();
+          try {
+            const { data: provider } = await supabase
+              .from("svc_providers")
+              .select("id, status")
+              .eq("user_id", data.user.id)
+              .single();
 
-          if (provider) {
-            if (provider.status === "pending_review") {
-              toast.info(t("auth.pendingReview"));
-              navigate("/services/dashboard/pending");
+            if (provider) {
+              if (provider.status === "pending_review") {
+                toast.info(t("auth.pendingReview"));
+                navigate("/services/dashboard/pending");
+                return;
+              }
+              navigate("/services/dashboard");
               return;
             }
-            navigate("/services/dashboard");
-            return;
+          } catch {
+            // svc_providers table might not exist - continue with normal flow
           }
         }
 
@@ -261,6 +265,14 @@ export function Login() {
                       <Eye className="h-5 w-5" />
                     )}
                   </button>
+                </div>
+                <div className="mt-2 text-right">
+                  <Link
+                    to="/forgot-password"
+                    className="text-sm text-primary hover:underline"
+                  >
+                    {t("auth.forgotPassword")}
+                  </Link>
                 </div>
               </div>
 

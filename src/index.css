@@ -4,91 +4,63 @@
 
 @layer base {
   :root {
-    /* Light Mode - Aurora Blue Theme */
+    /* Light Mode - Premium Glassmorphic Theme */
     --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    --foreground: 220 39% 11%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 220 39% 11%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 217 91% 60%; /* Aurora Blue */
+    --popover-foreground: 220 39% 11%;
+    --primary: 250 82% 64%; /* Vibrant Purple/Indigo */
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
-    --accent: 217 91% 60%; /* Aurora Blue */
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 220 39% 11%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
+    --accent: 250 82% 64%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 217 91% 60%; /* Aurora Blue */
-    --radius: 0.75rem;
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 250 82% 64%;
+    --radius: 1rem; /* Softer, rounder corners */
   }
 
   .dark {
-    /* Dark Mode - Deep Space with Aurora Blue */
-    --background: 222 47% 5%;
+    /* Dark Mode - Deep Space Luxury */
+    --background: 230 40% 6%; /* Deep navy/indigo base */
     --foreground: 210 40% 98%;
-    --card: 222 47% 7%;
+    /* Increase card opacity/glass base */
+    --card: 232 30% 12%;
     --card-foreground: 210 40% 98%;
-    --popover: 222 47% 7%;
+    --popover: 232 30% 12%;
     --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%; /* Aurora Blue */
+    --primary: 260 85% 70%; /* Soft vibrant violet */
     --primary-foreground: 0 0% 100%;
-    --secondary: 217 33% 17%;
+    --secondary: 230 20% 16%;
     --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 17%;
+    --muted: 230 20% 16%;
     --muted-foreground: 215 20% 65%;
-    --accent: 217 91% 60%; /* Aurora Blue */
+    --accent: 260 85% 70%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 217 91% 60%; /* Aurora Blue */
+    --border: 230 20% 18%;
+    --input: 230 20% 18%;
+    --ring: 260 85% 70%;
   }
 }
 
-.dark body {
-  background: #0b1120;
-}
-@layer utilities {
-  @keyframes slide-in-right {
-    from {
-      transform: translateX(100%);
-    }
-    to {
-      transform: translateX(0);
-    }
-  }
-
-  @keyframes slide-in-left {
-    from {
-      transform: translateX(-100%);
-    }
-    to {
-      transform: translateX(0);
-    }
-  }
-
-  .animate-slide-in-right {
-    animation: slide-in-right 0.3s ease-out;
-  }
-
-  .animate-slide-in-left {
-    animation: slide-in-left 0.3s ease-out;
-  }
-}
-
+/* Background Gradients & Base Typography */
 @layer base {
   * {
     @apply border-border;
   }
+  
   body {
-    @apply bg-background text-foreground;
-    font-family: "Inter", "Geist Sans", system-ui, sans-serif;
+    @apply bg-background text-foreground relative min-h-screen antialiased;
+    font-family: "Outfit", "Inter", "Geist Sans", system-ui, sans-serif;
     font-synthesis: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -102,8 +74,59 @@
   }
 }
 
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: -1;
+  pointer-events: none;
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(250,82%,64%,0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(190,80%,60%,0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(330,80%,60%,0.12) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(210,80%,60%,0.12) 0px, transparent 50%);
+  background-attachment: fixed;
+  background-size: cover;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.dark body::before {
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(260,85%,70%,0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, hsla(190,80%,60%,0.1) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, hsla(330,80%,60%,0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, hsla(210,80%,60%,0.1) 0px, transparent 50%);
+}
+
 @layer utilities {
+  @keyframes slide-in-right {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+  }
+
+  @keyframes slide-in-left {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out;
+  }
+
+  .animate-slide-in-left {
+    animation: slide-in-left 0.3s ease-out;
+  }
+
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Glassmorphism utilities */
+  .glass {
+    @apply bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border border-white/20 dark:border-white/10 shadow-xl;
+  }
+  
+  .glass-card {
+    @apply bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-white/20 dark:border-white/10 shadow-lg hover:shadow-xl transition-all duration-300;
   }
 }

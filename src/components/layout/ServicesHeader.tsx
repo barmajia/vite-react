@@ -111,11 +111,18 @@ export function ServicesHeader() {
       if (!user) return;
       try {
         // Fetch services provider
-        const { data: svcData } = await supabase
-          .from("svc_providers")
-          .select("id, provider_name, logo_url, is_verified, vertical")
-          .eq("user_id", user.id)
-          .maybeSingle();
+        let svcData = null;
+        try {
+          const { data } = await supabase
+            .from("svc_providers")
+            .select("id, provider_name, logo_url, is_verified")
+            .eq("user_id", user.id)
+            .maybeSingle();
+          svcData = data;
+        } catch (svcError) {
+          // Table or column might not exist - silently ignore
+          console.debug("svc_providers not available");
+        }
 
         if (svcData) {
           setProviderProfile(svcData);
@@ -149,13 +156,21 @@ export function ServicesHeader() {
           .eq("user_id", user.id)
           .eq("is_read", false);
 
-        const { count: msgCount } = await supabase
-          .from("svc_conversations")
-          .select("*", { count: "exact", head: true })
-          .or(`provider_id.eq.${user.id},customer_id.eq.${user.id}`);
+        // Skip svc_conversations query if table doesn't exist
+        let msgCount = 0;
+        try {
+          const { count } = await supabase
+            .from("svc_conversations")
+            .select("*", { count: "exact", head: true })
+            .or(`provider_id.eq.${user.id},customer_id.eq.${user.id}`);
+          msgCount = count || 0;
+        } catch (msgError) {
+          // Table might not exist - silently ignore
+          console.debug("svc_conversations table not available");
+        }
 
         setNotificationCount(notifCount || 0);
-        setMessageCount(msgCount || 0);
+        setMessageCount(msgCount);
       } catch (error) {
         console.error("Error fetching counts:", error);
       }
