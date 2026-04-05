@@ -13,7 +13,10 @@
       "Bash(git rm *)",
       "Bash(git checkout *)",
       "Bash(del *)",
-      "Bash(grep *)"
+      "Bash(grep *)",
+      "Bash(taskkill *)",
+      "Bash(timeout *)",
+      "Bash(rmdir *)"
     ]
   },
   "$version": 3
