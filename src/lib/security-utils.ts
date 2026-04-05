@@ -154,7 +154,7 @@ export function encodeHTML(input: string): string {
  */
 const SQL_INJECTION_PATTERNS = [
   /(\b(SELECT|INSERT|UPDATE|DELETE|DROP|CREATE|ALTER|EXEC|EXECUTE|UNION|DECLARE)\b)/gi,
-  /(--|#|/\*|\*\/)/g,
+  /(--|#|\/\*|\*\/)/g,
   /(\bOR\b\s+\d+\s*=\s*\d+)/gi,
   /(\bAND\b\s+\d+\s*=\s*\d+)/gi,
   /('\s*(OR|AND)\s*'?\d+\s*=\s*'?)/gi,
