@@ -212,6 +212,24 @@ export default {
           "0%, 100%": { transform: "translateY(-5%)" },
           "50%": { transform: "translateY(5%)" },
         },
+        float: {
+          "0%, 100%": {
+            transform: "translateY(0) translateX(0)",
+            opacity: "0.3",
+          },
+          "25%": {
+            transform: "translateY(-20px) translateX(10px)",
+            opacity: "0.8",
+          },
+          "50%": {
+            transform: "translateY(-10px) translateX(-10px)",
+            opacity: "0.5",
+          },
+          "75%": {
+            transform: "translateY(-30px) translateX(5px)",
+            opacity: "0.9",
+          },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -225,6 +243,7 @@ export default {
         "scale-in": "scale-in 0.2s ease-out",
         "spin-slow": "spin-slow 3s linear infinite",
         "bounce-slow": "bounce-slow 2s ease-in-out infinite",
+        float: "float 20s ease-in-out infinite",
       },
       boxShadow: {
         sm: "0 1px 2px 0 rgb(0 0 0 / 0.05)",

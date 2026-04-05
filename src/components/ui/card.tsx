@@ -59,7 +59,7 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
   action,
 }) => (
   <div className={`flex items-center justify-between mb-4 ${className}`}>
-    <h3 className="text-lg font-semibold text-gray-900">{children}</h3>
+    <div className="text-lg font-semibold text-gray-900">{children}</div>
     {action && <div>{action}</div>}
   </div>
 );
@@ -67,12 +67,18 @@ export const CardHeader: React.FC<CardHeaderProps> = ({
 interface CardTitleProps {
   children: React.ReactNode;
   className?: string;
+  as?: "h1" | "h2" | "h3" | "h4" | "h5" | "h6" | "p" | "span";
 }
 
 export const CardTitle: React.FC<CardTitleProps> = ({
   children,
   className = "",
-}) => <h3 className={`text-lg font-semibold ${className}`}>{children}</h3>;
+  as: Component = "h3",
+}) => (
+  <Component className={`text-lg font-semibold ${className}`}>
+    {children}
+  </Component>
+);
 
 interface CardDescriptionProps {
   children: React.ReactNode;

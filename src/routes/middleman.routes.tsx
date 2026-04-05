@@ -1,6 +1,6 @@
-import { RouteObject } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { RouteObject } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 const RouteSkeleton = () => (
   <div className="flex items-center justify-center min-h-[400px]">
@@ -9,22 +9,62 @@ const RouteSkeleton = () => (
 );
 
 // Lazy load middleman pages
-const MiddlemanDashboard = lazy(() => import('@/pages/middleman/MiddlemanDashboard').then(m => ({ default: m.MiddlemanDashboard })));
-const MiddlemanDeals = lazy(() => import('@/pages/middleman/MiddlemanDeals').then(m => ({ default: m.MiddlemanDeals })));
-const MiddlemanCreateDeal = lazy(() => import('@/pages/middleman/MiddlemanCreateDeal').then(m => ({ default: m.MiddlemanCreateDeal })));
-const MiddlemanDealDetails = lazy(() => import('@/pages/middleman/MiddlemanDealDetails').then(m => ({ default: m.MiddlemanDealDetails })));
-const MiddlemanOrders = lazy(() => import('@/pages/middleman/MiddlemanOrders').then(m => ({ default: m.MiddlemanOrders })));
-const MiddlemanAnalytics = lazy(() => import('@/pages/middleman/MiddlemanAnalytics').then(m => ({ default: m.MiddlemanAnalytics })));
-const MiddlemanConnections = lazy(() => import('@/pages/middleman/MiddlemanConnections').then(m => ({ default: m.MiddlemanConnections })));
-const MiddlemanCommission = lazy(() => import('@/pages/middleman/MiddlemanCommission').then(m => ({ default: m.MiddlemanCommission })));
-const MiddlemanProfile = lazy(() => import('@/pages/middleman/MiddlemanProfile').then(m => ({ default: m.MiddlemanProfile })));
-const MiddlemanSettings = lazy(() => import('@/pages/middleman/MiddlemanSettings').then(m => ({ default: m.MiddlemanSettings })));
+const MiddlemanDashboard = lazy(() =>
+  import("@/pages/middleman/MiddlemanDashboard").then((m) => ({
+    default: m.MiddlemanDashboard,
+  })),
+);
+const MiddlemanDeals = lazy(() =>
+  import("@/pages/middleman/MiddlemanDeals").then((m) => ({
+    default: m.MiddlemanDeals,
+  })),
+);
+const MiddlemanCreateDeal = lazy(() =>
+  import("@/pages/middleman/MiddlemanCreateDeal").then((m) => ({
+    default: m.MiddlemanCreateDeal,
+  })),
+);
+const MiddlemanDealDetails = lazy(() =>
+  import("@/pages/middleman/MiddlemanDealDetails").then((m) => ({
+    default: m.MiddlemanDealDetails,
+  })),
+);
+const MiddlemanOrders = lazy(() =>
+  import("@/pages/middleman/MiddlemanOrders").then((m) => ({
+    default: m.MiddlemanOrders,
+  })),
+);
+const MiddlemanAnalytics = lazy(() =>
+  import("@/pages/middleman/MiddlemanAnalytics").then((m) => ({
+    default: m.MiddlemanAnalytics,
+  })),
+);
+const MiddlemanConnections = lazy(() =>
+  import("@/pages/middleman/MiddlemanConnections").then((m) => ({
+    default: m.MiddlemanConnections,
+  })),
+);
+const MiddlemanCommission = lazy(() =>
+  import("@/pages/middleman/MiddlemanCommission").then((m) => ({
+    default: m.MiddlemanCommission,
+  })),
+);
+const MiddlemanProfile = lazy(() =>
+  import("@/pages/middleman/MiddlemanProfile").then((m) => ({
+    default: m.MiddlemanProfile,
+  })),
+);
+const MiddlemanSettings = lazy(() =>
+  import("@/pages/middleman/MiddlemanSettings").then((m) => ({
+    default: m.MiddlemanSettings,
+  })),
+);
 
 export const middlemanRoutes: RouteObject[] = [
   {
-    path: 'middleman',
+    path: "middleman",
     element: (
-      <ProtectedRoute allowedAccountTypes={['middleman']}>
+      <ProtectedRoute allowedAccountTypes={["middleman"]}>
         <Suspense fallback={<RouteSkeleton />}>
           <MiddlemanDashboard />
         </Suspense>
@@ -40,15 +80,7 @@ export const middlemanRoutes: RouteObject[] = [
         ),
       },
       {
-        path: 'dashboard',
-        element: (
-          <Suspense fallback={<RouteSkeleton />}>
-            <MiddlemanDashboard />
-          </Suspense>
-        ),
-      },
-      {
-        path: 'deals',
+        path: "deals",
         element: (
           <Suspense fallback={<RouteSkeleton />}>
             <MiddlemanDeals />
@@ -56,7 +88,7 @@ export const middlemanRoutes: RouteObject[] = [
         ),
       },
       {
-        path: 'deals/new',
+        path: "deals/new",
         element: (
           <Suspense fallback={<RouteSkeleton />}>
             <MiddlemanCreateDeal />
@@ -64,7 +96,7 @@ export const middlemanRoutes: RouteObject[] = [
         ),
       },
       {
-        path: 'deals/:dealId',
+        path: "deals/:dealId",
         element: (
           <Suspense fallback={<RouteSkeleton />}>
             <MiddlemanDealDetails />
@@ -72,7 +104,7 @@ export const middlemanRoutes: RouteObject[] = [
         ),
       },
       {
-        path: 'orders',
+        path: "orders",
         element: (
           <Suspense fallback={<RouteSkeleton />}>
             <MiddlemanOrders />
@@ -80,7 +112,7 @@ export const middlemanRoutes: RouteObject[] = [
         ),
       },
       {
-        path: 'analytics',
+        path: "analytics",
         element: (
           <Suspense fallback={<RouteSkeleton />}>
             <MiddlemanAnalytics />
@@ -88,7 +120,7 @@ export const middlemanRoutes: RouteObject[] = [
         ),
       },
       {
-        path: 'connections',
+        path: "connections",
         element: (
           <Suspense fallback={<RouteSkeleton />}>
             <MiddlemanConnections />
@@ -96,7 +128,7 @@ export const middlemanRoutes: RouteObject[] = [
         ),
       },
       {
-        path: 'commission',
+        path: "commission",
         element: (
           <Suspense fallback={<RouteSkeleton />}>
             <MiddlemanCommission />
@@ -104,7 +136,7 @@ export const middlemanRoutes: RouteObject[] = [
         ),
       },
       {
-        path: 'profile',
+        path: "profile",
         element: (
           <Suspense fallback={<RouteSkeleton />}>
             <MiddlemanProfile />
@@ -112,7 +144,7 @@ export const middlemanRoutes: RouteObject[] = [
         ),
       },
       {
-        path: 'settings',
+        path: "settings",
         element: (
           <Suspense fallback={<RouteSkeleton />}>
             <MiddlemanSettings />

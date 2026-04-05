@@ -1,6 +1,6 @@
-import { RouteObject } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { RouteObject } from "react-router-dom";
+import { lazy, Suspense } from "react";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 
 // Loading skeleton component
 const RouteSkeleton = () => (
@@ -10,25 +10,77 @@ const RouteSkeleton = () => (
 );
 
 // Lazy load product pages
-const ProductList = lazy(() => import('@/pages/public/ProductList').then(m => ({ default: m.ProductList })));
-const ProductDetail = lazy(() => import('@/pages/public/ProductDetail').then(m => ({ default: m.ProductDetail })));
-const ProductDetailsPage = lazy(() => import('@/pages/public/ProductDetailsPage').then(m => ({ default: m.default })));
-const ProductDetailRedirect = lazy(() => import('@/pages/public/ProductDetailRedirect').then(m => ({ default: m.ProductDetailRedirect })));
-const CategoriesPage = lazy(() => import('@/features/categories/pages/CategoriesPage').then(m => ({ default: m.CategoriesPage })));
-const CategoryProductsPage = lazy(() => import('@/features/categories/pages/CategoryProductsPage').then(m => ({ default: m.CategoryProductsPage })));
+const ProductList = lazy(() =>
+  import("@/pages/public/ProductList").then((m) => ({
+    default: m.ProductList,
+  })),
+);
+const ProductDetail = lazy(() =>
+  import("@/pages/public/ProductDetail").then((m) => ({
+    default: m.ProductDetail,
+  })),
+);
+const ProductDetailsPage = lazy(() =>
+  import("@/pages/public/ProductDetailsPage").then((m) => ({
+    default: m.default,
+  })),
+);
+const ProductDetailRedirect = lazy(() =>
+  import("@/pages/public/ProductDetailRedirect").then((m) => ({
+    default: m.ProductDetailRedirect,
+  })),
+);
+const CategoriesPage = lazy(() =>
+  import("@/features/categories/pages/CategoriesPage").then((m) => ({
+    default: m.CategoriesPage,
+  })),
+);
+const CategoryProductsPage = lazy(() =>
+  import("@/features/categories/pages/CategoryProductsPage").then((m) => ({
+    default: m.CategoryProductsPage,
+  })),
+);
 
 // Cart & Checkout
-const CartPage = lazy(() => import('@/features/cart/pages/CartPage').then(m => ({ default: m.CartPage })));
-const CheckoutPage = lazy(() => import('@/features/checkout/pages/CheckoutPage').then(m => ({ default: m.CheckoutPage })));
-const OrderSuccessPage = lazy(() => import('@/features/orders/pages/OrderSuccessPage').then(m => ({ default: m.OrderSuccessPage })));
+const CartPage = lazy(() =>
+  import("@/features/cart/pages/CartPage").then((m) => ({
+    default: m.CartPage,
+  })),
+);
+const CheckoutPage = lazy(() =>
+  import("@/features/checkout/pages/CheckoutPage").then((m) => ({
+    default: m.CheckoutPage,
+  })),
+);
+const OrderSuccessPage = lazy(() =>
+  import("@/features/orders/pages/OrderSuccessPage").then((m) => ({
+    default: m.OrderSuccessPage,
+  })),
+);
 
 // Orders
-const OrdersListPage = lazy(() => import('@/features/orders/pages/OrdersListPage').then(m => ({ default: m.OrdersListPage })));
-const OrderDetailPage = lazy(() => import('@/features/orders/pages/OrderDetailPage').then(m => ({ default: m.OrderDetailPage })));
+const OrdersListPage = lazy(() =>
+  import("@/features/orders/pages/OrdersListPage").then((m) => ({
+    default: m.OrdersListPage,
+  })),
+);
+const OrderDetailPage = lazy(() =>
+  import("@/features/orders/pages/OrderDetailPage").then((m) => ({
+    default: m.OrderDetailPage,
+  })),
+);
 
 // Wishlist & Addresses
-const WishlistPage = lazy(() => import('@/features/wishlist/pages/WishlistPage').then(m => ({ default: m.WishlistPage })));
-const AddressesPage = lazy(() => import('@/features/addresses/pages/AddressesPage').then(m => ({ default: m.AddressesPage })));
+const WishlistPage = lazy(() =>
+  import("@/features/wishlist/pages/WishlistPage").then((m) => ({
+    default: m.WishlistPage,
+  })),
+);
+const AddressesPage = lazy(() =>
+  import("@/features/addresses/pages/AddressesPage").then((m) => ({
+    default: m.AddressesPage,
+  })),
+);
 
 // Placeholder components
 const Brands = () => (
@@ -51,7 +103,7 @@ const BrandProducts = () => (
 
 export const productRoutes: RouteObject[] = [
   {
-    path: 'products',
+    path: "products",
     children: [
       {
         index: true,
@@ -62,7 +114,7 @@ export const productRoutes: RouteObject[] = [
         ),
       },
       {
-        path: ':asin',
+        path: ":asin",
         element: (
           <Suspense fallback={<RouteSkeleton />}>
             <ProductDetail />
@@ -70,7 +122,7 @@ export const productRoutes: RouteObject[] = [
         ),
       },
       {
-        path: 'details/:asin',
+        path: "details/:asin",
         element: (
           <Suspense fallback={<RouteSkeleton />}>
             <ProductDetailsPage />
@@ -78,7 +130,7 @@ export const productRoutes: RouteObject[] = [
         ),
       },
       {
-        path: 'categories',
+        path: "categories",
         element: (
           <Suspense fallback={<RouteSkeleton />}>
             <CategoriesPage />
@@ -86,7 +138,7 @@ export const productRoutes: RouteObject[] = [
         ),
       },
       {
-        path: 'categories/:slug',
+        path: "categories/:slug",
         element: (
           <Suspense fallback={<RouteSkeleton />}>
             <CategoryProductsPage />
@@ -94,35 +146,27 @@ export const productRoutes: RouteObject[] = [
         ),
       },
       {
-        path: 'brands',
+        path: "brands",
         element: <Brands />,
       },
       {
-        path: 'brands/:id',
+        path: "brands/:id",
         element: <BrandProducts />,
       },
     ],
   },
-  // Redirect old product routes
+  // Redirect old product routes (backward compatibility)
   {
-    path: 'product/:id',
+    path: "product/:id",
     element: (
       <Suspense fallback={<RouteSkeleton />}>
         <ProductDetailRedirect />
       </Suspense>
     ),
   },
-  {
-    path: 'product/:asin',
-    element: (
-      <Suspense fallback={<RouteSkeleton />}>
-        <ProductDetail />
-      </Suspense>
-    ),
-  },
   // Shopping flow
   {
-    path: 'cart',
+    path: "cart",
     element: (
       <Suspense fallback={<RouteSkeleton />}>
         <CartPage />
@@ -130,7 +174,7 @@ export const productRoutes: RouteObject[] = [
     ),
   },
   {
-    path: 'checkout',
+    path: "checkout",
     element: (
       <ProtectedRoute>
         <Suspense fallback={<RouteSkeleton />}>
@@ -140,7 +184,7 @@ export const productRoutes: RouteObject[] = [
     ),
   },
   {
-    path: 'order-success/:id',
+    path: "order-success/:id",
     element: (
       <ProtectedRoute>
         <Suspense fallback={<RouteSkeleton />}>
@@ -150,7 +194,7 @@ export const productRoutes: RouteObject[] = [
     ),
   },
   {
-    path: 'orders',
+    path: "orders",
     element: (
       <ProtectedRoute>
         <Suspense fallback={<RouteSkeleton />}>
@@ -160,7 +204,7 @@ export const productRoutes: RouteObject[] = [
     ),
   },
   {
-    path: 'orders/:id',
+    path: "orders/:id",
     element: (
       <ProtectedRoute>
         <Suspense fallback={<RouteSkeleton />}>
@@ -170,7 +214,7 @@ export const productRoutes: RouteObject[] = [
     ),
   },
   {
-    path: 'wishlist',
+    path: "wishlist",
     element: (
       <ProtectedRoute>
         <Suspense fallback={<RouteSkeleton />}>
@@ -180,7 +224,7 @@ export const productRoutes: RouteObject[] = [
     ),
   },
   {
-    path: 'addresses',
+    path: "addresses",
     element: (
       <ProtectedRoute>
         <Suspense fallback={<RouteSkeleton />}>

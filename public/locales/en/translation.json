@@ -52,6 +52,7 @@
     "redirecting": "Redirecting you now..."
   },
   "home": {
+    "multiRolePlatform": "Multi-Role Platform",
     "newArrivals": "New Season Arrivals",
     "heroTitle": "Discover Premium Products",
     "heroSubtitle": "Shop from thousands of verified sellers. Quality meets convenience with Aurora's curated marketplace.",
@@ -60,6 +61,50 @@
     "shopByCategory": "Shop by Category",
     "viewAll": "View All",
     "featuredProducts": "Featured Products",
+    "handpicked": "Handpicked",
+    "browse": "Browse",
+    "whyChooseUs": "Why Choose Us",
+    "builtForSuccess": "Built for Success",
+    "builtForSuccessDesc": "Everything you need to thrive in the digital marketplace",
+    "testimonials": "Testimonials",
+    "lovedByThousands": "Loved by Thousands",
+    "seeWhatUsersSay": "See what our users have to say",
+    "whyChooseAurora": "Why Choose Aurora?",
+    "ecosystemDesc": "A complete B2B2C ecosystem connecting everyone in the supply chain",
+    "multiRolePlatformDesc": "5 different roles working together seamlessly",
+    "secureTrusted": "Secure & Trusted",
+    "secureTrustedDesc": "Verified users and secure transactions",
+    "growBusiness": "Grow Your Business",
+    "growBusinessDesc": "Tools and analytics to scale your operations",
+    "startToday": "Start Today",
+    "readyToGetStarted": "Ready to Get Started?",
+    "joinThousands": "Join thousands of users already using Aurora to buy, sell, and grow their businesses",
+    "createFreeAccount": "Create Free Account",
+    "signIn": "Sign In",
+    "getStartedFree": "Get Started Free",
+    "globalReach": "Global Reach",
+    "securePlatform": "Secure Platform",
+    "support247": "24/7 Support",
+    "chooseYourRole": "Choose Your Role",
+    "chooseYourRoleDesc": "Join our platform as any of these roles and start your journey",
+    "multipleRoles": "Multiple Roles",
+    "joinAs": "Join as",
+    "activeUsers": "Active Users",
+    "productsListed": "Products Listed",
+    "verifiedSellers": "Verified Sellers",
+    "satisfactionRate": "Satisfaction Rate",
+    "roles": {
+      "customer": "Customer",
+      "customerDesc": "Browse and buy products from sellers",
+      "seller": "Seller",
+      "sellerDesc": "Sell products to customers and factories",
+      "factory": "Factory",
+      "factoryDesc": "Manufacture products for wholesale",
+      "middleman": "Middleman",
+      "middlemanDesc": "Connect buyers and sellers, earn commissions",
+      "delivery": "Delivery",
+      "deliveryDesc": "Deliver orders and earn per delivery"
+    },
     "categories": {
       "electronics": "Electronics",
       "fashion": "Fashion",
@@ -78,6 +123,23 @@
       "qualityGuaranteed": "Quality Guaranteed",
       "qualityGuaranteedDesc": "All products are verified for authenticity and quality"
     },
+    "testimonials": [
+      {
+        "name": "Sarah Johnson",
+        "role": "Seller",
+        "content": "Aurora transformed my small business into a thriving online store. The multi-role platform is genius!"
+      },
+      {
+        "name": "Ahmed Hassan",
+        "role": "Factory Owner",
+        "content": "We've doubled our production capacity thanks to Aurora's seamless factory-customer connections."
+      },
+      {
+        "name": "Maria Garcia",
+        "role": "Middleman",
+        "content": "The commission system is transparent and fair. I've built a sustainable income connecting buyers and sellers."
+      }
+    ],
     "newsletter": {
       "title": "Stay in the Loop",
       "subtitle": "Subscribe to our newsletter for exclusive deals, new arrivals, and insider-only discounts.",
@@ -436,14 +498,26 @@
     "notFoundDesc": "The category you're looking for doesn't exist or is inactive.",
     "shopByCategory": "Shop by Category",
     "exploreCategories": "Explore our curated collections",
+    "browseCategoriesDesc": "Browse through our extensive collection of products organized by categories for easy shopping",
+    "searchPlaceholder": "Search categories...",
     "allCategories": "All Categories",
     "loading": "Loading categories...",
     "errorLoading": "Failed to load categories",
     "noCategories": "No categories found.",
+    "noResults": "No categories found",
+    "tryDifferentSearch": "Try a different search term",
+    "categoriesFound": "Categories Found",
     "browseSubcategories": "Browse Subcategories",
     "backToCategories": "Back to Categories",
     "viewProducts": "View Products",
-    "items": "{{count}} items"
+    "viewAllProducts": "View All Products",
+    "items": "{{count}} items",
+    "products": "products",
+    "trending": "Trending",
+    "trendingCategories": "Trending Categories",
+    "can'tFindCategory": "Can't Find What You're Looking For?",
+    "browseAllProducts": "Browse All Products",
+    "contactUs": "Contact Us"
   },
   "categories": {
     "electronics": "Electronics",

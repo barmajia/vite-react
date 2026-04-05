@@ -1,26 +1,34 @@
-import { RouteObject, useRoutes } from 'react-router-dom';
-import { Layout } from '@/components/layout/Layout';
-import { AdminLayout } from '@/pages/admin/AdminLayout';
-import { DashboardLayout } from '@/features/services/dashboard/components/layout/DashboardLayout';
-import HealthLayout from '@/features/health/layouts/HealthLayout';
-import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { RouteObject, useRoutes } from "react-router-dom";
+import { Layout } from "@/components/layout/Layout";
+import { AdminLayout } from "@/pages/admin/AdminLayout";
 
 // Import route modules
-import { authRoutes } from './auth.routes';
-import { productRoutes } from './products.routes';
-import { servicesRoutes } from './services.routes';
-import { middlemanRoutes } from './middleman.routes';
-import { walletRoutes } from './wallet.routes';
-import { factoryRoutes } from './factory.routes';
-import { profileRoutes } from './profile.routes';
-import { adminRoutes } from './admin.routes';
-import { publicRoutes } from './public.routes';
+import { authRoutes } from "./auth.routes";
+import { productRoutes } from "./products.routes";
+import { servicesRoutes } from "./services.routes";
+import { middlemanRoutes } from "./middleman.routes";
+import { walletRoutes } from "./wallet.routes";
+import { factoryRoutes } from "./factory.routes";
+import { profileRoutes } from "./profile.routes";
+import { adminRoutes } from "./admin.routes";
+import { publicRoutes } from "./public.routes";
 
 // Lazy load error pages
-import { lazy, Suspense } from 'react';
-const NotFound = lazy(() => import('@/pages/errors/NotFound').then(m => ({ default: m.NotFound })));
-const ServerError = lazy(() => import('@/pages/errors/ServerError').then(m => ({ default: m.ServerError })));
-const Chat = lazy(() => import('@/chats/chat').then(m => ({ default: m.Chat })));
+import { lazy, Suspense } from "react";
+const NotFound = lazy(() =>
+  import("@/pages/errors/NotFound").then((m) => ({ default: m.NotFound })),
+);
+const ServerError = lazy(() =>
+  import("@/pages/errors/ServerError").then((m) => ({
+    default: m.ServerError,
+  })),
+);
+const Chat = lazy(() =>
+  import("@/chats/chat").then((m) => ({ default: m.Chat })),
+);
+const Home = lazy(() =>
+  import("@/pages/public/Home").then((m) => ({ default: m.Home })),
+);
 
 const RouteSkeleton = () => (
   <div className="flex items-center justify-center min-h-[400px]">
@@ -30,7 +38,7 @@ const RouteSkeleton = () => (
 
 // Main application routes with Layout
 const mainRoutes: RouteObject = {
-  path: '/',
+  path: "/",
   element: <Layout />,
   children: [
     // Home
@@ -38,7 +46,7 @@ const mainRoutes: RouteObject = {
       index: true,
       element: (
         <Suspense fallback={<RouteSkeleton />}>
-          {lazy(() => import('@/pages/public/ServicesGateway').then(m => ({ default: m.ServicesGateway })))}
+          <Home />
         </Suspense>
       ),
     },
@@ -61,14 +69,14 @@ const mainRoutes: RouteObject = {
 
 // Admin routes with AdminLayout
 const adminRoute: RouteObject = {
-  path: '/admin',
+  path: "/admin",
   element: <AdminLayout />,
   children: adminRoutes,
 };
 
 // Chat route (standalone)
 const chatRoute: RouteObject = {
-  path: '/Chat',
+  path: "/chat",
   element: (
     <Suspense fallback={<RouteSkeleton />}>
       <Chat />
@@ -79,7 +87,7 @@ const chatRoute: RouteObject = {
 // Error routes
 const errorRoutes: RouteObject[] = [
   {
-    path: '/error',
+    path: "/error",
     element: (
       <Suspense fallback={<RouteSkeleton />}>
         <ServerError />
@@ -87,7 +95,7 @@ const errorRoutes: RouteObject[] = [
     ),
   },
   {
-    path: '*',
+    path: "*",
     element: (
       <Suspense fallback={<RouteSkeleton />}>
         <NotFound />

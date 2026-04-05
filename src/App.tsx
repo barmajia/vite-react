@@ -1,4 +1,3 @@
-import { Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/hooks/useTheme";
 import { AuthProvider } from "@/hooks/useAuth";
 import { PreferencesProvider } from "@/context/PreferencesContext";

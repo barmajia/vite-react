@@ -1,5 +1,5 @@
-import { RouteObject } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { RouteObject } from "react-router-dom";
+import { lazy, Suspense } from "react";
 
 const RouteSkeleton = () => (
   <div className="flex items-center justify-center min-h-[400px]">
@@ -8,16 +8,25 @@ const RouteSkeleton = () => (
 );
 
 // Lazy load public pages
-const ServicesGateway = lazy(() => import('@/pages/public/ServicesGateway').then(m => ({ default: m.ServicesGateway })));
-const About = lazy(() => import('@/pages/public/About').then(m => ({ default: m.About })));
-const Contact = lazy(() => import('@/pages/public/Contact').then(m => ({ default: m.Contact })));
-const Help = lazy(() => import('@/pages/public/Help').then(m => ({ default: m.Help })));
-const FeedPage = lazy(() => import('@/components/feed/FeedPage').then(m => ({ default: m.FeedPage })));
-const Reviews = lazy(() => import('@/pages/Reviews').then(m => ({ default: m.default })));
+const About = lazy(() =>
+  import("@/pages/public/About").then((m) => ({ default: m.About })),
+);
+const Contact = lazy(() =>
+  import("@/pages/public/Contact").then((m) => ({ default: m.Contact })),
+);
+const Help = lazy(() =>
+  import("@/pages/public/Help").then((m) => ({ default: m.Help })),
+);
+const FeedPage = lazy(() =>
+  import("@/components/feed/FeedPage").then((m) => ({ default: m.FeedPage })),
+);
+const Reviews = lazy(() =>
+  import("@/pages/Reviews").then((m) => ({ default: m.default })),
+);
 
 export const publicRoutes: RouteObject[] = [
   {
-    path: 'about',
+    path: "about",
     element: (
       <Suspense fallback={<RouteSkeleton />}>
         <About />
@@ -25,7 +34,7 @@ export const publicRoutes: RouteObject[] = [
     ),
   },
   {
-    path: 'contact',
+    path: "contact",
     element: (
       <Suspense fallback={<RouteSkeleton />}>
         <Contact />
@@ -33,7 +42,7 @@ export const publicRoutes: RouteObject[] = [
     ),
   },
   {
-    path: 'help',
+    path: "help",
     element: (
       <Suspense fallback={<RouteSkeleton />}>
         <Help />
@@ -41,7 +50,7 @@ export const publicRoutes: RouteObject[] = [
     ),
   },
   {
-    path: 'feed',
+    path: "feed",
     element: (
       <Suspense fallback={<RouteSkeleton />}>
         <FeedPage />
@@ -49,7 +58,7 @@ export const publicRoutes: RouteObject[] = [
     ),
   },
   {
-    path: 'reviews',
+    path: "reviews",
     element: (
       <Suspense fallback={<RouteSkeleton />}>
         <Reviews />
