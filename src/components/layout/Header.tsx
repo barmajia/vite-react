@@ -144,7 +144,7 @@ export function Header() {
                   <Button
                     variant="ghost"
                     className={cn(
-                      "px-4 py-2 text-sm font-medium rounded-xl gap-2 transition-all duration-300",
+                      "group px-4 py-2 text-sm font-medium rounded-xl gap-2 transition-all duration-300",
                       location.pathname.startsWith("/services")
                         ? "text-blue-600 dark:text-blue-400 bg-blue-50/80 dark:bg-blue-900/30"
                         : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50/80 dark:hover:bg-gray-800/50",
