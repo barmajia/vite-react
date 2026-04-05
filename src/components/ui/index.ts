@@ -8,6 +8,7 @@ export {
   CardDescription,
 } from "./card";
 export { Input, TextArea } from "./Input";
+export { Label } from "./label";
 export {
   Skeleton,
   CardSkeleton,
