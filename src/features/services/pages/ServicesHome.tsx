@@ -216,9 +216,11 @@ export function ServicesHome() {
     }
 
     if (data) {
-      type === "featured"
-        ? setFeaturedListings(data)
-        : setTrendingListings(data);
+      if (type === "featured") {
+        setFeaturedListings(data);
+      } else {
+        setTrendingListings(data);
+      }
     }
   };
 

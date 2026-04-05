@@ -215,9 +215,16 @@ export const onAuthStateChange = (
 export const clearAuthStorage = () => {
   try {
     // Clear CSRF token
-    const { clearCsrfToken } = require("@/lib/csrf");
-    clearCsrfToken();
-  } catch {}
+    import("@/lib/csrf")
+      .then(({ clearCsrfToken }) => {
+        clearCsrfToken();
+      })
+      .catch((err) => {
+        console.warn("Failed to clear CSRF token:", err);
+      });
+  } catch (err) {
+    console.warn("CSRF cleanup error:", err);
+  }
 
   // Clear auth cookie
   cookieStorage.removeItem(SECURITY_CONFIG.AUTH_COOKIE_NAME);
@@ -226,7 +233,9 @@ export const clearAuthStorage = () => {
   try {
     sessionStorage.removeItem(SECURITY_CONFIG.AUTH_COOKIE_NAME);
     localStorage.removeItem(SECURITY_CONFIG.AUTH_COOKIE_NAME);
-  } catch {}
+  } catch (err) {
+    console.warn("Failed to clear storage:", err);
+  }
 };
 
 /**

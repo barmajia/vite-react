@@ -242,7 +242,7 @@ export function sanitizeRichText(html: string): string {
 
   // Remove dangerous tags with their content
   dangerousTags.forEach((tag) => {
-    const regex = new RegExp(`<${tag}[^>]*>.*?<\\/${tag}>`, "gi");
+    const regex = new RegExp(`<${tag}[^>]*>.*?</${tag}>`, "gi");
     sanitized = sanitized.replace(regex, "");
 
     // Also remove self-closing dangerous tags
@@ -283,7 +283,7 @@ export function validatePhone(phone: string): boolean {
   if (!phone) return false;
 
   // Remove common separators
-  const cleaned = phone.replace(/[\s\-\(\)\.]/g, "");
+  const cleaned = phone.replace(/[\s\-().]/g, "");
 
   // Check if it's a valid international phone number (8-15 digits)
   const phoneRegex = /^\+?[1-9]\d{7,14}$/;
