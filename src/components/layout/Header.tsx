@@ -158,7 +158,7 @@ export function Header() {
                   align="center"
                   className="w-[520px] p-4 rounded-2xl shadow-2xl border-gray-200/50 dark:border-gray-800/50"
                 >
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-2 gap-3 justify-items-center">
                     {[
                       {
                         title: t("services.tech"),
@@ -183,14 +183,6 @@ export function Header() {
                         desc: t("services.homeDesc"),
                         color: "text-purple-600 dark:text-purple-400",
                         bgColor: "bg-purple-100 dark:bg-purple-900/30",
-                      },
-                      {
-                        title: t("services.custom"),
-                        href: "/services/custom",
-                        icon: Camera,
-                        desc: t("services.customDesc"),
-                        color: "text-amber-600 dark:text-amber-400",
-                        bgColor: "bg-amber-100 dark:bg-amber-900/30",
                       },
                     ].map((item) => (
                       <DropdownMenuItem key={item.href} asChild className="p-0">
