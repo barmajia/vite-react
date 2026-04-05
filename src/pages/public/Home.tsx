@@ -12,7 +12,7 @@ import {
   Package,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui";
+import { Button, CardDescription } from "@/components/ui";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui";
 import { ProductGrid } from "@/components/products/ProductGrid";
 import { useFeaturedProducts } from "@/hooks/useProducts";
@@ -177,7 +177,9 @@ export function Home() {
                     {role.icon}
                   </div>
                   <CardTitle className="text-xl">{role.title}</CardTitle>
-                  <CardDescription>{role.description}</CardDescription>
+                  <CardDescription className="text-sm">
+                    {role.description}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Button className="w-full" variant="outline">

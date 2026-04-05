@@ -480,7 +480,7 @@ export function validatePassword(password: string): {
 
   if (
     config.REQUIRE_SPECIAL_CHARS &&
-    !/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>/?]/.test(password)
+    !/[!@#$%^&*()_+\-=[]{};':"\\|,.<>\/?]/.test(password)
   ) {
     errors.push("Password must contain at least one special character");
   }
