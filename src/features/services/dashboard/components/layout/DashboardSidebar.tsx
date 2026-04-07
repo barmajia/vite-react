@@ -46,7 +46,7 @@ const navItems = [
   {
     label: "Messages",
     icon: MessageSquare,
-    path: "/services/messages",
+    path: "/services/chat",
     roles: ["all"],
   },
   {

@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useNavigate } from "react-router-dom";
+import { getNexusProfile } from "@/utils/secure-profile-storage";
 
 export function useAdminAuth() {
   const [isAdmin, setIsAdmin] = useState(false);
@@ -47,14 +48,28 @@ export function useAdminAuth() {
         return;
       }
 
-      // Get user profile data
+      // Check for cached profile first
+      const cached = getNexusProfile();
+      if (cached && cached.uuid === user.id) {
+         setIsAdmin(cached.account_type === 'admin');
+         setAdminData({
+           user_id: user.id,
+           email: user.email || "",
+           full_name: cached.full_name,
+           role: adminRecord.role || "admin",
+         });
+         setLoading(false);
+         return;
+      }
+
+      // Fallback: Get user profile data from DB
       const { data: userData } = await supabase
         .from("users")
-        .select("email, full_name")
+        .select("email, full_name, account_type")
         .eq("user_id", user.id)
         .single();
 
-      setIsAdmin(true);
+      setIsAdmin(userData?.account_type === 'admin');
       setAdminData({
         user_id: user.id,
         email: userData?.email || "",

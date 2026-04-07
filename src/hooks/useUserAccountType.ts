@@ -1,17 +1,29 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
 import { TradingAccountType } from "../types/trading-chat";
+import { getNexusProfile } from "../utils/secure-profile-storage";
 
 export const useUserAccountType = (userId: string | null) => {
   const [accountType, setAccountType] = useState<TradingAccountType | null>(
-    null,
+    () => {
+      const cached = getNexusProfile();
+      if (cached && cached.uuid === userId) {
+        return cached.account_type as TradingAccountType;
+      }
+      return null;
+    }
   );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(!accountType);
 
   useEffect(() => {
     const fetchAccountType = async () => {
       if (!userId) {
+        setLoading(false);
+        return;
+      }
+
+      // If we already have it from cache, don't fetch unless needed
+      if (accountType) {
         setLoading(false);
         return;
       }
@@ -21,10 +33,9 @@ export const useUserAccountType = (userId: string | null) => {
           .from("users")
           .select("account_type")
           .eq("user_id", userId)
-          .maybeSingle(); // Use maybeSingle to handle no rows gracefully
+          .maybeSingle();
 
         if (error) {
-          // Log but don't fail - default to 'user'
           console.debug(
             "Account type fetch error, using default:",
             error.message,
@@ -44,7 +55,7 @@ export const useUserAccountType = (userId: string | null) => {
     };
 
     fetchAccountType();
-  }, [userId]);
+  }, [userId, accountType]);
 
-  return { accountType, loading, error };
+  return { accountType, loading };
 };

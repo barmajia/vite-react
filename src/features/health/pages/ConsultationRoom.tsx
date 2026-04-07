@@ -8,6 +8,7 @@ import {
   sendHealthMessage,
 } from "../api/supabaseHealth";
 import type { HealthMessage } from "../types";
+import { toast } from "sonner";
 
 const ConsultationRoom: React.FC = () => {
   const { id } = useParams();
@@ -56,7 +57,7 @@ const ConsultationRoom: React.FC = () => {
       setInput("");
     } catch (error) {
       console.error("Error sending message:", error);
-      alert("Failed to send message");
+      toast.error("Failed to send message. Please try again.");
     } finally {
       setSending(false);
     }

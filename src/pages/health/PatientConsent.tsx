@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "../../lib/supabase";
+import { toast } from "sonner";
 
 const PatientConsent: React.FC = () => {
   const { appointmentId } = useParams<{ appointmentId: string }>();
@@ -21,10 +22,10 @@ const PatientConsent: React.FC = () => {
       });
 
       if (error) throw error;
-      alert("Consent submitted successfully");
-      navigate("/services/health/patient/appointments");
+      toast.success("Consent submitted successfully");
+      navigate("/health/patient/appointments");
     } catch (error: any) {
-      alert(`Submission failed: ${error.message}`);
+      toast.error(`Submission failed: ${error.message}`);
     } finally {
       setLoading(false);
     }

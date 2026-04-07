@@ -1,35 +1,22 @@
-/**
- * Appointment Booking Page
- *
- * Schedule appointment with doctor
- * Route: /services/health/book/:doctorId
- */
-
+// src/features/health/pages/BookingPage.tsx
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import {
-  Calendar,
-  Clock,
-  User,
-  Mail,
-  Phone,
-  FileText,
-  CheckCircle,
-  AlertCircle,
+  ArrowRight,
+  Shield,
+  Zap,
 } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { ServicesHeader } from "@/components/layout/ServicesHeader";
+import { Avatar } from "@/components/ui/avatar";
 
 export default function BookingPage() {
-  const { t } = useTranslation();
   const { doctorId } = useParams<{ doctorId: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -49,12 +36,11 @@ export default function BookingPage() {
 
   useEffect(() => {
     if (!user) {
-      toast.error(t("auth.pleaseLogin"));
+      toast.error("Authorized session required for engagement.");
       navigate("/login");
       return;
     }
 
-    // Pre-fill user data
     setFormData((prev) => ({
       ...prev,
       patient_name: user.user_metadata?.full_name || "",
@@ -70,19 +56,14 @@ export default function BookingPage() {
     try {
       const { data, error } = await supabase
         .from("health_doctor_profiles")
-        .select(
-          `
-          *,
-          users:user_id (full_name, specialization)
-        `,
-        )
-        .eq("id", doctorId)
+        .select(`*, users:user_id (*)`)
+        .eq("user_id", doctorId)
         .single();
-
       if (error) throw error;
       if (data) setDoctor(data);
     } catch (error) {
-      console.error("Error fetching doctor:", error);
+       console.error("Error fetching doctor:", error);
+       toast.error("Node synchronization failure.");
     }
   };
 
@@ -91,7 +72,6 @@ export default function BookingPage() {
     setLoading(true);
 
     try {
-      // Get patient profile
       const { data: patientData } = await supabase
         .from("health_patient_profiles")
         .select("id")
@@ -100,20 +80,15 @@ export default function BookingPage() {
 
       let patientId = patientData?.id;
 
-      // Create patient profile if doesn't exist
       if (!patientId) {
         const { data: newPatient } = await supabase
           .from("health_patient_profiles")
-          .insert({
-            user_id: user!.id,
-          })
+          .insert({ user_id: user!.id })
           .select("id")
           .single();
-
         patientId = newPatient?.id;
       }
 
-      // Create appointment
       const { error } = await supabase.from("health_appointments").insert({
         doctor_id: doctorId,
         patient_id: patientId,
@@ -130,273 +105,166 @@ export default function BookingPage() {
 
       if (error) throw error;
 
-      toast.success(t("health.appointmentBooked"));
-      navigate("/services/health/patient/dashboard");
+      toast.success("Engagement initialized. Matrix updated.");
+      navigate("/health/patient/dashboard");
     } catch (error) {
       console.error("Booking error:", error);
-      toast.error(t("health.bookingFailed"));
+      toast.error("Engagement protocol failed.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  // Get tomorrow's date (minimum date for booking)
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   const minDate = tomorrow.toISOString().split("T")[0];
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950">
-      <ServicesHeader />
+    <div className="min-h-screen bg-background pb-32">
+      
+      {/* ===== ENGAGEMENT PROTOCOL HERO ===== */}
+      <section className="relative pt-32 pb-16 px-6 lg:px-12 border-b border-white/5 overflow-hidden">
+         <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-rose-500/5 rounded-full blur-[120px] pointer-events-none" />
+         
+         <div className="max-w-7xl mx-auto relative z-10">
+            <div className="flex items-center gap-4 text-[9px] font-black uppercase tracking-[0.3em] text-foreground/20 italic mb-8">
+               <Link to="/health" className="hover:text-rose-500 transition-colors">Sector / Health</Link>
+               <span className="opacity-50">/</span>
+               <span className="text-foreground/40">Engagement Protocol</span>
+            </div>
+            
+            <h1 className="text-5xl sm:text-7xl font-black italic tracking-tighter leading-[0.85] text-foreground mb-4">
+               INITIALIZE <br /> <span className="text-rose-500">ENGAGEMENT</span>
+            </h1>
+            <p className="text-sm font-medium italic text-foreground/40 max-w-lg">Configuring neural sync with medical node personnel. Ensure all telemetry data is accurate before finalizing protocol.</p>
+         </div>
+      </section>
 
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">
-            {t("health.bookAppointment")}
-          </h1>
-          <p className="text-slate-500 dark:text-slate-400">
-            {t("health.bookAppointmentDesc")}
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-8">
-          {/* Booking Form */}
-          <div className="md:col-span-2">
-            <Card className="border-slate-200 dark:border-slate-800">
-              <CardHeader>
-                <CardTitle>{t("health.appointmentDetails")}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Patient Info */}
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                      <User className="h-5 w-5 text-emerald-500" />
-                      {t("health.patientInformation")}
-                    </h3>
-
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="patient_name">
-                          {t("health.fullName")} *
-                        </Label>
-                        <Input
-                          id="patient_name"
-                          name="patient_name"
-                          value={formData.patient_name}
-                          onChange={handleChange}
-                          required
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="patient_email">
-                          {t("health.email")} *
-                        </Label>
-                        <Input
-                          id="patient_email"
-                          name="patient_email"
-                          type="email"
-                          value={formData.patient_email}
-                          onChange={handleChange}
-                          required
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="patient_phone">
-                          {t("health.phone")} *
-                        </Label>
-                        <Input
-                          id="patient_phone"
-                          name="patient_phone"
-                          value={formData.patient_phone}
-                          onChange={handleChange}
-                          required
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
+      <main className="max-w-7xl mx-auto px-6 lg:px-12 py-16 grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
+         
+         {/* FORM MATRIX */}
+         <div className="lg:col-span-8 space-y-12">
+            <form onSubmit={handleSubmit} className="space-y-16">
+               
+               {/* 01. Personnel Identity */}
+               <div className="space-y-10">
+                  <div className="flex items-center gap-6">
+                     <span className="text-4xl font-black italic text-rose-500/20">01</span>
+                     <h3 className="text-2xl font-black italic tracking-tighter uppercase text-foreground">Personnel Identity</h3>
                   </div>
-
-                  {/* Appointment Details */}
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                      <Calendar className="h-5 w-5 text-blue-500" />
-                      {t("health.appointmentDateTime")}
-                    </h3>
-
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="appointment_date">
-                          {t("health.date")} *
-                        </Label>
-                        <Input
-                          id="appointment_date"
-                          name="appointment_date"
-                          type="date"
-                          value={formData.appointment_date}
-                          onChange={handleChange}
-                          min={minDate}
-                          required
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="appointment_time">
-                          {t("health.time")} *
-                        </Label>
-                        <Input
-                          id="appointment_time"
-                          name="appointment_time"
-                          value={formData.appointment_time}
-                          onChange={handleChange}
-                          placeholder="e.g., 10:00 AM"
-                          required
-                          className="mt-1"
-                        />
-                      </div>
-                    </div>
+                  
+                  <div className="grid sm:grid-cols-2 gap-8">
+                     <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 italic ml-1">Full Name Index</Label>
+                        <Input name="patient_name" value={formData.patient_name} onChange={handleChange} required className="h-14 rounded-2xl glass bg-white/3 border-white/10 focus:border-rose-500/40 text-[12px] font-black uppercase tracking-tight" />
+                     </div>
+                     <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 italic ml-1">Communication Channel</Label>
+                        <Input name="patient_email" type="email" value={formData.patient_email} onChange={handleChange} required className="h-14 rounded-2xl glass bg-white/3 border-white/10 focus:border-rose-500/40 text-[12px] font-black uppercase tracking-tight" />
+                     </div>
+                     <div className="space-y-3 sm:col-span-2">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 italic ml-1">Veri-Link Phone</Label>
+                        <Input name="patient_phone" value={formData.patient_phone} onChange={handleChange} required className="h-14 rounded-2xl glass bg-white/3 border-white/10 focus:border-rose-500/40 text-[12px] font-black uppercase tracking-tight" />
+                     </div>
                   </div>
+               </div>
 
-                  {/* Reason & Notes */}
-                  <div className="space-y-4">
-                    <h3 className="font-semibold text-slate-900 dark:text-white flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-purple-500" />
-                      {t("health.reasonForVisit")}
-                    </h3>
-
-                    <div>
-                      <Label htmlFor="reason">{t("health.mainReason")} *</Label>
-                      <Textarea
-                        id="reason"
-                        name="reason"
-                        value={formData.reason}
-                        onChange={handleChange}
-                        rows={3}
-                        placeholder={t("health.describeSymptoms")}
-                        required
-                        className="mt-1"
-                      />
-                    </div>
-
-                    <div>
-                      <Label htmlFor="notes">
-                        {t("health.additionalNotes")}
-                      </Label>
-                      <Textarea
-                        id="notes"
-                        name="notes"
-                        value={formData.notes}
-                        onChange={handleChange}
-                        rows={2}
-                        placeholder={t("health.anyAdditionalInfo")}
-                        className="mt-1"
-                      />
-                    </div>
+               {/* 02. Chronos Mapping */}
+               <div className="space-y-10">
+                  <div className="flex items-center gap-6">
+                     <span className="text-4xl font-black italic text-rose-500/20">02</span>
+                     <h3 className="text-2xl font-black italic tracking-tighter uppercase text-foreground">Chronos Mapping</h3>
                   </div>
-
-                  {/* Consent */}
-                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <AlertCircle className="h-5 w-5 text-blue-500 mt-0.5" />
-                      <div className="text-sm text-blue-700 dark:text-blue-300">
-                        <p className="font-semibold mb-1">
-                          {t("health.importantNotice")}
-                        </p>
-                        <p>{t("health.appointmentNotice")}</p>
-                      </div>
-                    </div>
+                  
+                  <div className="grid sm:grid-cols-2 gap-8">
+                     <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 italic ml-1">Deployment Date</Label>
+                        <Input name="appointment_date" type="date" value={formData.appointment_date} onChange={handleChange} min={minDate} required className="h-14 rounded-2xl glass bg-white/3 border-white/10 focus:border-rose-500/40 text-[12px] font-black uppercase tracking-tight" />
+                     </div>
+                     <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 italic ml-1">Sync Window</Label>
+                        <Input name="appointment_time" value={formData.appointment_time} onChange={handleChange} placeholder="e.g., 09:30 AM" required className="h-14 rounded-2xl glass bg-white/3 border-white/10 focus:border-rose-500/40 text-[12px] font-black uppercase tracking-tight" />
+                     </div>
                   </div>
+               </div>
 
-                  {/* Submit Button */}
-                  <Button
-                    type="submit"
-                    className="w-full h-12 text-lg bg-emerald-600 hover:bg-emerald-700"
-                    disabled={loading}
-                  >
-                    {loading ? (
-                      t("health.bookingAppointment")
-                    ) : (
-                      <>
-                        <CheckCircle className="h-5 w-5 mr-2" />
-                        {t("health.confirmBooking")}
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </CardContent>
-            </Card>
-          </div>
+               {/* 03. Diagnostic Objectives */}
+               <div className="space-y-10">
+                  <div className="flex items-center gap-6">
+                     <span className="text-4xl font-black italic text-rose-500/20">03</span>
+                     <h3 className="text-2xl font-black italic tracking-tighter uppercase text-foreground">Diagnostic Objectives</h3>
+                  </div>
+                  
+                  <div className="space-y-8">
+                     <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 italic ml-1">Primary Objective (Symptoms)</Label>
+                        <Textarea name="reason" value={formData.reason} onChange={handleChange} required rows={3} placeholder="Describe bio-signal anomalies..." className="rounded-[2.5rem] glass bg-white/3 border-white/10 focus:border-rose-500/40 text-[12px] font-black uppercase tracking-tight p-8" />
+                     </div>
+                     <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-foreground/40 italic ml-1">Peripheral Data (Notes)</Label>
+                        <Textarea name="notes" value={formData.notes} onChange={handleChange} rows={2} placeholder="Additional medical ledger data..." className="rounded-[2rem] glass bg-white/3 border-white/10 focus:border-rose-500/40 text-[12px] font-black uppercase tracking-tight p-8" />
+                     </div>
+                  </div>
+               </div>
 
-          {/* Summary Sidebar */}
-          <div className="md:col-span-1">
-            <Card className="border-slate-200 dark:border-slate-800 sticky top-24">
-              <CardHeader>
-                <CardTitle>{t("health.bookingSummary")}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {doctor && (
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">
-                      {t("health.doctor")}
-                    </p>
-                    <p className="font-semibold text-slate-900 dark:text-white">
-                      {doctor.users?.full_name}
-                    </p>
-                    <p className="text-sm text-emerald-600">
-                      {doctor.users?.specialization}
-                    </p>
-                  </div>
-                )}
+               <Button type="submit" disabled={loading} className="w-full h-20 rounded-[2.5rem] bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-[0.2em] text-[12px] shadow-2xl shadow-rose-500/20 group">
+                  {loading ? "Synchronizing Matrix..." : (
+                     <span className="flex items-center gap-4">
+                        Authorize Engagement Protocol
+                        <ArrowRight className="h-5 w-5 group-hover:translate-x-2 transition-transform" />
+                     </span>
+                  )}
+               </Button>
+            </form>
+         </div>
 
-                {formData.appointment_date && (
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">
-                      {t("health.date")}
-                    </p>
-                    <p className="font-semibold text-slate-900 dark:text-white">
-                      {new Date(formData.appointment_date).toLocaleDateString()}
-                    </p>
+         {/* SUMMARY SIDEBAR */}
+         <aside className="lg:col-span-4 sticky top-32">
+            <div className="glass-card p-10 rounded-[3.5rem] border-white/5 space-y-12 relative overflow-hidden">
+               <div className="absolute top-0 right-0 p-6 opacity-5"><Zap className="h-24 w-24 text-rose-500" /></div>
+               
+               <h3 className="text-[10px] font-black uppercase tracking-[0.4em] text-foreground/20 italic">Engagement Summary</h3>
+               
+               {doctor && (
+                  <div className="flex gap-6 items-center">
+                     <Avatar name={doctor.users?.full_name} src={doctor.users?.avatar_url} className="h-20 w-20 rounded-3xl" />
+                     <div className="space-y-1">
+                        <p className="text-xl font-black italic tracking-tighter uppercase text-foreground leading-none">{doctor.users?.full_name}</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-rose-500/60">{doctor.specialization}</p>
+                     </div>
                   </div>
-                )}
+               )}
 
-                {formData.appointment_time && (
-                  <div>
-                    <p className="text-sm text-slate-500 mb-1">
-                      {t("health.time")}
-                    </p>
-                    <p className="font-semibold text-slate-900 dark:text-white">
-                      {formData.appointment_time}
-                    </p>
+               <div className="space-y-6 pt-6 border-t border-white/5">
+                  <div className="flex justify-between items-end">
+                     <span className="text-[9px] font-black uppercase tracking-widest text-foreground/20">Temporal Node</span>
+                     <span className="text-sm font-black italic tracking-tighter text-foreground uppercase">{formData.appointment_date || "Pending Selection"}</span>
                   </div>
-                )}
+                  <div className="flex justify-between items-end">
+                     <span className="text-[9px] font-black uppercase tracking-widest text-foreground/20">Sync Window</span>
+                     <span className="text-sm font-black italic tracking-tighter text-foreground uppercase">{formData.appointment_time || "Pending Sync"}</span>
+                  </div>
+                  <div className="flex justify-between items-end">
+                     <span className="text-[9px] font-black uppercase tracking-widest text-foreground/20">Engagement Credit</span>
+                     <span className="text-sm font-black italic tracking-tighter text-emerald-500 uppercase">${doctor?.consultation_fee || "0.00"}</span>
+                  </div>
+               </div>
 
-                <div className="pt-4 border-t border-slate-200 dark:border-slate-800">
-                  <div className="flex items-center gap-2 text-sm text-slate-500">
-                    <CheckCircle className="h-4 w-4 text-emerald-500" />
-                    {t("health.freeCancellation")}
+               <div className="p-6 rounded-[2rem] glass bg-emerald-500/5 border-emerald-500/10 space-y-3">
+                  <div className="flex items-center gap-3 text-emerald-500">
+                     <Shield className="h-4 w-4" />
+                     <span className="text-[10px] font-black uppercase tracking-widest">Secured Node</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-slate-500 mt-2">
-                    <CheckCircle className="h-4 w-4 text-emerald-500" />
-                    {t("health.secureBooking")}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
+                  <p className="text-[11px] font-medium italic text-foreground/30 leading-snug">Engagement is protected by Aurora's medical encryption matrix. Clinical confidentiality is absolute.</p>
+               </div>
+            </div>
+         </aside>
+      </main>
+
     </div>
   );
 }

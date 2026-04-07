@@ -16,11 +16,11 @@ import {
   Sparkles,
   ArrowRight,
   Chrome,
+  ShieldCheck,
+  Rocket,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui";
-import { Input } from "@/components/ui";
-import { Label } from "@/components/ui";
+import { Button, Input, Label } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
 import { ROUTES } from "@/lib/constants";
 import { isValidEmail } from "@/lib/utils";
@@ -56,8 +56,6 @@ export function Signup() {
       if (result.error) {
         toast.error(result.error.message ?? t("auth.googleAuthFailed"));
       }
-      // If successful, user will be redirected to Google
-      // and then back to /auth/callback
     } catch (_err) {
       toast.error(t("auth.googleAuthFailed"));
     } finally {
@@ -140,7 +138,6 @@ export function Signup() {
     }
   };
 
-  // Password strength calculation (0-4)
   const passwordStrength = () => {
     const pwd = formData.password;
     let strength = 0;
@@ -153,15 +150,14 @@ export function Signup() {
 
   const strengthLevel = passwordStrength();
   const strengthColors = [
-    "bg-white-200 dark:bg-black-700",
-    "bg-red-500",
-    "bg-orange-500",
-    "bg-yellow-500",
-    "bg-green-500",
+    "bg-muted/50",
+    "bg-red-500 shadow-red-500/50",
+    "bg-orange-500 shadow-orange-500/50",
+    "bg-yellow-500 shadow-yellow-500/50",
+    "bg-green-500 shadow-green-500/50",
   ];
   const strengthLabels = ["", "Very weak", "Weak", "Fair", "Strong"];
 
-  // Auto‑focus first field on step change
   useEffect(() => {
     const firstInput = document.querySelector<HTMLInputElement>(
       step === 1 ? "#fullName" : "#password",
@@ -170,430 +166,269 @@ export function Signup() {
   }, [step]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-black dark:bg-white">
-      {/* Theme Toggle & Back Button */}
-      <div className="fixed top-4 right-4 flex gap-2 z-10">
+    <div className="min-h-screen bg-background relative overflow-hidden flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+      {/* Immersive Background */}
+      <div className="absolute top-[-15%] right-[-5%] w-[50%] h-[50%] bg-primary/20 rounded-full blur-[140px] animate-pulse pointer-events-none" />
+      <div className="absolute bottom-[-15%] left-[-5%] w-[50%] h-[50%] bg-blue-500/20 rounded-full blur-[140px] pulse pointer-events-none" />
+      <div className="absolute top-[20%] left-[10%] w-[30%] h-[30%] bg-purple-500/10 rounded-full blur-[100px] pointer-events-none" />
+
+      {/* Top Controls */}
+      <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-20">
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(-1)}
-          className="rounded-full bg-white/80 dark:bg-black backdrop-blur-sm shadow-sm border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-white dark:hover:bg-gray-800"
+          onClick={() => navigate("/")}
+          className="glass hover:bg-white/10 text-foreground rounded-full px-4"
         >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Back
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          {t("common.back")}
         </Button>
+
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-          className="rounded-full bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm shadow-sm border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-yellow-400 hover:bg-white dark:hover:bg-gray-800"
+          className="glass hover:bg-white/10 rounded-full px-4"
         >
           {theme === "light" ? (
-            <Moon className="h-4 w-4 text-indigo-600" />
+            <Moon className="h-4 w-4 text-primary" />
           ) : (
             <Sun className="h-4 w-4 text-amber-500" />
           )}
+          <span className="ml-2 font-medium hidden sm:inline capitalize">
+            {theme === "light" ? t("common.darkMode") : t("common.lightMode")}
+          </span>
         </Button>
       </div>
 
-      {/* Main Card */}
-      <div className="w-full max-w-md">
-        <div className="bg-white dark:bg-gray-900/90 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-800 overflow-hidden transition-all duration-300 backdrop-blur-xl">
-          {/* Header with brand */}
-          <div className="px-6 pt-8 pb-2 text-center">
-            <div className="inline-flex items-center justify-center p-2 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-2xl mb-4 shadow-lg shadow-indigo-500/30">
-              <Sparkles className="h-6 w-6 text-white" />
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10 animate-in fade-in slide-in-from-top-8 duration-1000">
+        <div className="inline-flex items-center justify-center p-3 glass rounded-2xl mb-6 shadow-inner scale-110">
+          <Sparkles className="h-8 w-8 text-primary animate-pulse" />
+        </div>
+        <h1 className="text-4xl font-black tracking-tighter bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
+          {t("signup.title")}
+        </h1>
+        <p className="mt-3 text-muted-foreground font-medium">
+          {t("signup.subtitle")}
+        </p>
+      </div>
+
+      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md z-10">
+        <div className="glass-card p-0 rounded-[2.5rem] shadow-2xl border-white/20 dark:border-white/10 overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-1000">
+          {/* Progress Indicator */}
+          <div className="flex gap-1 p-1 bg-white/5 border-b border-white/10">
+            <div 
+              className={`h-1.5 flex-1 rounded-full transition-all duration-700 ${step >= 1 ? "bg-primary" : "bg-white/10"}`} 
+            />
+            <div 
+              className={`h-1.5 flex-1 rounded-full transition-all duration-700 ${step >= 2 ? "bg-primary shadow-[0_0_10px_rgba(var(--primary),0.5)]" : "bg-white/10"}`} 
+            />
+          </div>
+
+          <div className="p-8 sm:p-10">
+            {/* Google Link */}
+            <div className="mb-8">
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full glass bg-white/5 border-white/10 hover:bg-white/10 text-foreground h-14 text-lg font-bold rounded-2xl transition-all active:scale-[0.98]"
+                onClick={handleGoogleSignUp}
+                disabled={isLoading}
+              >
+                <Chrome className="mr-3 h-6 w-6 text-primary" />
+                {t("auth.signUpWithGoogle")}
+              </Button>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Create an account
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-              Join our community today
-            </p>
-          </div>
 
-          {/* Google Sign-In Button */}
-          <div className="px-6 mt-4">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
-              onClick={handleGoogleSignUp}
-              disabled={isLoading}
-            >
-              <Chrome className="mr-2 h-5 w-5" />
-              {t("auth.signUpWithGoogle")}
-            </Button>
-          </div>
-
-          {/* Divider */}
-          <div className="px-6 mt-6">
-            <div className="relative">
+            <div className="relative mb-8">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200 dark:border-gray-700" />
+                <div className="w-full border-t border-white/10" />
               </div>
-              <div className="relative flex justify-center text-xs">
-                <span className="px-2 bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400">
+              <div className="relative flex justify-center text-[10px] uppercase tracking-[0.3em] font-black">
+                <span className="px-4 glass py-1 rounded-full text-muted-foreground/60 border-white/10 italic">
                   {t("auth.orUseEmail")}
                 </span>
               </div>
             </div>
-          </div>
 
-          {/* Step Indicator */}
-          <div className="px-6 mt-6">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col items-center flex-1">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                    step >= 1
-                      ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/30"
-                      : "bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                  }`}
-                >
-                  {step > 1 ? (
-                    <CheckCircle2 className="h-5 w-5" />
-                  ) : (
-                    <User className="h-5 w-5" />
-                  )}
-                </div>
-                <span
-                  className={`text-xs mt-1 font-medium ${
-                    step >= 1
-                      ? "text-indigo-600 dark:text-indigo-400"
-                      : "text-gray-400 dark:text-gray-500"
-                  }`}
-                >
-                  Account
-                </span>
-              </div>
-              <div
-                className={`flex-1 h-0.5 mx-2 transition-colors ${
-                  step >= 2 ? "bg-indigo-500" : "bg-gray-200 dark:bg-gray-800"
-                }`}
-              />
-              <div className="flex flex-col items-center flex-1">
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
-                    step >= 2
-                      ? "bg-indigo-500 text-white shadow-md shadow-indigo-500/30"
-                      : "bg-gray-200 dark:bg-gray-800 text-gray-500 dark:text-gray-400"
-                  }`}
-                >
-                  {step === 2 ? (
-                    <Lock className="h-5 w-5" />
-                  ) : (
-                    <span className="text-sm font-medium">2</span>
-                  )}
-                </div>
-                <span
-                  className={`text-xs mt-1 font-medium ${
-                    step >= 2
-                      ? "text-indigo-600 dark:text-indigo-400"
-                      : "text-gray-400 dark:text-gray-500"
-                  }`}
-                >
-                  Security
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Form */}
-          <div className="p-6">
-            <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit} className="space-y-6">
               {step === 1 ? (
-                <div className="space-y-4">
-                  <div>
-                    <Label
-                      htmlFor="fullName"
-                      className="text-sm font-medium text-gray-700 dark:text-gray-200"
-                    >
-                      Full name
+                <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName" className="text-sm font-bold ml-1">
+                      {t("signup.fullName")}
                     </Label>
-                    <div className="relative mt-1">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-primary transition-colors">
+                        <User className="h-5 w-5 text-muted-foreground/30" />
+                      </div>
                       <Input
                         id="fullName"
                         type="text"
-                        placeholder="John Doe"
+                        className={`pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.fullName ? "border-destructive/50" : ""}`}
                         value={formData.fullName}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            fullName: e.target.value,
-                          })
-                        }
-                        className={`pl-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 ${
-                          errors.fullName ? "border-red-500" : ""
-                        }`}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        placeholder={t("signup.fullNamePlaceholder")}
                         disabled={isLoading}
-                        autoComplete="name"
                       />
                     </div>
-                    {errors.fullName && (
-                      <p className="text-xs text-red-500 mt-1">
-                        {errors.fullName}
-                      </p>
-                    )}
+                    {errors.fullName && <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">{errors.fullName}</p>}
                   </div>
 
-                  <div>
-                    <Label
-                      htmlFor="email"
-                      className="text-sm font-medium text-gray-700 dark:text-gray-200"
-                    >
-                      Email address
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-bold ml-1">
+                      {t("signup.email")}
                     </Label>
-                    <div className="relative mt-1">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-primary transition-colors">
+                        <Mail className="h-5 w-5 text-muted-foreground/30" />
+                      </div>
                       <Input
                         id="email"
                         type="email"
-                        placeholder="you@example.com"
+                        className={`pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.email ? "border-destructive/50" : ""}`}
                         value={formData.email}
-                        onChange={(e) =>
-                          setFormData({ ...formData, email: e.target.value })
-                        }
-                        className={`pl-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 ${
-                          errors.email ? "border-red-500" : ""
-                        }`}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder={t("signup.emailPlaceholder")}
                         disabled={isLoading}
-                        autoComplete="email"
                       />
                     </div>
-                    {errors.email && (
-                      <p className="text-xs text-red-500 mt-1">
-                        {errors.email}
-                      </p>
-                    )}
+                    {errors.email && <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">{errors.email}</p>}
                   </div>
 
                   <Button
                     type="button"
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all"
+                    className="w-full glass bg-primary hover:bg-primary/90 text-white h-14 text-lg font-bold rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
                     onClick={handleNext}
                     disabled={isLoading}
                   >
-                    Continue
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    {t("common.next")}
+                    <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  <div>
-                    <Label
-                      htmlFor="password"
-                      className="text-sm font-medium text-gray-700 dark:text-gray-200"
-                    >
-                      Password
+                <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-bold ml-1">
+                      {t("signup.password")}
                     </Label>
-                    <div className="relative mt-1">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-primary transition-colors">
+                        <Lock className="h-5 w-5 text-muted-foreground/30" />
+                      </div>
                       <Input
                         id="password"
                         type={showPassword ? "text" : "password"}
-                        placeholder="••••••••"
+                        className={`pl-12 pr-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.password ? "border-destructive/50" : ""}`}
                         value={formData.password}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            password: e.target.value,
-                          })
-                        }
-                        className={`pl-10 pr-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 ${
-                          errors.password ? "border-red-500" : ""
-                        }`}
+                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        placeholder="••••••••"
                         disabled={isLoading}
-                        autoComplete="new-password"
                       />
                       <button
                         type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-muted-foreground/50 hover:text-primary transition-colors"
                         onClick={() => setShowPassword(!showPassword)}
-                        disabled={isLoading}
                       >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
+                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                       </button>
                     </div>
 
                     {formData.password && (
-                      <div className="mt-2">
-                        <div className="flex gap-1 mb-1">
+                      <div className="mt-3 px-1 space-y-2">
+                        <div className="flex gap-1.5 h-1">
                           {[1, 2, 3, 4].map((level) => (
                             <div
                               key={level}
-                              className={`h-1 flex-1 rounded-full transition-all ${
-                                level <= strengthLevel
-                                  ? strengthColors[strengthLevel]
-                                  : "bg-gray-200 dark:bg-gray-800"
+                              className={`flex-1 rounded-full transition-all duration-500 ${
+                                level <= strengthLevel ? strengthColors[strengthLevel] : "bg-white/10"
                               }`}
                             />
                           ))}
                         </div>
-                        <p
-                          className={`text-xs font-medium ${
-                            strengthLevel <= 1
-                              ? "text-red-500"
-                              : strengthLevel <= 2
-                                ? "text-orange-500"
-                                : "text-green-500"
-                          }`}
-                        >
+                        <p className={`text-[10px] font-black uppercase tracking-widest ${strengthLevel <= 1 ? "text-destructive" : strengthLevel <= 2 ? "text-orange-500" : "text-green-500"}`}>
                           {strengthLabels[strengthLevel]}
                         </p>
-                        <ul className="text-xs text-gray-500 dark:text-gray-400 mt-2 space-y-1">
-                          <li
-                            className={`flex items-center gap-1 ${
-                              formData.password.length >= 8
-                                ? "text-green-600 dark:text-green-400"
-                                : ""
-                            }`}
-                          >
-                            {formData.password.length >= 8 ? "✓" : "○"} At least
-                            8 characters
-                          </li>
-                          <li
-                            className={`flex items-center gap-1 ${
-                              /[a-z]/.test(formData.password) &&
-                              /[A-Z]/.test(formData.password)
-                                ? "text-green-600 dark:text-green-400"
-                                : ""
-                            }`}
-                          >
-                            {/[a-zA-Z]/.test(formData.password) ? "✓" : "○"}{" "}
-                            Upper & lowercase
-                          </li>
-                          <li
-                            className={`flex items-center gap-1 ${
-                              /\d/.test(formData.password)
-                                ? "text-green-600 dark:text-green-400"
-                                : ""
-                            }`}
-                          >
-                            {/\d/.test(formData.password) ? "✓" : "○"} At least
-                            one number
-                          </li>
-                        </ul>
                       </div>
                     )}
-
-                    {errors.password && (
-                      <p className="text-xs text-red-500 mt-1">
-                        {errors.password}
-                      </p>
-                    )}
-                  </div>
-
-                  <div>
-                    <Label
-                      htmlFor="confirmPassword"
-                      className="text-sm font-medium text-gray-700 dark:text-gray-200"
-                    >
-                      Confirm password
-                    </Label>
-                    <div className="relative mt-1">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <Input
-                        id="confirmPassword"
-                        type={showConfirmPassword ? "text" : "password"}
-                        placeholder="••••••••"
-                        value={formData.confirmPassword}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            confirmPassword: e.target.value,
-                          })
-                        }
-                        className={`pl-10 pr-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:border-indigo-500 dark:focus:border-indigo-400 focus:ring-indigo-500/20 dark:focus:ring-indigo-400/20 ${
-                          errors.confirmPassword ? "border-red-500" : ""
-                        }`}
-                        disabled={isLoading}
-                        autoComplete="new-password"
-                      />
-                      <button
-                        type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                        onClick={() =>
-                          setShowConfirmPassword(!showConfirmPassword)
-                        }
-                        disabled={isLoading}
-                      >
-                        {showConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                    {formData.confirmPassword &&
-                      formData.confirmPassword === formData.password && (
-                        <p className="text-xs text-green-500 flex items-center gap-1 mt-1">
-                          <CheckCircle2 className="h-3 w-3" /> Passwords match
-                        </p>
-                      )}
-                    {errors.confirmPassword && (
-                      <p className="text-xs text-red-500 mt-1">
-                        {errors.confirmPassword}
-                      </p>
-                    )}
+                    {errors.password && <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">{errors.password}</p>}
                   </div>
 
                   <div className="space-y-2">
-                    <Button
-                      type="submit"
-                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all"
-                      disabled={isLoading}
-                    >
-                      {isLoading && (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      )}
-                      Create account
-                    </Button>
+                    <Label htmlFor="confirmPassword" className="text-sm font-bold ml-1">
+                      {t("signup.confirmPassword")}
+                    </Label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-primary transition-colors">
+                        <Lock className="h-5 w-5 text-muted-foreground/30" />
+                      </div>
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        className={`pl-12 pr-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.confirmPassword ? "border-destructive/50" : ""}`}
+                        value={formData.confirmPassword}
+                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                        placeholder="••••••••"
+                        disabled={isLoading}
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-muted-foreground/50 hover:text-primary transition-colors"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      >
+                        {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">{errors.confirmPassword}</p>}
+                  </div>
 
+                  <div className="flex gap-3 pt-2">
                     <Button
                       type="button"
-                      variant="outline"
-                      className="w-full border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      variant="ghost"
+                      className="flex-1 glass bg-white/5 border-white/10 h-14 text-lg font-bold rounded-2xl active:scale-[0.98]"
                       onClick={handleBack}
                       disabled={isLoading}
                     >
-                      Back
+                      {t("common.back")}
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="flex-[2] glass bg-primary hover:bg-primary/90 text-white h-14 text-lg font-bold rounded-2xl shadow-lg shadow-primary/20 active:scale-[0.98]"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : t("signup.createAccount")}
                     </Button>
                   </div>
                 </div>
               )}
 
-              <p className="text-center text-xs text-gray-500 dark:text-gray-400 mt-4">
-                Already have an account?{" "}
+              <p className="text-center text-sm text-muted-foreground font-medium mt-6">
+                {t("signup.alreadyHaveAccount")}{" "}
                 <Link
                   to={ROUTES.LOGIN}
-                  className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                  className="text-primary hover:underline font-bold transition-all underline-offset-4"
                 >
-                  Sign in
+                  {t("signup.signIn")}
                 </Link>
               </p>
             </form>
           </div>
 
-          {/* Trust Badges */}
-          <div className="bg-gray-50/50 dark:bg-gray-800/30 px-6 py-4 border-t border-gray-100 dark:border-gray-800">
-            <div className="flex justify-around text-xs text-gray-500 dark:text-gray-400">
-              <div className="flex items-center gap-1">
-                <Shield className="h-3 w-3" />
+          {/* Luxury Trust Badges */}
+          <div className="bg-white/5 backdrop-blur-3xl px-8 py-5 border-t border-white/10">
+            <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-green-500/70" />
                 <span>Secure</span>
               </div>
-              <div className="flex items-center gap-1">
-                <Zap className="h-3 w-3" />
-                <span>Fast</span>
+              <div className="flex items-center gap-2">
+                <Rocket className="h-4 w-4 text-blue-500/70" />
+                <span>Instant</span>
               </div>
-              <div className="flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3" />
-                <span>Free</span>
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-amber-500/70" />
+                <span>Global</span>
               </div>
             </div>
           </div>

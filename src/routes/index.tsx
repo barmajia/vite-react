@@ -14,6 +14,7 @@ import { adminRoutes } from "./admin.routes";
 import { publicRoutes } from "./public.routes";
 import { marketplaceRoutes } from "./marketplace.routes";
 import { storefrontRoutes } from "./storefront.routes";
+import { healthRoutes } from "./health.routes";
 
 // Lazy load error pages
 import { lazy, Suspense } from "react";
@@ -32,11 +33,7 @@ const Home = lazy(() =>
   import("@/pages/public/Home").then((m) => ({ default: m.Home })),
 );
 
-const RouteSkeleton = () => (
-  <div className="flex items-center justify-center min-h-[400px]">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-  </div>
-);
+import { RouteSkeleton } from "@/components/shared/RouteSkeleton";
 
 // Main application routes with Layout
 const mainRoutes: RouteObject = {
@@ -68,6 +65,8 @@ const mainRoutes: RouteObject = {
     ...profileRoutes,
     // Public info pages
     ...publicRoutes,
+    // Healthcare routes
+    ...healthRoutes,
   ],
 };
 
@@ -118,10 +117,5 @@ export const appRoutes: RouteObject[] = [
   ...storefrontRoutes,
   ...errorRoutes,
 ];
-
-// Hook to use routes in App component
-export function useAppRoutes() {
-  return useRoutes(appRoutes);
-}
 
 export default appRoutes;

@@ -1,6 +1,12 @@
-import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Grid, List, SlidersHorizontal, X } from "lucide-react";
+import {
+  List,
+  SlidersHorizontal,
+  X,
+  LayoutGrid,
+  ListFilter,
+  Sparkles,
+  FilterX,
+} from "lucide-react";
 import { Button } from "@/components/ui";
 import {
   Select,
@@ -16,6 +22,8 @@ import { Pagination } from "@/components/shared/Pagination";
 import { useProducts } from "@/hooks/useProducts";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 
 export function ProductList() {
   const { t } = useTranslation();
@@ -74,99 +82,144 @@ export function ProductList() {
   ).length;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pt-16 pb-16">
-      {/* Simplified Modern Header */}
-      <div className="bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl border-b border-slate-200/60 dark:border-slate-800/60 sticky top-16 z-30 shadow-sm shadow-slate-200/20 dark:shadow-none transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+    <div className="min-h-screen bg-background relative overflow-hidden pt-32 pb-20">
+      {/* Immersive Background Elements */}
+      <div
+        className="absolute top left-[-10%] w-[45%] h-[45%] bg-primary/10 rounded-full blur-[130px] pointer-events-none animate-pulse"
+        style={{ animationDuration: "10s" }}
+      />
+      <div
+        className="absolute bottom-[2%] right-[-10%] w-[45%] h-[45%] bg-blue-500/10 rounded-full blur-[130px] pointer-events-none animate-pulse"
+        style={{ animationDuration: "10s" }}
+      />
+
+      {/* High-Fidelity Header */}
+      <div className="glass-card mx-4 lg:mx-auto max-w-7xl mb-6 sticky top-[80px] z-40 overflow-hidden group backdrop-blur-[40px] rounded-[3rem] shadow-xl transition-all duration-700">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-blue-500/3 to-transparent opacity-60 group-hover:opacity-100 transition-opacity duration-700" />
+
+        <div className="px-8 sm:px-12 py-10 sm:py-14 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
+            <div className="space-y-4 sm:space-y-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 glass rounded-2xl shadow-lg backdrop-blur-xl">
+                  <Sparkles className="h-6 w-6 text-primary animate-pulse" />
+                </div>
+                <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-[0.5em] text-primary italic">
+                  Advanced Discovery Matrix
+                </span>
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6">
+                <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tighter italic leading-[0.9] text-foreground">
                   {searchQuery
                     ? t("productList.searchResults", { query: searchQuery })
                     : t("productList.allProducts")}
                 </h1>
-                {data && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {t("productList.productsFound", { count: data.totalCount })}
-                  </p>
+                {activeFiltersCount > 0 && (
+                  <Badge className="bg-primary text-white font-black italic px-5 py-2.5 rounded-full text-xs shadow-lg animate-in fade-in zoom-in-50 duration-500 tracking-widest uppercase mb-2 sm:mb-4">
+                    {activeFiltersCount} ACTIVE NODES
+                  </Badge>
                 )}
               </div>
-              {activeFiltersCount > 0 && (
-                <Badge
-                  variant="default"
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {activeFiltersCount}
-                </Badge>
+
+              {data && (
+                <div className="flex items-center gap-3 ml-2">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-md" />
+                  <p className="text-xs font-black text-muted-foreground/60 tracking-[0.2em] uppercase italic">
+                    {t("productList.productsFound", { count: data.totalCount })}{" "}
+                    segments synchronized with global grid
+                  </p>
+                </div>
               )}
             </div>
 
-            {/* Controls */}
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Mobile Filter Toggle */}
+            {/* Controls Interface */}
+            <div className="flex items-center gap-4 flex-wrap lg:justify-end">
               <Button
-                variant="outline"
-                className="lg:hidden border-gray-200 dark:border-[#1e293b]"
+                variant="ghost"
+                className="lg:hidden glass h-14 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all active:scale-95"
                 onClick={() => setShowFilters(!showFilters)}
               >
-                <SlidersHorizontal className="h-4 w-4 mr-2" />
+                <SlidersHorizontal className="h-4 w-4 mr-3 text-primary animate-pulse" />
                 {t("common.filters")}
               </Button>
 
-              {/* Sort Dropdown */}
               <Select
                 value={`${sortBy}-${sortOrder}`}
                 onValueChange={handleSortChange}
               >
-                <SelectTrigger className="w-[160px] border-gray-200 dark:border-[#1e293b]">
-                  <SelectValue placeholder={t("productList.sortBy")} />
+                <SelectTrigger className="w-[240px] h-14 glass rounded-2xl px-6 font-black text-[10px] uppercase tracking-[0.2em] group hover:border-primary/40 transition-all shadow-xl">
+                  <div className="flex items-center gap-3">
+                    <ListFilter className="h-4 w-4 text-primary/60 group-hover:rotate-180 transition-transform duration-500" />
+                    <SelectValue placeholder={t("productList.sortBy")} />
+                  </div>
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="created_at-desc">
+                <SelectContent className="glass rounded-3xl p-2 shadow-xl animate-in fade-in zoom-in-95 duration-300">
+                  <SelectItem
+                    value="created_at-desc"
+                    className="rounded-xl font-black uppercase text-[10px] tracking-widest py-3"
+                  >
                     {t("productList.newestFirst")}
                   </SelectItem>
-                  <SelectItem value="created_at-asc">
+                  <SelectItem
+                    value="created_at-asc"
+                    className="rounded-xl font-black uppercase text-[10px] tracking-widest py-3"
+                  >
                     {t("productList.oldestFirst")}
                   </SelectItem>
-                  <SelectItem value="price-asc">
+                  <SelectItem
+                    value="price-asc"
+                    className="rounded-xl font-black uppercase text-[10px] tracking-widest py-3"
+                  >
                     {t("productList.priceLowHigh")}
                   </SelectItem>
-                  <SelectItem value="price-desc">
+                  <SelectItem
+                    value="price-desc"
+                    className="rounded-xl font-black uppercase text-[10px] tracking-widest py-3"
+                  >
                     {t("productList.priceHighLow")}
                   </SelectItem>
-                  <SelectItem value="title-asc">
+                  <SelectItem
+                    value="title-asc"
+                    className="rounded-xl font-black uppercase text-[10px] tracking-widest py-3"
+                  >
                     {t("productList.nameAZ")}
                   </SelectItem>
-                  <SelectItem value="title-desc">
+                  <SelectItem
+                    value="title-desc"
+                    className="rounded-xl font-black uppercase text-[10px] tracking-widest py-3"
+                  >
                     {t("productList.nameZA")}
                   </SelectItem>
                 </SelectContent>
               </Select>
 
-              {/* View Mode Toggle */}
-              <div className="flex border border-gray-200 dark:border-[#1e293b] rounded-lg overflow-hidden bg-white dark:bg-[#0f172a]">
+              <div className="flex glass rounded-2xl overflow-hidden p-1.5 shadow-xl">
                 <Button
                   variant="ghost"
-                  size="icon"
+                  size="sm"
                   onClick={() => setViewMode("grid")}
                   className={cn(
-                    "rounded-r-none h-9 w-9",
-                    viewMode === "grid" && "bg-gray-100 dark:bg-[#1e293b]",
+                    "h-11 w-11 rounded-xl transition-all duration-500",
+                    viewMode === "grid"
+                      ? "bg-primary text-white shadow-lg shadow-primary/40"
+                      : "text-muted-foreground/40 hover:text-foreground",
                   )}
                 >
-                  <Grid className="h-4 w-4" />
+                  <LayoutGrid className="h-5 w-5" />
                 </Button>
                 <Button
                   variant="ghost"
-                  size="icon"
+                  size="sm"
                   onClick={() => setViewMode("list")}
                   className={cn(
-                    "rounded-l-none h-9 w-9",
-                    viewMode === "list" && "bg-gray-100 dark:bg-[#1e293b]",
+                    "h-11 w-11 rounded-xl transition-all duration-500",
+                    viewMode === "list"
+                      ? "bg-primary text-white shadow-lg shadow-primary/40"
+                      : "text-muted-foreground/40 hover:text-foreground",
                   )}
                 >
-                  <List className="h-4 w-4" />
+                  <List className="h-5 w-5" />
                 </Button>
               </div>
             </div>
@@ -174,104 +227,63 @@ export function ProductList() {
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex gap-8">
-          {/* Sidebar - Desktop */}
-          <aside className="hidden lg:block w-64 shrink-0">
-            <div className="sticky top-24 space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="font-semibold text-gray-900 dark:text-white">
-                  {t("common.filters")}
-                </h2>
-                {activeFiltersCount > 0 && (
-                  <Button
-                    variant="link"
-                    className="h-auto p-0 text-xs text-muted-foreground"
-                    onClick={() => setSearchParams(new URLSearchParams())}
-                  >
-                    {t("common.clearAll")}
-                  </Button>
-                )}
-              </div>
-              <FilterSidebar />
-            </div>
+      {/* Main Content Grid */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-8 relative z-10">
+        <div className="flex gap-12">
+          {/* Enhanced Desktop Sidebar - Now Sticky */}
+          <aside className="hidden lg:block w-72 shrink-0 sticky top-[280px] self-start animate-in fade-in slide-in-from-left-10 duration-1000">
+            <FilterSidebar />
           </aside>
 
-          {/* Mobile Sidebar Drawer */}
-          {showFilters && (
-            <>
-              <div
-                className="fixed inset-0 bg-black/50 z-40 lg:hidden backdrop-blur-sm"
-                onClick={() => setShowFilters(false)}
-              />
-              <aside className="fixed left-0 top-0 bottom-0 w-80 bg-white dark:bg-[#0f172a] z-50 overflow-y-auto lg:hidden shadow-2xl">
-                <div className="p-4">
-                  <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {t("common.filters")}
-                    </h2>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setShowFilters(false)}
-                    >
-                      <X className="h-5 w-5" />
-                    </Button>
-                  </div>
-                  <FilterSidebar />
-                  <div className="mt-6 sticky bottom-0 bg-white dark:bg-[#0f172a] pt-4 border-t dark:border-[#1e293b]">
-                    <Button
-                      className="w-full"
-                      onClick={() => setShowFilters(false)}
-                    >
-                      {t("common.showResults")}
-                    </Button>
-                  </div>
-                </div>
-              </aside>
-            </>
-          )}
-
-          {/* Products Grid */}
+          {/* Core Products Interface */}
           <div className="flex-1 min-w-0">
             {error ? (
-              <div className="text-center py-20 bg-white dark:bg-[#1e293b] rounded-2xl border border-gray-200 dark:border-[#0f172a]">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-red-50 dark:bg-red-900/20 mb-4">
-                  <X className="h-8 w-8 text-red-600 dark:text-red-400" />
+              <div className="glass-card p-24 text-center rounded-[3rem]">
+                <div className="h-24 w-24 glass rounded-[2.5rem] flex items-center justify-center mx-auto mb-8 shadow-xl">
+                  <X className="h-12 w-12 text-rose-500" />
                 </div>
-                <p className="text-destructive text-lg font-semibold">
-                  {t("productList.errorLoading")}
+                <h2 className="text-4xl font-black italic tracking-tighter uppercase mb-4 text-rose-500 leading-none">
+                  Retrieval Critical Failure
+                </h2>
+                <p className="text-muted-foreground font-bold mb-10 max-w-sm mx-auto uppercase text-xs tracking-widest leading-relaxed">
+                  Our connection to the product mainframe was interrupted.
+                  Please check your connection.
                 </p>
+                <Button
+                  onClick={() => window.location.reload()}
+                  className="glass bg-rose-500 text-white font-black px-12 h-16 rounded-[2rem] shadow-xl hover:scale-105 active:scale-95 transition-all uppercase tracking-[0.3em] text-[10px]"
+                >
+                  Retry Connection
+                </Button>
               </div>
             ) : isLoading ? (
               <ProductGrid isLoading={true} />
             ) : data && data.products.length === 0 ? (
-              <div className="text-center py-20 bg-white dark:bg-[#1e293b] rounded-2xl border border-gray-200 dark:border-[#0f172a]">
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-50 dark:bg-blue-900/20 mb-4">
-                  <Grid className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              <div className="glass-card p-24 text-center rounded-[3rem] group">
+                <div className="h-28 w-28 glass rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-xl group-hover:rotate-12 transition-all duration-700">
+                  <FilterX className="h-14 w-14 text-primary opacity-30 group-hover:opacity-60 transition-all duration-500" />
                 </div>
-                <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">
-                  {t("productList.noProductsFound")}
+                <h2 className="text-4xl font-black italic tracking-tighter uppercase mb-4 leading-none">
+                  No Matches Identified
                 </h2>
-                <p className="text-muted-foreground mb-6">
-                  {t("productList.tryAdjusting")}
+                <p className="text-muted-foreground font-bold mb-12 max-w-sm mx-auto uppercase text-xs tracking-[0.15em] leading-relaxed">
+                  Your current search did not return any results.
                 </p>
                 <Button
                   onClick={() => {
                     setSearchParams(new URLSearchParams());
                     setCurrentPage(1);
                   }}
-                  className="bg-[#0f172a] dark:bg-blue-600 text-white hover:bg-[#0f172a]/90"
+                  className="glass bg-primary text-white font-black px-14 h-18 rounded-[2rem] shadow-xl hover:scale-110 active:scale-95 transition-all text-[10px] tracking-[0.4em] uppercase"
                 >
                   {t("productList.clearFilters")}
                 </Button>
               </div>
             ) : (
-              <>
+              <div className="animate-in fade-in slide-in-from-bottom-10 duration-1000 space-y-12">
                 <ProductGrid products={data?.products || []} />
                 {data && data.totalPages > 1 && (
-                  <div className="mt-12">
+                  <div className="glass-card p-6 rounded-[2rem] shadow-xl">
                     <Pagination
                       currentPage={currentPage}
                       totalPages={data.totalPages}
@@ -280,11 +292,54 @@ export function ProductList() {
                     />
                   </div>
                 )}
-              </>
+              </div>
             )}
           </div>
         </div>
       </div>
+
+      {/* Mobile Filter Drawer */}
+      {showFilters && (
+        <div className="fixed inset-0 z-[120] lg:hidden">
+          <div
+            className="absolute inset-0 bg-black/80 backdrop-blur-xl animate-in fade-in duration-500"
+            onClick={() => setShowFilters(false)}
+          />
+          <div className="absolute right-0 top-0 bottom-0 w-[90%] max-w-md glass border-l p-10 overflow-y-auto shadow-2xl animate-in slide-in-from-right duration-500 flex flex-col">
+            <div className="flex items-center justify-between mb-12">
+              <div className="space-y-1">
+                <h2 className="text-4xl font-black italic tracking-tighter uppercase leading-none">
+                  {t("common.filters")}
+                </h2>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/60">
+                  Parameter Controls
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowFilters(false)}
+                className="h-14 w-14 glass rounded-2xl hover:bg-rose-500 hover:text-white transition-all"
+              >
+                <X className="h-6 w-6" />
+              </Button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto pr-2">
+              <FilterSidebar />
+            </div>
+
+            <div className="mt-12 pt-6 border-t border-white/5 sticky bottom-0 bg-background/5 backdrop-blur-md">
+              <Button
+                className="w-full h-18 glass bg-primary text-white font-black uppercase tracking-[0.4em] text-[10px] rounded-[2rem] shadow-xl hover:scale-105 active:scale-95 transition-all"
+                onClick={() => setShowFilters(false)}
+              >
+                Execute Matrix
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

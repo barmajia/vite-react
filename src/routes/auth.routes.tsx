@@ -7,6 +7,7 @@ import { MiddlemanSignup } from "@/pages/middleman/MiddlemanSignup";
 import { AuthCallback } from "@/pages/auth/AuthCallback";
 import { ForgotPassword } from "@/pages/auth/ForgotPassword";
 import { UpdatePassword } from "@/pages/auth/UpdatePassword";
+import { CompleteProfile } from "@/pages/auth/CompleteProfile";
 
 export const authRoutes: RouteObject[] = [
   {
@@ -32,5 +33,9 @@ export const authRoutes: RouteObject[] = [
   {
     path: "/update-password",
     element: <UpdatePassword />,
+  },
+  {
+    path: "/complete-profile",
+    element: <CompleteProfile />,
   },
 ];

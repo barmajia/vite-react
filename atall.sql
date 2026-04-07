@@ -120,6 +120,25 @@ CREATE TYPE "public"."factory_order_status" AS ENUM (
 ALTER TYPE "public"."factory_order_status" OWNER TO "postgres";
 
 
+CREATE TYPE "public"."hospital_type" AS ENUM (
+    'general',
+    'specialized',
+    'clinic',
+    'dental',
+    'teaching',
+    'public',
+    'private',
+    'emergency',
+    'maternity',
+    'psychiatric',
+    'rehabilitation',
+    'veterinary'
+);
+
+
+ALTER TYPE "public"."hospital_type" OWNER TO "postgres";
+
+
 CREATE TYPE "public"."notification_priority" AS ENUM (
     'low',
     'medium',
@@ -3943,6 +3962,24 @@ $$;
 ALTER FUNCTION "public"."get_typing_indicators"("p_conversation_id" "uuid") OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."get_unified_orders"("p_user_id" "uuid", "p_limit" integer DEFAULT 20, "p_offset" integer DEFAULT 0) RETURNS TABLE("order_id" "uuid", "order_type" "text", "provider_id" "uuid", "customer_id" "uuid", "status" "text", "total_amount" numeric, "currency" "text", "created_at" timestamp with time zone, "metadata" "jsonb")
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT id, 'ecommerce', seller_id, user_id, status, total, currency, created_at, metadata FROM public.orders WHERE user_id = p_user_id
+  UNION ALL
+  SELECT id, 'service', provider_id, user_id, status, agreed_price, currency, created_at, metadata FROM public.svc_orders WHERE user_id = p_user_id
+  UNION ALL
+  SELECT id, 'health_medicine', pharmacy_id, patient_id, status, total, 'EGP', created_at, NULL::JSONB FROM public.health_medicine_orders WHERE patient_id = p_user_id
+  ORDER BY created_at DESC LIMIT p_limit OFFSET p_offset;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."get_unified_orders"("p_user_id" "uuid", "p_limit" integer, "p_offset" integer) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."get_unread_notification_count"("p_user_id" "uuid") RETURNS integer
     LANGUAGE "plpgsql" IMMUTABLE
     AS $$
@@ -4518,6 +4555,22 @@ $$;
 
 
 ALTER FUNCTION "public"."haversine_distance"("lat1" double precision, "lon1" double precision, "lat2" double precision, "lon2" double precision) OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."increment_template_sales"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  UPDATE public.website_marketplace
+  SET total_sales = total_sales + 1,
+      updated_at = NOW()
+  WHERE id = NEW.template_id;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."increment_template_sales"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."initialize_user_notification_settings"() RETURNS "trigger"
@@ -5172,6 +5225,24 @@ $$;
 
 
 ALTER FUNCTION "public"."products_tsvector_trigger"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."register_app_device"("p_token" "text", "p_platform" "text", "p_app_version" "text" DEFAULT NULL::"text", "p_device_model" "text" DEFAULT NULL::"text", "p_os_version" "text" DEFAULT NULL::"text") RETURNS "uuid"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE v_id UUID;
+BEGIN
+  INSERT INTO public.app_devices (user_id, device_token, platform, app_version, device_model, os_version)
+  VALUES (auth.uid(), p_token, p_platform, p_app_version, p_device_model, p_os_version)
+  ON CONFLICT (user_id, device_token, platform) 
+  DO UPDATE SET last_seen_at = NOW(), is_active = TRUE, app_version = EXCLUDED.app_version
+  RETURNING id INTO v_id;
+  RETURN v_id;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."register_app_device"("p_token" "text", "p_platform" "text", "p_app_version" "text", "p_device_model" "text", "p_os_version" "text") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."register_push_subscription"("p_token" "text", "p_platform" "text", "p_app_version" "text" DEFAULT NULL::"text", "p_device_model" "text" DEFAULT NULL::"text", "p_os_version" "text" DEFAULT NULL::"text") RETURNS "uuid"
@@ -5972,6 +6043,36 @@ $$;
 ALTER FUNCTION "public"."split_payment_to_parties"("p_order_id" "uuid", "p_transaction_id" "uuid", "p_total_amount" numeric) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."split_template_purchase"("p_purchase_id" "uuid", "p_total_amount" numeric) RETURNS "void"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_purchase RECORD;
+  v_platform_share NUMERIC := p_total_amount * 0.15; -- 15% platform fee
+  v_creator_share NUMERIC := p_total_amount - v_platform_share;
+BEGIN
+  SELECT * INTO v_purchase FROM marketplace_purchases WHERE id = p_purchase_id;
+  
+  -- Credit creator wallet
+  PERFORM public.credit_wallet(
+    v_purchase.buyer_id, -- actually creator_id from marketplace
+    v_creator_share,
+    'template_sale',
+    p_purchase_id,
+    'Template sale: ' || v_purchase.template_id,
+    'tpl_creator_' || p_purchase_id
+  );
+  
+  -- Log platform split
+  INSERT INTO public.payment_splits (order_id, payment_transaction_id, recipient_id, recipient_type, amount, split_type, status)
+  VALUES (NULL, v_purchase.transaction_id, '00000000-0000-0000-0000-000000000000', 'platform', v_platform_share, 'fee', 'paid');
+END;
+$$;
+
+
+ALTER FUNCTION "public"."split_template_purchase"("p_purchase_id" "uuid", "p_total_amount" numeric) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."sync_participant_account_type"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -5988,6 +6089,19 @@ END $$;
 
 
 ALTER FUNCTION "public"."sync_participant_account_type"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."sync_user_roles"() RETURNS "trigger"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  INSERT INTO public.user_roles (user_id) VALUES (NEW.id) ON CONFLICT (user_id) DO NOTHING;
+  RETURN NEW;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."sync_user_roles"() OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."track_deal_click"("p_unique_slug" "text") RETURNS "void"
@@ -7277,6 +7391,24 @@ CREATE TABLE IF NOT EXISTS "public"."analytics_snapshots" (
 ALTER TABLE "public"."analytics_snapshots" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."app_devices" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "user_id" "uuid",
+    "device_token" "text" NOT NULL,
+    "platform" "text",
+    "app_version" "text",
+    "os_version" "text",
+    "device_model" "text",
+    "is_active" boolean DEFAULT true,
+    "last_seen_at" timestamp with time zone DEFAULT "now"(),
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    CONSTRAINT "app_devices_platform_check" CHECK (("platform" = ANY (ARRAY['ios'::"text", 'android'::"text", 'web'::"text"])))
+);
+
+
+ALTER TABLE "public"."app_devices" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."appointments" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "client_id" "uuid" NOT NULL,
@@ -7713,6 +7845,7 @@ CREATE TABLE IF NOT EXISTS "public"."doctors" (
     "rating" numeric(3,2) DEFAULT 0,
     "created_at" timestamp with time zone DEFAULT "now"(),
     "updated_at" timestamp with time zone DEFAULT "now"(),
+    "website_url" "text",
     CONSTRAINT "doctors_account_type_check" CHECK (("account_type" = 'doctor'::"text"))
 );
 
@@ -7754,7 +7887,8 @@ CREATE TABLE IF NOT EXISTS "public"."factories" (
     "location_text" "text",
     "longitude" bigint,
     "production_capacity" bigint,
-    "specialization" "text"
+    "specialization" "text",
+    "website_url" "text"
 );
 
 
@@ -7857,6 +7991,7 @@ CREATE TABLE IF NOT EXISTS "public"."sellers" (
     "avatar_url" "text",
     "bio" "text",
     "response_rate" integer DEFAULT 0,
+    "website_url" "text",
     CONSTRAINT "sellers_latitude_check" CHECK ((("latitude" >= ('-90'::integer)::numeric) AND ("latitude" <= (90)::numeric))),
     CONSTRAINT "sellers_longitude_check" CHECK ((("longitude" >= ('-180'::integer)::numeric) AND ("longitude" <= (180)::numeric)))
 );
@@ -7976,7 +8111,8 @@ CREATE TABLE IF NOT EXISTS "public"."freelancer_profiles" (
     "is_available" boolean DEFAULT true,
     "response_time_hours" integer,
     "created_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"()
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    "website_url" "text"
 );
 
 
@@ -8741,6 +8877,42 @@ CREATE TABLE IF NOT EXISTS "public"."health_typing_indicators" (
 ALTER TABLE "public"."health_typing_indicators" OWNER TO "postgres";
 
 
+CREATE TABLE IF NOT EXISTS "public"."hospitals" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "owner_user_id" "uuid" NOT NULL,
+    "name" "text" NOT NULL,
+    "slug" "text" NOT NULL,
+    "description" "text",
+    "avatar_url" "text",
+    "cover_image_url" "text",
+    "hospital_type" "public"."hospital_type" NOT NULL,
+    "is_verified" boolean DEFAULT false,
+    "is_active" boolean DEFAULT true,
+    "phone" "text",
+    "email" "text",
+    "website_url" "text",
+    "address" "text",
+    "city" "text",
+    "state" "text",
+    "country" "text" DEFAULT 'EG'::"text",
+    "latitude" numeric(10,8),
+    "longitude" numeric(11,8),
+    "opening_hours" "jsonb" DEFAULT '{}'::"jsonb",
+    "specialties" "text"[] DEFAULT '{}'::"text"[],
+    "features" "text"[] DEFAULT '{}'::"text"[],
+    "bed_capacity" integer,
+    "emergency_services" boolean DEFAULT false,
+    "average_rating" numeric(3,2) DEFAULT 0.00,
+    "total_reviews" integer DEFAULT 0,
+    "total_services" integer DEFAULT 0,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+ALTER TABLE "public"."hospitals" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."idempotency_keys" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "key" "text" NOT NULL,
@@ -8769,6 +8941,24 @@ CREATE TABLE IF NOT EXISTS "public"."location_history" (
 
 
 ALTER TABLE "public"."location_history" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."marketplace_purchases" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "buyer_id" "uuid" NOT NULL,
+    "template_id" "uuid" NOT NULL,
+    "amount_paid" numeric(10,2) NOT NULL,
+    "currency" "text" DEFAULT 'USD'::"text",
+    "payment_status" "text" DEFAULT 'pending'::"text",
+    "transaction_id" "uuid",
+    "downloaded" boolean DEFAULT false,
+    "license_key" "text" DEFAULT ('LIC-'::"text" || "encode"("extensions"."gen_random_bytes"(8), 'hex'::"text")),
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    CONSTRAINT "marketplace_purchases_payment_status_check" CHECK (("payment_status" = ANY (ARRAY['pending'::"text", 'completed'::"text", 'failed'::"text", 'refunded'::"text"])))
+);
+
+
+ALTER TABLE "public"."marketplace_purchases" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."medicine_sales_analytics" (
@@ -9302,6 +9492,7 @@ CREATE TABLE IF NOT EXISTS "public"."pharmacy_profiles" (
     "qr_code_prefix" "text",
     "created_at" timestamp with time zone DEFAULT "now"(),
     "updated_at" timestamp with time zone DEFAULT "now"(),
+    "website_url" "text",
     CONSTRAINT "pharmacy_profiles_verification_status_check" CHECK (("verification_status" = ANY (ARRAY['pending'::"text", 'verified'::"text", 'rejected'::"text", 'suspended'::"text"])))
 );
 
@@ -9353,6 +9544,24 @@ CREATE TABLE IF NOT EXISTS "public"."pharmacy_stock_movements" (
 
 
 ALTER TABLE "public"."pharmacy_stock_movements" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."platform_reports" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "reporter_id" "uuid",
+    "reported_type" "text" NOT NULL,
+    "reported_id" "uuid" NOT NULL,
+    "reason" "text" NOT NULL,
+    "status" "text" DEFAULT 'pending'::"text",
+    "admin_notes" "text",
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    CONSTRAINT "platform_reports_reported_type_check" CHECK (("reported_type" = ANY (ARRAY['user'::"text", 'product'::"text", 'listing'::"text", 'message'::"text", 'review'::"text", 'order'::"text"]))),
+    CONSTRAINT "platform_reports_status_check" CHECK (("status" = ANY (ARRAY['pending'::"text", 'reviewing'::"text", 'resolved'::"text", 'dismissed'::"text"])))
+);
+
+
+ALTER TABLE "public"."platform_reports" OWNER TO "postgres";
 
 
 CREATE OR REPLACE VIEW "public"."platform_revenue" AS
@@ -9866,6 +10075,7 @@ CREATE TABLE IF NOT EXISTS "public"."svc_providers" (
     "latitude" numeric(10,8),
     "longitude" numeric(11,8),
     "response_rate" integer DEFAULT 0,
+    "vertical" "text",
     CONSTRAINT "svc_providers_provider_type_check" CHECK (("provider_type" = ANY (ARRAY['individual'::"text", 'company'::"text", 'hospital'::"text", 'institution'::"text", 'ngo'::"text"]))),
     CONSTRAINT "svc_providers_status_check" CHECK (("status" = ANY (ARRAY['active'::"text", 'inactive'::"text", 'suspended'::"text", 'pending_review'::"text"])))
 );
@@ -9978,6 +10188,25 @@ COMMENT ON VIEW "public"."user_oauth_providers" IS 'View showing OAuth providers
 
 
 
+CREATE TABLE IF NOT EXISTS "public"."user_roles" (
+    "user_id" "uuid" NOT NULL,
+    "is_seller" boolean DEFAULT false,
+    "is_customer" boolean DEFAULT true,
+    "is_service_provider" boolean DEFAULT false,
+    "is_doctor" boolean DEFAULT false,
+    "is_pharmacy" boolean DEFAULT false,
+    "is_driver" boolean DEFAULT false,
+    "is_middleman" boolean DEFAULT false,
+    "is_admin" boolean DEFAULT false,
+    "last_active_at" timestamp with time zone DEFAULT "now"(),
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"()
+);
+
+
+ALTER TABLE "public"."user_roles" OWNER TO "postgres";
+
+
 CREATE TABLE IF NOT EXISTS "public"."user_wallets" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "user_id" "uuid" NOT NULL,
@@ -10009,7 +10238,7 @@ CREATE TABLE IF NOT EXISTS "public"."users" (
     "full_name" "text",
     "phone" "text",
     "avatar_url" "text",
-    "account_type" "text" DEFAULT 'user'::"text",
+    "account_type" "text"[] DEFAULT ARRAY['user'::"text"],
     "location" "jsonb",
     "currency" "text" DEFAULT 'EGP'::"text",
     "is_verified" boolean DEFAULT false,
@@ -10019,8 +10248,7 @@ CREATE TABLE IF NOT EXISTS "public"."users" (
     "preferred_language" "text" DEFAULT 'en'::"text",
     "preferred_currency" "text" DEFAULT 'USD'::"text",
     "theme_preference" "text" DEFAULT 'system'::"text",
-    "sidebar_state" "jsonb" DEFAULT '{"width": 280, "collapsed": false}'::"jsonb",
-    CONSTRAINT "users_account_type_check" CHECK (("account_type" = ANY (ARRAY['user'::"text", 'seller'::"text", 'doctor'::"text", 'factory'::"text", 'middleman'::"text"])))
+    "sidebar_state" "jsonb" DEFAULT '{"width": 280, "collapsed": false}'::"jsonb"
 );
 
 
@@ -10062,6 +10290,35 @@ CREATE TABLE IF NOT EXISTS "public"."website_integrations" (
 
 
 ALTER TABLE "public"."website_integrations" OWNER TO "postgres";
+
+
+CREATE TABLE IF NOT EXISTS "public"."website_marketplace" (
+    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
+    "creator_id" "uuid" NOT NULL,
+    "title" "text" NOT NULL,
+    "description" "text",
+    "category" "text" NOT NULL,
+    "target_role" "text" NOT NULL,
+    "preview_url" "text",
+    "thumbnail_url" "text",
+    "template_files" "jsonb" DEFAULT '[]'::"jsonb",
+    "price" numeric(10,2) DEFAULT 0,
+    "currency" "text" DEFAULT 'USD'::"text",
+    "version" "text" DEFAULT '1.0.0'::"text",
+    "is_published" boolean DEFAULT false,
+    "download_count" integer DEFAULT 0,
+    "rating" numeric(3,2) DEFAULT 0,
+    "review_count" integer DEFAULT 0,
+    "created_at" timestamp with time zone DEFAULT "now"(),
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    "pages_preview" "jsonb" DEFAULT '[]'::"jsonb",
+    "is_featured" boolean DEFAULT false,
+    "total_sales" integer DEFAULT 0,
+    CONSTRAINT "website_marketplace_target_role_check" CHECK (("target_role" = ANY (ARRAY['seller'::"text", 'doctor'::"text", 'pharmacy'::"text", 'factory'::"text", 'freelancer'::"text"])))
+);
+
+
+ALTER TABLE "public"."website_marketplace" OWNER TO "postgres";
 
 
 CREATE TABLE IF NOT EXISTS "public"."website_pages" (
@@ -10114,6 +10371,16 @@ ALTER TABLE ONLY "public"."analytics"
 
 ALTER TABLE ONLY "public"."analytics_snapshots"
     ADD CONSTRAINT "analytics_snapshots_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."app_devices"
+    ADD CONSTRAINT "app_devices_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."app_devices"
+    ADD CONSTRAINT "app_devices_user_id_device_token_platform_key" UNIQUE ("user_id", "device_token", "platform");
 
 
 
@@ -10542,6 +10809,16 @@ ALTER TABLE ONLY "public"."health_typing_indicators"
 
 
 
+ALTER TABLE ONLY "public"."hospitals"
+    ADD CONSTRAINT "hospitals_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."hospitals"
+    ADD CONSTRAINT "hospitals_slug_key" UNIQUE ("slug");
+
+
+
 ALTER TABLE ONLY "public"."idempotency_keys"
     ADD CONSTRAINT "idempotency_keys_key_key" UNIQUE ("key");
 
@@ -10549,6 +10826,16 @@ ALTER TABLE ONLY "public"."idempotency_keys"
 
 ALTER TABLE ONLY "public"."idempotency_keys"
     ADD CONSTRAINT "idempotency_keys_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."marketplace_purchases"
+    ADD CONSTRAINT "marketplace_purchases_license_key_key" UNIQUE ("license_key");
+
+
+
+ALTER TABLE ONLY "public"."marketplace_purchases"
+    ADD CONSTRAINT "marketplace_purchases_pkey" PRIMARY KEY ("id");
 
 
 
@@ -10729,6 +11016,11 @@ ALTER TABLE ONLY "public"."pharmacy_qr_scan_logs"
 
 ALTER TABLE ONLY "public"."pharmacy_stock_movements"
     ADD CONSTRAINT "pharmacy_stock_movements_pkey" PRIMARY KEY ("id");
+
+
+
+ALTER TABLE ONLY "public"."platform_reports"
+    ADD CONSTRAINT "platform_reports_pkey" PRIMARY KEY ("id");
 
 
 
@@ -10972,6 +11264,11 @@ ALTER TABLE ONLY "public"."user_events"
 
 
 
+ALTER TABLE ONLY "public"."user_roles"
+    ADD CONSTRAINT "user_roles_pkey" PRIMARY KEY ("user_id");
+
+
+
 ALTER TABLE ONLY "public"."user_wallets"
     ADD CONSTRAINT "user_wallets_pkey" PRIMARY KEY ("id");
 
@@ -11009,6 +11306,11 @@ ALTER TABLE ONLY "public"."website_integrations"
 
 ALTER TABLE ONLY "public"."website_integrations"
     ADD CONSTRAINT "website_integrations_website_id_integration_type_key" UNIQUE ("website_id", "integration_type");
+
+
+
+ALTER TABLE ONLY "public"."website_marketplace"
+    ADD CONSTRAINT "website_marketplace_pkey" PRIMARY KEY ("id");
 
 
 
@@ -11481,6 +11783,26 @@ CREATE INDEX "idx_health_stock_history_pharmacy" ON "public"."health_medicine_st
 
 
 
+CREATE INDEX "idx_hospitals_location" ON "public"."hospitals" USING "btree" ("latitude", "longitude");
+
+
+
+CREATE INDEX "idx_hospitals_owner" ON "public"."hospitals" USING "btree" ("owner_user_id");
+
+
+
+CREATE INDEX "idx_hospitals_search" ON "public"."hospitals" USING "gin" ("to_tsvector"('"english"'::"regconfig", (((("name" || ' '::"text") || COALESCE("description", ''::"text")) || ' '::"text") || COALESCE("city", ''::"text"))));
+
+
+
+CREATE INDEX "idx_hospitals_type" ON "public"."hospitals" USING "btree" ("hospital_type");
+
+
+
+CREATE INDEX "idx_hospitals_verified" ON "public"."hospitals" USING "btree" ("is_verified") WHERE ("is_verified" = true);
+
+
+
 CREATE INDEX "idx_idempotency_keys_expires" ON "public"."idempotency_keys" USING "btree" ("expires_at");
 
 
@@ -11490,6 +11812,26 @@ CREATE INDEX "idx_idempotency_keys_key" ON "public"."idempotency_keys" USING "bt
 
 
 CREATE INDEX "idx_location_history_user_id" ON "public"."location_history" USING "btree" ("user_id");
+
+
+
+CREATE INDEX "idx_marketplace_creator" ON "public"."website_marketplace" USING "btree" ("creator_id");
+
+
+
+CREATE INDEX "idx_marketplace_is_published" ON "public"."website_marketplace" USING "btree" ("is_published");
+
+
+
+CREATE INDEX "idx_marketplace_price" ON "public"."website_marketplace" USING "btree" ("price");
+
+
+
+CREATE INDEX "idx_marketplace_target_role" ON "public"."website_marketplace" USING "btree" ("target_role");
+
+
+
+CREATE INDEX "idx_marketplace_total_sales" ON "public"."website_marketplace" USING "btree" ("total_sales" DESC);
 
 
 
@@ -11921,6 +12263,18 @@ CREATE INDEX "idx_profiles_is_admin" ON "public"."profiles" USING "btree" ("is_a
 
 
 
+CREATE INDEX "idx_purchases_buyer" ON "public"."marketplace_purchases" USING "btree" ("buyer_id");
+
+
+
+CREATE INDEX "idx_purchases_payment_status" ON "public"."marketplace_purchases" USING "btree" ("payment_status");
+
+
+
+CREATE INDEX "idx_purchases_template" ON "public"."marketplace_purchases" USING "btree" ("template_id");
+
+
+
 CREATE INDEX "idx_qr_scan_logs_created" ON "public"."pharmacy_qr_scan_logs" USING "btree" ("created_at" DESC);
 
 
@@ -12193,6 +12547,10 @@ CREATE OR REPLACE TRIGGER "set_conversations_updated_at" BEFORE UPDATE ON "publi
 
 
 
+CREATE OR REPLACE TRIGGER "set_hospitals_updated_at" BEFORE UPDATE ON "public"."hospitals" FOR EACH ROW EXECUTE FUNCTION "public"."set_updated_at"();
+
+
+
 CREATE OR REPLACE TRIGGER "trg_auto_generate_description" BEFORE INSERT ON "public"."products" FOR EACH ROW EXECUTE FUNCTION "public"."auto_generate_product_description"();
 
 
@@ -12377,6 +12735,10 @@ CREATE OR REPLACE TRIGGER "update_health_pharmacy_timestamp" BEFORE UPDATE ON "p
 
 
 
+CREATE OR REPLACE TRIGGER "update_marketplace_updated_at" BEFORE UPDATE ON "public"."website_marketplace" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
+
+
+
 CREATE OR REPLACE TRIGGER "update_medicine_expiry_status_trigger" BEFORE INSERT OR UPDATE ON "public"."pharmacy_medicine_inventory" FOR EACH ROW EXECUTE FUNCTION "public"."update_medicine_expiry_status"();
 
 
@@ -12433,6 +12795,11 @@ ALTER TABLE ONLY "public"."analytics"
 
 ALTER TABLE ONLY "public"."analytics_snapshots"
     ADD CONSTRAINT "analytics_snapshots_seller_id_fkey" FOREIGN KEY ("seller_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."app_devices"
+    ADD CONSTRAINT "app_devices_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
 
 
@@ -13021,6 +13388,26 @@ ALTER TABLE ONLY "public"."health_typing_indicators"
 
 
 
+ALTER TABLE ONLY "public"."hospitals"
+    ADD CONSTRAINT "hospitals_owner_user_id_fkey" FOREIGN KEY ("owner_user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."marketplace_purchases"
+    ADD CONSTRAINT "marketplace_purchases_buyer_id_fkey" FOREIGN KEY ("buyer_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."marketplace_purchases"
+    ADD CONSTRAINT "marketplace_purchases_template_id_fkey" FOREIGN KEY ("template_id") REFERENCES "public"."website_marketplace"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."marketplace_purchases"
+    ADD CONSTRAINT "marketplace_purchases_transaction_id_fkey" FOREIGN KEY ("transaction_id") REFERENCES "public"."payment_transactions"("id");
+
+
+
 ALTER TABLE ONLY "public"."medicine_sales_analytics"
     ADD CONSTRAINT "medicine_sales_analytics_medicine_id_fkey" FOREIGN KEY ("medicine_id") REFERENCES "public"."health_medicines_master"("id");
 
@@ -13261,6 +13648,11 @@ ALTER TABLE ONLY "public"."pharmacy_stock_movements"
 
 
 
+ALTER TABLE ONLY "public"."platform_reports"
+    ADD CONSTRAINT "platform_reports_reporter_id_fkey" FOREIGN KEY ("reporter_id") REFERENCES "auth"."users"("id") ON DELETE SET NULL;
+
+
+
 ALTER TABLE ONLY "public"."platform_settings"
     ADD CONSTRAINT "platform_settings_updated_by_fkey" FOREIGN KEY ("updated_by") REFERENCES "auth"."users"("id");
 
@@ -13486,6 +13878,11 @@ ALTER TABLE ONLY "public"."user_events"
 
 
 
+ALTER TABLE ONLY "public"."user_roles"
+    ADD CONSTRAINT "user_roles_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."user_wallets"
     ADD CONSTRAINT "user_wallets_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
@@ -13511,6 +13908,11 @@ ALTER TABLE ONLY "public"."website_integrations"
 
 
 
+ALTER TABLE ONLY "public"."website_marketplace"
+    ADD CONSTRAINT "website_marketplace_creator_id_fkey" FOREIGN KEY ("creator_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
+
+
+
 ALTER TABLE ONLY "public"."website_pages"
     ADD CONSTRAINT "website_pages_website_id_fkey" FOREIGN KEY ("website_id") REFERENCES "public"."websites"("id") ON DELETE CASCADE;
 
@@ -13533,6 +13935,12 @@ CREATE POLICY "Admins can create conversations" ON "public"."conversations" FOR 
 
 
 CREATE POLICY "Admins can view all profiles" ON "public"."health_doctor_profiles" USING ((EXISTS ( SELECT 1
+   FROM "public"."admin_users"
+  WHERE ("admin_users"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "Admins view all reports" ON "public"."platform_reports" USING ((EXISTS ( SELECT 1
    FROM "public"."admin_users"
   WHERE ("admin_users"."user_id" = "auth"."uid"()))));
 
@@ -13623,6 +14031,10 @@ CREATE POLICY "Doctors view own patient archives" ON "public"."health_patient_ar
 CREATE POLICY "Freelancers manage own portfolio" ON "public"."freelancer_portfolio" TO "authenticated" USING (("freelancer_id" = ( SELECT "freelancer_profiles"."id"
    FROM "public"."freelancer_profiles"
   WHERE ("freelancer_profiles"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "Owners manage own hospital" ON "public"."hospitals" USING (("owner_user_id" = "auth"."uid"())) WITH CHECK (("owner_user_id" = "auth"."uid"()));
 
 
 
@@ -13722,6 +14134,10 @@ CREATE POLICY "Public profiles are viewable by everyone" ON "public"."profiles" 
 
 
 
+CREATE POLICY "Public view active hospitals" ON "public"."hospitals" FOR SELECT USING (("is_active" = true));
+
+
+
 CREATE POLICY "Public view available medicines" ON "public"."health_medicines" FOR SELECT TO "authenticated" USING (("is_available" = true));
 
 
@@ -13767,6 +14183,18 @@ CREATE POLICY "Service role can manage templates" ON "public"."notification_temp
 
 
 CREATE POLICY "Service role full access" ON "public"."customers" USING (("auth"."role"() = 'service_role'::"text")) WITH CHECK (("auth"."role"() = 'service_role'::"text"));
+
+
+
+CREATE POLICY "Service role full access" ON "public"."hospitals" USING (("auth"."role"() = 'service_role'::"text")) WITH CHECK (("auth"."role"() = 'service_role'::"text"));
+
+
+
+CREATE POLICY "System manage devices" ON "public"."app_devices" USING (("auth"."role"() = 'service_role'::"text"));
+
+
+
+CREATE POLICY "System manage roles" ON "public"."user_roles" USING (("auth"."role"() = 'service_role'::"text"));
 
 
 
@@ -13866,11 +14294,19 @@ CREATE POLICY "Users insert own profile" ON "public"."freelancer_profiles" FOR I
 
 
 
+CREATE POLICY "Users manage own devices" ON "public"."app_devices" USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
+
+
+
 CREATE POLICY "Users manage own doctor profile" ON "public"."health_doctor_profiles" TO "authenticated" USING (("user_id" = "auth"."uid"()));
 
 
 
 CREATE POLICY "Users manage own patient profile" ON "public"."health_patient_profiles" TO "authenticated" USING (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "Users submit reports" ON "public"."platform_reports" FOR INSERT WITH CHECK (("auth"."uid"() = "reporter_id"));
 
 
 
@@ -13897,6 +14333,14 @@ CREATE POLICY "Users view own medicine reviews" ON "public"."health_medicine_rev
 
 
 CREATE POLICY "Users view own payouts" ON "public"."payout_requests" FOR SELECT USING (("user_id" = "auth"."uid"()));
+
+
+
+CREATE POLICY "Users view own reports" ON "public"."platform_reports" FOR SELECT USING (("auth"."uid"() = "reporter_id"));
+
+
+
+CREATE POLICY "Users view own roles" ON "public"."user_roles" FOR SELECT USING (("auth"."uid"() = "user_id"));
 
 
 
@@ -14020,6 +14464,9 @@ CREATE POLICY "anyone_view_factory_ratings" ON "public"."factory_ratings" FOR SE
 
 
 
+ALTER TABLE "public"."app_devices" ENABLE ROW LEVEL SECURITY;
+
+
 ALTER TABLE "public"."appointments" ENABLE ROW LEVEL SECURITY;
 
 
@@ -14079,6 +14526,10 @@ ALTER TABLE "public"."conversations" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "conversations_select" ON "public"."conversations" FOR SELECT TO "authenticated" USING (("id" IN ( SELECT "conversation_participants"."conversation_id"
    FROM "public"."conversation_participants"
   WHERE ("conversation_participants"."user_id" = "auth"."uid"()))));
+
+
+
+CREATE POLICY "creators_manage_own_templates" ON "public"."website_marketplace" USING (("creator_id" = "auth"."uid"())) WITH CHECK (("creator_id" = "auth"."uid"()));
 
 
 
@@ -14365,6 +14816,9 @@ CREATE POLICY "health_typing_indicators_view" ON "public"."health_typing_indicat
 
 
 
+ALTER TABLE "public"."hospitals" ENABLE ROW LEVEL SECURITY;
+
+
 ALTER TABLE "public"."idempotency_keys" ENABLE ROW LEVEL SECURITY;
 
 
@@ -14434,6 +14888,21 @@ CREATE POLICY "manage_shop_products" ON "public"."shop_products" TO "authenticat
   WHERE (("s"."id" = "shop_products"."shop_id") AND ("s"."owner_id" = "auth"."uid"()))))) WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."shops" "s"
   WHERE (("s"."id" = "shop_products"."shop_id") AND ("s"."owner_id" = "auth"."uid"())))));
+
+
+
+CREATE POLICY "marketplace_manage_own" ON "public"."website_marketplace" USING (("creator_id" = "auth"."uid"())) WITH CHECK (("creator_id" = "auth"."uid"()));
+
+
+
+ALTER TABLE "public"."marketplace_purchases" ENABLE ROW LEVEL SECURITY;
+
+
+CREATE POLICY "marketplace_service_full" ON "public"."website_marketplace" TO "service_role" USING (true) WITH CHECK (true);
+
+
+
+CREATE POLICY "marketplace_view_published" ON "public"."website_marketplace" FOR SELECT USING (("is_published" = true));
 
 
 
@@ -14590,6 +15059,9 @@ ALTER TABLE "public"."pharmacy_qr_scan_logs" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "public"."pharmacy_stock_movements" ENABLE ROW LEVEL SECURITY;
 
 
+ALTER TABLE "public"."platform_reports" ENABLE ROW LEVEL SECURITY;
+
+
 ALTER TABLE "public"."platform_settings" ENABLE ROW LEVEL SECURITY;
 
 
@@ -14722,7 +15194,19 @@ CREATE POLICY "public_view_middleman_profiles" ON "public"."middleman_profiles" 
 
 
 
+CREATE POLICY "public_view_published_templates" ON "public"."website_marketplace" FOR SELECT USING (("is_published" = true));
+
+
+
 CREATE POLICY "public_view_published_websites" ON "public"."websites" FOR SELECT TO "anon" USING ((("is_published" = true) AND ("is_active" = true)));
+
+
+
+CREATE POLICY "purchases_system_manage" ON "public"."marketplace_purchases" TO "service_role" USING (true) WITH CHECK (true);
+
+
+
+CREATE POLICY "purchases_view_own" ON "public"."marketplace_purchases" FOR SELECT USING (("buyer_id" = "auth"."uid"()));
 
 
 
@@ -14917,6 +15401,10 @@ CREATE POLICY "system_insert_webhook_logs" ON "public"."payment_webhook_logs" FO
 
 
 
+CREATE POLICY "system_manage_purchases" ON "public"."marketplace_purchases" TO "service_role" USING (true) WITH CHECK (true);
+
+
+
 CREATE POLICY "system_manage_splits" ON "public"."payment_splits" TO "service_role" USING (true) WITH CHECK (true);
 
 
@@ -14937,6 +15425,9 @@ ALTER TABLE "public"."template_requests" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."user_events" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."user_roles" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."user_wallets" ENABLE ROW LEVEL SECURITY;
@@ -15075,6 +15566,10 @@ CREATE POLICY "users_view_own_profile" ON "public"."seller_profiles" FOR SELECT 
 
 
 
+CREATE POLICY "users_view_own_purchases" ON "public"."marketplace_purchases" FOR SELECT USING (("buyer_id" = "auth"."uid"()));
+
+
+
 CREATE POLICY "users_view_own_push_subscriptions" ON "public"."push_subscriptions" FOR SELECT TO "authenticated" USING (("user_id" = "auth"."uid"()));
 
 
@@ -15128,6 +15623,9 @@ CREATE POLICY "view_shop_products_public" ON "public"."shop_products" FOR SELECT
 
 
 ALTER TABLE "public"."wallet_transactions" ENABLE ROW LEVEL SECURITY;
+
+
+ALTER TABLE "public"."website_marketplace" ENABLE ROW LEVEL SECURITY;
 
 
 ALTER TABLE "public"."wishlist" ENABLE ROW LEVEL SECURITY;
@@ -18082,6 +18580,12 @@ GRANT ALL ON FUNCTION "public"."get_typing_indicators"("p_conversation_id" "uuid
 
 
 
+GRANT ALL ON FUNCTION "public"."get_unified_orders"("p_user_id" "uuid", "p_limit" integer, "p_offset" integer) TO "anon";
+GRANT ALL ON FUNCTION "public"."get_unified_orders"("p_user_id" "uuid", "p_limit" integer, "p_offset" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_unified_orders"("p_user_id" "uuid", "p_limit" integer, "p_offset" integer) TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."get_unread_notification_count"("p_user_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."get_unread_notification_count"("p_user_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_unread_notification_count"("p_user_id" "uuid") TO "service_role";
@@ -18239,6 +18743,12 @@ GRANT ALL ON FUNCTION "public"."haversine_distance"("lat1" double precision, "lo
 
 
 
+GRANT ALL ON FUNCTION "public"."increment_template_sales"() TO "anon";
+GRANT ALL ON FUNCTION "public"."increment_template_sales"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."increment_template_sales"() TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."initialize_user_notification_settings"() TO "anon";
 GRANT ALL ON FUNCTION "public"."initialize_user_notification_settings"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."initialize_user_notification_settings"() TO "service_role";
@@ -18348,6 +18858,12 @@ GRANT ALL ON FUNCTION "public"."products_search_vector_trigger"() TO "service_ro
 GRANT ALL ON FUNCTION "public"."products_tsvector_trigger"() TO "anon";
 GRANT ALL ON FUNCTION "public"."products_tsvector_trigger"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."products_tsvector_trigger"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."register_app_device"("p_token" "text", "p_platform" "text", "p_app_version" "text", "p_device_model" "text", "p_os_version" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."register_app_device"("p_token" "text", "p_platform" "text", "p_app_version" "text", "p_device_model" "text", "p_os_version" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."register_app_device"("p_token" "text", "p_platform" "text", "p_app_version" "text", "p_device_model" "text", "p_os_version" "text") TO "service_role";
 
 
 
@@ -18483,6 +18999,12 @@ GRANT ALL ON FUNCTION "public"."split_payment_to_parties"("p_order_id" "uuid", "
 
 
 
+GRANT ALL ON FUNCTION "public"."split_template_purchase"("p_purchase_id" "uuid", "p_total_amount" numeric) TO "anon";
+GRANT ALL ON FUNCTION "public"."split_template_purchase"("p_purchase_id" "uuid", "p_total_amount" numeric) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."split_template_purchase"("p_purchase_id" "uuid", "p_total_amount" numeric) TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."strict_word_similarity"("text", "text") TO "postgres";
 GRANT ALL ON FUNCTION "public"."strict_word_similarity"("text", "text") TO "anon";
 GRANT ALL ON FUNCTION "public"."strict_word_similarity"("text", "text") TO "authenticated";
@@ -18522,6 +19044,12 @@ REVOKE ALL ON FUNCTION "public"."sync_participant_account_type"() FROM PUBLIC;
 GRANT ALL ON FUNCTION "public"."sync_participant_account_type"() TO "anon";
 GRANT ALL ON FUNCTION "public"."sync_participant_account_type"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."sync_participant_account_type"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."sync_user_roles"() TO "anon";
+GRANT ALL ON FUNCTION "public"."sync_user_roles"() TO "authenticated";
+GRANT ALL ON FUNCTION "public"."sync_user_roles"() TO "service_role";
 
 
 
@@ -18956,6 +19484,12 @@ GRANT ALL ON TABLE "public"."analytics_snapshots" TO "service_role";
 
 
 
+GRANT ALL ON TABLE "public"."app_devices" TO "anon";
+GRANT ALL ON TABLE "public"."app_devices" TO "authenticated";
+GRANT ALL ON TABLE "public"."app_devices" TO "service_role";
+
+
+
 GRANT ALL ON TABLE "public"."appointments" TO "anon";
 GRANT ALL ON TABLE "public"."appointments" TO "authenticated";
 GRANT ALL ON TABLE "public"."appointments" TO "service_role";
@@ -19358,6 +19892,12 @@ GRANT ALL ON TABLE "public"."health_typing_indicators" TO "service_role";
 
 
 
+GRANT ALL ON TABLE "public"."hospitals" TO "anon";
+GRANT ALL ON TABLE "public"."hospitals" TO "authenticated";
+GRANT ALL ON TABLE "public"."hospitals" TO "service_role";
+
+
+
 GRANT ALL ON TABLE "public"."idempotency_keys" TO "anon";
 GRANT ALL ON TABLE "public"."idempotency_keys" TO "authenticated";
 GRANT ALL ON TABLE "public"."idempotency_keys" TO "service_role";
@@ -19367,6 +19907,12 @@ GRANT ALL ON TABLE "public"."idempotency_keys" TO "service_role";
 GRANT ALL ON TABLE "public"."location_history" TO "anon";
 GRANT ALL ON TABLE "public"."location_history" TO "authenticated";
 GRANT ALL ON TABLE "public"."location_history" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."marketplace_purchases" TO "anon";
+GRANT ALL ON TABLE "public"."marketplace_purchases" TO "authenticated";
+GRANT ALL ON TABLE "public"."marketplace_purchases" TO "service_role";
 
 
 
@@ -19505,6 +20051,12 @@ GRANT ALL ON TABLE "public"."pharmacy_qr_scan_logs" TO "service_role";
 GRANT ALL ON TABLE "public"."pharmacy_stock_movements" TO "anon";
 GRANT ALL ON TABLE "public"."pharmacy_stock_movements" TO "authenticated";
 GRANT ALL ON TABLE "public"."pharmacy_stock_movements" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."platform_reports" TO "anon";
+GRANT ALL ON TABLE "public"."platform_reports" TO "authenticated";
+GRANT ALL ON TABLE "public"."platform_reports" TO "service_role";
 
 
 
@@ -19706,6 +20258,12 @@ GRANT ALL ON TABLE "public"."user_oauth_providers" TO "service_role";
 
 
 
+GRANT ALL ON TABLE "public"."user_roles" TO "anon";
+GRANT ALL ON TABLE "public"."user_roles" TO "authenticated";
+GRANT ALL ON TABLE "public"."user_roles" TO "service_role";
+
+
+
 GRANT ALL ON TABLE "public"."user_wallets" TO "anon";
 GRANT ALL ON TABLE "public"."user_wallets" TO "authenticated";
 GRANT ALL ON TABLE "public"."user_wallets" TO "service_role";
@@ -19727,6 +20285,12 @@ GRANT ALL ON TABLE "public"."wallet_transactions" TO "service_role";
 GRANT ALL ON TABLE "public"."website_integrations" TO "anon";
 GRANT ALL ON TABLE "public"."website_integrations" TO "authenticated";
 GRANT ALL ON TABLE "public"."website_integrations" TO "service_role";
+
+
+
+GRANT ALL ON TABLE "public"."website_marketplace" TO "anon";
+GRANT ALL ON TABLE "public"."website_marketplace" TO "authenticated";
+GRANT ALL ON TABLE "public"."website_marketplace" TO "service_role";
 
 
 

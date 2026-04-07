@@ -1,28 +1,22 @@
 // src/features/health/components/HealthHeader.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Search,
   MessageSquare,
-  Menu,
-  X,
-  ChevronDown,
   LogOut,
   Bell,
-  CheckCircle2,
   Sun,
   Moon,
   LayoutDashboard,
-  UserPlus,
   HeartPulse,
   Stethoscope,
   Building,
   Pill,
-  FileText,
-  Calendar,
   Users,
+  Shield,
+  Zap,
 } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { supabase } from "@/lib/supabase";
@@ -30,8 +24,6 @@ import { supabaseHealth } from "../api/supabaseHealth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -40,14 +32,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
 
 interface HealthProviderProfile {
   id: string;
@@ -57,13 +41,11 @@ interface HealthProviderProfile {
 }
 
 export function HealthHeader() {
-  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
   const { theme, setTheme } = useTheme();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [userRole, setUserRole] = useState<
     "patient" | "doctor" | "admin" | null
   >(null);
@@ -73,8 +55,18 @@ export function HealthHeader() {
   const [notificationCount, setNotificationCount] = useState(0);
   const [messageCount, setMessageCount] = useState(0);
 
+  // Dynamic Theme Matrix
+  const isPharmacyRoute = useMemo(
+    () =>
+      location.pathname.includes("/health/pharmacies") ||
+      location.pathname.includes("/health/pharmacy"),
+    [location.pathname],
+  );
+  const themeColor = isPharmacyRoute ? "emerald" : "rose";
+  const themeHex = isPharmacyRoute ? "16, 185, 129" : "244, 63, 94"; // Tailwind emerald-500 vs rose-500
+
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -85,9 +77,7 @@ export function HealthHeader() {
         setUserRole("patient");
         return;
       }
-
       try {
-        // Check Admin
         const { data: adminData } = await supabase
           .from("admin_users")
           .select("user_id")
@@ -99,7 +89,6 @@ export function HealthHeader() {
           return;
         }
 
-        // Check Doctor
         const { data: doctorData } = await supabaseHealth
           .from("health_doctor_profiles")
           .select("id, specialization, is_verified, clinic_name")
@@ -111,15 +100,12 @@ export function HealthHeader() {
           setProviderProfile(doctorData);
           return;
         }
-
-        // Default to patient
         setUserRole("patient");
       } catch (error) {
         console.error("Error checking user role:", error);
         setUserRole("patient");
       }
     };
-
     checkUserRole();
   }, [user]);
 
@@ -150,503 +136,334 @@ export function HealthHeader() {
 
   const handleLogout = async () => {
     await signOut();
-    navigate("/services/health");
+    navigate("/health");
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(
-        `/services/health/doctors?search=${encodeURIComponent(searchQuery.trim())}`,
+        `/health/doctors?search=${encodeURIComponent(searchQuery.trim())}`,
       );
     }
   };
 
-  const isActive = (path: string) => {
-    return location.pathname.startsWith(path);
-  };
+  const isActive = (path: string) => location.pathname === path;
 
   const navItems = [
-    {
-      label: t("health.findDoctor"),
-      href: "/services/health/doctors",
-      icon: Stethoscope,
-    },
-    {
-      label: t("health.pharmacies"),
-      href: "/services/health/pharmacies",
-      icon: Pill,
-    },
-    {
-      label: t("health.hospitals"),
-      href: "/services/health/hospitals",
-      icon: Building,
-    },
+    { label: "Providers", href: "/health/doctors", icon: Stethoscope },
+    { label: "Pharmacies", href: "/health/pharmacies", icon: Pill },
+    { label: "Facilities", href: "/health/hospitals", icon: Building },
   ];
-
-  const patientNavItems = [
-    {
-      label: t("health.dashboard"),
-      href: "/services/health/patient/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      label: t("health.appointments"),
-      href: "/services/health/patient/dashboard?tab=appointments",
-      icon: Calendar,
-    },
-    {
-      label: t("health.records"),
-      href: "/services/health/patient/dashboard?tab=records",
-      icon: FileText,
-    },
-  ];
-
-  const doctorNavItems = [
-    {
-      label: t("health.dashboard"),
-      href: "/services/health/doctor/dashboard",
-      icon: LayoutDashboard,
-    },
-    {
-      label: t("health.appointments"),
-      href: "/services/health/doctor/dashboard?tab=appointments",
-      icon: Calendar,
-    },
-    {
-      label: t("health.patients"),
-      href: "/services/health/doctor/dashboard?tab=patients",
-      icon: Users,
-    },
-  ];
-
-  const adminNavItems = [
-    {
-      label: t("health.verifyDoctors"),
-      href: "/services/health/admin/verify",
-      icon: CheckCircle2,
-    },
-    {
-      label: t("health.auditLogs"),
-      href: "/services/health/admin/audit-logs",
-      icon: FileText,
-    },
-  ];
-
-  const getRoleNavItems = () => {
-    switch (userRole) {
-      case "patient":
-        return patientNavItems;
-      case "doctor":
-        return doctorNavItems;
-      case "admin":
-        return adminNavItems;
-      default:
-        return [];
-    }
-  };
 
   return (
-    <>
-      <header
-        className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b",
-          isScrolled
-            ? "bg-white/95 backdrop-blur-lg shadow-lg shadow-rose-200/50 dark:bg-[#0f172a]/95 dark:border-[#1e293b]"
-            : "bg-white/90 backdrop-blur-md dark:bg-[#0f172a]/90 dark:border-[#1e293b]",
-        )}
-      >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link
-              to="/services/health"
-              className="flex-shrink-0 flex items-center gap-2"
-            >
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-rose-500 to-indigo-600 flex items-center justify-center">
-                <HeartPulse className="w-6 h-6 text-white" />
-              </div>
-              <div className="hidden sm:block">
-                <span className="text-xl font-bold bg-gradient-to-r from-rose-600 to-indigo-600 bg-clip-text text-transparent">
-                  AURORA Health
-                </span>
-                <p className="text-xs text-slate-500 dark:text-slate-400 -mt-1">
-                  {t("health.tagline")}
-                </p>
-              </div>
-            </Link>
+    <header
+      className={cn(
+        "fixed top-0 left-0 right-0 z-[100] transition-all duration-700 h-20 flex items-center",
+        isScrolled
+          ? "bg-background/80 backdrop-blur-[30px] border-b border-white/5 shadow-2xl shadow-black/50"
+          : "bg-transparent border-b border-transparent",
+      )}
+      style={{
+        // @ts-expect-error - CSS custom property for theme shadow
+        "--header-shadow": `rgba(${themeHex}, 0.15)`,
+      }}
+    >
+      {isScrolled && (
+        <div
+          className={cn(
+            "absolute inset-x-0 bottom-0 h-px transition-colors duration-700",
+            `bg-${themeColor}-500/20`,
+          )}
+        />
+      )}
 
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.href}
-                  to={item.href}
+      <div className="max-w-8xl mx-auto px-6 lg:px-12 w-full">
+        <div className="flex justify-between items-center gap-8">
+          {/* LOGO - Dynamic Sector Identity */}
+          <Link to="/health" className="flex items-center gap-4 group">
+            <div
+              className={cn(
+                "p-2.5 glass border rounded-2xl group-hover:scale-110 transition-all duration-700 shadow-2xl",
+                isPharmacyRoute
+                  ? "bg-emerald-500/10 border-emerald-500/20 shadow-emerald-500/20"
+                  : "bg-rose-500/10 border-rose-500/20 shadow-rose-500/20",
+              )}
+            >
+              <HeartPulse
+                className={cn(
+                  "h-6 w-6 animate-pulse transition-colors duration-700",
+                  `text-${themeColor}-500`,
+                )}
+              />
+            </div>
+            <div className="flex flex-col">
+              <span
+                className={cn(
+                  "text-xl font-black italic tracking-tighter leading-none text-foreground transition-colors duration-700",
+                  `group-hover:text-${themeColor}-500`,
+                )}
+              >
+                {isPharmacyRoute ? "PHARMA" : "HEALTH"}{" "}
+                <span className="text-foreground/20">CORE</span>
+              </span>
+              <span className="text-[8px] font-black uppercase tracking-[0.4em] text-foreground/30 italic">
+                Bio-System Nexus
+              </span>
+            </div>
+          </Link>
+
+          {/* MAIN NAV - Adaptive Sector Blocks */}
+          <nav className="hidden lg:flex items-center gap-2 p-1.5 glass bg-white/5 border border-white/10 rounded-2xl backdrop-blur-2xl">
+            {navItems.map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "relative px-6 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-500 flex items-center gap-2",
+                  isActive(item.href)
+                    ? `bg-${themeColor}-500 text-white shadow-lg shadow-${themeColor}-500/30`
+                    : "text-foreground/40 hover:text-foreground hover:bg-white/5",
+                )}
+              >
+                <item.icon
                   className={cn(
-                    "relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2",
+                    "h-3.5 w-3.5 transition-colors duration-700",
                     isActive(item.href)
-                      ? "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20"
-                      : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
+                      ? "text-white"
+                      : `text-${themeColor}-500/60`,
                   )}
+                />
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+
+          {/* ACTIONS */}
+          <div className="flex items-center gap-3">
+            {/* Search - Sector Focused */}
+            <form
+              onSubmit={handleSearch}
+              className="relative hidden xl:block group/search"
+            >
+              <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                <Search
+                  className={cn(
+                    "h-4 w-4 text-foreground/20 group-focus-within/search:transition-colors group-focus-within/search:duration-700",
+                    `group-focus-within/search:text-${themeColor}-500`,
+                  )}
+                />
+              </div>
+              <input
+                type="text"
+                placeholder="Identify Node..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={cn(
+                  "w-44 pl-10 pr-4 py-2.5 bg-black/20 backdrop-blur-3xl border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest placeholder:text-foreground/10 transition-all outline-none",
+                  `focus:w-64 focus:bg-black/40 focus:border-${themeColor}-500/40 focus:ring-4 focus:ring-${themeColor}-500/10`,
+                )}
+              />
+            </form>
+
+            <div className="h-6 w-px bg-white/10 hidden md:block" />
+
+            {/* Notifications adaptive stream */}
+            {user && (
+              <div className="flex items-center gap-1">
+                <Link
+                  to="/health/messages"
+                  className="relative group p-2.5 rounded-xl hover:bg-white/5 transition-all overflow-hidden"
                 >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
-                  {isActive(item.href) && (
-                    <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-rose-600 dark:bg-rose-400 rounded-full" />
+                  <MessageSquare
+                    className={cn(
+                      "h-5 w-5 text-foreground/40 transition-colors duration-700",
+                      `group-hover:text-${themeColor}-500`,
+                    )}
+                  />
+                  {messageCount > 0 && (
+                    <span className="absolute top-2 right-2 flex h-3 w-3">
+                      <span
+                        className={cn(
+                          "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
+                          `bg-${themeColor}-500`,
+                        )}
+                      ></span>
+                      <span
+                        className={cn(
+                          "relative inline-flex rounded-full h-3 w-3 border-2 border-background",
+                          `bg-${themeColor}-500`,
+                        )}
+                      ></span>
+                    </span>
                   )}
                 </Link>
-              ))}
-
-              {/* Role-Based Dashboard */}
-              {user && (
-                <NavigationMenu>
-                  <NavigationMenuList>
-                    <NavigationMenuItem>
-                      <NavigationMenuTrigger
+                <button className="relative group p-2.5 rounded-xl hover:bg-white/5 transition-all">
+                  <Bell
+                    className={cn(
+                      "h-5 w-5 text-foreground/40 transition-colors duration-700",
+                      `group-hover:text-${themeColor}-500`,
+                    )}
+                  />
+                  {notificationCount > 0 && (
+                    <span className="absolute top-2 right-2 flex h-3 w-3">
+                      <span
                         className={cn(
-                          "text-sm font-medium flex items-center gap-2",
-                          isActive("/services/health/patient/dashboard") ||
-                            isActive("/services/health/doctor/dashboard")
-                            ? "text-rose-700 dark:text-rose-400"
-                            : "text-gray-600 dark:text-gray-300",
+                          "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
+                          `bg-${themeColor}-500`,
                         )}
-                      >
-                        <LayoutDashboard className="h-4 w-4" />
-                        {userRole === "doctor"
-                          ? t("health.doctorDashboard")
-                          : t("health.dashboard")}
-                      </NavigationMenuTrigger>
-                      <NavigationMenuContent>
-                        <ul className="grid w-[300px] gap-2 p-4">
-                          {getRoleNavItems().map((navItem) => (
-                            <li key={navItem.href}>
-                              <NavigationMenuLink asChild>
-                                <Link
-                                  to={navItem.href}
-                                  className="block p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                                >
-                                  <div className="flex items-center gap-3">
-                                    <navItem.icon className="h-5 w-5 text-rose-600 dark:text-rose-400" />
-                                    <div>
-                                      <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                        {navItem.label}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </Link>
-                              </NavigationMenuLink>
-                            </li>
-                          ))}
-                        </ul>
-                      </NavigationMenuContent>
-                    </NavigationMenuItem>
-                  </NavigationMenuList>
-                </NavigationMenu>
-              )}
-            </nav>
-
-            {/* Right Actions */}
-            <div className="flex items-center gap-3">
-              {/* Search - Desktop */}
-              <form
-                onSubmit={handleSearch}
-                className="hidden md:block relative"
-              >
-                <input
-                  type="text"
-                  placeholder={t("health.searchDoctors")}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-64 pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-800 border-0 rounded-full text-sm text-gray-900 dark:text-white focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-rose-500/20 focus:outline-none transition-all"
-                />
-                <Search
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-                  size={17}
-                />
-              </form>
-
-              {/* Theme Toggle */}
-              <button
-                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-                className="p-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-yellow-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-all"
-              >
-                {theme === "light" ? (
-                  <Moon className="h-5 w-5 text-indigo-600" />
-                ) : (
-                  <Sun className="h-5 w-5 text-amber-500" />
-                )}
-              </button>
-
-              {/* Language Switcher */}
-              <LanguageSwitcher />
-
-              {user ? (
-                <>
-                  {/* Notifications */}
-                  <button className="relative p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
-                    <Bell size={20} />
-                    {notificationCount > 0 && (
-                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-950" />
-                    )}
-                  </button>
-
-                  {/* Messages */}
-                  <Link
-                    to="/services/health/messages"
-                    className="relative p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-                  >
-                    <MessageSquare size={20} />
-                    {messageCount > 0 && (
-                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-950" />
-                    )}
-                  </Link>
-
-                  {/* Profile Dropdown */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1.5 rounded-full transition-all">
-                        <Avatar
-                          name={
-                            providerProfile?.clinic_name ||
-                            user.user_metadata.full_name
-                          }
-                          src={user.user_metadata.avatar_url}
-                          className="w-9 h-9 border-2 border-gray-200 dark:border-gray-700"
-                        />
-                        <ChevronDown size={15} className="text-gray-500" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-64">
-                      <DropdownMenuLabel>
-                        <div className="flex flex-col space-y-1">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold">
-                              {user.user_metadata.full_name}
-                            </p>
-                            {providerProfile?.is_verified && (
-                              <Badge className="h-4 text-[8px] px-1 bg-emerald-100 text-emerald-700">
-                                <CheckCircle2 size={10} className="mr-0.5" />
-                                {t("health.verified")}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-500">{user.email}</p>
-                          {userRole && (
-                            <Badge
-                              variant="secondary"
-                              className="w-fit text-[10px]"
-                            >
-                              {userRole === "doctor"
-                                ? t("health.doctor")
-                                : userRole === "admin"
-                                  ? t("health.admin")
-                                  : t("health.patient")}
-                            </Badge>
-                          )}
-                        </div>
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-
-                      {/* Dashboard based on role */}
-                      {getRoleNavItems().map((item) => (
-                        <DropdownMenuItem key={item.href} asChild>
-                          <Link to={item.href}>
-                            <item.icon className="mr-2 h-4 w-4" />
-                            {item.label}
-                          </Link>
-                        </DropdownMenuItem>
-                      ))}
-
-                      <DropdownMenuItem asChild>
-                        <Link to="/profile">
-                          <LayoutDashboard className="mr-2 h-4 w-4" />
-                          {t("common.profile")}
-                        </Link>
-                      </DropdownMenuItem>
-
-                      <DropdownMenuItem asChild>
-                        <Link to="/orders">
-                          <FileText className="mr-2 h-4 w-4" />
-                          {t("common.orders")}
-                        </Link>
-                      </DropdownMenuItem>
-
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        onClick={handleLogout}
-                        className="text-red-600"
-                      >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        {t("auth.signOut")}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    onClick={() => navigate("/login")}
-                    className="text-sm font-medium"
-                  >
-                    {t("auth.signIn")}
-                  </Button>
-                  <Button
-                    onClick={() => navigate("/services/health/doctor/signup")}
-                    className="bg-gradient-to-r from-rose-600 to-indigo-600 text-white px-5 py-2 rounded-full text-sm font-semibold"
-                  >
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    {t("health.doctorSignup")}
-                  </Button>
-                </div>
-              )}
-
-              {/* Mobile Menu Button */}
-              <button
-                className="lg:hidden p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              >
-                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-          <div className="fixed top-0 right-0 z-50 h-full w-[300px] bg-white dark:bg-gray-950 shadow-2xl flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-rose-500 to-indigo-600 flex items-center justify-center">
-                  <HeartPulse className="w-5 h-5 text-white" />
-                </div>
-                <span className="font-bold text-lg">Aurora Health</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <LanguageSwitcher />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-                >
-                  {theme === "light" ? (
-                    <Moon className="h-5 w-5" />
-                  ) : (
-                    <Sun className="h-5 w-5 text-amber-500" />
+                      ></span>
+                      <span
+                        className={cn(
+                          "relative inline-flex rounded-full h-3 w-3 border-2 border-background",
+                          `bg-${themeColor}-500`,
+                        )}
+                      ></span>
+                    </span>
                   )}
-                </Button>
-                <button
-                  className="p-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <X size={22} />
                 </button>
               </div>
-            </div>
+            )}
 
-            {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {/* Search */}
-              <form onSubmit={handleSearch} className="relative">
-                <input
-                  type="text"
-                  placeholder={t("health.searchDoctors")}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-100 dark:bg-gray-800 border-0 rounded-xl"
-                />
-                <Search
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-                  size={18}
-                />
-              </form>
-
-              {/* Navigation */}
-              <div className="space-y-1">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800"
-                  >
-                    <item.icon size={20} />
-                    {item.label}
-                  </Link>
-                ))}
-              </div>
-
-              {/* Role-Based Navigation */}
-              {user && (
-                <>
-                  <div className="border-t border-gray-100 dark:border-gray-800 my-4" />
-                  <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">
-                    {t("health.dashboard")}
-                  </p>
-                  <div className="space-y-1">
-                    {getRoleNavItems().map((item) => (
-                      <Link
-                        key={item.href}
-                        to={item.href}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-3 text-base font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800"
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex items-center gap-3 p-1 rounded-2xl pl-3 hover:bg-white/5 transition-all group">
+                    <div className="flex flex-col items-end text-right">
+                      <span
+                        className={cn(
+                          "text-[10px] font-black uppercase tracking-widest leading-none text-foreground/80 transition-colors duration-700",
+                          `group-hover:text-${themeColor}-500`,
+                        )}
                       >
-                        <item.icon size={20} />
-                        {item.label}
-                      </Link>
-                    ))}
-                  </div>
-                </>
-              )}
-
-              {user ? (
-                <div className="space-y-2 pt-4 border-t">
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-base font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl"
-                  >
-                    <LogOut size={20} />
-                    {t("auth.signOut")}
+                        {user.user_metadata.full_name?.split(" ")[0]}
+                      </span>
+                      <span className="text-[7px] font-black uppercase tracking-[0.3em] text-foreground/20 italic">
+                        {userRole?.toUpperCase()} MODE
+                      </span>
+                    </div>
+                    <Avatar
+                      name={user.user_metadata.full_name}
+                      src={user.user_metadata.avatar_url}
+                      className={cn(
+                        "w-10 h-10 border-2 border-white/10 rounded-xl transition-all shadow-lg",
+                        `group-hover:border-${themeColor}-500/40`,
+                      )}
+                    />
                   </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-2 pt-4 border-t">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      navigate("/login");
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full"
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="end"
+                  className="w-64 glass-card rounded-[2rem] border-white/20 p-2 shadow-2xl backdrop-blur-3xl"
+                >
+                  <DropdownMenuLabel className="p-4 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-black italic tracking-tighter uppercase">
+                        {user.user_metadata.full_name}
+                      </p>
+                      {providerProfile?.is_verified && (
+                        <Shield className="h-3 w-3 text-emerald-500" />
+                      )}
+                    </div>
+                    <p className="text-[10px] font-medium text-foreground/40">
+                      {user.email}
+                    </p>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator className="bg-white/5" />
+                  <DropdownMenuItem
+                    asChild
+                    className={cn(
+                      "rounded-xl p-3 transition-all cursor-pointer",
+                      `focus:bg-${themeColor}-500/10 focus:text-${themeColor}-500`,
+                    )}
                   >
-                    {t("auth.signIn")}
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      navigate("/services/health/doctor/signup");
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full bg-gradient-to-r from-rose-600 to-indigo-600"
+                    <Link
+                      to={
+                        userRole === "doctor"
+                          ? "/health/doctor/dashboard"
+                          : "/health/patient/dashboard"
+                      }
+                      className="flex items-center"
+                    >
+                      <LayoutDashboard className="mr-3 h-4 w-4" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">
+                        Medical Dashboard
+                      </span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    asChild
+                    className={cn(
+                      "rounded-xl p-3 transition-all cursor-pointer",
+                      `focus:bg-${themeColor}-500/10 focus:text-${themeColor}-500`,
+                    )}
                   >
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    {t("health.doctorSignup")}
-                  </Button>
-                </div>
+                    <Link to="/profile" className="flex items-center">
+                      <Users className="mr-3 h-4 w-4" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">
+                        Citizen Profile
+                      </span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-white/5" />
+                  <DropdownMenuItem
+                    onClick={handleLogout}
+                    className="rounded-xl p-3 text-red-500 focus:bg-red-500/10 focus:text-red-500 transition-all cursor-pointer"
+                  >
+                    <LogOut className="mr-3 h-4 w-4" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">
+                      Terminate Session
+                    </span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  onClick={() => navigate("/login")}
+                  className="text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white"
+                >
+                  Authenticate
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/health/patient/signup")}
+                  className={cn(
+                    "rounded-xl border-white/10 h-10 px-6 text-[10px] font-black uppercase tracking-widest hover:bg-white/5 transition-all",
+                  )}
+                >
+                  Patient Join
+                </Button>
+                <Button
+                  onClick={() => navigate("/health/doctor/signup")}
+                  className={cn(
+                    "text-white rounded-xl h-10 px-6 text-[10px] font-black uppercase tracking-widest shadow-lg transition-all duration-700",
+                    `bg-${themeColor}-500 hover:bg-${themeColor}-600 shadow-${themeColor}-500/20`,
+                  )}
+                >
+                  Medical Signup
+                </Button>
+              </div>
+            )}
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className={cn(
+                "w-10 h-10 p-0 flex items-center justify-center glass bg-white/5 border border-white/10 rounded-xl text-foreground/40 transition-all duration-700",
+                `hover:text-${themeColor}-500`,
               )}
-            </div>
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            >
+              <div className="relative h-5 w-5">
+                <Sun className="h-5 w-5 transition-transform duration-500 absolute rotate-0 scale-100 dark:-rotate-90 dark:scale-0" />
+                <Moon className="h-5 w-5 transition-transform duration-500 absolute rotate-90 scale-0 dark:rotate-0 dark:scale-100 dark:text-amber-400" />
+              </div>
+            </Button>
           </div>
         </div>
-      )}
-    </>
+      </div>
+    </header>
   );
 }

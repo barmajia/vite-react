@@ -18,6 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Search, X, UserPlus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ACCOUNT_TYPE_CONFIG } from "@/lib/chatConfig";
+import { toast } from "sonner";
 
 interface StartNewChatProps {
   open: boolean;
@@ -174,7 +175,7 @@ export function StartNewChat({ open, onOpenChange }: StartNewChatProps) {
         console.log("Using fallback direct query...");
         const { data: directResults, error: directError } = await supabase
           .from("users")
-          .select("id, user_id, email, full_name, avatar_url, account_type")
+          .select("user_id, email, full_name, avatar_url, account_type")
           .or(`email.ilike.%${q}%,full_name.ilike.%${q}%`)
           .neq("user_id", currentUserId)
           .neq("account_type", "admin")
@@ -194,7 +195,7 @@ export function StartNewChat({ open, onOpenChange }: StartNewChatProps) {
 
         const mappedResults: UserResult[] = (directResults || []).map(
           (r: any) => ({
-            id: r.id,
+            id: r.user_id,
             user_id: r.user_id,
             email: r.email,
             full_name: r.full_name,
@@ -335,7 +336,7 @@ export function StartNewChat({ open, onOpenChange }: StartNewChatProps) {
       setSearchResults([]);
     } catch (error: any) {
       console.error("Failed to start conversation:", error);
-      alert(
+      toast.error(
         `Failed to start conversation: ${error?.message || "Unknown error"}`,
       );
     } finally {
@@ -375,7 +376,6 @@ export function StartNewChat({ open, onOpenChange }: StartNewChatProps) {
           {searchQuery && (
             <Button
               variant="ghost"
-              size="icon"
               className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7"
               onClick={() => setSearchQuery("")}
             >
@@ -424,9 +424,9 @@ export function StartNewChat({ open, onOpenChange }: StartNewChatProps) {
                       <p className="text-sm text-muted-foreground truncate">
                         {result.email}
                       </p>
-                      {ACCOUNT_TYPE_CONFIG[result.account_type] && (
+                      {ACCOUNT_TYPE_CONFIG[result.account_type as keyof typeof ACCOUNT_TYPE_CONFIG] && (
                         <Badge variant="secondary" className="text-xs shrink-0">
-                          {ACCOUNT_TYPE_CONFIG[result.account_type].label}
+                          {ACCOUNT_TYPE_CONFIG[result.account_type as keyof typeof ACCOUNT_TYPE_CONFIG].label}
                         </Badge>
                       )}
                     </div>

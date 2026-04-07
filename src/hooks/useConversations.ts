@@ -25,29 +25,18 @@ export const useConversations = (currentUserId: string) => {
       setError(null);
 
       // STEP 1: Get conversation IDs user participates in (SIMPLE QUERY)
-      console.log("Fetching conversations for user:", currentUserId);
-      const { data: participantData, error: participantError } = await supabase
+      // Silent fetch for better dev experience
+      const { data: participants, error: participantError } = await supabase
         .from("conversation_participants")
         .select("conversation_id")
         .eq("user_id", currentUserId);
 
-      console.log("Participant query result:", {
-        data: participantData,
-        error: participantError,
-      });
-
-      if (participantError) {
-        console.error("Participant query error:", participantError);
-        throw participantError;
-      }
+      if (participantError) throw participantError;
 
       const conversationIds =
-        participantData?.map((p) => p.conversation_id) || [];
-
-      console.log("Conversation IDs found:", conversationIds.length);
+        participants?.map((p) => p.conversation_id) || [];
 
       if (conversationIds.length === 0) {
-        console.log("No conversations found for this user");
         setConversations([]);
         setLoading(false);
         return;
@@ -57,7 +46,7 @@ export const useConversations = (currentUserId: string) => {
       const { data: conversationsData, error: convError } = await supabase
         .from("conversations")
         .select(
-          "id, name, type, category, created_at, updated_at, last_message, last_message_at",
+          "id, name, type, category, created_at, updated_at, last_message, last_message_at, is_archived",
         )
         .in("id", conversationIds)
         .order("updated_at", { ascending: false });
@@ -99,7 +88,7 @@ export const useConversations = (currentUserId: string) => {
               );
             }
 
-            const otherUser = (participants?.users as User) || null;
+            const otherUser = (participants?.users as unknown as User) || null;
 
             return {
               ...conv,
@@ -163,11 +152,12 @@ export const useConversations = (currentUserId: string) => {
           }
         }
 
-        // Create new conversation (your schema only has: id, product_id, created_at, updated_at, last_message, last_message_at, is_archived)
+        // Create new conversation
         const { data: conversation, error: convError } = await supabase
           .from("conversations")
           .insert({
             product_id: null,
+            name: name || null,
           })
           .select("id")
           .single();

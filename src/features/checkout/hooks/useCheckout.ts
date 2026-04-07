@@ -6,6 +6,9 @@ import { useCart } from "@/hooks/useCart";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
+export type CheckoutStep = "shipping" | "payment" | "review";
+export type PaymentMethod = "card" | "fawry" | "cod";
+
 interface CheckoutFormData {
   fullName: string;
   addressLine1: string;
@@ -22,6 +25,9 @@ export function useCheckout() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { items, clearCart } = useCart();
+
+  const [currentStep, setCurrentStep] = useState<CheckoutStep>("shipping");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("card");
 
   const [formData, setFormData] = useState<CheckoutFormData>({
     fullName: user?.user_metadata?.full_name || "",
@@ -181,7 +187,40 @@ export function useCheckout() {
     setFormData((prev) => ({ ...prev, ...updates }));
   };
 
-  const placeOrder = async (paymentMethod: "fawry" | "card" = "card") => {
+  const goToStep = (step: CheckoutStep) => {
+    setCurrentStep(step);
+  };
+
+  const nextStep = () => {
+    if (currentStep === "shipping") {
+      // Validate shipping form
+      if (
+        !formData.fullName ||
+        !formData.addressLine1 ||
+        !formData.city ||
+        !formData.state ||
+        !formData.postalCode ||
+        !formData.country ||
+        !formData.phone
+      ) {
+        toast.error("Please fill in all shipping details");
+        return;
+      }
+      setCurrentStep("payment");
+    } else if (currentStep === "payment") {
+      setCurrentStep("review");
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep === "payment") {
+      setCurrentStep("shipping");
+    } else if (currentStep === "review") {
+      setCurrentStep("payment");
+    }
+  };
+
+  const placeOrder = async () => {
     // Validate form
     if (
       !formData.fullName ||
@@ -197,7 +236,7 @@ export function useCheckout() {
 
     const orderData = await placeOrderMutation.mutateAsync(formData);
 
-    // If Fawry payment, initialize Fawry payment
+    // Handle different payment methods
     if (paymentMethod === "fawry") {
       try {
         const {
@@ -228,9 +267,10 @@ export function useCheckout() {
         if (fawryData.checkoutUrl) {
           window.location.href = fawryData.checkoutUrl;
         } else if (fawryData.referenceNumber) {
-          // Show reference number dialog (you can implement a custom dialog)
-          alert(
-            `Please pay at any Fawry kiosk using Reference: ${fawryData.referenceNumber}`,
+          // Surface reference number without blocking the UI
+          toast.info(
+            `Pay at any Fawry kiosk using Reference: ${fawryData.referenceNumber}`,
+            { duration: 8000 },
           );
         }
       } catch (error) {
@@ -248,11 +288,26 @@ export function useCheckout() {
   };
 
   return {
+    // Form data
     formData,
     updateFormData,
+
+    // Multi-step navigation
+    currentStep,
+    goToStep,
+    nextStep,
+    prevStep,
+
+    // Payment
+    paymentMethod,
+    setPaymentMethod,
+
+    // Order placement
     placeOrder,
     isPlacing: placeOrderMutation.isPending,
     error: placeOrderMutation.error,
+
+    // Order totals
     ...calculateOrderTotal(),
   };
 }

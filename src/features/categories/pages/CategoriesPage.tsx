@@ -9,8 +9,7 @@ import {
   ArrowRight,
   TrendingUp,
 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button, Card, CardContent } from "@/components/ui";
 import { ROUTES } from "@/lib/constants";
 
 interface Category {

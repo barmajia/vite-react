@@ -163,20 +163,52 @@ export function AdminDashboard() {
 
       setRecentOrders(ordersWithCustomers);
 
-      // Load top sellers - simplified approach
+      // Load top sellers - calculate from actual orders
+      const { data: ordersWithSellers } = await supabase
+        .from("orders")
+        .select("seller_id, total, status")
+        .eq("status", "delivered")
+        .or("status,eq.completed");
+
+      // Get seller names
       const { data: sellersData } = await supabase
         .from("sellers")
         .select("user_id, full_name");
 
-      if (sellersData) {
-        // For now, just show sellers without sales data
-        // In production, you'd calculate this from actual sales
-        const topSellersData = sellersData.slice(0, 5).map((seller: any) => ({
-          user_id: seller.user_id,
-          full_name: seller.full_name || "Unknown",
-          total_revenue: 0,
-          total_sales: 0,
-        }));
+      if (ordersWithSellers && sellersData) {
+        // Calculate revenue per seller
+        const sellerRevenueMap = new Map<
+          string,
+          { revenue: number; sales: number }
+        >();
+
+        ordersWithSellers.forEach((order) => {
+          if (order.seller_id) {
+            const existing = sellerRevenueMap.get(order.seller_id) || {
+              revenue: 0,
+              sales: 0,
+            };
+            sellerRevenueMap.set(order.seller_id, {
+              revenue: existing.revenue + (order.total || 0),
+              sales: existing.sales + 1,
+            });
+          }
+        });
+
+        // Map to array with seller names
+        const topSellersData = Array.from(sellerRevenueMap.entries())
+          .map(([sellerId, data]) => {
+            const seller = sellersData.find((s) => s.user_id === sellerId);
+            return {
+              user_id: sellerId,
+              full_name: seller?.full_name || "Unknown Seller",
+              total_revenue: data.revenue,
+              total_sales: data.sales,
+            };
+          })
+          .sort((a, b) => b.total_revenue - a.total_revenue)
+          .slice(0, 5);
+
         setTopSellers(topSellersData);
       }
     } catch (error) {

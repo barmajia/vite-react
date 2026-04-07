@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   Mail,
   Lock,
@@ -10,21 +10,24 @@ import {
   Moon,
   ArrowLeft,
   Chrome,
+  ShieldCheck,
+  Zap,
+  Globe,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@/components/ui";
-import { Input, Label } from "@/components/ui";
-import { Card, CardContent } from "@/components/ui";
+import { Button, Input, Label } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { supabase } from "@/lib/supabase";
 import { isValidEmail } from "@/lib/utils";
+import { sanitizeReturnUrl } from "@/lib/security";
 import { toast } from "sonner";
 import { Logo } from "@/components/shared/Logo";
 
 export function Login() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { signIn, signInWithGoogle } = useAuth();
   const { theme, setTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
@@ -35,6 +38,17 @@ export function Login() {
   });
   const [error, setError] = useState("");
 
+  // Get the returnTo URL from query params (set by ProtectedRoute)
+  const returnTo = searchParams.get("returnTo");
+
+  // Pre-fill email if passed from signup or password reset
+  useEffect(() => {
+    const state = window.history.state?.usr;
+    if (state?.email) {
+      setFormData((prev) => ({ ...prev, email: state.email }));
+    }
+  }, []);
+
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
@@ -43,8 +57,6 @@ export function Login() {
         setError(result.error.message ?? t("auth.googleAuthFailed"));
         toast.error(result.error.message ?? t("auth.googleAuthFailed"));
       }
-      // If successful, user will be redirected to Google
-      // and then back to /auth/callback
     } catch (_err) {
       toast.error(t("auth.googleAuthFailed"));
     } finally {
@@ -85,13 +97,11 @@ export function Login() {
       const data = (result as any).data;
 
       if (error) {
-        // Show error in UI
         setError(error.message ?? t("auth.unexpectedError"));
         toast.error(error.message ?? t("auth.unexpectedError"));
       } else {
         toast.success(t("auth.welcomeBack"));
 
-        // Check for Service Provider Profile
         if (data?.user) {
           try {
             const { data: provider } = await supabase
@@ -106,15 +116,28 @@ export function Login() {
                 navigate("/services/dashboard/pending");
                 return;
               }
-              navigate("/services/dashboard");
+              // If there's a returnTo, respect it even for providers
+              if (returnTo) {
+                // Validate returnTo to prevent open redirect attacks
+                const validReturn = sanitizeReturnUrl(returnTo, "/services");
+                navigate(validReturn, { replace: true });
+              } else {
+                navigate("/services/dashboard");
+              }
               return;
             }
           } catch {
-            // svc_providers table might not exist - continue with normal flow
+            // svc_providers table might not exist
           }
         }
 
-        navigate("/services");
+        // Default redirect: use returnTo if available, otherwise /services
+        if (returnTo) {
+          const validReturn = sanitizeReturnUrl(returnTo, "/services");
+          navigate(validReturn, { replace: true });
+        } else {
+          navigate("/services");
+        }
       }
     } catch (_err) {
       toast.error(t("auth.unexpectedError"));
@@ -124,217 +147,207 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-brand-blue-50 via-white to-brand-purple-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950 flex flex-col justify-center py-12 sm:px-6 lg:px-8 relative">
-      {/* Theme Toggle */}
-      <div className="absolute top-6 right-6 flex items-center gap-3">
+    <div className="min-h-screen bg-background relative overflow-hidden flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+      {/* Dynamic Background Elements */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 rounded-full blur-[120px] animate-pulse pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/10 rounded-full blur-[120px] pulse pointer-events-none" />
+
+      {/* Top Navigation */}
+      <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-20">
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate(-1)}
-          className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+          onClick={() => navigate("/")}
+          className="glass hover:bg-white/10 text-foreground rounded-full px-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back
+          {t("common.back")}
         </Button>
 
         <Button
-          variant="outline"
+          variant="ghost"
           size="sm"
           onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-          className="border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-yellow-400 hover:bg-gray-100 dark:hover:bg-gray-700 shadow-sm"
-          title={
-            theme === "light"
-              ? "Switch to Dark Mode 🌙"
-              : "Switch to Light Mode ☀️"
-          }
+          className="glass hover:bg-white/10 rounded-full px-4"
         >
           {theme === "light" ? (
-            <Moon className="h-4 w-4 text-indigo-600" />
+            <Moon className="h-4 w-4 text-primary" />
           ) : (
             <Sun className="h-4 w-4 text-amber-500" />
           )}
-          <span className="ml-2 text-xs font-medium hidden sm:inline">
-            {theme === "light" ? "Dark" : "Light"}
+          <span className="ml-2 font-medium hidden sm:inline capitalize">
+            {theme === "light" ? t("common.darkMode") : t("common.lightMode")}
           </span>
         </Button>
       </div>
 
-      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="flex justify-center">
-          <Logo size="lg" showText={false} />
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10 animate-in fade-in slide-in-from-top-8 duration-700">
+        <div className="flex justify-center mb-6">
+          <div className="p-4 glass rounded-3xl shadow-inner border-white/40 dark:border-white/10 scale-110">
+            <Logo size="lg" showText={false} />
+          </div>
         </div>
-        <h2 className="mt-6 text-3xl font-extrabold text-gray-900 dark:text-white">
+        <h2 className="text-4xl font-black tracking-tight bg-gradient-to-br from-foreground to-foreground/70 bg-clip-text text-transparent">
           {t("auth.signInToAurora")}
         </h2>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-3 text-muted-foreground font-medium">
           {t("auth.orText")}{" "}
           <Link
             to="/signup"
-            className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
+            className="text-primary hover:underline transition-all underline-offset-4"
           >
             {t("auth.createAccount")}
           </Link>
         </p>
-
-        {/* Quick Signup Links */}
-        <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate("/signup?tab=products")}
-            className="text-sm border-2 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-          >
-            🛍️ {t("auth.signupForProducts")}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate("/signup?tab=services")}
-            className="text-sm border-2 hover:bg-purple-50 dark:hover:bg-purple-900/20"
-          >
-            🤝 {t("auth.signupForServices")}
-          </Button>
-        </div>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <Card className="bg-white dark:bg-gray-800 py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-slate-200 dark:border-gray-700">
-          <CardContent className="space-y-6">
-            {error && (
-              <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-md text-sm">
-                {error}
-              </div>
-            )}
+      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md z-10">
+        <div className="glass-card p-8 sm:p-10 rounded-[2.5rem] shadow-2xl border-white/20 dark:border-white/10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+          {error && (
+            <div className="bg-destructive/10 border border-destructive/20 text-destructive p-4 rounded-2xl text-sm font-medium mb-6 animate-in shake duration-300">
+              {error}
+            </div>
+          )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div>
-                <Label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-200"
-                >
-                  {t("auth.email")}
-                </Label>
-                <div className="mt-1 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <Input
-                    id="email"
-                    type="email"
-                    required
-                    className="pl-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 dark:text-white"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                    placeholder={t("auth.emailPlaceholder")}
-                  />
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-sm font-bold ml-1">
+                {t("auth.email")}
+              </Label>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-primary">
+                  <Mail className="h-5 w-5 text-muted-foreground/50" />
                 </div>
+                <Input
+                  id="email"
+                  type="email"
+                  required
+                  className="pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl focus:ring-primary/50 transition-all text-lg placeholder:text-muted-foreground/30"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
+                  placeholder={t("auth.emailPlaceholder")}
+                />
               </div>
+            </div>
 
-              <div>
-                <Label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-gray-700 dark:text-gray-200"
-                >
+            <div className="space-y-2">
+              <div className="flex justify-between items-center ml-1">
+                <Label htmlFor="password" className="text-sm font-bold">
                   {t("auth.password")}
                 </Label>
-                <div className="mt-1 relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <Input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    required
-                    className="pl-10 pr-10 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700 dark:text-white"
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                    placeholder={t("auth.passwordPlaceholder")}
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5" />
-                    ) : (
-                      <Eye className="h-5 w-5" />
-                    )}
-                  </button>
-                </div>
-                <div className="mt-2 text-right">
-                  <Link
-                    to="/forgot-password"
-                    className="text-sm text-primary hover:underline"
-                  >
-                    {t("auth.forgotPassword")}
-                  </Link>
-                </div>
+                <Link
+                  to="/forgot-password"
+                  className="text-xs font-semibold text-primary/70 hover:text-primary transition-colors"
+                >
+                  {t("auth.forgotPassword")}
+                </Link>
               </div>
-
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {t("auth.signingIn")}
-                  </>
-                ) : (
-                  t("auth.signIn")
-                )}
-              </Button>
-            </form>
-
-            {/* Google Sign-In Divider */}
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300 dark:border-gray-600" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                  {t("auth.orContinueWith")}
-                </span>
+              <div className="relative group">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none transition-colors group-focus-within:text-primary">
+                  <Lock className="h-5 w-5 text-muted-foreground/50" />
+                </div>
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  required
+                  className="pl-12 pr-12 h-14 glass bg-white/5 border-white/10 rounded-2xl focus:ring-primary/50 transition-all text-lg placeholder:text-muted-foreground/30"
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                  placeholder={t("auth.passwordPlaceholder")}
+                />
+                <button
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-muted-foreground/50 hover:text-primary transition-colors"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
               </div>
             </div>
 
-            {/* Google Sign-In Button */}
             <Button
-              type="button"
-              variant="outline"
-              className="w-full border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700"
-              onClick={handleGoogleSignIn}
+              type="submit"
+              className="w-full glass bg-primary hover:bg-primary/90 text-white h-14 text-lg font-bold rounded-2xl shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
               disabled={isLoading}
             >
-              <Chrome className="mr-2 h-5 w-5" />
-              {t("auth.signInWithGoogle")}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  {t("auth.signingIn")}
+                </>
+              ) : (
+                t("auth.signIn")
+              )}
             </Button>
+          </form>
 
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300 dark:border-gray-600" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                    {t("auth.lookingForProducts")}
-                  </span>
-                </div>
-              </div>
-              <div className="mt-6">
-                <Button
-                  variant="outline"
-                  className="w-full border-gray-200 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700"
-                  onClick={() => navigate("/products")}
-                >
-                  {t("auth.goToProducts")}
-                </Button>
-              </div>
+          <div className="relative my-8">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-white/10" />
             </div>
-          </CardContent>
-        </Card>
+            <div className="relative flex justify-center text-xs uppercase tracking-widest font-bold">
+              <span className="px-4 glass py-1 rounded-full text-muted-foreground/60 border-white/10">
+                {t("auth.orContinueWith")}
+              </span>
+            </div>
+          </div>
+
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full glass bg-white/5 border-white/10 hover:bg-white/10 text-foreground h-14 text-lg font-bold rounded-2xl transition-all active:scale-[0.98]"
+            onClick={handleGoogleSignIn}
+            disabled={isLoading}
+          >
+            <Chrome className="mr-3 h-6 w-6 text-primary" />
+            {t("auth.signInWithGoogle")}
+          </Button>
+
+          <div className="mt-10 grid grid-cols-2 gap-4">
+            <div
+              className="p-4 glass rounded-2xl text-center space-y-1 group hover:bg-primary/5 transition-colors cursor-pointer"
+              onClick={() => navigate("/products")}
+            >
+              <Zap className="h-5 w-5 text-primary mx-auto group-hover:animate-bounce" />
+              <p className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground">
+                Products
+              </p>
+              <p className="text-[11px] font-bold leading-none">
+                {t("auth.goToProducts")}
+              </p>
+            </div>
+            <div
+              className="p-4 glass rounded-2xl text-center space-y-1 group hover:bg-primary/5 transition-colors cursor-pointer"
+              onClick={() => navigate("/services")}
+            >
+              <Globe className="h-5 w-5 text-primary mx-auto group-hover:animate-bounce" />
+              <p className="text-[10px] font-black uppercase tracking-tighter text-muted-foreground">
+                Services
+              </p>
+              <p className="text-[11px] font-bold leading-none">
+                {t("auth.welcomeTitle")}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Status Footer */}
+        <div className="mt-8 flex items-center justify-center gap-6 text-muted-foreground/40 font-bold text-[10px] uppercase tracking-[0.2em] animate-in fade-in duration-1000">
+          <div className="flex items-center gap-1.5">
+            <ShieldCheck className="h-3 w-3" />
+            <span>Secure SSL</span>
+          </div>
+          <div className="w-1 h-1 bg-muted-foreground/20 rounded-full" />
+          <span>Verified Enterprise</span>
+        </div>
       </div>
     </div>
   );

@@ -36,64 +36,52 @@ const HealthFAB: React.FC<HealthFABProps> = ({ userRole }) => {
       case "patient":
         return [
           {
-            label: "Book Appointment",
+            label: "Initialize Diagnostic",
             icon: CalendarDays,
-            path: "/services/health/doctors",
-            color: "indigo",
+            path: "/health/doctors",
+            color: "rose",
           },
           {
-            label: "Emergency Request",
+            label: "Emergency Deployment",
             icon: Ambulance,
-            path: "/services/health/doctors?emergency=true",
+            path: "/health/doctors?emergency=true",
             color: "red",
             urgent: true,
           },
           {
-            label: "My Records",
+            label: "Biological Ledger",
             icon: FileText,
-            path: "/services/health/patient/dashboard",
+            path: "/health/patient/dashboard",
             color: "emerald",
-          },
-          {
-            label: "Prescriptions",
-            icon: Pill,
-            path: "/services/health/patient/dashboard?tab=prescriptions",
-            color: "amber",
           },
         ];
       case "doctor":
         return [
           {
-            label: "My Schedule",
+            label: "Operational Schedule",
             icon: CalendarPlus,
-            path: "/services/health/doctor/dashboard?tab=schedule",
-            color: "indigo",
+            path: "/health/doctor/dashboard?tab=schedule",
+            color: "rose",
           },
           {
-            label: "Patient Messages",
+            label: "Neural Messages",
             icon: MessageSquare,
-            path: "/services/health/doctor/dashboard?tab=messages",
+            path: "/health/doctor/dashboard?tab=messages",
             color: "emerald",
-          },
-          {
-            label: "Appointments",
-            icon: CalendarDays,
-            path: "/services/health/doctor/dashboard?tab=appointments",
-            color: "amber",
           },
         ];
       case "admin":
         return [
           {
-            label: "Verify Doctors",
+            label: "Verify Components",
             icon: ShieldCheck,
-            path: "/services/health/admin/verify",
+            path: "/health/admin/verify",
             color: "emerald",
           },
           {
             label: "Audit Logs",
             icon: FileText,
-            path: "/services/health/admin/audit-logs",
+            path: "/health/admin/audit-logs",
             color: "amber",
           },
         ];
@@ -106,15 +94,13 @@ const HealthFAB: React.FC<HealthFABProps> = ({ userRole }) => {
 
   const getColorClasses = (color: string) => {
     const colors: Record<string, string> = {
-      indigo:
-        "bg-indigo-100 dark:bg-indigo-900/50 text-indigo-600 dark:text-indigo-400",
-      emerald:
-        "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400",
-      amber:
-        "bg-amber-100 dark:bg-amber-900/50 text-amber-600 dark:text-amber-400",
-      red: "bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400",
+      rose: "bg-rose-500/10 text-rose-500 border-rose-500/20",
+      emerald: "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
+      amber: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+      red: "bg-red-500/10 text-red-500 border-red-500/20",
+      indigo: "bg-indigo-500/10 text-indigo-500 border-indigo-500/20",
     };
-    return colors[color] || colors.indigo;
+    return colors[color] || colors.rose;
   };
 
   return (
@@ -138,22 +124,21 @@ const HealthFAB: React.FC<HealthFABProps> = ({ userRole }) => {
               onClick={() =>
                 handleNavigation(
                   action.path,
-                  action.urgent ? "Emergency request initiated" : undefined,
+                  action.urgent ? "Priority medical signal transmitted" : undefined,
                 )
               }
               className={cn(
-                "flex items-center gap-3 px-5 py-3.5 bg-white/90 dark:bg-slate-800/90 backdrop-blur-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 rounded-full shadow-lg shadow-black/5 hover:-translate-y-1 hover:shadow-xl transition-all group",
-                action.urgent &&
-                  "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-900 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 hover:shadow-red-500/20",
+                "flex items-center gap-3 px-4 py-3 glass bg-black/40 border border-white/10 text-white rounded-xl shadow-[0_20px_50px_rgba(0,0,0,0.4)] hover:-translate-y-1 hover:border-white/20 transition-all group backdrop-blur-[20px]",
+                action.urgent && "border-rose-500/40 bg-rose-500/5 shadow-rose-500/10"
               )}
               style={{
                 animationDelay: `${index * 50}ms`,
               }}
             >
-              <span className="font-semibold text-sm">{action.label}</span>
+              <span className="text-[9px] font-black uppercase tracking-widest">{action.label}</span>
               <div
                 className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform",
+                  "w-8 h-8 rounded-lg flex items-center justify-center group-hover:scale-110 transition-all border",
                   colorClasses,
                 )}
               >
@@ -168,7 +153,7 @@ const HealthFAB: React.FC<HealthFABProps> = ({ userRole }) => {
       <button
         onClick={() => setExpanded(!expanded)}
         className={cn(
-          "w-14 h-14 lg:w-16 lg:h-16 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 hover:shadow-indigo-500/30",
+          "w-12 h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center shadow-2xl transition-all duration-300 hover:shadow-indigo-500/30",
           expanded
             ? "bg-slate-800 dark:bg-slate-700 text-white rotate-180 hover:bg-slate-900 dark:hover:bg-slate-600"
             : "bg-gradient-to-r from-rose-600 to-indigo-600 text-white hover:scale-105",
@@ -176,9 +161,9 @@ const HealthFAB: React.FC<HealthFABProps> = ({ userRole }) => {
         aria-label="Toggle health menu"
       >
         {expanded ? (
-          <X className="w-6 h-6 lg:w-7 lg:h-7" />
+          <X className="w-5 h-5 lg:w-6 lg:h-6" />
         ) : (
-          <Plus className="w-6 h-6 lg:w-7 lg:h-7" />
+          <Plus className="w-5 h-5 lg:w-6 lg:h-6" />
         )}
       </button>
     </div>

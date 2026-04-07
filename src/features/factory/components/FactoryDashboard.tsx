@@ -1,35 +1,75 @@
-import { useFactoryAnalytics } from '../hooks/useFactoryAnalytics';
-import { FactoryDashboardStats } from './StatCard';
-import { SalesChart } from './SalesChart';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useFactoryAnalytics } from "../hooks/useFactoryAnalytics";
+import { FactoryDashboardStats } from "./StatCard";
+import { SalesChart } from "./SalesChart";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/useAuth";
+import { useEffect, useState } from "react";
+import { format } from "date-fns";
 
-// Generate mock chart data based on analytics
-const generateChartData = (totalRevenue: number, totalOrders: number) => {
+// Generate real chart data from orders
+const generateRealChartData = (
+  orders: Array<{ created_at: string; total: number }>,
+) => {
   const days = 30;
-  const avgRevenue = totalRevenue / days;
-  const avgOrders = totalOrders / days;
-
-  return Array.from({ length: days }, (_, i) => {
+  const now = new Date();
+  const chartData = Array.from({ length: days }, (_, i) => {
     const date = new Date();
     date.setDate(date.getDate() - (days - 1 - i));
-
-    // Add some randomness
-    const revenue = avgRevenue * (0.5 + Math.random());
-    const orders = Math.floor(avgOrders * (0.5 + Math.random()));
-
     return {
       date: date.toISOString(),
-      revenue: Math.round(revenue),
-      orders,
+      revenue: 0,
+      orders: 0,
     };
   });
+
+  // Aggregate orders by date
+  orders.forEach((order) => {
+    const orderDate = format(new Date(order.created_at), "yyyy-MM-dd");
+    const chartEntry = chartData.find(
+      (d) => format(new Date(d.date), "yyyy-MM-dd") === orderDate,
+    );
+    if (chartEntry) {
+      chartEntry.revenue += order.total || 0;
+      chartEntry.orders += 1;
+    }
+  });
+
+  return chartData;
 };
 
 export const FactoryDashboard = () => {
-  const period = '30d';
+  const { user } = useAuth();
+  const period = "30d";
   const { analytics, isLoading } = useFactoryAnalytics(period);
+  const [chartData, setChartData] = useState<
+    Array<{ date: string; revenue: number; orders: number }>
+  >([]);
+
+  // Fetch real order data for chart
+  useEffect(() => {
+    const fetchOrderData = async () => {
+      if (!user || !analytics) return;
+
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      const { data: orders } = await supabase
+        .from("orders")
+        .select("created_at, total")
+        .eq("seller_id", user.id)
+        .gte("created_at", thirtyDaysAgo.toISOString())
+        .order("created_at", { ascending: true });
+
+      if (orders) {
+        setChartData(generateRealChartData(orders));
+      }
+    };
+
+    fetchOrderData();
+  }, [user, analytics]);
 
   if (isLoading) {
     return (
@@ -67,7 +107,7 @@ export const FactoryDashboard = () => {
     );
   }
 
-  const chartData = generateChartData(analytics.totalRevenue, analytics.totalOrders);
+  // Use real chart data from state (or empty array if not loaded yet)
 
   return (
     <div className="space-y-6">
@@ -124,27 +164,40 @@ export const FactoryDashboard = () => {
         <CardContent>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Order Completion Rate</p>
+              <p className="text-sm text-muted-foreground">
+                Order Completion Rate
+              </p>
               <p className="text-2xl font-bold">
                 {analytics.totalOrders > 0
-                  ? ((analytics.completedOrders / analytics.totalOrders) * 100).toFixed(1)
-                  : 0}%
+                  ? (
+                      (analytics.completedOrders / analytics.totalOrders) *
+                      100
+                    ).toFixed(1)
+                  : 0}
+                %
               </p>
             </div>
             <div className="space-y-1">
               <p className="text-sm text-muted-foreground">Products in Stock</p>
               <p className="text-2xl font-bold">
                 {analytics.totalProducts > 0
-                  ? ((analytics.activeProducts / analytics.totalProducts) * 100).toFixed(1)
-                  : 0}%
+                  ? (
+                      (analytics.activeProducts / analytics.totalProducts) *
+                      100
+                    ).toFixed(1)
+                  : 0}
+                %
               </p>
             </div>
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Customer Satisfaction</p>
+              <p className="text-sm text-muted-foreground">
+                Customer Satisfaction
+              </p>
               <p className="text-2xl font-bold">
                 {analytics.averageRating > 0
                   ? ((analytics.averageRating / 5) * 100).toFixed(0)
-                  : 0}%
+                  : 0}
+                %
               </p>
             </div>
           </div>

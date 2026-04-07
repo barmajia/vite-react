@@ -1,12 +1,14 @@
-import { useState } from "react";
+// src/features/services/dashboard/pages/BookingsPage.tsx
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
 import {
   Calendar,
   Clock,
-  CheckCircle,
+  CheckCircle2,
   XCircle,
   AlertCircle,
   Search,
@@ -16,10 +18,19 @@ import {
   MessageSquare,
   DollarSign,
   Briefcase,
+  Zap,
+  Activity,
+  ArrowRight,
+  ShieldCheck,
+  ChevronRight,
+  GripVertical,
+  Users,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,38 +46,51 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
-interface Booking {
+interface Milestone {
+  id: string;
+  title: string;
+  description: string;
+  amount: number;
+  dueDate: string;
+  status?: "pending" | "submitted" | "approved";
+}
+
+interface Order {
   id: string;
   created_at: string;
   ordered_at: string;
-  listing_id: string;
-  customer_id: string;
-  provider_id: string;
   status: "pending" | "confirmed" | "completed" | "cancelled" | "disputed";
   agreed_price: number;
-  booking_type: string;
+  order_type: "booking" | "project";
+  currency: string;
+  metadata?: {
+    milestones?: Milestone[];
+    selectedDate?: string;
+    selectedTime?: string;
+  };
   listing?: {
     title: string;
-    price: number;
     id: string;
   };
+  user_id: string;
 }
 
 export const BookingsPage = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Fetch all bookings for this provider
   const {
-    data: bookings,
+    data: orders,
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["provider-bookings", user?.id, statusFilter],
+    queryKey: ["provider-orders", user?.id, statusFilter],
     queryFn: async () => {
       if (!user) return [];
 
@@ -74,12 +98,8 @@ export const BookingsPage = () => {
         .from("svc_orders")
         .select(
           `
-          id,
-          ordered_at,
-          status,
-          agreed_price,
           *,
-          listing_id
+          listing:svc_listings (id, title)
         `,
         )
         .eq("provider_id", user.id)
@@ -91,371 +111,374 @@ export const BookingsPage = () => {
 
       const { data, error } = await query;
       if (error) throw error;
-
-      // Fetch listing details separately if we have bookings
-      if (data && data.length > 0) {
-        const listingIds = [
-          ...new Set(data.map((b) => b.listing_id).filter(Boolean)),
-        ];
-        if (listingIds.length > 0) {
-          const { data: listings } = await supabase
-            .from("svc_listings")
-            .select("id, title, price")
-            .in("id", listingIds);
-
-          // Merge listings with bookings
-          return data.map((booking) => ({
-            ...booking,
-            listing: listings?.find((l) => l.id === booking.listing_id),
-          }));
-        }
-      }
-
-      return data;
+      return data as Order[];
     },
     enabled: !!user,
   });
 
-  // Update booking status
-  const updateBookingStatus = async (
-    bookingId: string,
-    newStatus: Booking["status"],
-  ) => {
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
+      if (!user) throw new Error("Unauthorized");
       const { error } = await supabase
         .from("svc_orders")
         .update({ status: newStatus })
-        .eq("id", bookingId);
+        .eq("id", orderId);
 
       if (error) throw error;
-
-      toast.success(`Booking ${newStatus} successfully`);
+      toast.success(`Protocol ${newStatus.toUpperCase()} executed.`);
       refetch();
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
-      toast.error(`Failed to update booking: ${errorMessage}`);
-    }
-  };
-
-  // Filter bookings by search query
-  const filteredBookings = bookings?.filter((booking) => {
-    const searchTerm = searchQuery.toLowerCase();
-    return booking.listing?.title.toLowerCase().includes(searchTerm);
-  });
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "confirmed":
-        return (
-          <Badge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 hover:bg-emerald-100">
-            <CheckCircle size={12} className="mr-1" />
-            Confirmed
-          </Badge>
-        );
-      case "pending":
-        return (
-          <Badge className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 hover:bg-amber-100">
-            <AlertCircle size={12} className="mr-1" />
-            Pending
-          </Badge>
-        );
-      case "completed":
-        return (
-          <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 hover:bg-blue-100">
-            <CheckCircle size={12} className="mr-1" />
-            Completed
-          </Badge>
-        );
-      case "cancelled":
-        return (
-          <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-100">
-            <XCircle size={12} className="mr-1" />
-            Cancelled
-          </Badge>
-        );
-      case "disputed":
-        return (
-          <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-100">
-            <AlertCircle size={12} className="mr-1" />
-            Disputed
-          </Badge>
-        );
-      default:
-        return <Badge variant="outline">{status}</Badge>;
+      const message = error instanceof Error ? error.message : "Operational Error";
+      toast.error(`Override Error: ${message}`);
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600 mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">
-            Loading bookings...
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-6">
+          <Loader2 className="h-12 w-12 text-primary animate-spin mx-auto" />
+          <p className="text-[10px] font-black uppercase tracking-[0.5em] text-primary/40 animate-pulse italic">
+            Scanning Operational Grid...
           </p>
         </div>
       </div>
     );
   }
 
-  const stats = [
-    {
-      title: "Total Bookings",
-      value: bookings?.length || 0,
-      icon: Calendar,
-      gradient: "from-violet-500 to-purple-500",
-    },
-    {
-      title: "Pending",
-      value: bookings?.filter((b) => b.status === "pending").length || 0,
-      icon: AlertCircle,
-      gradient: "from-amber-500 to-orange-500",
-    },
-    {
-      title: "Confirmed",
-      value: bookings?.filter((b) => b.status === "confirmed").length || 0,
-      icon: CheckCircle,
-      gradient: "from-emerald-500 to-teal-500",
-    },
-    {
-      title: "This Month",
-      value: `${bookings
-        ?.filter((b) => {
-          const bookingDate = new Date(b.ordered_at || b.created_at);
-          const now = new Date();
-          return (
-            bookingDate.getMonth() === now.getMonth() &&
-            bookingDate.getFullYear() === now.getFullYear()
-          );
-        })
-        .reduce((sum, b) => sum + (b.agreed_price || 0), 0)
-        .toFixed(2)} EGP`,
-      icon: DollarSign,
-      gradient: "from-blue-500 to-cyan-500",
-    },
-  ];
-
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-2xl p-8 text-white shadow-lg shadow-violet-500/30">
-        <h2 className="text-3xl font-bold">Bookings</h2>
-        <p className="text-violet-100 mt-2">
-          Manage your service appointments and bookings
-        </p>
+    <div className="space-y-12 pb-20 font-sans">
+      {/* Header Matrix */}
+      <div className="relative overflow-hidden rounded-[4rem] p-16 bg-white/[0.03] border border-white/5 shadow-2xl group">
+        <div className="absolute top-0 right-0 p-16 opacity-5 group-hover:opacity-10 transition-opacity duration-1000">
+          <Activity className="w-60 h-60 text-primary" />
+        </div>
+        <div className="absolute -top-20 -left-20 w-64 h-64 bg-primary/10 rounded-full blur-[100px] animate-pulse" />
+
+        <div className="relative z-10 space-y-6">
+          <div className="flex items-center gap-4">
+            <div className="h-px w-12 bg-primary/40" />
+            <span className="text-[10px] font-black uppercase tracking-[0.5em] text-primary italic">
+              Operational Registry v2.4
+            </span>
+          </div>
+          <h1 className="text-6xl md:text-8xl font-black italic tracking-tighter uppercase leading-[0.8] mb-4">
+            Mission <br />
+            <span className="text-foreground/40 italic">
+              {t("common.control", "Control")}
+            </span>
+          </h1>
+          <p className="text-foreground/40 text-lg font-medium italic max-w-xl leading-relaxed">
+            Orchestrate high-stakes deployments, monitor node health, and
+            maintain secure client synchronization across the global Aurora
+            Services matrix.
+          </p>
+        </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-6 md:grid-cols-4">
-        {stats.map((stat, index) => (
-          <Card
-            key={index}
-            className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-md hover:shadow-lg transition-shadow"
-          >
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                {stat.title}
-              </CardTitle>
-              <div
-                className={cn(
-                  "p-2 rounded-lg bg-gradient-to-br text-white",
-                  stat.gradient,
-                )}
-              >
-                <stat.icon className="h-4 w-4" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-gray-900 dark:text-white">
-                {stat.value}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Filters */}
-      <div className="flex items-center gap-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+      {/* Control Matrix */}
+      <div className="flex flex-col md:flex-row gap-6">
+        <div className="relative flex-1 group">
+          <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-4 w-4 text-white/20 group-focus-within:text-primary transition-colors" />
           <Input
-            placeholder="Search by service, customer name or email..."
+            placeholder="Filter by Node ID or Sector Title..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+            className="h-14 pl-14 pr-6 bg-white/5 border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest placeholder:text-white/10 focus:border-primary/40 focus:ring-primary/10 transition-all font-sans"
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px] bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Filter by status" />
+          <SelectTrigger className="w-[200px] h-14 bg-white/5 border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest focus:border-primary/40">
+            <div className="flex items-center gap-3">
+              <Filter className="h-4 w-4 text-primary" />
+              <SelectValue placeholder="All Status" />
+            </div>
           </SelectTrigger>
-          <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-            <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="confirmed">Confirmed</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-            <SelectItem value="disputed">Disputed</SelectItem>
+          <SelectContent className="bg-zinc-900 border-white/10 rounded-2xl shadow-2xl">
+            {[
+              "all",
+              "pending",
+              "confirmed",
+              "completed",
+              "cancelled",
+              "disputed",
+            ].map((s) => (
+              <SelectItem
+                key={s}
+                value={s}
+                className="text-[10px] font-black uppercase tracking-widest focus:bg-primary/10 focus:text-primary cursor-pointer"
+              >
+                {s}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
 
-      {/* Bookings List */}
-      <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-md">
-        <CardHeader>
-          <CardTitle className="text-gray-900 dark:text-white">
-            {filteredBookings?.length || 0} Booking
-            {(filteredBookings?.length || 0) !== 1 ? "s" : ""}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {filteredBookings && filteredBookings.length > 0 ? (
-            <div className="space-y-4">
-              {filteredBookings.map((booking) => (
-                <div
-                  key={booking.id}
-                  className="flex flex-col md:flex-row md:items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors bg-white dark:bg-gray-800/50"
-                >
-                  <div className="space-y-3 flex-1">
-                    {/* Service Info */}
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-base text-gray-900 dark:text-white">
-                          {booking.listing?.title || "Service Booking"}
-                        </h4>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          Booking #{booking.id.slice(0, 8)}
-                        </p>
-                      </div>
-                      {getStatusBadge(booking.status)}
-                    </div>
-
-                    {/* Details */}
-                    <div className="flex flex-wrap gap-4 text-sm">
-                      <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                        <Calendar size={14} />
-                        <span>
-                          {format(
-                            new Date(booking.ordered_at || booking.created_at),
-                            "MMM dd, yyyy",
-                          )}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                        <Clock size={14} />
-                        <span>
-                          {new Date(
-                            booking.ordered_at || booking.created_at,
-                          ).toLocaleTimeString("en-US", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
-                        <DollarSign size={14} />
-                        <span>
-                          {booking.agreed_price?.toFixed(2) || "0.00"} EGP
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 mt-4 md:mt-0">
-                    {booking.status === "pending" && (
-                      <>
-                        <Button
-                          size="sm"
-                          onClick={() =>
-                            updateBookingStatus(booking.id, "confirmed")
-                          }
-                          className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                        >
-                          <CheckCircle size={16} className="mr-1" />
-                          Confirm
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() =>
-                            updateBookingStatus(booking.id, "cancelled")
-                          }
-                          className="border-red-300 dark:border-red-700 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                        >
-                          <XCircle size={16} className="mr-1" />
-                          Cancel
-                        </Button>
-                      </>
+      {/* Orders Matrix Feed */}
+      <div className="space-y-8">
+        {orders?.length === 0 ? (
+          <div className="p-20 glass-card rounded-[3.5rem] border-white/5 bg-white/5 text-center space-y-8">
+            <Briefcase className="h-16 w-16 text-white/5 mx-auto" />
+            <h3 className="text-3xl font-black italic tracking-tighter uppercase">
+              No Entries <span className="text-primary">Found</span>
+            </h3>
+            <p className="text-white/40 text-sm font-medium italic max-w-sm mx-auto">
+              The operational grid is currently clear of pending deployments.
+            </p>
+          </div>
+        ) : (
+          orders?.map((order) => (
+            <div
+              key={order.id}
+              className="group glass-card rounded-[3rem] border-white/5 bg-white/5 hover:bg-white/[0.07] transition-all duration-700 overflow-hidden shadow-xl"
+            >
+              {/* Header Row */}
+              <div className="p-8 flex flex-col md:flex-row justify-between items-center gap-8 border-b border-white/5 bg-white/[0.02]">
+                <div className="flex items-center gap-8">
+                  <div className="w-16 h-16 rounded-3xl glass bg-black/20 flex items-center justify-center border border-white/10 relative">
+                    {order.order_type === "project" ? (
+                      <Zap className="h-6 w-6 text-primary" />
+                    ) : (
+                      <Clock className="h-6 w-6 text-emerald-500" />
                     )}
-                    {booking.status === "confirmed" && (
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() =>
-                          updateBookingStatus(booking.id, "completed")
-                        }
-                        className="border-violet-300 dark:border-violet-700 text-violet-600 dark:text-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20"
+                    <div
+                      className={cn(
+                        "absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-black",
+                        order.status === "pending"
+                          ? "bg-amber-500"
+                          : order.status === "confirmed"
+                            ? "bg-emerald-500"
+                            : "bg-primary",
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-3">
+                      <Badge
+                        className={cn(
+                          "bg-white/5 border-white/10 text-[9px] font-black uppercase italic tracking-widest",
+                          order.order_type === "project"
+                            ? "text-primary"
+                            : "text-emerald-500",
+                        )}
                       >
-                        <CheckCircle size={16} className="mr-1" />
-                        Mark Complete
+                        {order.order_type.toUpperCase()}_DEPLOYMENT
+                      </Badge>
+                      <span className="text-[10px] font-black text-white/20 uppercase tracking-tighter italic">
+                        ID: {order.id.slice(0, 12)}
+                      </span>
+                    </div>
+                    <h3 className="text-3xl font-black italic tracking-tighter uppercase leading-none">
+                      {order.listing?.title}
+                    </h3>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-8">
+                  <div className="text-center md:text-right">
+                    <p className="text-[8px] font-black text-white/20 uppercase tracking-widest mb-1">
+                      Total Allocation
+                    </p>
+                    <p className="text-4xl font-black italic tracking-tighter text-foreground leading-none">
+                      {order.currency} {order.agreed_price.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="flex gap-4">
+                    <Button
+                      onClick={() =>
+                        navigate(
+                          `/services/chat?conversationId=mock-${order.id}`,
+                        )
+                      }
+                      className="h-16 px-8 rounded-2xl glass border-primary/20 bg-primary/5 text-primary hover:bg-primary hover:text-white font-black uppercase tracking-widest text-[10px] shadow-2xl shadow-primary/10 transition-all flex items-center gap-3 group"
+                    >
+                      <MessageSquare className="h-4 w-4 group-hover:rotate-12 transition-all" />
+                      {t("servicesNexus.programmer.secureLink", "Secure Link")}
+                    </Button>
+                    {order.status === "pending" && (
+                      <Button
+                        onClick={() => updateOrderStatus(order.id, "confirmed")}
+                        className="h-16 px-8 rounded-2xl bg-emerald-500 text-white font-black uppercase tracking-widest text-[10px] shadow-2xl shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all"
+                      >
+                        Accept Deployment
                       </Button>
                     )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
-                          size="sm"
                           variant="ghost"
-                          className="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700"
+                          className="h-16 w-16 rounded-2xl glass border-white/5 hover:bg-white hover:text-black transition-all"
                         >
-                          <MoreVertical size={16} />
+                          <MoreVertical className="h-5 w-5" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent
                         align="end"
-                        className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                        className="w-64 glass-card rounded-[2rem] border-white/20 shadow-2xl backdrop-blur-3xl p-2 bg-black/80"
                       >
-                        <DropdownMenuItem asChild>
-                          <Link
-                            to={`/services/listing/${booking.listing?.id}`}
-                            className="flex items-center cursor-pointer text-gray-700 dark:text-gray-200"
-                          >
-                            <Eye size={16} className="mr-2" />
-                            View Service
-                          </Link>
+                        <DropdownMenuItem
+                          onClick={() => navigate(`/services/chat`)}
+                          className="p-4 rounded-xl focus:bg-primary focus:text-white transition-all cursor-pointer group"
+                        >
+                          <MessageSquare className="mr-3 h-4 w-4 opacity-40 group-hover:opacity-100" />
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-black uppercase tracking-widest">
+                              Archive Thread
+                            </span>
+                            <span className="text-[8px] font-medium opacity-40 uppercase tracking-tighter">
+                              Sync Log Persistence
+                            </span>
+                          </div>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link
-                            to={`/services/messages`}
-                            className="flex items-center cursor-pointer text-gray-700 dark:text-gray-200"
-                          >
-                            <MessageSquare size={16} className="mr-2" />
-                            Contact Customer
-                          </Link>
+                        <DropdownMenuItem className="p-4 rounded-xl focus:bg-rose-500/10 focus:text-rose-500 transition-all cursor-pointer group">
+                          <XCircle className="mr-3 h-4 w-4 opacity-40 group-hover:opacity-100" />
+                          <div className="flex flex-col">
+                            <span className="text-[10px] font-black uppercase tracking-widest">
+                              Abort Protocol
+                            </span>
+                            <span className="text-[8px] font-medium opacity-40 uppercase tracking-tighter">
+                              Emergency Termination
+                            </span>
+                          </div>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
                 </div>
-              ))}
+              </div>
+
+              {/* Body Content: Milestones or Sync Data */}
+              <CardContent className="p-10">
+                {order.order_type === "project" &&
+                order.metadata?.milestones ? (
+                  <div className="space-y-12">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <ShieldCheck className="h-5 w-5 text-primary" />
+                        <h4 className="text-[10px] font-black uppercase tracking-[0.3em] italic">
+                          Deployment Roadmap Progress
+                        </h4>
+                      </div>
+                      <span className="text-[10px] font-black text-white/40 italic uppercase tracking-widest">
+                        {
+                          order.metadata.milestones.filter(
+                            (m) => m.status === "approved",
+                          ).length
+                        }{" "}
+                        / {order.metadata.milestones.length} PHASES CLEARED
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                      {order.metadata.milestones.map((milestone, idx) => (
+                        <div
+                          key={milestone.id}
+                          className="relative glass-card p-6 rounded-[2rem] border-white/5 bg-white/[0.03] space-y-4 group/ms"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex items-center gap-3">
+                              <div className="w-8 h-8 rounded-xl glass bg-white/5 border-white/5 flex items-center justify-center text-[10px] font-black italic">
+                                {idx + 1}
+                              </div>
+                              <h5 className="text-sm font-black italic tracking-tighter uppercase leading-tight line-clamp-1 group-hover/ms:text-primary transition-colors">
+                                {milestone.title}
+                              </h5>
+                            </div>
+                            {milestone.status === "approved" ? (
+                              <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                            ) : (
+                              <div className="h-5 w-5 rounded-full border-2 border-white/10" />
+                            )}
+                          </div>
+                          <p className="text-[10px] font-medium text-white/30 italic line-clamp-2 leading-relaxed">
+                            "{milestone.description}"
+                          </p>
+                          <div className="flex justify-between items-end pt-4 border-t border-white/5">
+                            <div className="space-y-1">
+                              <p className="text-[7px] font-black text-white/20 uppercase tracking-widest">
+                                Allocation
+                              </p>
+                              <p className="text-xl font-black italic tracking-tighter">
+                                {order.currency}{" "}
+                                {milestone.amount.toLocaleString()}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-[7px] font-black text-white/20 uppercase tracking-widest">
+                                Deadline
+                              </p>
+                              <p className="text-[9px] font-black italic text-white/60">
+                                {milestone.dueDate || "TBD"}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col md:flex-row items-center gap-12 bg-white/[0.02] p-8 rounded-[2.5rem] border border-white/5 shadow-inner">
+                    <div className="flex items-center gap-6">
+                      <div className="p-4 rounded-2xl glass bg-emerald-500/10 border border-emerald-500/20 text-emerald-500">
+                        <Calendar className="h-8 w-8" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-white/20 italic mb-1">
+                          Synchronization Launch
+                        </p>
+                        <h4 className="text-3xl font-black italic tracking-tighter uppercase">
+                          {order.metadata?.selectedDate
+                            ? format(
+                                new Date(order.metadata.selectedDate),
+                                "MMM dd, yyyy",
+                              )
+                            : "DATE_PENDING"}
+                        </h4>
+                      </div>
+                    </div>
+                    <div className="h-12 w-px bg-white/5 hidden md:block" />
+                    <div className="flex items-center gap-6">
+                      <div className="p-4 rounded-2xl glass bg-amber-500/10 border border-amber-500/20 text-amber-500">
+                        <Clock className="h-8 w-8" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-white/20 italic mb-1">
+                          Time Alignment
+                        </p>
+                        <h4 className="text-3xl font-black italic tracking-tighter uppercase">
+                          {order.metadata?.selectedTime || "TIME_PENDING"}{" "}
+                          <span className="text-sm italic opacity-40">UTC</span>
+                        </h4>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+
+              {/* Footer Row: Details & Quick Actions */}
+              <div className="px-10 py-6 border-t border-white/5 flex items-center justify-between bg-white/[0.01]">
+                <div className="flex items-center gap-4">
+                  <Users className="h-4 w-4 text-white/20" />
+                  <p className="text-[9px] font-black uppercase tracking-widest text-white/20 italic">
+                    Personnel Node:{" "}
+                    <span className="text-white/60">
+                      CLIENT_{order.user_id.slice(0, 8)}
+                    </span>
+                  </p>
+                </div>
+                <Link
+                  to={`/services/listing/${order.listing?.id}`}
+                  className="group/lnk flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-white/20 hover:text-primary transition-colors italic"
+                >
+                  View Detailed Sector Specs{" "}
+                  <ChevronRight className="h-3 w-3 group-hover/lnk:translate-x-1 transition-transform" />
+                </Link>
+              </div>
             </div>
-          ) : (
-            <div className="text-center py-12">
-              <Briefcase className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No bookings found
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                {searchQuery || statusFilter !== "all"
-                  ? "Try adjusting your filters"
-                  : "You haven't received any bookings yet"}
-              </p>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+          ))
+        )}
+      </div>
     </div>
   );
 };

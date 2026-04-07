@@ -6,34 +6,24 @@ import {
   MessageSquare,
   Menu,
   X,
-  ChevronDown,
   LogOut,
   ShoppingBag,
   Bell,
-  CheckCircle2,
-  ArrowRight,
   Sun,
   Moon,
   LayoutDashboard,
-  UserPlus,
   Briefcase,
-  HeartPulse,
-  Stethoscope,
   Users,
-  Pill,
+  Sparkles,
 } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
-import { useSwipeToOpen } from "@/hooks/useSwipeToOpen";
 import { supabase } from "@/lib/supabase";
-import { supabaseHealth } from "@/features/health/api/supabaseHealth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { LanguageSwitcher } from "@/components/shared/LanguageSwitcher";
 import { Logo } from "@/components/shared/Logo";
+import { Activity, Shield } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -42,17 +32,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-} from "@/components/ui/navigation-menu";
 
 export function ServicesHeader() {
-  const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
@@ -64,88 +45,35 @@ export function ServicesHeader() {
     provider_name: string | null;
     logo_url: string | null;
     is_verified: boolean | null;
-    vertical?: string;
-  } | null>(null);
-  const [healthProvider, setHealthProvider] = useState<{
-    id: string;
-    is_verified: boolean;
-    specialization?: string;
   } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [notificationCount, setNotificationCount] = useState(0);
   const [messageCount, setMessageCount] = useState(0);
 
-  const { onTouchStart } = useSwipeToOpen({
-    isOpen: isMobileMenuOpen,
-    onOpen: () => setIsMobileMenuOpen(true),
-    onClose: () => setIsMobileMenuOpen(false),
-    threshold: 100,
-    direction: "left",
-    edgeWidth: 20,
-  });
-
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Prevent body scroll when mobile menu is open
-  useEffect(() => {
-    if (isMobileMenuOpen) {
-      document.body.style.overflow = "hidden";
-      document.documentElement.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-      document.documentElement.style.overflow = "";
-    };
-  }, [isMobileMenuOpen]);
-
-  // Fetch provider profiles
   useEffect(() => {
     const fetchProfiles = async () => {
       if (!user) return;
       try {
-        // Fetch services provider
-        let svcData = null;
-        try {
-          const { data } = await supabase
-            .from("svc_providers")
-            .select("id, provider_name, logo_url, is_verified")
-            .eq("user_id", user.id)
-            .maybeSingle();
-          svcData = data;
-        } catch (svcError) {
-          // Table or column might not exist - silently ignore
-          console.debug("svc_providers not available");
-        }
-
-        if (svcData) {
-          setProviderProfile(svcData);
-        }
-
-        // Fetch healthcare provider
-        const healthData = await supabaseHealth
-          .from("health_doctor_profiles")
-          .select("id, is_verified, specialization")
+        const { data: svcData } = await supabase
+          .from("svc_providers")
+          .select("id, provider_name, logo_url, is_verified")
           .eq("user_id", user.id)
           .maybeSingle();
 
-        if (healthData) {
-          setHealthProvider(healthData);
-        }
+        if (svcData) setProviderProfile(svcData);
       } catch (err) {
-        console.error("Error fetching provider profiles:", err);
+        console.error("Error fetching header profiles:", err);
       }
     };
     fetchProfiles();
   }, [user]);
 
-  // Fetch notification counts
   useEffect(() => {
     const fetchCounts = async () => {
       if (!user) return;
@@ -156,21 +84,13 @@ export function ServicesHeader() {
           .eq("user_id", user.id)
           .eq("is_read", false);
 
-        // Skip svc_conversations query if table doesn't exist
-        let msgCount = 0;
-        try {
-          const { count } = await supabase
-            .from("svc_conversations")
-            .select("*", { count: "exact", head: true })
-            .or(`provider_id.eq.${user.id},customer_id.eq.${user.id}`);
-          msgCount = count || 0;
-        } catch (msgError) {
-          // Table might not exist - silently ignore
-          console.debug("svc_conversations table not available");
-        }
+        const { count: msgCount } = await supabase
+          .from("conversation_participants")
+          .select("*", { count: "exact", head: true })
+          .eq("user_id", user.id);
 
         setNotificationCount(notifCount || 0);
-        setMessageCount(msgCount);
+        setMessageCount(msgCount || 0);
       } catch (error) {
         console.error("Error fetching counts:", error);
       }
@@ -191,619 +111,233 @@ export function ServicesHeader() {
   };
 
   const isActive = (path: string) => {
-    if (path === "/services") {
-      return location.pathname === "/services" || location.pathname === "/";
-    }
+    if (path === "/services") return location.pathname === "/services";
     return location.pathname.startsWith(path);
   };
 
-  const isHealthRoute = location.pathname.startsWith("/services/health");
-  const isPharmacyRoute = location.pathname.startsWith(
-    "/services/health/pharmacies",
-  );
+  const isHealthRoute = location.pathname.startsWith("/health");
 
-  const navItems = [
-    {
-      label: t("services.tech"),
-      href: "/services/tech",
-      icon: Briefcase,
-      description: t("services.techDesc"),
-    },
-    {
-      label: t("services.healthcare"),
-      href: "/services/health",
-      icon: HeartPulse,
-      description: t("services.healthcareDesc"),
-      children: [
-        { label: t("services.doctors"), href: "/services/health/doctors" },
-        {
-          label: t("services.pharmacies"),
-          href: "/services/health/pharmacies",
-        },
-        { label: t("services.hospitals"), href: "/services/health/hospitals" },
-      ],
-    },
-
-    {
-      label: t("services.allServices"),
-      href: "/services",
-      icon: Briefcase,
-    },
-  ];
-
-  const healthNavItems = [
-    {
-      label: t("health.findDoctor"),
-      href: "/services/health/doctors",
-      icon: Stethoscope,
-    },
-    {
-      label: t("health.pharmacies"),
-      href: "/services/health/pharmacies",
-      icon: Pill,
-    },
-    {
-      label: t("health.hospitals"),
-      href: "/services/health/hospitals",
-      icon: Users,
-    },
-  ];
-
-  const getRoleNavItems = () => {
-    const items = [];
-
-    if (providerProfile) {
-      items.push({
-        label: t("services.providerDashboard"),
-        href: "/services/dashboard",
-        icon: LayoutDashboard,
-      });
-    }
-    if (healthProvider) {
-      items.push({
-        label: t("health.doctorDashboard"),
-        href: "/services/health/doctor/dashboard",
-        icon: LayoutDashboard,
-      });
-    }
-    if (!providerProfile && !healthProvider) {
-      items.push({
-        label: t("common.profile"),
-        href: "/profile",
-        icon: LayoutDashboard,
-      });
-    }
-
-    items.push({
-      label: t("common.orders"),
-      href: "/orders",
-      icon: ShoppingBag,
-    });
-
-    return items;
-  };
+  const mainNavItems = isHealthRoute 
+    ? [
+        { label: "Health Matrix", href: "/health", icon: Activity },
+        { label: "Care Nexus", href: "/health/doctor-registration", icon: Shield },
+      ]
+    : [
+        { label: "Elite Tech", href: "/services/tech", icon: Briefcase },
+        { label: "Global Matrix", href: "/services", icon: Sparkles },
+      ];
 
   return (
-    <>
-      <header
-        className={cn(
-          "fixed top-0 left-0 right-0 z-50 transition-all duration-300 border-b",
-          isScrolled
-            ? "bg-white/95 backdrop-blur-lg shadow-lg shadow-gray-200/50 dark:bg-gray-950/95 dark:border-gray-800 dark:shadow-gray-900/50"
-            : "bg-white/90 backdrop-blur-md dark:bg-gray-950/90 dark:border-gray-800",
-        )}
-      >
-        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            {/* Logo Section */}
-            <Link
-              to={isHealthRoute ? "/services/health" : "/services"}
-              className="flex items-center gap-3 group hover:opacity-90 transition-opacity"
-            >
-              <Logo size="xl" showText={true} />
-            </Link>
+    <header
+      className={cn(
+        "fixed top-0 left-0 right-0 z-[100] transition-all duration-700 h-20 flex items-center",
+        isScrolled
+          ? "bg-background/80 backdrop-blur-[30px] border-b border-white/5 shadow-[0_10px_40px_-5px_rgba(0,0,0,0.4)]"
+          : "bg-transparent border-b border-transparent"
+      )}
+    >
+      <div className="max-w-8xl mx-auto px-6 lg:px-12 w-full">
+        <div className="flex justify-between items-center gap-8">
+          
+          <Link
+            to={isHealthRoute ? "/health" : "/services"}
+            className="flex items-center gap-4 group relative"
+          >
+            <div className={cn(
+              "p-2 glass border border-white/20 rounded-2xl group-hover:scale-110 transition-all duration-500 shadow-2xl",
+              isHealthRoute ? "bg-rose-500/10 shadow-rose-500/20" : "bg-primary/10 shadow-primary/20"
+            )}>
+              <Logo size="lg" showText={false} />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-xl font-black italic tracking-tighter leading-none text-foreground group-hover:text-primary transition-colors">
+                {isHealthRoute ? "HEALTH" : "SERVICES"}
+              </span>
+              <span className="text-[8px] font-black uppercase tracking-[0.4em] text-foreground/30 italic">Nexus Architecture</span>
+            </div>
+          </Link>
 
-            {/* Center Navigation - Desktop */}
-            <nav className="hidden lg:flex items-center gap-1">
-              {isHealthRoute
-                ? // Healthcare-specific nav
-                  healthNavItems.map((item) => (
-                    <Link
-                      key={item.href}
-                      to={item.href}
-                      className={cn(
-                        "relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2",
-                        isActive(item.href)
-                          ? "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/20"
-                          : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
-                      )}
-                    >
-                      <item.icon className="h-4 w-4" />
-                      {item.label}
-                      {isActive(item.href) && (
-                        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-rose-600 dark:bg-rose-400 rounded-full" />
-                      )}
-                    </Link>
-                  ))
-                : // Regular services nav with dropdown
-                  navItems.map((item) =>
-                    item.children ? (
-                      <NavigationMenu key={item.label}>
-                        <NavigationMenuList>
-                          <NavigationMenuItem>
-                            <NavigationMenuTrigger
-                              className={cn(
-                                "text-sm font-medium flex items-center gap-2",
-                                isActive(item.href)
-                                  ? "text-violet-700 dark:text-violet-400"
-                                  : "text-gray-600 dark:text-gray-300",
-                              )}
-                            >
-                              <item.icon className="h-4 w-4" />
-                              {item.label}
-                            </NavigationMenuTrigger>
-                            <NavigationMenuContent>
-                              <ul className="grid w-[250px] gap-2 p-4">
-                                {item.children.map((child) => (
-                                  <li key={child.href}>
-                                    <NavigationMenuLink asChild>
-                                      <Link
-                                        to={child.href}
-                                        className="block p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                                      >
-                                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                                          {child.label}
-                                        </p>
-                                      </Link>
-                                    </NavigationMenuLink>
-                                  </li>
-                                ))}
-                              </ul>
-                            </NavigationMenuContent>
-                          </NavigationMenuItem>
-                        </NavigationMenuList>
-                      </NavigationMenu>
-                    ) : (
-                      <Link
-                        key={item.label}
-                        to={item.href}
-                        className={cn(
-                          "relative px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2",
-                          isActive(item.href)
-                            ? "text-violet-700 dark:text-violet-400 bg-violet-50 dark:bg-violet-900/20"
-                            : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800",
-                        )}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        {item.label}
-                        {isActive(item.href) && (
-                          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-violet-600 dark:bg-violet-400 rounded-full" />
-                        )}
-                      </Link>
-                    ),
-                  )}
-            </nav>
-
-            {/* Right Actions - Desktop */}
-            <div className="hidden md:flex items-center gap-3">
-              {/* Products Cross-Link */}
-              {!isHealthRoute && (
-                <>
-                  <Link
-                    to="/products"
-                    className="group flex items-center gap-2 px-3 py-2 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-violet-600 dark:hover:text-violet-400 transition-colors"
-                  >
-                    <div className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-800 group-hover:bg-violet-50 dark:group-hover:bg-violet-900/20 transition-colors">
-                      <ShoppingBag size={14} strokeWidth={2.5} />
-                    </div>
-                    <span className="hidden xl:inline">
-                      {t("services.shopProducts")}
-                    </span>
-                    <ArrowRight
-                      size={14}
-                      className="group-hover:translate-x-0.5 transition-transform"
-                    />
-                  </Link>
-                  <div className="w-px h-6 bg-gray-200 dark:bg-gray-700" />
-                </>
-              )}
-
-              {/* Search */}
-              <form onSubmit={handleSearch} className="relative">
-                <input
-                  type="text"
-                  placeholder={
-                    isHealthRoute
-                      ? t("health.searchDoctors")
-                      : t("services.searchPlaceholder")
-                  }
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-64 pl-10 pr-4 py-2 bg-gray-100 dark:bg-gray-800 border-0 rounded-full text-sm text-gray-900 dark:text-white focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-violet-500/20 focus:outline-none transition-all placeholder:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-                />
-                <Search
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-                  size={17}
-                />
-              </form>
-
-              {/* Theme Toggle */}
-              <button
-                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-                className="relative p-2.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-yellow-400 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-full transition-all hover:scale-110 shadow-sm hover:shadow-md border border-gray-200 dark:border-gray-700"
-                aria-label="Toggle theme"
-                title={
-                  theme === "light"
-                    ? "Switch to Dark Mode 🌙"
-                    : "Switch to Light Mode ☀️"
-                }
-              >
-                {theme === "light" ? (
-                  <Moon className="h-5 w-5 text-indigo-600" />
-                ) : (
-                  <Sun className="h-5 w-5 text-amber-500" />
+          <nav className="hidden lg:flex items-center gap-2 p-1.5 glass bg-white/5 border border-white/10 rounded-2xl backdrop-blur-2xl">
+            {mainNavItems.map((item) => (
+              <Link
+                key={item.href}
+                to={item.href}
+                className={cn(
+                  "relative px-6 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all duration-300 flex items-center gap-2",
+                  isActive(item.href)
+                    ? "bg-primary text-white shadow-lg shadow-primary/30 active:scale-95"
+                    : "text-foreground/40 hover:text-foreground hover:bg-white/5"
                 )}
-              </button>
+              >
+                <item.icon className={cn("h-3.5 w-3.5", isActive(item.href) ? "text-white" : "text-primary/60")} />
+                {item.label}
+              </Link>
+            ))}
+          </nav>
 
-              {user ? (
-                <>
-                  {/* Notifications */}
-                  <button className="relative p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors">
-                    <Bell size={20} />
-                    {notificationCount > 0 && (
-                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-950" />
-                    )}
-                  </button>
+          <div className="flex items-center gap-3">
+            <form onSubmit={handleSearch} className="relative hidden xl:block group/search">
+               <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-foreground/20 group-focus-within/search:text-primary transition-colors" />
+               </div>
+               <input
+                 type="text"
+                 placeholder="Search Matrix..."
+                 value={searchQuery}
+                 onChange={(e) => setSearchQuery(e.target.value)}
+                 className="w-48 pl-10 pr-4 py-2.5 bg-black/20 backdrop-blur-3xl border border-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest placeholder:text-foreground/10 focus:w-72 focus:bg-black/40 focus:border-primary/40 focus:ring-4 focus:ring-primary/10 transition-all outline-none"
+               />
+            </form>
 
-                  {/* Messages */}
-                  <Link
-                    to={
-                      isHealthRoute
-                        ? "/services/health/messages"
-                        : "/services/messages"
-                    }
-                    className="relative p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
-                  >
-                    <MessageSquare size={20} />
-                    {messageCount > 0 && (
-                      <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-gray-950" />
-                    )}
-                  </Link>
+            <div className="h-6 w-px bg-white/10 hidden md:block" />
 
-                  {/* Language Switcher */}
-                  <LanguageSwitcher />
+            {user && (
+              <div className="flex items-center gap-1.5">
+                <Link to="/services/chat" className="relative group p-2.5 rounded-xl hover:bg-white/5 transition-all active:scale-90 overflow-hidden">
+                  <MessageSquare className="h-5 w-5 text-foreground/40 group-hover:text-primary transition-colors" />
+                  {messageCount > 0 && (
+                    <span className="absolute top-2 right-2 flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-primary border-2 border-background"></span>
+                    </span>
+                  )}
+                </Link>
+                <button className="relative group p-2.5 rounded-xl hover:bg-white/5 transition-all active:scale-90">
+                  <Bell className="h-5 w-5 text-foreground/40 group-hover:text-primary transition-colors" />
+                  {notificationCount > 0 && (
+                    <span className="absolute top-2 right-2 flex h-3 w-3">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-3 w-3 bg-primary border-2 border-background"></span>
+                    </span>
+                  )}
+                </button>
+              </div>
+            )}
 
-                  {/* Profile Dropdown */}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-800 px-2 py-1.5 rounded-full transition-all border border-transparent hover:border-gray-200 dark:hover:border-gray-700">
-                        <Avatar
-                          name={
-                            providerProfile?.provider_name ||
-                            healthProvider?.specialization ||
-                            user.user_metadata.full_name
-                          }
+            {user ? (
+               <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-3 p-1 rounded-2xl pl-3 hover:bg-white/5 transition-all group">
+                       <div className="flex flex-col items-end">
+                          <span className="text-[10px] font-black uppercase tracking-widest leading-none text-foreground/80 group-hover:text-primary transition-colors">
+                            {user.user_metadata.full_name?.split(" ")[0]}
+                          </span>
+                          <span className="text-[7px] font-black uppercase tracking-[0.3em] text-foreground/20 italic">ID: {user.id.slice(0, 4)}</span>
+                       </div>
+                       <Avatar
+                          name={user.user_metadata.full_name}
                           src={providerProfile?.logo_url}
-                          size="md"
-                          className="w-9 h-9 border-2 border-gray-200 dark:border-gray-700 shadow-sm"
+                          className="w-10 h-10 border-2 border-white/10 rounded-xl group-hover:border-primary/40 transition-all shadow-lg"
                         />
-                        <ChevronDown
-                          size={15}
-                          className="text-gray-500 dark:text-gray-400"
-                        />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      align="end"
-                      className="w-64 rounded-xl shadow-xl border-gray-200 bg-white dark:bg-gray-900 dark:border-gray-700"
-                    >
-                      <DropdownMenuLabel className="font-normal">
-                        <div className="flex flex-col space-y-1">
-                          <div className="flex items-center gap-2">
-                            <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                              {user.user_metadata.full_name}
-                            </p>
-                            {(providerProfile?.is_verified ||
-                              healthProvider?.is_verified) && (
-                              <Badge className="h-4 text-[8px] px-1 bg-emerald-100 text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400">
-                                <CheckCircle2 size={10} className="mr-0.5" />
-                                {t("services.verified")}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {user.email}
-                          </p>
-                        </div>
-                      </DropdownMenuLabel>
-                      <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
-
-                      {/* Role-based dashboard links */}
-                      {getRoleNavItems().map((item) => (
-                        <DropdownMenuItem
-                          key={item.href}
-                          asChild
-                          className="cursor-pointer text-gray-700 dark:text-gray-200 dark:focus:bg-gray-700"
-                        >
-                          <Link to={item.href} className="flex items-center">
-                            <item.icon className="mr-2 h-4 w-4" />
-                            <span>{item.label}</span>
-                          </Link>
-                        </DropdownMenuItem>
-                      ))}
-
-                      {!providerProfile && !healthProvider && (
-                        <>
-                          <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
-                          <DropdownMenuItem
-                            asChild
-                            className="cursor-pointer text-violet-600 dark:text-violet-400 dark:focus:bg-gray-700"
-                          >
-                            <Link
-                              to={
-                                isHealthRoute
-                                  ? "/services/health/doctor/signup"
-                                  : "/services/onboarding"
-                              }
-                              className="flex items-center font-medium"
-                            >
-                              <Briefcase className="mr-2 h-4 w-4" />
-                              <span>
-                                {isHealthRoute
-                                  ? t("health.doctorSignup")
-                                  : t("services.becomeProvider")}
-                              </span>
-                            </Link>
-                          </DropdownMenuItem>
-                        </>
-                      )}
-
-                      <DropdownMenuSeparator className="bg-gray-200 dark:bg-gray-700" />
-                      <DropdownMenuItem
-                        onClick={handleLogout}
-                        className="cursor-pointer text-red-600 dark:text-red-400 focus:text-red-600 dark:focus:text-red-400 focus:bg-red-50 dark:focus:bg-red-900/20"
-                      >
-                        <LogOut className="mr-2 h-4 w-4" />
-                        <span>{t("auth.signOut")}</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </>
-              ) : (
-                <div className="flex items-center gap-2">
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-64 glass-card rounded-[2rem] border-white/20 p-2 shadow-2xl backdrop-blur-3xl">
+                     <DropdownMenuLabel className="p-4 space-y-1">
+                        <p className="text-sm font-black italic tracking-tighter uppercase">{user.user_metadata.full_name}</p>
+                        <p className="text-[10px] font-medium text-foreground/40">{user.email}</p>
+                     </DropdownMenuLabel>
+                     <DropdownMenuSeparator className="bg-white/5" />
+                     <DropdownMenuItem asChild className="rounded-xl p-3 focus:bg-primary/10 focus:text-primary transition-all">
+                        <Link to="/services/dashboard" className="flex items-center">
+                          <LayoutDashboard className="mr-3 h-4 w-4" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Dashboard</span>
+                        </Link>
+                     </DropdownMenuItem>
+                     <DropdownMenuItem asChild className="rounded-xl p-3 focus:bg-primary/10 focus:text-primary transition-all">
+                        <Link to="/profile" className="flex items-center">
+                          <Users className="mr-3 h-4 w-4" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Global Profile</span>
+                        </Link>
+                     </DropdownMenuItem>
+                     <DropdownMenuSeparator className="bg-white/5" />
+                     <DropdownMenuItem onClick={handleLogout} className="rounded-xl p-3 text-red-500 focus:bg-red-500/10 focus:text-red-500 transition-all">
+                        <LogOut className="mr-3 h-4 w-4" />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Disconnect</span>
+                     </DropdownMenuItem>
+                  </DropdownMenuContent>
+               </DropdownMenu>
+            ) : (
+                <div className="flex items-center gap-4">
                   <Button
                     variant="ghost"
                     onClick={() => navigate("/login")}
-                    className="text-sm font-medium text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
+                    className="text-[10px] font-black uppercase tracking-widest text-foreground/60 hover:text-foreground"
                   >
-                    {t("auth.signIn")}
+                    Authorize
                   </Button>
                   <Button
-                    onClick={() =>
-                      navigate(
-                        isHealthRoute
-                          ? "/services/health/doctor/signup"
-                          : "/services/onboarding",
-                      )
-                    }
-                    className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white px-5 py-2 rounded-full text-sm font-semibold hover:from-violet-700 hover:to-indigo-700 transition-all shadow-lg shadow-violet-500/30 hover:shadow-violet-500/50"
+                    onClick={() => navigate("/signup")}
+                    className="bg-primary hover:bg-primary/90 text-white rounded-xl h-10 px-6 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-primary/20"
                   >
-                    {isHealthRoute
-                      ? t("health.doctorSignup")
-                      : t("auth.joinNow")}
+                    Initialize Account
                   </Button>
                 </div>
-              )}
-            </div>
+            )}
 
-            {/* Mobile Menu Button */}
-            <div className="flex items-center gap-2 lg:hidden">
-              <button
-                className="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-10 h-10 p-0 flex items-center justify-center glass bg-white/5 border border-white/10 rounded-xl text-foreground/40 hover:text-primary transition-all overflow-hidden relative"
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+            >
+              <div className="relative h-5 w-5">
+                 <Sun className="h-5 w-5 transition-transform duration-500 absolute rotate-0 scale-100 dark:-rotate-90 dark:scale-0" />
+                 <Moon className="h-5 w-5 transition-transform duration-500 absolute rotate-90 scale-0 dark:rotate-0 dark:scale-100 dark:text-amber-400" />
+              </div>
+            </Button>
+
+            <Button
+                variant="ghost"
+                size="sm"
+                className="lg:hidden w-10 h-10 glass border-white/10 rounded-xl"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               >
-                {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-            </div>
+                {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+            </Button>
+
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Mobile Menu */}
       {isMobileMenuOpen && (
-        <>
-          {/* Overlay */}
-          <div
-            className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
-            onClick={() => setIsMobileMenuOpen(false)}
-            onTouchStart={onTouchStart}
-          />
-
-          {/* Drawer */}
-          <div
-            className="fixed top-0 right-0 z-50 h-full w-[300px] bg-white dark:bg-gray-950 shadow-2xl lg:hidden flex flex-col"
-            onTouchStart={onTouchStart}
-          >
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
-              <span className="font-bold text-lg text-gray-900 dark:text-white">
-                {isHealthRoute
-                  ? t("health.auroraHealth")
-                  : t("services.auroraServices")}
-              </span>
-              <div className="flex items-center gap-2">
-                <LanguageSwitcher />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-                >
-                  {theme === "light" ? (
-                    <Moon className="h-5 w-5" />
-                  ) : (
-                    <Sun className="h-5 w-5 text-amber-500" />
-                  )}
-                </Button>
-                <button
-                  className="p-2 text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  <X size={22} />
-                </button>
+        <div className="fixed inset-0 z-[200] lg:hidden">
+           <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setIsMobileMenuOpen(false)} />
+           <div className="absolute top-0 right-0 h-full w-[300px] glass bg-black/20 border-l border-white/10 p-8 pt-12 flex flex-col gap-10 shadow-2xl backdrop-blur-[50px]">
+              <div className="flex items-center justify-between">
+                 <Logo size="lg" />
+                 <Button variant="ghost" size="sm" className="rounded-xl" onClick={() => setIsMobileMenuOpen(false)}>
+                    <X className="h-6 w-6" />
+                 </Button>
               </div>
-            </div>
+              
+              <nav className="flex flex-col gap-4">
+                 {mainNavItems.map((item) => (
+                   <Link
+                     key={item.href}
+                     to={item.href}
+                     onClick={() => setIsMobileMenuOpen(false)}
+                     className="px-6 py-4 glass bg-white/5 border border-white/5 rounded-2xl text-[12px] font-black uppercase tracking-[0.2em] flex items-center gap-4 text-foreground/60 hover:text-primary hover:border-primary/40 transition-all"
+                   >
+                     <item.icon className="h-5 w-5" />
+                     {item.label}
+                   </Link>
+                 ))}
+              </nav>
 
-            {/* Content - Scrollable */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {/* Search */}
-              <form onSubmit={handleSearch} className="relative">
-                <input
-                  type="text"
-                  placeholder={
-                    isHealthRoute
-                      ? t("health.searchDoctors")
-                      : t("services.searchPlaceholder")
-                  }
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 bg-gray-100 dark:bg-gray-800 border-0 rounded-xl text-sm text-gray-900 dark:text-white focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-violet-500/20 focus:outline-none"
-                />
-                <Search
-                  className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400"
-                  size={18}
-                />
-              </form>
-
-              {/* Navigation */}
-              <div className="space-y-1">
-                {(isHealthRoute ? healthNavItems : navItems).map((item) => (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={cn(
-                      "flex items-center gap-3 px-4 py-3 text-base font-medium rounded-xl transition-colors",
-                      isActive(item.href)
-                        ? isHealthRoute
-                          ? "bg-rose-50 dark:bg-rose-900/20 text-rose-700 dark:text-rose-400"
-                          : "bg-violet-50 dark:bg-violet-900/20 text-violet-700 dark:text-violet-400"
-                        : "text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800",
-                    )}
-                  >
-                    {item.icon && <item.icon size={20} />}
-                    {item.label}
-                  </Link>
-                ))}
+              <div className="mt-auto space-y-4">
+                 <Button onClick={() => navigate("/products")} className="w-full h-14 rounded-2xl glass border-white/10 flex items-center justify-between px-8 text-[10px] font-black uppercase tracking-widest text-foreground group transition-all">
+                    <span>Shop Products</span>
+                    <ShoppingBag className="group-hover:scale-110 transition-transform" />
+                 </Button>
+                 {user && (
+                    <Button onClick={handleLogout} className="w-full h-14 rounded-2xl bg-red-500/10 border border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest">
+                       Sign Out Matrix
+                    </Button>
+                 )}
               </div>
-
-              {/* Products Cross-Link */}
-              {!isHealthRoute && (
-                <Link
-                  to="/products"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center justify-center gap-2 w-full px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 rounded-xl shadow-md transition-all"
-                >
-                  <ShoppingBag size={18} />
-                  {t("services.shopProducts")}
-                </Link>
-              )}
-
-              <div className="border-t border-gray-100 dark:border-gray-800 my-4" />
-
-              {user ? (
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3 px-4 py-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                    <Avatar
-                      name={user.user_metadata.full_name}
-                      src={user.user_metadata.avatar_url}
-                      size="sm"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {user.user_metadata.full_name}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {user.email}
-                      </p>
-                    </div>
-                  </div>
-
-                  {getRoleNavItems().map((item) => (
-                    <Link
-                      key={item.href}
-                      to={item.href}
-                      onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-colors"
-                    >
-                      <item.icon size={20} />
-                      {item.label}
-                    </Link>
-                  ))}
-
-                  <Link
-                    to={
-                      isHealthRoute
-                        ? "/services/health/messages"
-                        : "/services/messages"
-                    }
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 text-base font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl transition-colors"
-                  >
-                    <MessageSquare size={20} />
-                    {t("common.messages")}
-                    {messageCount > 0 && (
-                      <Badge className="ml-auto bg-red-500">
-                        {messageCount}
-                      </Badge>
-                    )}
-                  </Link>
-
-                  <button
-                    onClick={() => {
-                      handleLogout();
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-base font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-xl transition-colors"
-                  >
-                    <LogOut size={20} />
-                    {t("auth.signOut")}
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      navigate("/login");
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full"
-                  >
-                    {t("auth.signIn")}
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      navigate(
-                        isHealthRoute
-                          ? "/services/health/doctor/signup"
-                          : "/services/onboarding",
-                      );
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white"
-                  >
-                    <UserPlus className="mr-2 h-4 w-4" />
-                    {isHealthRoute
-                      ? t("health.doctorSignup")
-                      : t("auth.joinNow")}
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
-        </>
+           </div>
+        </div>
       )}
-    </>
+    </header>
   );
 }

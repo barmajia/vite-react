@@ -124,7 +124,8 @@ export function ServiceDetailPage() {
       navigate("/login");
       return;
     }
-    toast.info(t("services.contactFeatureComingSoon"));
+    if (!service) return;
+    navigate(`/services/chat?listingId=${service.id}&providerId=${service.provider?.id}`);
   };
 
   const handleWishlist = async () => {
@@ -280,9 +281,8 @@ export function ServiceDetailPage() {
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
-                      size="icon"
+                      className="rounded-full h-10 w-10 p-0"
                       onClick={handleWishlist}
-                      className="rounded-full"
                     >
                       <Heart
                         className={`h-5 w-5 ${
@@ -292,9 +292,8 @@ export function ServiceDetailPage() {
                     </Button>
                     <Button
                       variant="outline"
-                      size="icon"
+                      className="rounded-full h-10 w-10 p-0"
                       onClick={handleShare}
-                      className="rounded-full"
                     >
                       <Share2 className="h-5 w-5" />
                     </Button>

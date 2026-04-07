@@ -19,15 +19,12 @@ import {
   detectXss,
 } from "@/utils/sanitize";
 import { authRateLimiter, signupRateLimiter } from "@/lib/security";
-
-// Json type for Supabase responses
-type Json =
-  | string
-  | number
-  | boolean
-  | null
-  | { [key: string]: Json | undefined }
-  | Json[];
+import {
+  NexusProfile,
+  saveNexusProfile,
+  getNexusProfile,
+  clearNexusProfile,
+} from "@/utils/secure-profile-storage";
 
 type SignupMetadata = {
   phone?: string;
@@ -43,6 +40,7 @@ type SignupMetadata = {
 type AuthContextType = {
   session: Session | null;
   user: User | null;
+  profile: NexusProfile | null;
   loading: boolean;
   signIn: (
     email: string,
@@ -65,13 +63,15 @@ type AuthContextType = {
     password: string,
     fullName: string,
     phone: string,
-    role:
-      | "client"
-      | "trader"
+    role: "client" | "individual" | "company" | "hospital",
+  ) => Promise<{ error: Error | null }>;
+  signUpWithGoogle: (
+    accountType:
       | "customer"
-      | "individual"
-      | "company"
-      | "hospital",
+      | "seller"
+      | "factory"
+      | "delivery_driver"
+      | "middleman",
   ) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   linkGoogleAccount: () => Promise<{ error: Error | null }>;
@@ -96,12 +96,53 @@ interface AuthProviderProps {
 export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [user, setUser] = useState<User | null>(null);
+  const [profile, setProfile] = useState<NexusProfile | null>(
+    getNexusProfile(),
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const syncProfile = async (u: User | null) => {
+      if (!u) {
+        setProfile(null);
+        clearNexusProfile();
+        return;
+      }
+
+      // Check current cache
+      const cached = getNexusProfile();
+      if (cached && cached.uuid === u.id) {
+        setProfile(cached);
+        return;
+      }
+
+      // Fetch one-time transition data
+      try {
+        const { data, error } = await supabase
+          .from("users")
+          .select("full_name, account_type")
+          .eq("user_id", u.id)
+          .maybeSingle();
+
+        if (data) {
+          const newProfile: NexusProfile = {
+            uuid: u.id,
+            full_name:
+              data.full_name || u.user_metadata?.full_name || "Nexus User",
+            account_type: data.account_type || "user",
+          };
+          setProfile(newProfile);
+          saveNexusProfile(newProfile);
+        }
+      } catch (err) {
+        console.warn("Nexus profile sync bypassed");
+      }
+    };
+
     getSession().then((sessionData) => {
       setSession(sessionData);
       setUser(sessionData?.user ?? null);
+      syncProfile(sessionData?.user ?? null);
       setLoading(false);
     });
 
@@ -109,6 +150,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       (_event, sessionData: Session | null) => {
         setSession(sessionData);
         setUser(sessionData?.user ?? null);
+        syncProfile(sessionData?.user ?? null);
         setLoading(false);
       },
     );
@@ -456,13 +498,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  /**
-   * Sign out with cleanup
-   */
   const signOut = async () => {
     try {
       // Clear auth storage (CSRF token, cookies, etc.)
       clearAuthStorage();
+
+      // Clear Profile Cache
+      clearNexusProfile();
+      setProfile(null);
 
       // Sign out from Supabase
       await supabase.auth.signOut();
@@ -474,6 +517,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error("Error signing out:", error);
       // Still clear local storage even if sign out fails
       clearAuthStorage();
+      clearNexusProfile();
+      setProfile(null);
       setSession(null);
       setUser(null);
     }
@@ -622,6 +667,53 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   /**
+   * Sign up with Google OAuth (includes account_type for role selection)
+   * The account_type is passed via state and stored after OAuth completes
+   */
+  const signUpWithGoogle = async (
+    accountType:
+      | "customer"
+      | "seller"
+      | "factory"
+      | "delivery_driver"
+      | "middleman" = "customer",
+  ) => {
+    try {
+      const resolvedAccountType =
+        accountType === "delivery_driver" ? "delivery" : accountType;
+
+      // Store intended account_type in sessionStorage so AuthCallback can use it
+      sessionStorage.setItem("google_signup_account_type", resolvedAccountType);
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+          // Pass account_type as state to Supabase (will be available in callback)
+          state: JSON.stringify({ account_type: resolvedAccountType }),
+        },
+      });
+
+      if (error) {
+        sessionStorage.removeItem("google_signup_account_type");
+        return { error: error as Error };
+      }
+
+      return { error: null };
+    } catch (err) {
+      console.error("Google signup error:", err);
+      sessionStorage.removeItem("google_signup_account_type");
+      return {
+        error: new Error("An unexpected error occurred. Please try again."),
+      };
+    }
+  };
+
+  /**
    * Link Google account to existing user
    */
   const linkGoogleAccount = async () => {
@@ -649,10 +741,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const value = {
     session,
     user,
+    profile,
     loading,
     signIn,
     signUp,
     signUpWithRole,
+    signUpWithGoogle,
     signInWithGoogle,
     linkGoogleAccount,
     signOut,

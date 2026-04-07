@@ -1,10 +1,27 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabase";
-import { ChatUser } from "../types/chat";
+import { ChatUser, AccountType } from "../types/chat";
+import { getNexusProfile } from "../utils/secure-profile-storage";
 
 export const useCurrentUser = () => {
-  const [user, setUser] = useState<ChatUser | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<ChatUser | null>(() => {
+    const cached = getNexusProfile();
+    if (cached) {
+      return {
+        id: cached.uuid,
+        user_id: cached.uuid,
+        email: "", // Email not in nexus cache, will fill on fetch
+        full_name: cached.full_name,
+        phone: undefined,
+        avatar_url: undefined,
+        account_type: cached.account_type as AccountType,
+        is_online: true,
+        is_verified: false,
+      };
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(!user);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,6 +37,7 @@ export const useCurrentUser = () => {
           return;
         }
 
+        // We already have core info from cache, but we may want to fetch full data once
         const { data, error: err } = await supabase
           .from("users")
           .select("*")

@@ -1,94 +1,99 @@
 // src/features/health/pages/HealthLanding.tsx
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Stethoscope,
   FileText,
   Pill,
   Ambulance,
-  CalendarDays,
   Video,
   Shield,
-  Users,
-  Clock,
   ArrowRight,
   Search,
+  Activity,
+  HeartPulse,
+  Sparkles,
+  Zap,
+  Globe,
+  Database,
+  Lock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+
+import { HealthHeader } from "../components/HealthHeader";
 
 const HealthLanding: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [searchQuery, setSearchQuery] = React.useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const quickActions = [
     {
-      title: "Find a Doctor",
+      title: "Diagnostic Node",
       icon: Stethoscope,
-      path: "/services/health/doctors",
-      color: "indigo",
-      description: "Browse verified doctors by specialization",
+      path: "/health/doctors",
+      color: "rose",
+      description: "Initialize consultation with elite medical experts",
     },
     {
-      title: "My Health Records",
+      title: "Biological Ledger",
       icon: FileText,
-      path: "/services/health/patient/dashboard",
+      path: "/health/patient/dashboard",
       color: "emerald",
-      description: "Access your medical history",
+      description: "Secure data mining for your medical histories",
       requiresAuth: true,
     },
     {
-      title: "Pharmacies",
+      title: "Pharmaceutical Matrix",
       icon: Pill,
-      path: "/services/health/pharmacies",
-      color: "amber",
-      description: "Find nearby pharmacies",
+      path: "/health/pharmacies",
+      color: "blue",
+      description: "Automated distribution for verified prescriptions",
     },
     {
-      title: "Emergency",
+      title: "Emergency Pulse",
       icon: Ambulance,
-      path: "/services/health/doctors?emergency=true",
+      path: "/health/doctors?emergency=true",
       color: "red",
-      description: "Quick emergency assistance",
+      description: "Priority deployment for critical medical signals",
       urgent: true,
     },
   ];
 
-  const features = [
+  const coreAbilities = [
     {
-      icon: CalendarDays,
-      title: "Easy Booking",
-      description: "Schedule appointments in seconds",
+      icon: Zap,
+      title: "Instant Sync",
+      description: "Deployment-ready medical scheduling with zero latency",
     },
     {
       icon: Video,
-      title: "Telemedicine",
-      description: "Video consultations from home",
+      title: "Neural Session",
+      description: "High-bandwidth encrypted video consultations",
     },
     {
-      icon: Shield,
-      title: "Verified Doctors",
-      description: "All doctors are license-verified",
+      icon: Lock,
+      title: "Vault Privacy",
+      description: "Military-grade encryption for patient data",
     },
     {
-      icon: Users,
-      title: "Patient Support",
-      description: "24/7 customer support",
+      icon: Globe,
+      title: "Global Grid",
+      description: "Cross-border network of certified specialists",
     },
     {
-      icon: Clock,
-      title: "Quick Access",
-      description: "Same-day appointments available",
+      icon: Database,
+      title: "Data Integrity",
+      description: "Real-time blockchain-verified health records",
     },
     {
-      icon: FileText,
-      title: "Digital Records",
-      description: "Secure health data storage",
+      icon: Activity,
+      title: "Life Stream",
+      description: "Continuous telemetry for vital signal monitoring",
     },
   ];
 
@@ -96,241 +101,236 @@ const HealthLanding: React.FC = () => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(
-        `/services/health/doctors?search=${encodeURIComponent(searchQuery.trim())}`,
+        `/health/doctors?search=${encodeURIComponent(searchQuery.trim())}`,
       );
     }
   };
 
-  const handleQuickAction = (action: (typeof quickActions)[0]) => {
-    if (action.requiresAuth && !user) {
-      toast.error("Please login to access this feature");
-      navigate("/login");
-      return;
-    }
-    navigate(action.path);
-  };
-
-  const getColorClasses = (color: string) => {
-    const colors: Record<string, string> = {
-      indigo:
-        "bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800",
-      emerald:
-        "bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800",
-      amber:
-        "bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800",
-      red: "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800",
-    };
-    return colors[color] || colors.indigo;
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 dark:from-[#0f172a] dark:via-[#1e293b] dark:to-[#0f172a]">
-      {/* Hero Section */}
-      <div className="relative pt-32 pb-20 px-4 overflow-hidden">
-        {/* Background Gradients */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-rose-500/10 dark:bg-rose-500/20 rounded-full blur-[100px]" />
-          <div className="absolute top-40 -left-40 w-[500px] h-[500px] bg-indigo-500/10 dark:bg-indigo-500/20 rounded-full blur-[100px]" />
-        </div>
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      <HealthHeader />
+      {/* Immersive Background Nodes */}
+      <div
+        className="absolute top-[5%] left-[-15%] w-[60%] h-[60%] bg-rose-500/10 rounded-full blur-[160px] pointer-events-none animate-pulse"
+        style={{ animationDuration: "8s" }}
+      />
+      <div
+        className="absolute bottom-[5%] right-[-15%] w-[60%] h-[60%] bg-indigo-500/10 rounded-full blur-[160px] pointer-events-none animate-pulse"
+        style={{ animationDuration: "8s" }}
+      />
 
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-12">
-            <Badge className="bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800 text-sm px-4 py-1.5 rounded-full mb-6">
-              <HeartPulseIcon className="w-4 h-4 mr-2 inline" />
-              Aurora Healthcare
-            </Badge>
+      {/* ===== HERO COMPONENT ===== */}
+      <section className="relative z-10 max-w-7xl mx-auto px-6 lg:px-12 py-20 lg:py-32">
+        <div className="glass-card rounded-[4rem] border-t-white/20 border-l-white/10 border-b-black/20 border-r-black/20 backdrop-blur-[50px] shadow-[0_40px_100px_-20px_rgba(0,0,0,0.6)] overflow-hidden relative group">
+          <div className="absolute inset-0 bg-gradient-to-br from-rose-500/5 to-transparent pointer-events-none" />
 
-            <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-white mb-6 tracking-tight leading-tight">
-              Your Health, <br className="hidden md:block" />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-600 to-indigo-600 dark:from-rose-400 dark:to-indigo-400">
-                Our Priority
-              </span>
-            </h1>
+          <div className="px-8 sm:px-16 py-20 sm:py-24 relative z-10 text-center lg:text-left flex flex-col lg:flex-row items-center gap-16">
+            <div className="flex-1 space-y-10">
+              <div className="flex items-center gap-4 justify-center lg:justify-start">
+                <div className="p-3 glass bg-white/10 border border-white/20 rounded-2xl shadow-[0_0_30px_rgba(244,63,94,0.3)]">
+                  <Activity className="h-6 w-6 text-rose-500 animate-pulse" />
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-[0.5em] text-rose-500 italic">
+                  Advanced Medical Core
+                </span>
+              </div>
 
-            <p className="text-xl md:text-2xl text-slate-600 dark:text-slate-400 mb-10 max-w-3xl mx-auto font-medium">
-              Connect with verified doctors, book appointments, and manage your
-              health records all in one secure platform.
-            </p>
+              <h1 className="text-6xl sm:text-8xl font-black tracking-tighter italic leading-[0.85] bg-clip-text text-transparent bg-gradient-to-br from-foreground to-foreground/40">
+                Biological <br />
+                <span className="text-rose-500 drop-shadow-[0_0_40px_rgba(244,63,94,0.4)]">
+                  Excellence
+                </span>
+              </h1>
 
-            {/* Search Bar */}
-            <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-12">
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <p className="text-lg md:text-xl text-foreground/40 font-medium italic max-w-xl mx-auto lg:mx-0 leading-relaxed tracking-tight">
+                Access the global matrix of verified medical professionals.
+                Real-time diagnostics, encrypted biological ledgers, and
+                priority deployments for all citizens.
+              </p>
+
+              <div className="relative max-w-2xl group/search">
+                <form onSubmit={handleSearch} className="relative z-10">
+                  <div className="absolute inset-y-0 left-6 flex items-center pointer-events-none">
+                    <Search className="h-6 w-6 text-rose-500/50" />
+                  </div>
                   <Input
-                    type="text"
-                    placeholder="Search doctors, specialties, or clinics..."
+                    type="search"
+                    placeholder="Identify Specialist / Signal / Node..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-12 h-14 rounded-full bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white focus:border-rose-500 focus:ring-rose-500/20"
+                    className="w-full h-20 pl-16 pr-44 rounded-3xl bg-black/40 backdrop-blur-3xl border-white/10 text-lg font-bold placeholder:text-white/10"
                   />
-                </div>
-                <Button
-                  type="submit"
-                  size="lg"
-                  className="h-14 px-8 rounded-full bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-700 hover:to-indigo-700 text-white font-semibold"
-                >
-                  Search
-                </Button>
+                  <Button
+                    type="submit"
+                    className="absolute right-3 top-3 h-14 px-8 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-widest text-xs shadow-lg shadow-rose-500/20"
+                  >
+                    Transmit
+                  </Button>
+                </form>
               </div>
-            </form>
 
-            {/* Trust Indicators */}
-            <div className="flex flex-wrap items-center justify-center gap-6 md:gap-12 text-sm font-medium text-slate-500 dark:text-slate-400">
-              <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-emerald-500" />
-                <span>Verified Doctors</span>
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-8 pt-4">
+                {[
+                  { label: "Providers", val: "8.4K+", icon: Stethoscope },
+                  { label: "Active Nodes", val: "1.2M", icon: Activity },
+                  { label: "Success Rate", val: "99.9%", icon: Shield },
+                ].map((stat) => (
+                  <div key={stat.label} className="flex items-center gap-3">
+                    <div className="w-10 h-10 glass bg-white/5 border border-white/5 rounded-xl flex items-center justify-center">
+                      <stat.icon className="h-5 w-5 text-rose-500/40" />
+                    </div>
+                    <div>
+                      <p className="text-xl font-black italic tracking-tighter leading-none">
+                        {stat.val}
+                      </p>
+                      <p className="text-[8px] font-black uppercase tracking-widest text-foreground/20 italic">
+                        {stat.label}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-indigo-500" />
-                <span>10,000+ Patients</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 text-amber-500" />
-                <span>24/7 Support</span>
-              </div>
+            </div>
+
+            <div className="w-full lg:w-[450px] space-y-4">
+              {quickActions.map((action) => (
+                <button
+                  key={action.title}
+                  onClick={() => {
+                    if (action.requiresAuth && !user) {
+                      toast.error("Protocol requires authorization");
+                      navigate("/login");
+                      return;
+                    }
+                    navigate(action.path);
+                  }}
+                  className={cn(
+                    "w-full group/btn relative p-8 glass-card rounded-[2.5rem] border-white/5 hover:border-rose-500/40 transition-all duration-500 text-left flex items-center gap-6 overflow-hidden",
+                    action.urgent && "bg-rose-500/5",
+                  )}
+                >
+                  <div
+                    className={cn(
+                      "w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover/btn:scale-110",
+                      `bg-${action.color}-500/10 border border-${action.color}-500/20 shadow-[0_0_20px_rgba(var(--${action.color}),0.1)]`,
+                    )}
+                  >
+                    <action.icon
+                      className={cn("h-6 w-6", `text-${action.color}-500`)}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-xl font-black italic tracking-tighter leading-none mb-2">
+                      {action.title}
+                    </h3>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-foreground/30 italic group-hover/btn:text-foreground/50 transition-colors">
+                      {action.description}
+                    </p>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-foreground/10 group-hover/btn:text-rose-500 group-hover/btn:translate-x-2 transition-all" />
+
+                  {action.urgent && (
+                    <div className="absolute top-4 right-4 flex items-center gap-2">
+                      <span className="flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-500 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                      </span>
+                      <span className="text-[8px] font-black text-rose-500 uppercase tracking-widest">
+                        Active Pulse
+                      </span>
+                    </div>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      {/* Quick Actions */}
-      <div className="py-16 px-4 bg-white dark:bg-slate-900">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-4">
-              Quick Actions
-            </h2>
-            <p className="text-lg text-slate-600 dark:text-slate-400">
-              Access healthcare services instantly
-            </p>
+      {/* ===== CAPABILITIES SECTION ===== */}
+      <section className="max-w-7xl mx-auto px-6 lg:px-12 py-32 relative z-10">
+        <div className="text-center mb-24 space-y-4">
+          <div className="inline-flex items-center gap-2 px-4 py-2 glass bg-primary/10 border border-white/10 rounded-2xl">
+            <Sparkles className="h-4 w-4 text-primary" />
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary italic">
+              Protocol Advantages
+            </span>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {quickActions.map((action) => {
-              const IconComponent = action.icon;
-              const colorClasses = getColorClasses(action.color);
-
-              return (
-                <button
-                  key={action.title}
-                  onClick={() => handleQuickAction(action)}
-                  className={`group relative p-6 rounded-2xl border-2 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${colorClasses} ${
-                    action.urgent
-                      ? "animate-pulse hover:animate-none"
-                      : "hover:shadow-rose-500/10"
-                  }`}
-                >
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-16 h-16 rounded-2xl bg-white/50 dark:bg-slate-800/50 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                      <IconComponent className="h-8 w-8" />
-                    </div>
-                    <h3 className="text-xl font-bold mb-2">{action.title}</h3>
-                    <p className="text-sm opacity-80">{action.description}</p>
-                    {action.requiresAuth && !user && (
-                      <Badge className="mt-3 text-xs">Login Required</Badge>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Features */}
-      <div className="py-24 px-4 bg-slate-50 dark:bg-slate-950">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-extrabold text-slate-900 dark:text-white mb-4">
-              Why Choose Aurora Health?
-            </h2>
-            <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Comprehensive healthcare solutions designed for your convenience
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-8">
-            {features.map((feature) => {
-              const IconComponent = feature.icon;
-              return (
-                <div
-                  key={feature.title}
-                  className="text-center p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-rose-300 dark:hover:border-rose-700 transition-all"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-100 to-indigo-100 dark:from-rose-900/30 dark:to-indigo-900/30 flex items-center justify-center mx-auto mb-4">
-                    <IconComponent className="h-7 w-7 text-rose-600 dark:text-rose-400" />
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
-                    {feature.title}
-                  </h3>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">
-                    {feature.description}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      {/* Doctor CTA */}
-      <div className="py-24 px-4 bg-gradient-to-br from-rose-600 to-indigo-700 dark:from-rose-900 dark:to-indigo-900">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="w-20 h-20 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mx-auto mb-6">
-            <Stethoscope className="h-10 w-10 text-white" />
-          </div>
-          <h2 className="text-3xl md:text-5xl font-extrabold text-white mb-6">
-            Are You a Healthcare Professional?
+          <h2 className="text-5xl md:text-7xl font-black italic tracking-tighter leading-tight">
+            Aurora <span className="text-foreground/40">Bio-Systems</span>
           </h2>
-          <p className="text-xl text-rose-100 mb-8 max-w-2xl mx-auto">
-            Join our network of verified doctors and grow your practice with
-            Aurora Health's powerful platform.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button
-              size="lg"
-              onClick={() => navigate("/services/health/doctor/signup")}
-              className="bg-white text-rose-600 hover:bg-rose-50 font-bold h-14 px-8 rounded-full"
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+          {coreAbilities.map((ability) => (
+            <div
+              key={ability.title}
+              className="group p-10 glass-card rounded-[3rem] border-white/5 hover:border-primary/30 transition-all duration-500 hover:-translate-y-2"
             >
-              Register as a Doctor
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => navigate("/services/health")}
-              className="bg-transparent border-white text-white hover:bg-white/10 h-14 px-8 rounded-full"
-            >
-              Learn More
-            </Button>
+              <div className="w-16 h-16 glass bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center mb-8 group-hover:scale-110 group-hover:shadow-[0_0_30px_rgba(var(--primary),0.3)] transition-all duration-500">
+                <ability.icon className="h-8 w-8 text-primary/40 group-hover:text-primary transition-colors" />
+              </div>
+              <h3 className="text-2xl font-black italic tracking-tighter leading-none mb-4 group-hover:text-primary transition-colors">
+                {ability.title}
+              </h3>
+              <p className="text-sm font-medium text-foreground/40 italic leading-relaxed tracking-tight mb-6">
+                {ability.description}
+              </p>
+              <div className="h-1 w-12 bg-white/5 rounded-full group-hover:w-full group-hover:bg-primary/20 transition-all duration-700" />
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* ===== PROFESSIONAL DEPLOYMENT CTA ===== */}
+      <section className="max-w-7xl mx-auto px-6 lg:px-12 py-32 relative z-10">
+        <div className="glass-card rounded-[4rem] bg-gradient-to-br from-rose-500 to-rose-700 border-white/20 p-16 sm:p-24 overflow-hidden relative group">
+          <div className="absolute inset-0 bg-[url('https://grain-y.com/assets/images/noise.png')] opacity-20 pointer-events-none" />
+          <div className="absolute -top-24 -right-24 w-96 h-96 bg-white/10 rounded-full blur-[100px] animate-pulse" />
+
+          <div className="max-w-3xl relative z-10 space-y-12">
+            <div className="w-24 h-24 glass bg-white/20 border border-white/30 rounded-[2.5rem] flex items-center justify-center shadow-2xl">
+              <HeartPulse className="h-12 w-12 text-white" />
+            </div>
+
+            <div className="space-y-6">
+              <h2 className="text-5xl sm:text-7xl font-black italic tracking-tighter leading-[0.85] text-white">
+                Accelerate Your <br />
+                <span className="text-white/40">Medical Practice</span>
+              </h2>
+              <p className="text-xl text-rose-100 font-medium italic leading-relaxed max-w-xl">
+                Join the global grid of biological excellence. Access advanced
+                telemetry, automated ledgering, and instant deployment
+                protocols.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-6">
+              <Button
+                size="xl"
+                onClick={() => navigate("/health/doctor/signup")}
+                className="bg-white text-rose-600 hover:bg-rose-50 font-black uppercase tracking-widest text-xs h-16 px-10 rounded-2xl shadow-2xl transition-all active:scale-95 group"
+              >
+                Register Component
+                <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
+              <Button
+                size="xl"
+                variant="outline"
+                onClick={() => navigate("/health/doctors")}
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20 font-black uppercase tracking-widest text-xs h-16 px-10 rounded-2xl backdrop-blur-xl"
+              >
+                Analyze Network
+              </Button>
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Footer Spacer */}
-      <div className="h-24 bg-slate-50 dark:bg-slate-950" />
+      <div className="h-40" />
     </div>
   );
 };
-
-// Helper icon component
-function HeartPulseIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-      />
-    </svg>
-  );
-}
 
 export default HealthLanding;

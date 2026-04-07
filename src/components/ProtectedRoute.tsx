@@ -1,5 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { Lock } from "lucide-react";
+import { isValidReturnUrl } from "@/lib/security";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -12,6 +14,7 @@ interface ProtectedRouteProps {
 /**
  * Route guard component that redirects unauthenticated users to login.
  * Preserves the intended destination via `returnTo` query parameter.
+ * Includes open redirect protection.
  *
  * Usage:
  *   <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
@@ -39,10 +42,16 @@ export function ProtectedRoute({
 
   // Redirect unauthenticated users
   if (!user) {
-    const returnTo = encodeURIComponent(
-      location.pathname + location.search + location.hash,
-    );
-    return <Navigate to={`${redirectTo}?returnTo=${returnTo}`} replace />;
+    const destination = location.pathname + location.search + location.hash;
+
+    // Only set returnTo if it's a valid relative URL (open redirect protection)
+    if (isValidReturnUrl(destination)) {
+      const returnTo = encodeURIComponent(destination);
+      return <Navigate to={`${redirectTo}?returnTo=${returnTo}`} replace />;
+    }
+
+    // Invalid destination - just redirect to login
+    return <Navigate to={redirectTo} replace />;
   }
 
   // Check account type restriction
@@ -52,7 +61,7 @@ export function ProtectedRoute({
       return (
         <div className="min-h-[60vh] flex items-center justify-center">
           <div className="text-center max-w-md p-8">
-            <div className="text-5xl mb-4">🔒</div>
+            <Lock className="w-16 h-16 mx-auto mb-4 text-destructive" />
             <h2 className="text-2xl font-bold mb-2">Access Denied</h2>
             <p className="text-muted-foreground mb-6">
               You don't have permission to access this page. This area is

@@ -1,6 +1,6 @@
 // src/features/health/pages/DoctorList.tsx
 import React, { useEffect, useState, useMemo } from "react";
-import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Search,
   Filter,
@@ -9,7 +9,6 @@ import {
   Calendar,
   Video,
   Building,
-  Clock,
   CheckCircle2,
   AlertCircle,
   Stethoscope,
@@ -19,9 +18,9 @@ import {
   Baby,
   Eye,
   Activity,
-  Loader2,
   ArrowRight,
   X,
+  Sparkles,
 } from "lucide-react";
 import { getVerifiedDoctors } from "../api/supabaseHealth";
 import type { HealthDoctorProfile } from "../types";
@@ -37,26 +36,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { ServicesHeader } from "@/components/layout/ServicesHeader";
+import { cn } from "@/lib/utils";
 
 const DoctorList: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const [doctors, setDoctors] = useState<HealthDoctorProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSpecialization, setSelectedSpecialization] =
-    useState<string>("all");
+  const [selectedSpecialization, setSelectedSpecialization] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("rating");
   const [consultationType, setConsultationType] = useState<string>("all");
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
@@ -75,99 +66,53 @@ const DoctorList: React.FC = () => {
       setDoctors(data);
     } catch (error) {
       console.error("Error loading doctors:", error);
-      toast.error("Failed to load doctors. Please try again.");
+      toast.error("Failed to load medical components.");
     } finally {
       setLoading(false);
     }
   };
 
-  // Filter and sort doctors
   const filteredDoctors = useMemo(() => {
     let filtered = [...doctors];
-
-    // Emergency filter
-    if (isEmergency) {
-      filtered = filtered.filter((d) => d.emergency_availability);
-    }
-
-    // Search query
+    if (isEmergency) filtered = filtered.filter((d) => d.emergency_availability);
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (d) =>
           d.specialization.toLowerCase().includes(query) ||
           d.bio?.toLowerCase().includes(query) ||
-          d.location?.toLowerCase().includes(query) ||
-          d.languages?.some((lang) => lang.toLowerCase().includes(query)),
+          d.location?.toLowerCase().includes(query)
       );
     }
-
-    // Specialization filter
     if (selectedSpecialization !== "all") {
-      filtered = filtered.filter(
-        (d) =>
-          d.specialization.toLowerCase() ===
-          selectedSpecialization.toLowerCase(),
-      );
+      filtered = filtered.filter((d) => d.specialization.toLowerCase() === selectedSpecialization.toLowerCase());
     }
-
-    // Consultation type filter
     if (consultationType !== "all") {
-      filtered = filtered.filter((d) =>
-        d.consultation_types?.includes(consultationType as any),
-      );
+      filtered = filtered.filter((d) => d.consultation_types?.includes(consultationType as any));
     }
-
-    // Price range filter
     const feeField = isEmergency ? "emergency_fee" : "consultation_fee";
-    filtered = filtered.filter(
-      (d) =>
-        d[feeField] &&
-        d[feeField]! >= priceRange[0] &&
-        d[feeField]! <= priceRange[1],
-    );
+    filtered = filtered.filter((d) => (d[feeField] || 0) >= priceRange[0] && (d[feeField] || 0) <= priceRange[1]);
 
-    // Sorting
     filtered.sort((a, b) => {
       switch (sortBy) {
-        case "rating":
-          return (b.rating_avg || 0) - (a.rating_avg || 0);
-        case "fee_low":
-          return (a[feeField] || 0) - (b[feeField] || 0);
-        case "fee_high":
-          return (b[feeField] || 0) - (a[feeField] || 0);
-        case "experience":
-          return (b.years_of_experience || 0) - (a.years_of_experience || 0);
-        case "reviews":
-          return (b.review_count || 0) - (a.review_count || 0);
-        default:
-          return 0;
+        case "rating": return (b.rating_avg || 0) - (a.rating_avg || 0);
+        case "fee_low": return (a[feeField] || 0) - (b[feeField] || 0);
+        case "fee_high": return (b[feeField] || 0) - (a[feeField] || 0);
+        case "experience": return (b.years_of_experience || 0) - (a.years_of_experience || 0);
+        default: return 0;
       }
     });
-
     return filtered;
-  }, [
-    doctors,
-    searchQuery,
-    selectedSpecialization,
-    sortBy,
-    consultationType,
-    priceRange,
-    isEmergency,
-  ]);
+  }, [doctors, searchQuery, selectedSpecialization, sortBy, consultationType, priceRange, isEmergency]);
 
   const getSpecializationIcon = (specialization: string) => {
     const spec = specialization.toLowerCase();
-    if (spec.includes("cardio")) return <Heart className="h-5 w-5" />;
-    if (spec.includes("neuro")) return <Brain className="h-5 w-5" />;
-    if (spec.includes("ortho") || spec.includes("bone"))
-      return <Bone className="h-5 w-5" />;
-    if (spec.includes("pediatric") || spec.includes("child"))
-      return <Baby className="h-5 w-5" />;
-    if (spec.includes("eye") || spec.includes("ophthal"))
-      return <Eye className="h-5 w-5" />;
-    if (spec.includes("dent")) return <Activity className="h-5 w-5" />;
-    return <Stethoscope className="h-5 w-5" />;
+    if (spec.includes("cardio")) return <Heart className="h-6 w-6 text-rose-500" />;
+    if (spec.includes("neuro")) return <Brain className="h-6 w-6 text-indigo-500" />;
+    if (spec.includes("ortho")) return <Bone className="h-6 w-6 text-amber-500" />;
+    if (spec.includes("pediatric")) return <Baby className="h-6 w-6 text-emerald-500" />;
+    if (spec.includes("eye")) return <Eye className="h-6 w-6 text-blue-500" />;
+    return <Stethoscope className="h-6 w-6 text-rose-500" />;
   };
 
   const clearFilters = () => {
@@ -178,435 +123,160 @@ const DoctorList: React.FC = () => {
     setSortBy("rating");
   };
 
-  const activeFiltersCount = [
-    selectedSpecialization !== "all",
-    consultationType !== "all",
-    priceRange[0] > 0 || priceRange[1] < 500,
-  ].filter(Boolean).length;
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 dark:from-[#0f172a] dark:via-[#1e293b] dark:to-[#0f172a]">
-        <ServicesHeader />
-        <div className="flex items-center justify-center min-h-[80vh]">
-          <div className="relative z-10 flex flex-col items-center">
-            <div className="relative w-24 h-24 flex items-center justify-center mb-6">
-              <div className="absolute inset-0 rounded-full border-4 border-indigo-100 dark:border-indigo-900 shadow-inner" />
-              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-indigo-500 border-r-indigo-500 animate-spin" />
-              <div className="w-16 h-16 bg-white dark:bg-slate-900 rounded-full shadow-lg flex items-center justify-center z-10">
-                <Stethoscope className="w-8 h-8 text-rose-500 animate-pulse" />
-              </div>
-            </div>
-            <h2 className="text-xl font-bold tracking-tight text-slate-900 dark:text-white bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-rose-500">
-              Finding Doctors...
-            </h2>
-            <p className="mt-2 text-sm font-medium text-slate-500 dark:text-slate-400">
-              Searching our verified network
-            </p>
-          </div>
+      <div className="min-h-screen bg-background flex items-center justify-center pt-20">
+        <div className="flex flex-col items-center gap-6">
+           <div className="w-20 h-20 glass bg-rose-500/10 border border-rose-500/20 rounded-[2rem] flex items-center justify-center animate-pulse shadow-[0_0_40px_rgba(244,63,94,0.3)]">
+              <Activity className="h-10 w-10 text-rose-500" />
+           </div>
+           <p className="text-[10px] font-black uppercase tracking-[0.5em] text-foreground/20 italic animate-pulse">Syncing Diagnostic Matrix...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-indigo-50 dark:from-[#0f172a] dark:via-[#1e293b] dark:to-[#0f172a]">
-      <ServicesHeader />
-
-      {/* Hero Section */}
-      <div className="relative pt-24 pb-12 px-4 overflow-hidden bg-gradient-to-br from-rose-600 to-indigo-700 dark:from-rose-900 dark:to-indigo-900">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-white/5 rounded-full blur-[100px]" />
-        <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] bg-white/5 rounded-full blur-[100px]" />
-
+    <div className="min-h-screen bg-background pt-20">
+      
+      {/* ===== IMMERSIVE DIRECTORY HERO ===== */}
+      <section className="relative px-6 lg:px-12 py-20 overflow-hidden">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[120%] h-[120%] bg-rose-500/5 rounded-full blur-[140px] pointer-events-none" />
+        
         <div className="max-w-7xl mx-auto relative z-10">
-          <div className="text-center mb-8">
-            <Badge className="bg-rose-500/20 text-rose-200 border-rose-400/30 text-sm px-4 py-1.5 rounded-full mb-4">
-              {isEmergency ? (
-                <>
-                  <AlertCircle className="w-4 h-4 mr-2 inline" />
-                  Emergency Care
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-4 h-4 mr-2 inline" />
-                  Verified Doctors
-                </>
-              )}
-            </Badge>
-
-            <h1 className="text-4xl md:text-6xl font-extrabold text-white mb-4 tracking-tight">
-              {isEmergency ? "🚑 Emergency Doctors" : "Find Your Doctor"}
-            </h1>
-            <p className="text-xl text-rose-100 max-w-3xl mx-auto">
-              {isEmergency
-                ? "Connect with available doctors for urgent care"
-                : "Browse our network of verified healthcare professionals"}
-            </p>
-          </div>
-
-          {/* Search Bar */}
-          <div className="max-w-3xl mx-auto">
-            <div className="flex gap-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-                <Input
-                  type="text"
-                  placeholder="Search by specialization, name, or location..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-12 h-14 rounded-full bg-white text-slate-900 border-0 focus:ring-2 focus:ring-rose-500"
-                />
-              </div>
-              <Button
-                onClick={() => setShowFilters(!showFilters)}
-                variant="outline"
-                size="lg"
-                className="h-14 px-6 rounded-full bg-white/10 border-white/20 text-white hover:bg-white/20"
-              >
-                <Filter className="h-5 w-5 mr-2" />
-                Filters
-                {activeFiltersCount > 0 && (
-                  <Badge className="ml-2 bg-rose-500 text-white">
-                    {activeFiltersCount}
-                  </Badge>
-                )}
-              </Button>
-            </div>
-          </div>
-
-          {isEmergency && (
-            <div className="mt-6 text-center">
-              <Button
-                variant="ghost"
-                onClick={() => navigate("/services/health/doctors")}
-                className="text-white hover:bg-white/10"
-              >
-                View All Doctors
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Filters Panel */}
-      {showFilters && (
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <Card className="border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-lg font-bold text-slate-900 dark:text-white">
-                  Filters
-                </h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={clearFilters}
-                  className="text-slate-500"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Clear All
-                </Button>
+           <div className="flex flex-col lg:flex-row items-end justify-between gap-12 mb-16">
+              <div className="space-y-6 max-w-2xl">
+                 <div className="inline-flex items-center gap-3 px-4 py-2 glass bg-white/5 border border-white/10 rounded-2xl">
+                    <Sparkles className="h-4 w-4 text-rose-500" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-rose-500 italic">Personnel Database</span>
+                 </div>
+                 <h1 className="text-6xl sm:text-8xl font-black italic tracking-tighter leading-[0.85] text-foreground">
+                    Directory <br />
+                    <span className="text-foreground/20">Index</span>
+                 </h1>
+                 <p className="text-lg font-medium italic text-foreground/40 leading-relaxed tracking-tight max-w-lg">
+                    Real-time access to the elite diagnostic medical network. Filters applied for operational excellence.
+                 </p>
               </div>
 
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* Specialization */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Specialization
-                  </label>
-                  <Select
-                    value={selectedSpecialization}
-                    onValueChange={setSelectedSpecialization}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select specialization" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Specializations</SelectItem>
-                      <SelectItem value="cardiology">Cardiology</SelectItem>
-                      <SelectItem value="dermatology">Dermatology</SelectItem>
-                      <SelectItem value="pediatrics">Pediatrics</SelectItem>
-                      <SelectItem value="orthopedics">Orthopedics</SelectItem>
-                      <SelectItem value="neurology">Neurology</SelectItem>
-                      <SelectItem value="general">General Practice</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Consultation Type */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Consultation Type
-                  </label>
-                  <Select
-                    value={consultationType}
-                    onValueChange={setConsultationType}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="in_clinic">In-Clinic</SelectItem>
-                      <SelectItem value="online">Online Video</SelectItem>
-                      <SelectItem value="home_visit">Home Visit</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Sort By */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Sort By
-                  </label>
-                  <Select value={sortBy} onValueChange={setSortBy}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="rating">Top Rated</SelectItem>
-                      <SelectItem value="fee_low">
-                        Price: Low to High
-                      </SelectItem>
-                      <SelectItem value="fee_high">
-                        Price: High to Low
-                      </SelectItem>
-                      <SelectItem value="experience">
-                        Most Experienced
-                      </SelectItem>
-                      <SelectItem value="reviews">Most Reviews</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Price Range */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Price Range: ${priceRange[0]} - ${priceRange[1]}
-                  </label>
-                  <Input
-                    type="range"
-                    min="0"
-                    max="500"
-                    value={priceRange[1]}
-                    onChange={(e) =>
-                      setPriceRange([priceRange[0], parseInt(e.target.value)])
-                    }
-                    className="w-full"
-                  />
-                </div>
+              <div className="w-full lg:w-[450px] space-y-4">
+                 <div className="glass-card p-2 rounded-[2.5rem] border-white/10 shadow-2xl backdrop-blur-3xl">
+                    <div className="relative group/search">
+                       <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-rose-500/40 group-focus-within/search:text-rose-500 transition-colors" />
+                       <input
+                          type="text"
+                          placeholder="IDENTIFY SPECIALIST..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="w-full h-16 pl-16 pr-6 bg-transparent border-0 text-[10px] font-black uppercase tracking-[0.3em] text-foreground placeholder:text-foreground/10 focus:ring-0 outline-none"
+                       />
+                       <Button 
+                          onClick={() => setShowFilters(!showFilters)}
+                          className={cn(
+                            "absolute right-2 top-2 h-12 px-6 rounded-2xl glass transition-all",
+                            showFilters ? "bg-rose-500 text-white" : "bg-white/5 text-foreground/40 hover:bg-white/10"
+                          )}
+                       >
+                          <Filter className="h-4 w-4 mr-2" />
+                          <span className="text-[10px] font-black uppercase tracking-widest">Filters</span>
+                       </Button>
+                    </div>
+                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+           </div>
 
-      {/* Results Count */}
-      <div className="max-w-7xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between">
-          <p className="text-slate-600 dark:text-slate-400">
-            <span className="font-bold text-slate-900 dark:text-white">
-              {filteredDoctors.length}
-            </span>{" "}
-            doctors found
-            {isEmergency && (
-              <span className="text-rose-600 dark:text-rose-400 font-medium">
-                {" "}
-                (Emergency Available)
-              </span>
-            )}
-          </p>
-        </div>
-      </div>
-
-      {/* Doctors Grid */}
-      <div className="max-w-7xl mx-auto px-4 pb-16">
-        {filteredDoctors.length === 0 ? (
-          <Card className="border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur">
-            <CardContent className="p-12 text-center">
-              <div className="w-20 h-20 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-6">
-                <Stethoscope className="h-10 w-10 text-slate-400" />
+           {/* ===== FILTER MATRIX ===== */}
+           {showFilters && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16 animate-in fade-in slide-in-from-top-4 duration-500">
+                 {[
+                   { label: "Matrix Sector", value: selectedSpecialization, setter: setSelectedSpecialization, options: ["all", "cardiology", "neurology", "pediatrics", "orthopedics", "ophthalmology"] },
+                   { label: "Session Mode", value: consultationType, setter: setConsultationType, options: ["all", "online", "in_clinic", "home_visit"] },
+                   { label: "Deployment Cost", value: sortBy, setter: setSortBy, options: ["rating", "fee_low", "fee_high", "experience"] },
+                 ].map((filter) => (
+                    <div key={filter.label} className="glass-card p-6 rounded-[2rem] border-white/5">
+                       <label className="text-[8px] font-black uppercase tracking-[0.3em] text-foreground/20 italic mb-4 block">{filter.label}</label>
+                       <Select value={filter.value} onValueChange={filter.setter}>
+                          <SelectTrigger className="h-10 bg-black/20 border-white/5 rounded-xl uppercase text-[10px] font-black tracking-widest">
+                             <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="glass-card rounded-2xl border-white/10">
+                             {filter.options.map(opt => <SelectItem key={opt} value={opt} className="uppercase text-[10px] font-black tracking-widest">{opt.replace('_', ' ')}</SelectItem>)}
+                          </SelectContent>
+                       </Select>
+                    </div>
+                 ))}
+                 <div className="glass-card p-6 rounded-[2rem] border-white/5 flex items-end">
+                    <Button onClick={clearFilters} variant="ghost" className="w-full h-10 rounded-xl hover:bg-rose-500/10 text-rose-500 uppercase text-[10px] font-black tracking-widest">
+                       Purge Filters
+                    </Button>
+                 </div>
               </div>
-              <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-3">
-                No Doctors Found
-              </h3>
-              <p className="text-slate-600 dark:text-slate-400 mb-6">
-                Try adjusting your search or filters to find what you're looking
-                for.
-              </p>
-              <Button onClick={clearFilters} variant="outline">
-                Clear All Filters
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredDoctors.map((doctor) => (
-              <Card
-                key={doctor.id}
-                className="group border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur hover:border-rose-300 dark:hover:border-rose-700 transition-all duration-300 hover:shadow-xl hover:shadow-rose-500/10 hover:-translate-y-1 overflow-hidden"
-              >
-                <CardContent className="p-0">
-                  {/* Header with Gradient */}
-                  <div className="relative h-32 bg-gradient-to-br from-rose-500 to-indigo-600 dark:from-rose-700 dark:to-indigo-800">
-                    <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10" />
-                    <div className="absolute -bottom-12 left-6">
-                      <div className="w-24 h-24 rounded-2xl bg-white dark:bg-slate-900 border-4 border-white dark:border-slate-900 shadow-lg flex items-center justify-center">
-                        <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-rose-100 to-indigo-100 dark:from-rose-900/30 dark:to-indigo-900/30 flex items-center justify-center">
+           )}
+
+           {/* ===== RESULTS MATRIX ===== */}
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {filteredDoctors.map((doctor) => (
+                <div key={doctor.id} className="group glass-card rounded-[3.5rem] border-white/5 hover:border-rose-500/40 transition-all duration-700 hover:-translate-y-2 overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.4)]">
+                   <div className="relative h-48 bg-gradient-to-br from-rose-500/20 to-indigo-500/10 p-8 flex items-center justify-center">
+                       <div className="absolute inset-0 bg-[url('https://grain-y.com/assets/images/noise.png')] opacity-10 pointer-events-none" />
+                       <div className="p-6 glass bg-white/5 border border-white/10 rounded-[2.5rem] group-hover:scale-110 transition-transform duration-700 shadow-2xl relative z-10">
                           {getSpecializationIcon(doctor.specialization)}
-                        </div>
-                      </div>
-                    </div>
-                    {doctor.is_verified && (
-                      <Badge className="absolute top-4 right-4 bg-emerald-500/90 text-white border-0 backdrop-blur-md">
-                        <CheckCircle2 className="h-3 w-3 mr-1" />
-                        Verified
-                      </Badge>
-                    )}
-                  </div>
+                       </div>
+                       {doctor.is_verified && (
+                          <div className="absolute top-6 right-8 p-1.5 glass bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
+                             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                          </div>
+                       )}
+                   </div>
 
-                  {/* Content */}
-                  <div className="pt-16 px-6 pb-6">
-                    <div className="mb-4">
-                      <h3 className="font-bold text-xl text-slate-900 dark:text-white mb-1 group-hover:text-rose-600 dark:group-hover:text-rose-400 transition-colors">
-                        {doctor.specialization}
-                      </h3>
-                      <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                        <span>License: {doctor.license_number}</span>
-                        {doctor.years_of_experience && (
-                          <>
-                            <span>•</span>
-                            <span>{doctor.years_of_experience} years exp.</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {doctor.bio && (
-                      <p className="text-slate-600 dark:text-slate-400 text-sm mb-4 line-clamp-2">
-                        {doctor.bio}
-                      </p>
-                    )}
-
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {doctor.consultation_types?.includes("online") && (
-                        <Badge
-                          variant="secondary"
-                          className="bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400"
-                        >
-                          <Video className="h-3 w-3 mr-1" />
-                          Online
-                        </Badge>
-                      )}
-                      {doctor.consultation_types?.includes("in_clinic") && (
-                        <Badge
-                          variant="secondary"
-                          className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400"
-                        >
-                          <Building className="h-3 w-3 mr-1" />
-                          In-Clinic
-                        </Badge>
-                      )}
-                      {doctor.emergency_availability && (
-                        <Badge className="bg-rose-100 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400">
-                          <AlertCircle className="h-3 w-3 mr-1" />
-                          Emergency
-                        </Badge>
-                      )}
-                    </div>
-
-                    {/* Location & Languages */}
-                    <div className="space-y-2 mb-4">
-                      {doctor.location && (
-                        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                          <MapPin className="h-4 w-4" />
-                          {doctor.location}
-                        </div>
-                      )}
-                      {doctor.languages && doctor.languages.length > 0 && (
-                        <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
-                          <span>🌐</span>
-                          {doctor.languages.join(", ")}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Rating */}
-                    {doctor.rating_avg && (
-                      <div className="flex items-center gap-2 mb-4">
-                        <div className="flex text-amber-500">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`h-4 w-4 ${
-                                i < Math.floor(doctor.rating_avg!)
-                                  ? "fill-current"
-                                  : "text-slate-300 dark:text-slate-600"
-                              }`}
-                            />
-                          ))}
-                        </div>
-                        <span className="font-bold text-slate-900 dark:text-white">
-                          {doctor.rating_avg.toFixed(1)}
-                        </span>
-                        {doctor.review_count && (
-                          <span className="text-sm text-slate-500 dark:text-slate-400">
-                            ({doctor.review_count} reviews)
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Price & Action */}
-                    <div className="pt-4 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                   <div className="p-10 space-y-8 relative">
                       <div>
-                        <span className="text-xs text-slate-500 dark:text-slate-400 uppercase">
-                          {isEmergency ? "Emergency Fee" : "Consultation"}
-                        </span>
-                        <p
-                          className={`font-extrabold text-2xl ${
-                            isEmergency
-                              ? "text-rose-600 dark:text-rose-400"
-                              : "text-slate-900 dark:text-white"
-                          }`}
-                        >
-                          $
-                          {isEmergency
-                            ? doctor.emergency_fee || doctor.consultation_fee
-                            : doctor.consultation_fee}
-                        </p>
+                         <h3 className="text-2xl font-black italic tracking-tighter uppercase mb-2 group-hover:text-rose-500 transition-colors">
+                            {doctor.specialization}
+                         </h3>
+                         <div className="flex items-center gap-4 text-[9px] font-black uppercase tracking-[0.2em] text-foreground/20 italic">
+                            <span>Lic: {doctor.license_number}</span>
+                            <span className="w-1 h-1 rounded-full bg-rose-500/30" />
+                            <span>{doctor.years_of_experience}+ Years Deployment</span>
+                         </div>
                       </div>
-                      <Button
-                        onClick={() =>
-                          navigate(
-                            `/services/health/doctor/${doctor.user_id}${
-                              isEmergency ? "?emergency=true" : ""
-                            }`,
-                          )
-                        }
-                        className={`rounded-full font-semibold ${
-                          isEmergency
-                            ? "bg-rose-600 hover:bg-rose-700 text-white"
-                            : "bg-gradient-to-r from-rose-600 to-indigo-600 hover:from-rose-700 hover:to-indigo-700 text-white"
-                        }`}
-                      >
-                        {isEmergency ? "Emergency" : "Book"}
-                        <Calendar className="ml-2 h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+
+                      <div className="flex flex-wrap gap-2 text-foreground/40 italic text-sm leading-relaxed tracking-tight line-clamp-2">
+                         {doctor.bio}
+                      </div>
+
+                      <div className="flex items-center justify-between pt-6 border-t border-white/5">
+                         <div>
+                            <span className="text-[8px] font-black uppercase tracking-[0.3em] text-foreground/20 italic">Session Cost</span>
+                            <p className="text-3xl font-black italic tracking-tighter">${isEmergency ? doctor.emergency_fee : doctor.consultation_fee}</p>
+                         </div>
+                         <Button 
+                            onClick={() => navigate(`/health/book/${doctor.id}${isEmergency ? '?emergency=true' : ''}`)}
+                            className="h-14 px-8 rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-rose-500/20"
+                         >
+                            Initialize
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                         </Button>
+                      </div>
+                   </div>
+                </div>
+              ))}
+           </div>
+
+           {filteredDoctors.length === 0 && (
+              <div className="py-40 text-center space-y-6">
+                 <div className="w-24 h-24 glass bg-white/5 border border-white/10 rounded-[3rem] mx-auto flex items-center justify-center">
+                    <Search className="h-10 w-10 text-foreground/10" />
+                 </div>
+                 <h2 className="text-4xl font-black italic tracking-tighter uppercase text-foreground/20">No Component Identified</h2>
+                 <Button onClick={clearFilters} variant="outline" className="rounded-2xl h-14 border-white/10 text-[10px] font-black uppercase tracking-widest">Reset Discovery</Button>
+              </div>
+           )}
+        </div>
+      </section>
 
       {/* Footer Spacer */}
-      <div className="h-24 bg-slate-50 dark:bg-slate-950" />
+      <div className="h-40" />
     </div>
   );
 };

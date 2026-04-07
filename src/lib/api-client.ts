@@ -87,7 +87,7 @@ const sanitizeErrorMessage = (message: string): string => {
     /credential/i,
   ];
 
-  let sanitized = message;
+  const sanitized = message;
 
   // Don't expose internal details in production
   if (import.meta.env.PROD) {

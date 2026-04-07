@@ -6,12 +6,7 @@ import { SellerSignupForm } from "@/components/signup/SellerSignupForm";
 import { FactorySignupForm } from "@/components/signup/FactorySignupForm";
 import { DeliverySignupForm } from "@/components/signup/DeliverySignupForm";
 import { RoleSelection } from "@/components/signup/RoleSelection";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardTitle,
-} from "@/components/ui";
+import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertCircle,
@@ -27,6 +22,7 @@ import {
   Building2,
   Truck,
   ChevronRight,
+  Chrome,
 } from "lucide-react";
 import { Button } from "@/components/ui";
 import { useTheme } from "@/hooks/useTheme";
@@ -36,13 +32,14 @@ import { toast } from "sonner";
 export function SignupPage() {
   const navigate = useNavigate();
   const { theme, setTheme } = useTheme();
-  const { signUp } = useAuth();
+  const { signUp, signUpWithGoogle } = useAuth();
   const [searchParams] = useSearchParams();
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [createdEmail, setCreatedEmail] = useState<string>("");
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   // Handle tab query parameter from login page
   useEffect(() => {
@@ -71,6 +68,24 @@ export function SignupPage() {
   const handleRoleSelect = (role: UserRole) => {
     setSelectedRole(role);
     setError(null);
+  };
+
+  const handleGoogleSignup = async () => {
+    if (!selectedRole) {
+      setError("Please select a role first");
+      return;
+    }
+
+    setGoogleLoading(true);
+    setError(null);
+
+    const accountType = getAccountType(selectedRole);
+    const { error } = await signUpWithGoogle(accountType as any);
+
+    if (error) {
+      setError(error.message);
+      toast.error(error.message);
+    }
   };
 
   const handleBack = () => {
@@ -414,157 +429,204 @@ export function SignupPage() {
                 </CardContent>
               </Card>
             ) : (
-              <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-xl shadow-slate-200/50 dark:shadow-black/20 overflow-hidden">
-                <div className="p-6 sm:p-8">
-                  {selectedRole === "customer" && (
-                    <CustomerSignupForm
-                      onSubmit={async (formData: {
-                        email: string;
-                        password: string;
-                        full_name: string;
-                        phone?: string;
-                      }) => {
-                        setLoading(true);
-                        try {
-                          const { error } = await signUp(
-                            formData.email,
-                            formData.password,
-                            formData.full_name,
-                            "customer",
-                            {
-                              phone: formData.phone,
-                            },
-                          );
-                          if (error) setError(error.message);
-                          else handleSignupComplete(formData.email);
-                        } catch (err) {
-                          const errorMessage =
-                            err instanceof Error
-                              ? err.message
-                              : "Unknown error";
-                          setError(errorMessage);
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      onBack={handleBack}
-                      loading={loading}
-                    />
-                  )}
-                  {selectedRole === "seller" && (
-                    <SellerSignupForm
-                      onSubmit={async (formData: {
-                        email: string;
-                        password: string;
-                        full_name: string;
-                        phone?: string;
-                        location?: string;
-                        currency?: string;
-                      }) => {
-                        setLoading(true);
-                        try {
-                          const { error } = await signUp(
-                            formData.email,
-                            formData.password,
-                            formData.full_name,
-                            "seller",
-                            {
-                              phone: formData.phone,
-                              location: formData.location,
-                              currency: formData.currency,
-                            },
-                          );
-                          if (error) setError(error.message);
-                          else handleSignupComplete(formData.email);
-                        } catch (err) {
-                          const errorMessage =
-                            err instanceof Error
-                              ? err.message
-                              : "Unknown error";
-                          setError(errorMessage);
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      onBack={handleBack}
-                      loading={loading}
-                    />
-                  )}
-                  {selectedRole === "factory" && (
-                    <FactorySignupForm
-                      onSubmit={async (formData: {
-                        email: string;
-                        password: string;
-                        full_name: string;
-                        phone?: string;
-                        location?: string;
-                        currency?: string;
-                        production_capacity?: string;
-                        min_order_quantity?: number;
-                      }) => {
-                        setLoading(true);
-                        try {
-                          const { error } = await signUp(
-                            formData.email,
-                            formData.password,
-                            formData.full_name,
-                            "factory",
-                            {
-                              phone: formData.phone,
-                              location: formData.location,
-                              currency: formData.currency,
-                              production_capacity: formData.production_capacity,
-                              min_order_quantity: formData.min_order_quantity,
-                            },
-                          );
-                          if (error) setError(error.message);
-                          else handleSignupComplete(formData.email);
-                        } catch (err) {
-                          const errorMessage =
-                            err instanceof Error
-                              ? err.message
-                              : "Unknown error";
-                          setError(errorMessage);
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      onBack={handleBack}
-                      loading={loading}
-                    />
-                  )}
-                  {selectedRole === "delivery" && (
-                    <DeliverySignupForm
-                      onSubmit={async (formData: DeliverySignupData) => {
-                        setLoading(true);
-                        try {
-                          const { error } = await signUp(
-                            formData.email,
-                            formData.password,
-                            formData.full_name,
-                            "delivery_driver",
-                            {
-                              phone: formData.phone,
-                              vehicle_type: formData.vehicle_type,
-                              vehicle_number: formData.vehicle_number,
-                            },
-                          );
-                          if (error) setError(error.message);
-                          else handleSignupComplete(formData.email);
-                        } catch (err) {
-                          const errorMessage =
-                            err instanceof Error
-                              ? err.message
-                              : "Unknown error";
-                          setError(errorMessage);
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      onBack={handleBack}
-                      loading={loading}
-                    />
-                  )}
+              <div className="space-y-6">
+                {/* Google Signup Button */}
+                <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl p-6 sm:p-8">
+                  <div className="text-center mb-6">
+                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                      Quick Signup with Google
+                    </h3>
+                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                      Sign up as <strong>{selectedRole}</strong> using your
+                      Google account
+                    </p>
+                  </div>
+
+                  <Button
+                    onClick={handleGoogleSignup}
+                    disabled={googleLoading}
+                    className="w-full h-14 bg-white hover:bg-slate-50 text-slate-900 border-2 border-slate-200 hover:border-slate-300 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3"
+                  >
+                    <Chrome className="h-5 w-5 text-red-500" />
+                    {googleLoading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-slate-300 border-t-red-500" />
+                        Connecting to Google...
+                      </>
+                    ) : (
+                      <>
+                        Continue with Google as {selectedRole}
+                        <ArrowRight className="h-4 w-4 ml-1" />
+                      </>
+                    )}
+                  </Button>
+
+                  <div className="relative my-6">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-slate-200 dark:border-slate-700" />
+                    </div>
+                    <div className="relative flex justify-center text-xs uppercase tracking-widest font-bold">
+                      <span className="px-4 bg-white/60 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 rounded-full">
+                        Or signup with email
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Email Signup Forms */}
+                <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-xl shadow-slate-200/50 dark:shadow-black/20 overflow-hidden">
+                  <div className="p-6 sm:p-8">
+                    {selectedRole === "customer" && (
+                      <CustomerSignupForm
+                        onSubmit={async (formData: {
+                          email: string;
+                          password: string;
+                          full_name: string;
+                          phone?: string;
+                        }) => {
+                          setLoading(true);
+                          try {
+                            const { error } = await signUp(
+                              formData.email,
+                              formData.password,
+                              formData.full_name,
+                              "customer",
+                              {
+                                phone: formData.phone,
+                              },
+                            );
+                            if (error) setError(error.message);
+                            else handleSignupComplete(formData.email);
+                          } catch (err) {
+                            const errorMessage =
+                              err instanceof Error
+                                ? err.message
+                                : "Unknown error";
+                            setError(errorMessage);
+                          } finally {
+                            setLoading(false);
+                          }
+                        }}
+                        onBack={handleBack}
+                        loading={loading}
+                      />
+                    )}
+                    {selectedRole === "seller" && (
+                      <SellerSignupForm
+                        onSubmit={async (formData: {
+                          email: string;
+                          password: string;
+                          full_name: string;
+                          phone?: string;
+                          location?: string;
+                          currency?: string;
+                        }) => {
+                          setLoading(true);
+                          try {
+                            const { error } = await signUp(
+                              formData.email,
+                              formData.password,
+                              formData.full_name,
+                              "seller",
+                              {
+                                phone: formData.phone,
+                                location: formData.location,
+                                currency: formData.currency,
+                              },
+                            );
+                            if (error) setError(error.message);
+                            else handleSignupComplete(formData.email);
+                          } catch (err) {
+                            const errorMessage =
+                              err instanceof Error
+                                ? err.message
+                                : "Unknown error";
+                            setError(errorMessage);
+                          } finally {
+                            setLoading(false);
+                          }
+                        }}
+                        onBack={handleBack}
+                        loading={loading}
+                      />
+                    )}
+                    {selectedRole === "factory" && (
+                      <FactorySignupForm
+                        onSubmit={async (formData: {
+                          email: string;
+                          password: string;
+                          full_name: string;
+                          phone?: string;
+                          location?: string;
+                          currency?: string;
+                          production_capacity?: string;
+                          min_order_quantity?: number;
+                        }) => {
+                          setLoading(true);
+                          try {
+                            const { error } = await signUp(
+                              formData.email,
+                              formData.password,
+                              formData.full_name,
+                              "factory",
+                              {
+                                phone: formData.phone,
+                                location: formData.location,
+                                currency: formData.currency,
+                                production_capacity:
+                                  formData.production_capacity,
+                                min_order_quantity: formData.min_order_quantity,
+                              },
+                            );
+                            if (error) setError(error.message);
+                            else handleSignupComplete(formData.email);
+                          } catch (err) {
+                            const errorMessage =
+                              err instanceof Error
+                                ? err.message
+                                : "Unknown error";
+                            setError(errorMessage);
+                          } finally {
+                            setLoading(false);
+                          }
+                        }}
+                        onBack={handleBack}
+                        loading={loading}
+                      />
+                    )}
+                    {selectedRole === "delivery" && (
+                      <DeliverySignupForm
+                        onSubmit={async (formData: DeliverySignupData) => {
+                          setLoading(true);
+                          try {
+                            const { error } = await signUp(
+                              formData.email,
+                              formData.password,
+                              formData.full_name,
+                              "delivery_driver",
+                              {
+                                phone: formData.phone,
+                                vehicle_type: formData.vehicle_type,
+                                vehicle_number: formData.vehicle_number,
+                              },
+                            );
+                            if (error) setError(error.message);
+                            else handleSignupComplete(formData.email);
+                          } catch (err) {
+                            const errorMessage =
+                              err instanceof Error
+                                ? err.message
+                                : "Unknown error";
+                            setError(errorMessage);
+                          } finally {
+                            setLoading(false);
+                          }
+                        }}
+                        onBack={handleBack}
+                        loading={loading}
+                      />
+                    )}
+                  </div>
                 </div>
               </div>
             )}

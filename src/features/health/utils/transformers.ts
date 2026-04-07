@@ -246,7 +246,7 @@ export function generateAvailableSlots(
       const [startHour, startMin] = slot.start.split(':').map(Number);
       const [endHour, endMin] = slot.end.split(':').map(Number);
       
-      let currentTime = new Date(date);
+      const currentTime = new Date(date);
       currentTime.setHours(startHour, startMin, 0, 0);
       
       const endTime = new Date(date);

@@ -246,7 +246,7 @@ export function sanitizeRichText(html: string): string {
     sanitized = sanitized.replace(regex, "");
 
     // Also remove self-closing dangerous tags
-    const selfClosingRegex = new RegExp(`<${tag}[^>]*\/?>`, "gi");
+    const selfClosingRegex = new RegExp(`<${tag}[^>]*\\/?>`, "gi");
     sanitized = sanitized.replace(selfClosingRegex, "");
   });
 

@@ -66,10 +66,10 @@
     "whyChooseUs": "Why Choose Us",
     "builtForSuccess": "Built for Success",
     "builtForSuccessDesc": "Everything you need to thrive in the digital marketplace",
-    "testimonials": "Testimonials",
+    "testimonialsTitle": "Testimonials",
     "lovedByThousands": "Loved by Thousands",
     "seeWhatUsersSay": "See what our users have to say",
-    "whyChooseAurora": "Why Choose Aurora?",
+    "whyChooseAuroraTitle": "Why Choose Aurora?",
     "ecosystemDesc": "A complete B2B2C ecosystem connecting everyone in the supply chain",
     "multiRolePlatformDesc": "5 different roles working together seamlessly",
     "secureTrusted": "Secure & Trusted",
@@ -233,13 +233,22 @@
     "quantity": "Quantity"
   },
   "cart": {
+    "title": "Shopping Bag",
+    "item": "Item",
+    "items": "Items",
+    "inBag": "in your bag",
     "yourCart": "Your Cart",
     "emptyCart": "Your cart is empty",
+    "emptyTitle": "Your Bag is Empty",
+    "emptyDescription": "Looks like you haven't added anything to your cart yet. Discover our premium collections and start shopping today!",
+    "startShopping": "Start Shopping",
     "total": "Total",
     "subtotal": "Subtotal",
     "removeItem": "Remove item",
     "continueShopping": "Continue Shopping",
-    "proceedToCheckout": "Proceed to Checkout"
+    "proceedToCheckout": "Proceed to Checkout",
+    "freeShippingBadge": "You're eligible for free express shipping on this order!",
+    "termsNotice": "By proceeding to checkout, you agree to our Terms of Service and Privacy Policy. Taxes and shipping calculated at checkout."
   },
   "settings": {
     "title": "Settings",
@@ -829,5 +838,91 @@
     "viewDetails": "View Details",
     "callPharmacy": "Call Pharmacy",
     "getDirections": "Get Directions"
+  },
+  "servicesNexus": {
+    "programmer": {
+      "title": "Elite Programmer Matrix",
+      "subtitle": "Connecting with global architecture masters.",
+      "searchPlaceholder": "Search Engineer ID or Stack...",
+      "secureLink": "Secure Nexus Link",
+      "verification": "Neural Verification Active",
+      "label": "DEV_MODE",
+      "tag": "Nexus Architecture"
+    },
+    "translator": {
+      "title": "Linguistic Processor Matrix",
+      "subtitle": "Native precision across 40+ language nodes.",
+      "searchPlaceholder": "Filter Language Protocol...",
+      "secureLink": "Initiate Protocol",
+      "label": "LINGUA_LINK",
+      "tag": "Global Translation Hub"
+    },
+    "designer": {
+      "title": "Aesthetik Archive",
+      "subtitle": "High-fidelity visual systems & creative ops.",
+      "searchPlaceholder": "Filter Visual Asset...",
+      "secureLink": "Secure Link",
+      "label": "CREATIVE_CORE",
+      "tag": "Visual Identity System"
+    },
+    "home": {
+      "title": "Facility Management Matrix",
+      "subtitle": "Certified maintenance nodes & smart home protocols.",
+      "searchPlaceholder": "Filter Maintenance Sector...",
+      "secureLink": "Dispatch Node",
+      "label": "HOME_FIX",
+      "tag": "Facility Maintenance",
+      "verification": "Facility Trust Active"
+    },
+    "generic": {
+      "label": "SERVICES",
+      "tag": "Elite Nexus"
+    },
+    "signup": {
+      "title": "NEURAL ONBOARDING",
+      "subtitle": "Select your entry protocol to join the global service matrix.",
+      "tagline": "AURORA_NEXUS_v1.0",
+      "provider": {
+        "title": "Operational Provider",
+        "subtitle": "Offer specialized high-fidelity assets.",
+        "desc": "Join as an elite technician or specialist and offer your services to the global network.",
+        "cta": "Start Provisioning"
+      },
+      "consumer": {
+        "title": "Nexus Client",
+        "subtitle": "Hire & book specialized nodes.",
+        "desc": "Access the global pool of verified specialists for your specific project requirements.",
+        "cta": "Access Nexus"
+      },
+      "benefits": {
+        "compare": "Browse & Compare",
+        "compareDesc": "Top-rated neural nodes",
+        "payments": "Secure Protocol",
+        "paymentsDesc": "Escrow vault protection",
+        "booking": "Instant Manifest",
+        "bookingDesc": "Real-time sync availability",
+        "chat": "Direct Synchronization",
+        "chatDesc": "Encrypted communication link"
+      }
+    },
+    "chat": {
+      "title": "Communication Matrix",
+      "subtitle": "Secure endpoint for global synchronization.",
+      "typeMessage": "Initialize transmission...",
+      "online": "Online",
+      "offline": "Offline",
+      "lastSeen": "Last Sync",
+      "noMessages": "Nexus Standby. Select identification to begin.",
+      "systemEstablish": "LINK_ESTABLISHED: End-to-end encryption active via Aurora Nexus.",
+      "context": "Operational Context"
+    },
+    "fab": {
+      "quickConnect": "Quick Connect",
+      "nexusLink": "Nexus Link v1.0",
+      "searchIdentification": "Search Identification...",
+      "frequentTransmissions": "Frequent Transmissions",
+      "fullHub": "Open Full Intelligence Hub",
+      "vaultActive": "Aurora Vault Protocol Active"
+    }
   }
 }

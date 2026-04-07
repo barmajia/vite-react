@@ -1,8 +1,7 @@
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Mail, Phone, Edit, Calendar } from "lucide-react";
+import { Mail, Phone, Edit, Calendar, ShieldCheck } from "lucide-react";
 import type { UserProfile, AccountType } from "@/types/profile";
 
 interface ProfileHeaderProps {
@@ -15,11 +14,11 @@ const roleConfig: Partial<Record<
   AccountType,
   { label: string; icon: string; color: string }
 >> = {
-  factory: { label: "Factory", icon: "🏭", color: "bg-blue-500" },
-  seller: { label: "Seller", icon: "🏪", color: "bg-green-500" },
-  middleman: { label: "Middleman", icon: "🤝", color: "bg-purple-500" },
-  user: { label: "User", icon: "👤", color: "bg-gray-500" },
-  admin: { label: "Admin", icon: "⚙️", color: "bg-red-500" },
+  factory: { label: "Factory", icon: "🏭", color: "from-blue-600 to-indigo-600" },
+  seller: { label: "Seller", icon: "🏪", color: "from-emerald-600 to-teal-600" },
+  middleman: { label: "Middleman", icon: "🤝", color: "from-amber-600 to-orange-600" },
+  user: { label: "User", icon: "👤", color: "from-gray-600 to-slate-600" },
+  admin: { label: "Admin", icon: "⚙️", color: "from-rose-600 to-pink-600" },
 };
 
 export function ProfileHeader({
@@ -27,67 +26,80 @@ export function ProfileHeader({
   isOwnProfile,
   onEdit,
 }: ProfileHeaderProps) {
-  const role = roleConfig[user.account_type] || { label: user.account_type || "User", icon: "👤", color: "bg-gray-500" };
+  const role = roleConfig[user.account_type] || { label: user.account_type || "User", icon: "👤", color: "from-gray-600 to-slate-600" };
 
   return (
-    <Card className="overflow-hidden">
-      {/* Cover Image */}
-      <div className={`h-32 ${role.color} relative`}>
+    <div className="glass-card overflow-hidden border-white/20 dark:border-white/10 shadow-2xl relative">
+      {/* Dynamic Cover Backdrop */}
+      <div className={`h-48 bg-gradient-to-br ${role.color} opacity-80 relative overflow-hidden`}>
+        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+        
         {isOwnProfile && onEdit && (
           <Button
-            variant="secondary"
+            variant="ghost"
             size="sm"
-            className="absolute bottom-2 right-4"
+            className="absolute bottom-6 right-6 glass border-white/20 text-white hover:bg-white/20 transition-all font-bold backdrop-blur-md"
             onClick={onEdit}
           >
-            <Edit className="h-4 w-4 mr-1" />
+            <Edit className="h-4 w-4 mr-2" />
             Edit Profile
           </Button>
         )}
       </div>
 
-      <CardContent className="relative pt-16 pb-6">
-        <div className="flex items-start gap-4">
-          {/* Avatar */}
-          <Avatar
-            name={user.full_name || user.email}
-            src={user.avatar_url}
-            size="xl"
-            className="border-4 border-background -mt-12"
-          />
+      <div className="px-8 pb-8 relative">
+        <div className="flex flex-col md:flex-row md:items-end gap-6 -mt-16 relative z-10">
+          {/* Avatar with Ring */}
+          <div className="relative group">
+            <div className={`absolute -inset-1 bg-gradient-to-r ${role.color} rounded-full blur opacity-25 group-hover:opacity-75 transition duration-1000 group-hover:duration-200`} />
+            <Avatar
+              name={user.full_name || user.email}
+              src={user.avatar_url}
+              size="xl"
+              className="h-32 w-32 border-4 border-background ring-4 ring-white/10 shadow-2xl relative"
+            />
+          </div>
 
           {/* User Info */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h1 className="text-2xl font-bold">
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="flex items-center gap-3">
+              <h1 className="text-3xl md:text-4xl font-black tracking-tighter text-foreground drop-shadow-sm">
                 {user.full_name || "Unnamed User"}
               </h1>
+              {user.is_verified && (
+                <ShieldCheck className="h-6 w-6 text-primary fill-primary/20" />
+              )}
             </div>
 
-            <Badge className={`mt-1 ${role.color} text-white`}>
-              {role.icon} {role.label}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge className={`glass border-none py-1 px-3 text-xs font-black uppercase tracking-widest bg-gradient-to-r ${role.color} text-white shadow-lg`}>
+                <span className="mr-1">{role.icon}</span> {role.label}
+              </Badge>
+            </div>
 
-            {/* Contact Info */}
-            <div className="flex flex-wrap gap-4 mt-3 text-sm text-muted-foreground">
-              <div className="flex items-center gap-1">
-                <Mail className="h-4 w-4" />
-                {user.email}
+            {/* Premium Contact Badges */}
+            <div className="flex flex-wrap gap-4 mt-4">
+              <div className="glass px-3 py-1.5 rounded-full flex items-center gap-2 text-xs font-bold text-muted-foreground border-white/10">
+                <Mail className="h-3.5 w-3.5 text-primary/70" />
+                <span>{user.email}</span>
               </div>
+              
               {user.phone && (
-                <div className="flex items-center gap-1">
-                  <Phone className="h-4 w-4" />
-                  {user.phone}
+                <div className="glass px-3 py-1.5 rounded-full flex items-center gap-2 text-xs font-bold text-muted-foreground border-white/10">
+                  <Phone className="h-3.5 w-3.5 text-emerald-500/70" />
+                  <span>{user.phone}</span>
                 </div>
               )}
-              <div className="flex items-center gap-1">
-                <Calendar className="h-4 w-4" />
-                Member since {new Date(user.created_at).toLocaleDateString()}
+              
+              <div className="glass px-3 py-1.5 rounded-full flex items-center gap-2 text-xs font-bold text-muted-foreground border-white/10">
+                <Calendar className="h-3.5 w-3.5 text-amber-500/70" />
+                <span>Since {new Date(user.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short' })}</span>
               </div>
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

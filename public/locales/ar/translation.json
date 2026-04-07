@@ -875,5 +875,59 @@
     "viewDetails": "عرض التفاصيل",
     "callPharmacy": "اتصل بالصيدلية",
     "getDirections": "احصل على الاتجاهات"
+  },
+  "servicesNexus": {
+    "programmer": {
+      "title": "مصفوفة البرمجة المتقدمة",
+      "subtitle": "الاتصال مع أساتذة الهندسة العالميين.",
+      "searchPlaceholder": "ابحث عن هوية المهندس أو التقنية...",
+      "secureLink": "رابط آمن",
+      "verification": "تحقق نشط",
+      "label": "DEV_MODE",
+      "tag": "هندسة نيكسوس"
+    },
+    "translator": {
+      "title": "مصفوفة المعالجة اللغوية",
+      "subtitle": "دقة أصلية عبر أكثر من 40 عقدة لغوية.",
+      "searchPlaceholder": "تصفية بروتوكول اللغة...",
+      "secureLink": "بدء البروتوكول",
+      "label": "LINGUA_LINK",
+      "tag": "مركز الترجمة العالمي"
+    },
+    "designer": {
+      "title": "أرشيف الجماليات",
+      "subtitle": "أنظمة بصرية عالية الجودة وعمليات إبداعية.",
+      "searchPlaceholder": "تصفية الأصل البصري...",
+      "secureLink": "رابط آمن",
+      "label": "CREATIVE_CORE",
+      "tag": "نظام الهوية البصرية"
+    },
+    "home": {
+      "label": "إصلاح_المنزل",
+      "tag": "صيانة المرافق"
+    },
+    "generic": {
+      "label": "خدمات",
+      "tag": "نيكسوس النخبة"
+    },
+    "chat": {
+      "title": "مصفوفة الاتصال",
+      "subtitle": "نقطة نهاية آمنة للمزامنة العالمية.",
+      "typeMessage": "بدء الإرسال...",
+      "online": "نشط",
+      "offline": "غير متصل",
+      "lastSeen": "آخر مزامنة",
+      "noMessages": "نيكسوس في وضع الاستعداد. اختر هوية للبدء.",
+      "systemEstablish": "تم إنشاء الرابط: تشفير طرف إلى طرف نشط عبر أورورا نيكسوس.",
+      "context": "السياق العملياتي"
+    },
+    "fab": {
+      "quickConnect": "اتصال سريع",
+      "nexusLink": "رابط نيكسوس",
+      "searchIdentification": "البحث عن الهوية...",
+      "frequentTransmissions": "عمليات الإرسال المتكررة",
+      "fullHub": "فتح مركز الاستخبارات الكامل",
+      "vaultActive": "بروتوكول أورورا نشط"
+    }
   }
 }
