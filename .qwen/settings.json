@@ -18,7 +18,8 @@
       "Bash(timeout *)",
       "Bash(rmdir *)",
       "Bash(type *)",
-      "Bash(select-string *)"
+      "Bash(select-string *)",
+      "Bash(mkdir *)"
     ]
   },
   "$version": 3

@@ -1,24 +1,16 @@
-// ChatLayout - Main Chat Page for Aurora E-commerce Platform
-import { useState } from "react";
+// ChatLayout – streamlined for desktop + mobile
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useConversations } from "@/hooks/useConversations";
 import { ChatWindow } from "./ChatWindow";
 import { ConversationItem } from "@/components/chat/ConversationItem";
-import { ChatHeader } from "@/components/chat/ChatHeader";
 import { StartNewChat } from "@/components/chat/StartNewChat";
-import { Input } from "@/components/ui";
-import { Button } from "@/components/ui";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar } from "@/components/ui/avatar";
-import {
-  Search,
-  MessageSquare,
-  Menu,
-  X,
-  RefreshCw,
-  MoreVertical,
-  Plus,
-} from "lucide-react";
+import { Search, MessageSquare, Plus, RefreshCw } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import type { ConversationListItem } from "@/lib/chat-types";
 
 export function ChatLayout() {
@@ -29,25 +21,49 @@ export function ChatLayout() {
   const [activeConversation, setActiveConversation] =
     useState<ConversationListItem | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [showSidebar, setShowSidebar] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const triedRefresh = useRef(false);
 
-  const filteredConversations = conversations.filter(
-    (conv) =>
-      conv.last_message?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      conv.other_user?.full_name
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase()) ||
-      conv.context.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  // Handle responsive behavior properly
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  // Filter conversations based on search
+  const filteredConversations = conversations.filter((conv) => {
+    const q = searchQuery.toLowerCase();
+    return (
+      conv.last_message?.toLowerCase().includes(q) ||
+      conv.other_user?.full_name?.toLowerCase().includes(q) ||
+      conv.context?.toLowerCase().includes(q)
+    );
+  });
+
+  const syncUrl = (conversation: ConversationListItem | null) => {
+    const params = new URLSearchParams(searchParams);
+    if (conversation) {
+      params.set("conversationId", conversation.id);
+    } else {
+      params.delete("conversationId");
+    }
+    setSearchParams(params, { replace: true });
+  };
 
   const handleSelectConversation = (conversation: ConversationListItem) => {
     setActiveConversation(conversation);
-    // On mobile, hide sidebar when conversation selected
-    if (window.innerWidth < 768) {
-      setShowSidebar(false);
-    }
+    syncUrl(conversation);
+    if (isMobile) window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleBackToList = () => {
+    setActiveConversation(null);
+    syncUrl(null);
   };
 
   const handleRefresh = async () => {
@@ -56,200 +72,153 @@ export function ChatLayout() {
     setIsRefreshing(false);
   };
 
-  const handleBackToList = () => {
-    setActiveConversation(null);
-    setShowSidebar(true);
-  };
+  // Activate conversation from URL param
+  useEffect(() => {
+    const cid = searchParams.get("conversationId");
+    if (!cid) return;
+    const found = conversations.find((c) => c.id === cid);
+    if (found) {
+      setActiveConversation(found);
+      triedRefresh.current = false;
+    } else if (!triedRefresh.current) {
+      triedRefresh.current = true;
+      handleRefresh();
+    }
+  }, [searchParams, conversations]);
 
+  // Show simplified loading state
   if (!user) {
     return (
-      <div className="h-[calc(100vh-4rem)] flex items-center justify-center pt-16">
-        <div className="text-center">
-          <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-2xl font-bold mb-2">Sign in to view messages</h2>
-          <p className="text-muted-foreground">
-            You need to be signed in to access your conversations
+      <div className="h-screen flex items-center justify-center bg-background">
+        <div className="text-center p-6">
+          <MessageSquare className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
+          <h2 className="text-xl font-semibold">Sign in to chat</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Access your conversations after signing in
           </p>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="h-screen flex bg-background overflow-hidden">
-      {/* Chat Header */}
-      <ChatHeader />
-
-      {/* Main Content - Sidebar + Chat Window */}
-      <div className="flex flex-1 pt-16 overflow-hidden">
-        {/* Sidebar - Conversation List (WhatsApp Style) */}
-        <div
-          className={`${
-            showSidebar ? "translate-x-0" : "-translate-x-full"
-          } fixed md:relative md:translate-x-0 z-10 w-full md:w-96 lg:w-[420px] h-full bg-card border-r flex flex-col transition-transform duration-300 ease-in-out`}
-        >
-          {/* Sidebar Header */}
-          <div className="px-4 py-3 border-b bg-muted/30">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <Avatar
-                  name={user?.full_name}
-                  src={user?.avatar_url}
-                  size="md"
-                  className="bg-primary"
-                />
-                <div>
-                  <h1 className="text-lg font-bold">Chats</h1>
-                  <p className="text-xs text-muted-foreground">
-                    {conversations.length} conversations
-                  </p>
-                </div>
-              </div>
-              <div className="flex gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9"
-                  title="New Chat"
-                  onClick={() => setIsNewChatOpen(true)}
-                >
-                  <Plus className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  className="h-9 w-9"
-                  title="Start New Chat"
-                  onClick={() => setIsNewChatOpen(true)}
-                >
-                  <MessageSquare className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9"
-                  onClick={handleRefresh}
-                  disabled={isRefreshing}
-                  title="Refresh"
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
-                  />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9 md:hidden"
-                  onClick={() => setShowSidebar(false)}
-                >
-                  <X className="h-5 w-5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-9 w-9"
-                  title="More Options"
-                >
-                  <MoreVertical className="h-5 w-5" />
-                </Button>
-              </div>
-            </div>
-
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search or start new chat"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-10 bg-muted/50 border-0"
-              />
+  // Unified responsive layout
+  const Sidebar = (
+    <div className="w-full md:w-80 lg:w-96 border-r flex flex-col bg-card">
+      <div className="px-4 py-3 border-b">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <Avatar name={user?.full_name} src={user?.avatar_url} size="sm" />
+            <div>
+              <h1 className="font-semibold">Chats</h1>
+              <p className="text-xs text-muted-foreground">
+                {conversations.length} conversations
+              </p>
             </div>
           </div>
-
-          {/* Conversation List */}
-          <ScrollArea className="flex-1">
-            <div className="divide-y">
-              {loading ? (
-                <div className="p-8 text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto mb-4"></div>
-                  <p className="text-muted-foreground">
-                    Loading conversations...
-                  </p>
-                </div>
-              ) : error ? (
-                <div className="p-8 text-center text-destructive">
-                  <p>Error loading conversations</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleRefresh}
-                    className="mt-2"
-                  >
-                    Try Again
-                  </Button>
-                </div>
-              ) : filteredConversations.length === 0 ? (
-                <div className="p-8 text-center">
-                  <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-                  <p className="text-muted-foreground">
-                    {searchQuery
-                      ? "No conversations found"
-                      : "No conversations yet"}
-                  </p>
-                  {!searchQuery && (
-                    <p className="text-sm mt-2">
-                      Start a conversation from a product or profile
-                    </p>
-                  )}
-                </div>
-              ) : (
-                filteredConversations.map((conv) => (
-                  <ConversationItem
-                    key={conv.id}
-                    conversation={conv}
-                    isActive={activeConversation?.id === conv.id}
-                    onClick={() => handleSelectConversation(conv)}
-                  />
-                ))
-              )}
-            </div>
-          </ScrollArea>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setIsNewChatOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+            >
+              <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            </Button>
+          </div>
         </div>
-
-        {/* Main Chat Window */}
-        <div className="flex-1 flex flex-col min-w-0 bg-background">
-          {activeConversation ? (
-            <ChatWindow
-              conversation={activeConversation}
-              onBack={handleBackToList}
-            />
-          ) : (
-            <div className="flex-1 flex items-center justify-center bg-muted/10">
-              <div className="text-center p-8 max-w-md">
-                <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mx-auto mb-6">
-                  <MessageSquare className="h-12 w-12 text-muted-foreground" />
-                </div>
-                <h2 className="text-2xl font-bold mb-2">Aurora Chat</h2>
-                <p className="text-muted-foreground mb-6">
-                  Send and receive messages with your contacts
-                </p>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowSidebar(true)}
-                  className="md:hidden"
-                >
-                  <Menu className="h-4 w-4 mr-2" />
-                  View Conversations
-                </Button>
-              </div>
-            </div>
-          )}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search chats"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9 h-9 text-sm"
+          />
         </div>
       </div>
 
-      {/* New Chat Dialog */}
-      <StartNewChat open={isNewChatOpen} onOpenChange={setIsNewChatOpen} />
+      <ScrollArea className="flex-1">
+        {loading ? (
+          <div className="p-6 text-center text-sm text-muted-foreground">Loading...</div>
+        ) : error ? (
+          <div className="p-6 text-center">
+            <p className="text-sm text-destructive">Failed to load</p>
+            <Button variant="link" size="sm" onClick={handleRefresh}>
+              Try again
+            </Button>
+          </div>
+        ) : filteredConversations.length === 0 ? (
+          <div className="p-6 text-center text-sm text-muted-foreground">
+            {searchQuery ? "No matches" : "Start a chat from any product"}
+          </div>
+        ) : (
+          <div className="divide-y">
+            {filteredConversations.map((conv) => (
+              <ConversationItem
+                key={conv.id}
+                conversation={conv}
+                isActive={activeConversation?.id === conv.id}
+                onClick={() => {
+                  setActiveConversation(conv);
+                  if (isMobile) window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </ScrollArea>
+    </div>
+  );
+
+  return (
+    <div className="h-screen bg-background flex flex-col md:flex-row">
+      {/* Mobile: show list or chat; Desktop: grid */}
+      <div className={`${isMobile && activeConversation ? "hidden" : "block"} md:block md:flex-shrink-0`}>
+        {Sidebar}
+      </div>
+
+      <div className="flex-1 min-w-0 flex flex-col">
+        {isMobile && !activeConversation ? (
+          <div className="flex-1 flex items-center justify-center bg-muted/20">
+            <div className="text-center p-6">
+              <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+              <p className="text-sm text-muted-foreground">
+                Select a conversation or start a new one
+              </p>
+            </div>
+          </div>
+        ) : activeConversation ? (
+          <ChatWindow conversation={activeConversation} onBack={handleBackToList} />
+        ) : (
+          <div className="flex-1 flex items-center justify-center bg-muted/20">
+            <div className="text-center p-6">
+              <MessageSquare className="h-16 w-16 mx-auto mb-4 text-muted-foreground/50" />
+              <h2 className="text-lg font-semibold mb-1">Aurora Chat</h2>
+              <p className="text-sm text-muted-foreground">
+                Select a conversation to start messaging
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* New Chat Modal */}
+      {isNewChatOpen && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-card rounded-lg w-full max-w-md p-0">
+            <StartNewChat open={isNewChatOpen} onOpenChange={setIsNewChatOpen} />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

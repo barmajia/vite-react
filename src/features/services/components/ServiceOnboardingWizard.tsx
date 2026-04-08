@@ -21,6 +21,9 @@ import {
   Hospital,
   ArrowRight,
   CheckCircle,
+  ShieldCheck,
+  Sparkles,
+  LaptopMinimal,
 } from "lucide-react";
 
 type ProviderType = "individual" | "company" | "health_provider" | "hospital";
@@ -75,7 +78,6 @@ export const ServiceOnboardingWizard = () => {
     setIsLoading(true);
 
     try {
-      // 1. Check if provider profile already exists
       const { data: existingProvider } = await supabase
         .from("svc_providers")
         .select("id")
@@ -83,7 +85,6 @@ export const ServiceOnboardingWizard = () => {
         .single();
 
       if (existingProvider) {
-        // Provider already exists, update instead
         const { error: updateError } = await supabase
           .from("svc_providers")
           .update({
@@ -107,24 +108,21 @@ export const ServiceOnboardingWizard = () => {
           throw updateError;
         }
       } else {
-        // 2. Create Service Provider Profile (only if doesn't exist)
-        const { error: providerError } = await supabase
-          .from("svc_providers")
-          .insert({
-            user_id: user.id,
-            provider_name: formData.business_name,
-            provider_type: providerType,
-            tagline: formData.tagline || null,
-            description: formData.description,
-            phone: formData.phone || null,
-            website: formData.website || null,
-            location_city: formData.city || null,
-            specialties: formData.skills
-              ? formData.skills.split(",").map((s) => s.trim())
-              : null,
-            status: "pending_review",
-            is_verified: false,
-          });
+        const { error: providerError } = await supabase.from("svc_providers").insert({
+          user_id: user.id,
+          provider_name: formData.business_name,
+          provider_type: providerType,
+          tagline: formData.tagline || null,
+          description: formData.description,
+          phone: formData.phone || null,
+          website: formData.website || null,
+          location_city: formData.city || null,
+          specialties: formData.skills
+            ? formData.skills.split(",").map((s) => s.trim())
+            : null,
+          status: "pending_review",
+          is_verified: false,
+        });
 
         if (providerError) {
           console.error("Provider insert error:", providerError);
@@ -133,12 +131,9 @@ export const ServiceOnboardingWizard = () => {
       }
 
       toast.success("Profile created successfully!");
-
-      // Redirect to create first listing
       navigate("/services/dashboard/create-listing");
     } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : "Unknown error";
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       console.error(errorMessage);
       toast.error(`Failed to create profile: ${errorMessage}`);
     } finally {
@@ -151,102 +146,137 @@ export const ServiceOnboardingWizard = () => {
     return true;
   };
 
+  const progressBar = (percent: number) => (
+    <div className="w-24 h-2 bg-slate-100 rounded-full overflow-hidden">
+      <div className="h-full bg-primary rounded-full" style={{ width: `${percent}%` }} />
+    </div>
+  );
+
   // Step 1: Select Type
   if (step === 1) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-12 px-4">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-10">
-            <h2 className="text-3xl font-bold mb-2">
-              Become a Service Provider
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 py-12 px-4">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.25fr,0.75fr] gap-8 items-stretch">
+          <div className="bg-white/5 border border-white/10 backdrop-blur-xl rounded-2xl p-8 shadow-2xl flex flex-col justify-center">
+            <div className="flex items-center gap-3 mb-6 text-white">
+              <LaptopMinimal className="h-5 w-5 text-primary" />
+              <p className="text-xs uppercase tracking-[0.25em] text-primary">
+                Services Dashboard
+              </p>
+            </div>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white leading-tight mb-4">
+              Build your provider workspace in two quick steps.
             </h2>
-            <p className="text-muted-foreground">
-              Choose the type of account that best describes you.
+            <p className="text-slate-300 mb-8 text-lg">
+              Pick the role that matches your operation. We’ll tailor fields, verification, and
+              the dashboard to fit.
             </p>
+            <div className="space-y-3 text-slate-200">
+              <div className="flex items-start gap-3">
+                <ShieldCheck className="h-5 w-5 text-emerald-400 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Secure identity</p>
+                  <p className="text-sm text-slate-300/80">
+                    RLS-protected profile creation with audit-ready metadata.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Sparkles className="h-5 w-5 text-amber-300 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Personalized flows</p>
+                  <p className="text-sm text-slate-300/80">
+                    Different checklists for freelancers, agencies, and medical providers.
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Individual Freelancer */}
-            <Card
-              className={`cursor-pointer transition-all hover:border-primary hover:shadow-lg ${
-                providerType === "individual"
-                  ? "border-primary bg-primary/5 ring-2 ring-primary"
-                  : ""
-              }`}
-              onClick={() => setProviderType("individual")}
-            >
-              <CardContent className="pt-6 flex flex-col items-center text-center">
-                <Briefcase className="h-12 w-12 mb-4 text-primary" />
-                <h3 className="font-bold text-lg">Individual Freelancer</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Developers, Designers, Consultants, Tutors.
-                </p>
-              </CardContent>
-            </Card>
+          <div className="bg-white rounded-2xl shadow-2xl p-8 space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-primary">Step 1 of 2</p>
+                <h3 className="text-xl font-semibold text-slate-900 mt-1">
+                  Choose your provider type
+                </h3>
+              </div>
+              {progressBar(50)}
+            </div>
 
-            {/* Company / Agency */}
-            <Card
-              className={`cursor-pointer transition-all hover:border-primary hover:shadow-lg ${
-                providerType === "company"
-                  ? "border-primary bg-primary/5 ring-2 ring-primary"
-                  : ""
-              }`}
-              onClick={() => setProviderType("company")}
-            >
-              <CardContent className="pt-6 flex flex-col items-center text-center">
-                <Building2 className="h-12 w-12 mb-4 text-primary" />
-                <h3 className="font-bold text-lg">Company / Agency</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Marketing agencies, Software houses, Firms.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="grid md:grid-cols-2 gap-4">
+              <Card
+                className={`cursor-pointer transition-all hover:border-primary hover:shadow-lg ${
+                  providerType === "individual" ? "border-primary bg-primary/5 ring-2 ring-primary" : ""
+                }`}
+                onClick={() => setProviderType("individual")}
+              >
+                <CardContent className="pt-6 pb-6 flex flex-col items-center text-center space-y-2">
+                  <Briefcase className="h-12 w-12 mb-2 text-primary" />
+                  <h3 className="font-bold text-lg">Individual Freelancer</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Developers, Designers, Consultants, Tutors.
+                  </p>
+                </CardContent>
+              </Card>
 
-            {/* Doctor / Clinic */}
-            <Card
-              className={`cursor-pointer transition-all hover:border-primary hover:shadow-lg ${
-                providerType === "health_provider"
-                  ? "border-primary bg-primary/5 ring-2 ring-primary"
-                  : ""
-              }`}
-              onClick={() => setProviderType("health_provider")}
-            >
-              <CardContent className="pt-6 flex flex-col items-center text-center">
-                <Stethoscope className="h-12 w-12 mb-4 text-primary" />
-                <h3 className="font-bold text-lg">Doctor / Clinic</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Medical practitioners, Private clinics, Therapists.
-                </p>
-              </CardContent>
-            </Card>
+              <Card
+                className={`cursor-pointer transition-all hover:border-primary hover:shadow-lg ${
+                  providerType === "company" ? "border-primary bg-primary/5 ring-2 ring-primary" : ""
+                }`}
+                onClick={() => setProviderType("company")}
+              >
+                <CardContent className="pt-6 pb-6 flex flex-col items-center text-center space-y-2">
+                  <Building2 className="h-12 w-12 mb-2 text-primary" />
+                  <h3 className="font-bold text-lg">Company / Agency</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Marketing agencies, Software houses, Firms.
+                  </p>
+                </CardContent>
+              </Card>
 
-            {/* Hospital */}
-            <Card
-              className={`cursor-pointer transition-all hover:border-primary hover:shadow-lg ${
-                providerType === "hospital"
-                  ? "border-primary bg-primary/5 ring-2 ring-primary"
-                  : ""
-              }`}
-              onClick={() => setProviderType("hospital")}
-            >
-              <CardContent className="pt-6 flex flex-col items-center text-center">
-                <Hospital className="h-12 w-12 mb-4 text-primary" />
-                <h3 className="font-bold text-lg">Hospital / Medical Center</h3>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Large medical facilities and multi-specialty centers.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+              <Card
+                className={`cursor-pointer transition-all hover:border-primary hover:shadow-lg ${
+                  providerType === "health_provider"
+                    ? "border-primary bg-primary/5 ring-2 ring-primary"
+                    : ""
+                }`}
+                onClick={() => setProviderType("health_provider")}
+              >
+                <CardContent className="pt-6 pb-6 flex flex-col items-center text-center space-y-2">
+                  <Stethoscope className="h-12 w-12 mb-2 text-primary" />
+                  <h3 className="font-bold text-lg">Doctor / Clinic</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Medical practitioners, Private clinics, Therapists.
+                  </p>
+                </CardContent>
+              </Card>
 
-          <div className="mt-8 flex justify-end">
-            <Button
-              disabled={!providerType}
-              onClick={handleNext}
-              className="w-full md:w-auto"
-            >
-              Continue <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+              <Card
+                className={`cursor-pointer transition-all hover:border-primary hover:shadow-lg ${
+                  providerType === "hospital" ? "border-primary bg-primary/5 ring-2 ring-primary" : ""
+                }`}
+                onClick={() => setProviderType("hospital")}
+              >
+                <CardContent className="pt-6 pb-6 flex flex-col items-center text-center space-y-2">
+                  <Hospital className="h-12 w-12 mb-2 text-primary" />
+                  <h3 className="font-bold text-lg">Hospital / Medical Center</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Large medical facilities and multi-specialty centers.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="flex justify-end">
+              <Button
+                disabled={!providerType}
+                onClick={handleNext}
+                className="w-full md:w-auto shadow-lg shadow-primary/30"
+              >
+                Continue <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -269,205 +299,240 @@ export const ServiceOnboardingWizard = () => {
     };
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-primary/10 via-background to-secondary/10 py-12 px-4">
-        <div className="max-w-2xl mx-auto">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold mb-2">
-              Complete Your {getTypeLabel()} Profile
-            </h2>
-            <p className="text-muted-foreground">
-              {providerType === "health_provider" || providerType === "hospital"
-                ? "We require verification documents for medical providers."
-                : "Help customers find and trust your services."}
-            </p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 py-12 px-4">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-[1.35fr,0.65fr] gap-8 items-start">
+          <div className="bg-white rounded-2xl shadow-2xl p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <p className="text-xs uppercase tracking-[0.18em] text-primary">Step 2 of 2</p>
+                <h2 className="text-2xl font-bold text-slate-900">
+                  Complete your {getTypeLabel()} profile
+                </h2>
+                <p className="text-sm text-slate-500 mt-1">
+                  Tailored fields based on your selected provider type.
+                </p>
+              </div>
+              {progressBar(100)}
+            </div>
+
+            <Card className="shadow-none border border-slate-200">
+              <CardHeader>
+                <CardTitle>Profile Information</CardTitle>
+                <CardDescription>Provide details about your services</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="business_name">
+                    {providerType === "individual" ? "Full Name / Brand" : "Business Name"}
+                  </Label>
+                  <Input
+                    id="business_name"
+                    value={formData.business_name}
+                    onChange={(e) => updateFormData("business_name", e.target.value)}
+                    placeholder={providerType === "individual" ? "e.g. Ahmed Ali" : "e.g. Aurora Tech"}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tagline">Tagline</Label>
+                  <Input
+                    id="tagline"
+                    value={formData.tagline}
+                    onChange={(e) => updateFormData("tagline", e.target.value)}
+                    placeholder="e.g. Expert Web Developer"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) => updateFormData("description", e.target.value)}
+                    placeholder="Describe your services, expertise, and what makes you unique..."
+                    rows={5}
+                  />
+                </div>
+
+                {(providerType === "health_provider" || providerType === "hospital") && (
+                  <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
+                    <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
+                      <CheckCircle className="h-5 w-5" />
+                      Medical Verification
+                    </h4>
+                    <div className="space-y-3">
+                      <div className="space-y-2">
+                        <Label htmlFor="license_number">Medical License Number *</Label>
+                        <Input
+                          id="license_number"
+                          value={formData.license_number}
+                          onChange={(e) => updateFormData("license_number", e.target.value)}
+                          placeholder="Your official medical license number"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="specialization">Specialization / Department *</Label>
+                        <Input
+                          id="specialization"
+                          value={formData.specialization}
+                          onChange={(e) => updateFormData("specialization", e.target.value)}
+                          placeholder="e.g. Cardiology, Dentistry, Pediatrics"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {providerType === "company" && (
+                  <div className="space-y-2">
+                    <Label htmlFor="tax_id">Tax ID / Registration Number *</Label>
+                    <Input
+                      id="tax_id"
+                      value={formData.tax_id}
+                      onChange={(e) => updateFormData("tax_id", e.target.value)}
+                      placeholder="Your business registration number"
+                    />
+                  </div>
+                )}
+
+                {providerType === "individual" && (
+                  <>
+                    <div className="space-y-2">
+                      <Label htmlFor="skills">Skills (comma-separated)</Label>
+                      <Input
+                        id="skills"
+                        value={formData.skills}
+                        onChange={(e) => updateFormData("skills", e.target.value)}
+                        placeholder="e.g. React, TypeScript, UI Design"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="hourly_rate">Hourly Rate (EGP)</Label>
+                      <Input
+                        id="hourly_rate"
+                        type="number"
+                        value={formData.hourly_rate || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          updateFormData("hourly_rate", value === "" ? 0 : parseFloat(value));
+                        }}
+                        placeholder="e.g. 200"
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Phone Number</Label>
+                    <Input
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) => updateFormData("phone", e.target.value)}
+                      placeholder="+20 123 456 7890"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Input
+                      id="city"
+                      value={formData.city}
+                      onChange={(e) => updateFormData("city", e.target.value)}
+                      placeholder="e.g. Cairo, Alexandria"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="website">Website (Optional)</Label>
+                  <Input
+                    id="website"
+                    value={formData.website}
+                    onChange={(e) => updateFormData("website", e.target.value)}
+                    placeholder="https://yourwebsite.com"
+                  />
+                </div>
+              </CardContent>
+              <div className="p-6 pt-0 flex justify-between">
+                <Button variant="outline" onClick={handleBack}>
+                  Back
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isLoading || !isStep2Valid()}
+                  className="shadow-lg shadow-primary/30"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
+                      Creating...
+                    </div>
+                  ) : (
+                    "Complete Setup"
+                  )}
+                </Button>
+              </div>
+            </Card>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Information</CardTitle>
-              <CardDescription>
-                Provide details about your services
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Common Fields */}
-              <div className="space-y-2">
-                <Label htmlFor="business_name">
-                  {providerType === "individual"
-                    ? "Full Name / Brand"
-                    : "Business Name"}
-                </Label>
-                <Input
-                  id="business_name"
-                  value={formData.business_name}
-                  onChange={(e) =>
-                    updateFormData("business_name", e.target.value)
-                  }
-                  placeholder={
-                    providerType === "individual"
-                      ? "e.g. Ahmed Ali"
-                      : "e.g. Aurora Tech"
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="tagline">Tagline</Label>
-                <Input
-                  id="tagline"
-                  value={formData.tagline}
-                  onChange={(e) => updateFormData("tagline", e.target.value)}
-                  placeholder="e.g. Expert Web Developer"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) =>
-                    updateFormData("description", e.target.value)
-                  }
-                  placeholder="Describe your services, expertise, and what makes you unique..."
-                  rows={5}
-                />
-              </div>
-
-              {/* Conditional Fields: Health */}
-              {(providerType === "health_provider" ||
-                providerType === "hospital") && (
-                <div className="p-4 bg-blue-50 border border-blue-200 rounded-md">
-                  <h4 className="font-semibold text-blue-900 mb-3 flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5" />
-                    Medical Verification
-                  </h4>
-                  <div className="space-y-3">
-                    <div className="space-y-2">
-                      <Label htmlFor="license_number">
-                        Medical License Number *
-                      </Label>
-                      <Input
-                        id="license_number"
-                        value={formData.license_number}
-                        onChange={(e) =>
-                          updateFormData("license_number", e.target.value)
-                        }
-                        placeholder="Your official medical license number"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="specialization">
-                        Specialization / Department *
-                      </Label>
-                      <Input
-                        id="specialization"
-                        value={formData.specialization}
-                        onChange={(e) =>
-                          updateFormData("specialization", e.target.value)
-                        }
-                        placeholder="e.g. Cardiology, Dentistry, Pediatrics"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Conditional Fields: Company */}
-              {providerType === "company" && (
-                <div className="space-y-2">
-                  <Label htmlFor="tax_id">Tax ID / Registration Number *</Label>
-                  <Input
-                    id="tax_id"
-                    value={formData.tax_id}
-                    onChange={(e) => updateFormData("tax_id", e.target.value)}
-                    placeholder="Your business registration number"
-                  />
-                </div>
-              )}
-
-              {/* Conditional Fields: Individual Freelancer */}
-              {providerType === "individual" && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="skills">Skills (comma-separated)</Label>
-                    <Input
-                      id="skills"
-                      value={formData.skills}
-                      onChange={(e) => updateFormData("skills", e.target.value)}
-                      placeholder="e.g. React, TypeScript, UI Design"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="hourly_rate">Hourly Rate (EGP)</Label>
-                    <Input
-                      id="hourly_rate"
-                      type="number"
-                      value={formData.hourly_rate || ""}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        updateFormData(
-                          "hourly_rate",
-                          value === "" ? 0 : parseFloat(value),
-                        );
-                      }}
-                      placeholder="e.g. 200"
-                    />
-                  </div>
-                </>
-              )}
-
-              {/* Contact Info */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input
-                    id="phone"
-                    value={formData.phone}
-                    onChange={(e) => updateFormData("phone", e.target.value)}
-                    placeholder="+20 123 456 7890"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
-                  <Input
-                    id="city"
-                    value={formData.city}
-                    onChange={(e) => updateFormData("city", e.target.value)}
-                    placeholder="e.g. Cairo, Alexandria"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="website">Website (Optional)</Label>
-                <Input
-                  id="website"
-                  value={formData.website}
-                  onChange={(e) => updateFormData("website", e.target.value)}
-                  placeholder="https://yourwebsite.com"
-                />
-              </div>
-            </CardContent>
-            <div className="p-6 pt-0 flex justify-between">
-              <Button variant="outline" onClick={handleBack}>
-                Back
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isLoading || !isStep2Valid()}
-              >
-                {isLoading ? (
-                  <div className="flex items-center gap-2">
-                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent" />
-                    Creating...
-                  </div>
-                ) : (
-                  "Complete Setup"
-                )}
-              </Button>
+          <div className="bg-white/5 border border-white/10 rounded-2xl backdrop-blur-xl p-6 text-white space-y-6 shadow-xl">
+            <div>
+              <p className="text-sm text-slate-200/80 mb-1">You selected</p>
+              <h3 className="text-2xl font-bold">{getTypeLabel() || "Provider"}</h3>
             </div>
-          </Card>
+            <div className="space-y-3 text-sm text-slate-200/90">
+              <div className="flex items-start gap-3">
+                <CheckCircle className="h-5 w-5 text-emerald-400 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Verification ready</p>
+                  <p className="text-slate-300/80">
+                    License and specialization fields unlock review workflows.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <ShieldCheck className="h-5 w-5 text-primary mt-0.5" />
+                <div>
+                  <p className="font-semibold">Secure profile</p>
+                  <p className="text-slate-300/80">
+                    Data stored with RLS; only you and reviewers can see it.
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <Sparkles className="h-5 w-5 text-amber-300 mt-0.5" />
+                <div>
+                  <p className="font-semibold">Faster go-live</p>
+                  <p className="text-slate-300/80">
+                    Completing this form auto-routes you to your first listing.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white/10 border border-white/20 rounded-xl p-4 space-y-2">
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-300">Checklist</p>
+              <ul className="space-y-2 text-sm">
+                <li>• Business name and description</li>
+                {providerType === "company" && <li>• Tax / registration number</li>}
+                {(providerType === "health_provider" || providerType === "hospital") && (
+                  <li>• License number + specialization</li>
+                )}
+                {providerType === "individual" && <li>• Skills and hourly rate (optional)</li>}
+                <li>• Contact info and website</li>
+              </ul>
+            </div>
+
+            <div className="text-sm text-slate-200/80">
+              Need help?{" "}
+              <button
+                className="text-primary font-semibold underline-offset-4 hover:underline"
+                onClick={() => navigate("/services/chat")}
+              >
+                Chat with support
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     );

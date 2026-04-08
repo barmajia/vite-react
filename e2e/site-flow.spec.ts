@@ -34,13 +34,11 @@ test.describe("Site flow + lag detection", () => {
     expect(aboutLatency).toBeLessThan(5000);
     await expect(page).toHaveURL(/\/about/);
 
-    test
-      .info()
-      .annotations.push({
-        type: "latency",
-        description: `home=${homeLatency}ms, products=${productsLatency}ms, categories=${categoriesLatency}ms, about=${aboutLatency}ms`,
-        value: "",
-      });
+    test.info().annotations.push({
+      type: "latency",
+      description: `home=${homeLatency}ms, products=${productsLatency}ms, categories=${categoriesLatency}ms, about=${aboutLatency}ms`,
+      value: "",
+    });
   });
 
   test("auth protected route and chat route smoke test", async ({ page }) => {

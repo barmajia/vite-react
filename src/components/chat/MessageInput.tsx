@@ -114,15 +114,15 @@ export function MessageInput({
             className="max-h-48 rounded-lg border shadow-sm"
           />
           <Button
-            variant="destructive"
-            size="icon"
-            className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+            variant="danger"
+            size="sm"
+            className="absolute -top-2 -right-2 h-6 w-6 rounded-full px-0"
             onClick={() => setPreviewImage(null)}
           >
             <X className="h-3 w-3" />
           </Button>
           <Button
-            variant="default"
+            variant="primary"
             size="sm"
             className="absolute -bottom-2 -right-2 h-8 rounded-full"
             onClick={handleSendImage}
@@ -140,8 +140,8 @@ export function MessageInput({
           <PopoverTrigger asChild>
             <Button
               variant="ghost"
-              size="icon"
-              className="shrink-0"
+              size="sm"
+              className="shrink-0 h-10 w-10 px-0"
               disabled={disabled || isSending}
               aria-label="Open attachment options"
               title="Attach file"
@@ -192,9 +192,9 @@ export function MessageInput({
 
         {/* Send Button */}
         <Button
-          variant="default"
-          size="icon"
-          className="shrink-0"
+          variant="primary"
+          size="sm"
+          className="shrink-0 h-10 w-10 px-0"
           onClick={handleSend}
           disabled={disabled || isSending || !message.trim()}
           aria-label="Send message"

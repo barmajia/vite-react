@@ -219,14 +219,15 @@ test.describe("Security Tests", () => {
   });
 
   test.describe("Clickjacking Protection", () => {
-    test("should prevent framing", async ({ page, browserName }) => {
+    test("should prevent framing", async ({ page, browser }) => {
       // This test requires a separate page to attempt framing
       // Skip in CI as it requires special setup
 
       test.skip();
 
       // Try to load the app in an iframe
-      const framePage = await browserName.newPage();
+      const context = await browser.newContext();
+      const framePage = await context.newPage();
       await framePage.setContent(`
         <iframe src="${page.url()}" id="target"></iframe>
       `);
@@ -234,6 +235,8 @@ test.describe("Security Tests", () => {
       // Check if iframe loaded (it shouldn't if X-Frame-Options is set)
       const iframe = framePage.frameLocator("#target");
       await expect(iframe.locator("body")).not.toBeVisible();
+
+      await context.close();
     });
   });
 

@@ -11,8 +11,7 @@ export const Chat = () => {
   const [searchParams] = useSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [hasSession, setHasSession] = useState(false);
-  const [userName, setUserName] = useState<string | null>(null);
-  const [userUuid, setUserUuid] = useState<string | null>(null);
+  // Removed unused states: userName, userUuid
 
   useEffect(() => {
     const checkSession = async () => {
@@ -43,7 +42,7 @@ export const Chat = () => {
     };
 
     checkSession();
-  }, []);
+  }, [navigate, searchParams]); // Fixed exhaustive-deps
 
   if (isLoading) {
     return (
@@ -73,7 +72,9 @@ export const Chat = () => {
               </div>
             </div>
             <p className="text-slate-300/90 mb-6">
-              Secure, multi-vertical chat for customers, factories, middlemen, and services. Your session keeps conversations synced across devices.
+              Secure, multi-vertical chat for customers, factories, middlemen,
+              and services. Your session keeps conversations synced across
+              devices.
             </p>
             <Login />
             <div className="mt-4 flex items-center justify-between gap-3 text-sm text-slate-200/80">
@@ -94,7 +95,8 @@ export const Chat = () => {
               <div>
                 <p className="font-semibold">Secure by design</p>
                 <p className="text-slate-300 text-sm">
-                  Row-level security, sanitized inputs, and session checks before every chat action.
+                  Row-level security, sanitized inputs, and session checks
+                  before every chat action.
                 </p>
               </div>
             </div>
@@ -103,7 +105,8 @@ export const Chat = () => {
               <div>
                 <p className="font-semibold">Instant sync</p>
                 <p className="text-slate-300 text-sm">
-                  Conversations update in real time across devices and verticals.
+                  Conversations update in real time across devices and
+                  verticals.
                 </p>
               </div>
             </div>
@@ -112,7 +115,8 @@ export const Chat = () => {
               <div>
                 <p className="font-semibold">One inbox, all roles</p>
                 <p className="text-slate-300 text-sm">
-                  Customers, factories, middlemen, and providers meet in one consolidated inbox.
+                  Customers, factories, middlemen, and providers meet in one
+                  consolidated inbox.
                 </p>
               </div>
             </div>

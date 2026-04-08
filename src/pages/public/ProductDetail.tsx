@@ -41,6 +41,7 @@ import { formatPrice, formatDate } from "@/lib/utils";
 import { ROUTES } from "@/lib/constants";
 import { toast } from "sonner";
 import { useWishlist } from "@/features/wishlist/hooks/useWishlist";
+import { supabase } from "@/lib/supabase";
 
 export function ProductDetail() {
   const { t } = useTranslation();
@@ -54,6 +55,7 @@ export function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
   const [reviewData, setReviewData] = useState({ rating: 5, comment: "" });
+  const [startingChat, setStartingChat] = useState(false);
 
   const { data: product, isLoading, error } = useProduct(asin || "");
   const { data: seller } = useSeller(product?.seller_id);
@@ -132,6 +134,46 @@ export function ProductDetail() {
       setReviewData({ rating: 5, comment: "" });
     } catch (_err) {
       toast.error(t("productDetail.failedSubmitReview"));
+    }
+  };
+
+  const handleStartDealChat = async () => {
+    if (!user) {
+      toast.error("Please sign in to message the seller");
+      navigate(ROUTES.LOGIN, {
+        state: { from: { pathname: window.location.pathname } },
+      });
+      return;
+    }
+    if (!product || !product.id || !product.seller_id) {
+      toast.error("Product or seller information is missing.");
+      return;
+    }
+
+    try {
+      setStartingChat(true);
+      const { data, error } = await supabase.rpc(
+        "create_or_get_product_conversation",
+        {
+          p_customer_id: user.id,
+          p_seller_id: product.seller_id,
+          p_product_id: product.id,
+          p_display_name: `Deal chat: ${product.title?.slice(0, 50)}`,
+        },
+      );
+
+      if (error || !data?.conversation_id) {
+        throw error || new Error("Failed to start chat");
+      }
+
+      toast.success("Chat opened with the seller");
+      navigate(`/chat?conversationId=${data.conversation_id}`);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Could not start chat";
+      toast.error(message);
+    } finally {
+      setStartingChat(false);
     }
   };
 
@@ -397,6 +439,16 @@ export function ProductDetail() {
                   {product.quantity === 0
                     ? t("product.outOfStock")
                     : t("product.addToCart")}
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="flex-1 glass border-primary/30 h-14 text-lg rounded-2xl hover:bg-primary/5 transition-all active:scale-95"
+                  onClick={handleStartDealChat}
+                  disabled={startingChat}
+                >
+                  <MessageCircle className="mr-2 h-5 w-5" />
+                  {startingChat ? "Opening chat..." : "Message Seller"}
                 </Button>
                 <Button
                   size="lg"

@@ -98,8 +98,8 @@ export function MessageBubble({
           {!isDeleted && onDelete && (
             <Button
               variant="ghost"
-              size="icon"
-              className="h-6 w-6 opacity-0 hover:opacity-100 transition-opacity"
+              size="sm"
+              className="h-6 w-6 px-0 opacity-0 hover:opacity-100 transition-opacity"
               onClick={() => onDelete(message.id)}
             >
               <Trash2 className="h-3 w-3" />

@@ -924,5 +924,184 @@
       "fullHub": "Open Full Intelligence Hub",
       "vaultActive": "Aurora Vault Protocol Active"
     }
+  },
+  "factoryWelcome": {
+    "badge": "For Manufacturers & Producers",
+    "heroTitle": "Power Your Factory",
+    "heroTitleAccent": "Reach the World",
+    "heroSubtitle": "Join Aurora's manufacturing network. Manage production, connect with global buyers, and scale your operations with enterprise-grade tools.",
+    "cta": {
+      "signup": "Sign Up as Factory",
+      "login": "Login as Factory"
+    },
+    "badges": {
+      "verified": "Verified Factories",
+      "global": "Global Network",
+      "support": "24/7 Support"
+    },
+    "stats": {
+      "factories": "Active Factories",
+      "countries": "Countries Reached",
+      "satisfaction": "Satisfaction Rate",
+      "unitsProduced": "Units Produced"
+    },
+    "benefits": {
+      "title": "Why Choose Aurora for Your Factory",
+      "heading": "Everything You Need to Scale Production",
+      "description": "From order management to quality control, Aurora provides the complete toolkit for modern manufacturers.",
+      "globalReach": {
+        "title": "Connect with Global Buyers",
+        "description": "Reach manufacturers, wholesalers, and buyers from over 50+ countries worldwide."
+      },
+      "analytics": {
+        "title": "Advanced Analytics",
+        "description": "Track production performance, sales trends, and market demand with real-time dashboards."
+      },
+      "qualityControl": {
+        "title": "Quality Control",
+        "description": "Built-in QC workflows ensure every batch meets standards before shipment."
+      },
+      "production": {
+        "title": "Production Management",
+        "description": "Manage orders, timelines, and capacity all in one centralized platform."
+      },
+      "efficiency": {
+        "title": "Streamlined Operations",
+        "description": "Automate workflows, reduce manual overhead, and scale production effortlessly."
+      },
+      "partnerships": {
+        "title": "Build Partnerships",
+        "description": "Connect with trusted suppliers, middlemen, and delivery partners for seamless logistics."
+      }
+    },
+    "steps": {
+      "title": "Getting Started",
+      "heading": "Three Steps to Go Live",
+      "description": "Set up your factory presence on Aurora in minutes, not weeks.",
+      "register": {
+        "title": "Register Your Factory",
+        "description": "Create your account and set up your factory profile with capabilities and certifications."
+      },
+      "list": {
+        "title": "List Your Products",
+        "description": "Add your product catalog with pricing, MOQs, and production lead times."
+      },
+      "grow": {
+        "title": "Grow & Scale",
+        "description": "Receive orders, manage production, and expand your business globally."
+      }
+    },
+    "features": {
+      "analytics": {
+        "title": "Real-Time Production Analytics",
+        "description": "Monitor production metrics, track order fulfillment, and optimize capacity utilization with live dashboards and automated reports.",
+        "f1": "Production pipeline tracking",
+        "f2": "Revenue and order analytics",
+        "f3": "Performance benchmarks"
+      },
+      "marketplace": {
+        "title": "Global Marketplace Access",
+        "description": "Showcase your capabilities to thousands of buyers worldwide. Get discovered through smart matching and verified supplier profiles.",
+        "f1": "Verified supplier badge",
+        "f2": "Smart buyer-factory matching",
+        "f3": "Multi-currency support"
+      }
+    },
+    "finalCta": {
+      "badge": "Ready to Transform Your Business?",
+      "title": "Start Manufacturing Smarter Today",
+      "description": "Join hundreds of factories already using Aurora to streamline operations, reach new markets, and grow their business globally.",
+      "signupButton": "Create Factory Account",
+      "loginButton": "Existing Factory? Sign In",
+      "free": "Free to get started",
+      "nocard": "No credit card required",
+      "setup": "Setup in under 5 minutes"
+    }
+  },
+  "middleman": {
+    "welcome": {
+      "hero": {
+        "badge": "Become a Trusted Connector",
+        "title": "Bridge Deals,",
+        "title2": "Earn Rewards",
+        "subtitle": "Connect buyers with sellers, facilitate transactions, and earn commissions on every successful deal. Join Aurora's growing network of professional middlemen.",
+        "signupCta": "Sign Up as Middleman",
+        "loginCta": "Login as Middleman",
+        "trust": {
+          "global": "Global Network",
+          "secure": "Secure Payments",
+          "support": "24/7 Support"
+        }
+      },
+      "stats": {
+        "activeMiddlemen": "Active Middlemen",
+        "dealsClosed": "Deals Closed",
+        "commissionsPaid": "Commissions Paid ($)",
+        "satisfactionRate": "Satisfaction Rate"
+      },
+      "benefits": {
+        "title": "Why Become a Middleman?",
+        "heading": "Everything You Need to Succeed",
+        "subheading": "Our platform provides all the tools and support you need to build a thriving middleman business.",
+        "earnCommission": {
+          "title": "Earn Commission on Every Deal",
+          "desc": "Get paid for successfully connecting buyers with sellers. Our transparent commission system ensures you're rewarded for every connection."
+        },
+        "connect": {
+          "title": "Connect Buyers & Sellers",
+          "desc": "Build your network by bringing together businesses that complement each other. Create lasting partnerships and grow your influence."
+        },
+        "track": {
+          "title": "Track Your Earnings",
+          "desc": "Real-time analytics dashboard shows your commissions, pending deals, and growth metrics. Never wonder where your money is."
+        },
+        "secure": {
+          "title": "Secure & Transparent",
+          "desc": "All transactions are protected and tracked. Get paid automatically when deals close with our escrow-based system."
+        },
+        "global": {
+          "title": "Global Marketplace",
+          "desc": "Access buyers and sellers from around the world. No geographical limits - connect businesses across borders."
+        },
+        "fast": {
+          "title": "Fast Deal Closure",
+          "desc": "Our streamlined process helps deals close faster. Average deal closure time is just 48 hours."
+        }
+      },
+      "howItWorks": {
+        "title": "How It Works",
+        "heading": "Start Earning in 4 Simple Steps",
+        "subheading": "Our streamlined process makes it easy to get started and start earning commissions.",
+        "1": {
+          "title": "Sign Up & Get Verified",
+          "desc": "Create your middleman account and complete the verification process. It only takes a few minutes."
+        },
+        "2": {
+          "title": "Find Opportunities",
+          "desc": "Browse buyer requests and seller offerings. Identify matching opportunities where you can add value."
+        },
+        "3": {
+          "title": "Connect & Negotiate",
+          "desc": "Introduce buyers to sellers, facilitate negotiations, and help both parties reach an agreement."
+        },
+        "4": {
+          "title": "Earn Commission",
+          "desc": "Once the deal closes, your commission is automatically calculated and paid out. Simple and transparent."
+        }
+      },
+      "testimonial": {
+        "content": "The commission system is transparent and fair. I've built a sustainable income connecting buyers and sellers across multiple industries. Aurora gave me the tools to turn my network into a real business.",
+        "avatar": "MG",
+        "name": "Maria Garcia",
+        "role": "Professional Middleman"
+      },
+      "finalCta": {
+        "badge": "Start Today",
+        "heading": "Ready to Start Connecting?",
+        "subheading": "Join thousands of middlemen already earning commissions on Aurora. Create your account today and start building your network.",
+        "signupBtn": "Sign Up as Middleman",
+        "loginBtn": "Login as Middleman"
+      }
+    }
   }
 }

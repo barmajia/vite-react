@@ -1,635 +1,399 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { UserRole, DeliverySignupData } from "@/types/signup";
-import { CustomerSignupForm } from "@/components/signup/CustomerSignupForm";
-import { SellerSignupForm } from "@/components/signup/SellerSignupForm";
-import { FactorySignupForm } from "@/components/signup/FactorySignupForm";
-import { DeliverySignupForm } from "@/components/signup/DeliverySignupForm";
-import { RoleSelection } from "@/components/signup/RoleSelection";
-import { Card, CardContent, CardDescription, CardTitle } from "@/components/ui";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Link, useNavigate } from "react-router-dom";
 import {
-  AlertCircle,
-  ArrowLeft,
-  CheckCircle,
   Mail,
-  ArrowRight,
-  Moon,
+  Lock,
+  Eye,
+  EyeOff,
+  Loader2,
   Sun,
-  Sparkles,
-  Users,
-  Store,
-  Building2,
-  Truck,
-  ChevronRight,
+  Moon,
+  ArrowLeft,
+  User,
+  ShieldCheck,
+  Zap,
+  ArrowRight,
   Chrome,
+  Phone,
+  ShoppingCart,
 } from "lucide-react";
-import { Button } from "@/components/ui";
-import { useTheme } from "@/hooks/useTheme";
+import { useTranslation } from "react-i18next";
+import { Button, Input, Label } from "@/components/ui";
 import { useAuth } from "@/hooks/useAuth";
+import { ROUTES } from "@/lib/constants";
+import { isValidEmail } from "@/lib/utils";
 import { toast } from "sonner";
+import { useTheme } from "@/hooks/useTheme";
 
 export function SignupPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const { theme, setTheme } = useTheme();
   const { signUp, signUpWithGoogle } = useAuth();
-  const [searchParams] = useSearchParams();
-  const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-  const [createdEmail, setCreatedEmail] = useState<string>("");
+  const { theme, setTheme } = useTheme();
+  const [isLoading, setIsLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-
-  // Handle tab query parameter from login page
-  useEffect(() => {
-    const tab = searchParams.get("tab");
-    if (tab === "products") {
-      // Products = Seller role
-      setSelectedRole("seller");
-    } else if (tab === "services") {
-      // Services = Customer role
-      setSelectedRole("customer");
-    }
-  }, [searchParams]);
-
-  // Helper function to get account type for database
-  const getAccountType = (role: UserRole): string => {
-    const accountTypeMap: Record<UserRole, string> = {
-      customer: "customer",
-      seller: "seller",
-      factory: "factory",
-      delivery: "delivery",
-      middleman: "middleman",
-    };
-    return accountTypeMap[role] || "customer";
-  };
-
-  const handleRoleSelect = (role: UserRole) => {
-    setSelectedRole(role);
-    setError(null);
-  };
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: "",
+    phone: "",
+  });
+  const [errors, setErrors] = useState<{
+    fullName?: string;
+    email?: string;
+    password?: string;
+  }>({});
 
   const handleGoogleSignup = async () => {
-    if (!selectedRole) {
-      setError("Please select a role first");
-      return;
-    }
-
     setGoogleLoading(true);
-    setError(null);
-
-    const accountType = getAccountType(selectedRole);
-    const { error } = await signUpWithGoogle(accountType as any);
-
-    if (error) {
-      setError(error.message);
-      toast.error(error.message);
+    try {
+      const { error } = await signUpWithGoogle("customer");
+      if (error) {
+        toast.error(error.message ?? "Google signup failed");
+      } else {
+        toast.success("Customer account created successfully!");
+        navigate("/login");
+      }
+    } catch {
+      toast.error("Google signup failed");
+    } finally {
+      setGoogleLoading(false);
     }
   };
 
-  const handleBack = () => {
-    setSelectedRole(null);
-    setError(null);
+  const validateForm = () => {
+    const newErrors: typeof errors = {};
+
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = "Full name is required";
+    } else if (formData.fullName.trim().length < 2) {
+      newErrors.fullName = "Name must be at least 2 characters";
+    }
+
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!isValidEmail(formData.email)) {
+      newErrors.email = "Please enter a valid email";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+      newErrors.password = "Must include uppercase, lowercase, and numbers";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
-  const handleSignupComplete = (email?: string) => {
-    if (email) setCreatedEmail(email);
-    setSuccess(true);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+    try {
+      const { error } = await signUp(
+        formData.email,
+        formData.password,
+        formData.fullName,
+        "customer",
+        { phone: formData.phone },
+      );
+
+      if (error) {
+        toast.error(error.message ?? "Failed to create account");
+      } else {
+        toast.success("Account created successfully!");
+        navigate("/login");
+      }
+    } catch {
+      toast.error("Failed to create account");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const roleIcons: Record<UserRole | "admin", React.ElementType> = {
-    customer: Users,
-    seller: Store,
-    factory: Building2,
-    delivery: Truck,
-    middleman: Sparkles,
-    admin: Users,
+  const passwordStrength = () => {
+    const pwd = formData.password;
+    let strength = 0;
+    if (pwd.length >= 8) strength++;
+    if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) strength++;
+    if (/\d/.test(pwd)) strength++;
+    if (/[^a-zA-Z\d]/.test(pwd)) strength++;
+    return strength;
   };
 
-  if (success) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-violet-50 via-white to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-violet-950 p-4 relative overflow-hidden">
-        {/* Animated Background Blobs */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-violet-400/20 dark:bg-violet-600/20 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-indigo-400/20 dark:bg-indigo-600/20 rounded-full blur-3xl animate-pulse delay-700" />
-        </div>
+  const strengthLevel = passwordStrength();
+  const strengthColors = [
+    "bg-muted/50",
+    "bg-sky-500 shadow-sky-500/50",
+    "bg-blue-500 shadow-blue-500/50",
+    "bg-indigo-500 shadow-indigo-500/50",
+    "bg-cyan-500 shadow-cyan-500/50",
+  ];
+  const strengthLabels = ["", "Weak", "Fair", "Good", "Strong"];
 
-        {/* Theme Toggle */}
-        <div className="fixed top-4 right-4 flex gap-2 z-20">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigate(-1)}
-            className="rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-800 transition-all"
-          >
-            <ArrowLeft className="h-4 w-4 mr-1" />
-            Back
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="rounded-full bg-white/70 dark:bg-slate-800/70 backdrop-blur-md border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-yellow-400 hover:bg-white dark:hover:bg-slate-800 transition-all"
-          >
-            {theme === "light" ? (
-              <Moon className="h-4 w-4 text-violet-600" />
-            ) : (
-              <Sun className="h-4 w-4 text-amber-400" />
-            )}
-          </Button>
-        </div>
-
-        {/* Success Card */}
-        <Card className="max-w-lg w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-slate-200 dark:border-slate-800 shadow-2xl shadow-violet-500/10 dark:shadow-violet-900/20 rounded-3xl overflow-hidden relative z-10">
-          {/* Animated Checkmark Header */}
-          <div className="relative bg-gradient-to-r from-violet-600 to-indigo-600 p-8 text-center">
-            <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.1)_1px,transparent_1px)] bg-[size:20px_20px] opacity-30" />
-            <div className="relative">
-              <div className="mx-auto w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-4 animate-[bounce_2s_infinite]">
-                <CheckCircle className="w-10 h-10 text-white" />
-              </div>
-              <CardTitle className="text-2xl font-bold text-white">
-                Account Created! 🎉
-              </CardTitle>
-              <CardDescription className="text-violet-100 mt-2">
-                One last step to activate your account
-              </CardDescription>
-            </div>
-          </div>
-
-          <CardContent className="space-y-6 p-8">
-            {createdEmail && (
-              <div className="p-4 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-800 rounded-2xl">
-                <p className="text-sm text-violet-900 dark:text-violet-200 text-center">
-                  Verification sent to{" "}
-                  <strong className="font-semibold">{createdEmail}</strong>
-                </p>
-              </div>
-            )}
-
-            <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl">
-              <div className="flex items-start gap-3">
-                <Mail className="w-5 h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                <div>
-                  <p className="text-sm text-amber-900 dark:text-amber-200 font-medium">
-                    Can't find the email?
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4 pt-4">
-              <Button
-                onClick={() => navigate("/login")}
-                variant="outline"
-                className="w-full border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 py-6 rounded-xl transition-all"
-              >
-                Go to Login
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const firstInput = document.querySelector<HTMLInputElement>("#fullName");
+    firstInput?.focus();
+  }, []);
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-gradient-to-br from-violet-50 via-white to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-violet-950 relative overflow-hidden">
-      {/* Animated Background Elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-violet-400/10 dark:bg-violet-600/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-indigo-400/10 dark:bg-indigo-600/10 rounded-full blur-3xl" />
-        <div className="absolute inset-0 bg-[linear-gradient(rgba(139,92,246,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(139,92,246,0.03)_1px,transparent_1px)] bg-[size:64px_64px]" />
+    <div className="min-h-screen bg-background relative overflow-hidden flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+      {/* Immersive Background - Light Blue Theme */}
+      <div className="absolute top-[-15%] right-[-5%] w-[50%] h-[50%] bg-sky-400/20 rounded-full blur-[140px] animate-pulse pointer-events-none" />
+      <div className="absolute bottom-[-15%] left-[-5%] w-[50%] h-[50%] bg-blue-400/20 rounded-full blur-[140px] pulse pointer-events-none" />
+      <div className="absolute top-[20%] left-[10%] w-[30%] h-[30%] bg-cyan-400/10 rounded-full blur-[100px] pointer-events-none" />
+
+      {/* Top Controls */}
+      <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-20">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/")}
+          className="glass hover:bg-white/10 text-foreground rounded-full px-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          {t("common.back")}
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+          className="glass hover:bg-white/10 rounded-full px-4"
+        >
+          {theme === "light" ? (
+            <Moon className="h-4 w-4 text-sky-500" />
+          ) : (
+            <Sun className="h-4 w-4 text-amber-500" />
+          )}
+          <span className="ml-2 font-medium hidden sm:inline capitalize">
+            {theme === "light" ? t("common.darkMode") : t("common.lightMode")}
+          </span>
+        </Button>
       </div>
 
-      {/* Left Panel - Visual Area (Desktop) */}
-      <div className="hidden lg:flex lg:w-[45%] xl:w-[40%] relative bg-gradient-to-br from-violet-600 via-indigo-600 to-violet-800 dark:from-violet-900 dark:via-indigo-900 dark:to-slate-900 overflow-hidden shadow-2xl z-10">
-        <div className="absolute inset-0 opacity-20 bg-[url('/noise.svg')] mix-blend-overlay"></div>
-        <div className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-20 right-20 w-96 h-96 bg-indigo-400/20 rounded-full blur-3xl animate-pulse delay-1000" />
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10 animate-in fade-in slide-in-from-top-8 duration-1000">
+        <div className="inline-flex items-center justify-center p-3 glass rounded-2xl mb-6 shadow-inner scale-110">
+          <ShoppingCart className="h-8 w-8 text-sky-500 animate-pulse" />
+        </div>
+        <h1 className="text-4xl font-black tracking-tighter bg-gradient-to-br from-sky-500 to-blue-600 bg-clip-text text-transparent">
+          Create Customer Account
+        </h1>
+        <p className="mt-3 text-muted-foreground font-medium">
+          Shop, discover, and buy amazing products on Aurora
+        </p>
+      </div>
 
-        <div className="relative z-10 flex flex-col justify-center px-12 xl:px-16 text-white w-full h-full">
-          {/* Logo */}
-          <div className="flex items-center gap-3 mb-12">
-            <div className="p-3 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-xl">
-              <Sparkles className="h-7 w-7 text-indigo-100" />
-            </div>
-            <span className="text-3xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-100">
-              AURORA
-            </span>
-          </div>
-
-          <h1 className="text-4xl xl:text-5xl font-extrabold leading-[1.15] mb-12">
-            Join the future of{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-200 to-violet-200 drop-shadow-sm">
-              commerce
-            </span>
-          </h1>
-
-          {/* Role Preview Cards */}
-          <div className="space-y-4 max-w-sm">
-            {[
-              {
-                role: "customer" as UserRole,
-                label: "Shop & Discover",
-                icon: Users,
-              },
-              {
-                role: "seller" as UserRole,
-                label: "Sell Products",
-                icon: Store,
-              },
-              {
-                role: "factory" as UserRole,
-                label: "Manufacturing",
-                icon: Building2,
-              },
-              { role: "delivery" as UserRole, label: "Logistics", icon: Truck },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className={`flex items-center gap-4 p-4 rounded-2xl border backdrop-blur-md transition-all duration-300 ${
-                  selectedRole === item.role
-                    ? "bg-white/20 border-white/40 scale-[1.02] shadow-lg shadow-black/10"
-                    : "bg-white/5 border-white/10 hover:bg-white/10"
-                }`}
+      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-md z-10">
+        <div className="glass-card p-0 rounded-[2.5rem] shadow-2xl border-white/20 dark:border-white/10 overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-1000">
+          <div className="p-8 sm:p-10">
+            {/* Google Signup */}
+            <div className="mb-8">
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full glass bg-white/5 border-white/10 hover:bg-white/10 text-foreground h-14 text-lg font-bold rounded-2xl transition-all active:scale-[0.98]"
+                onClick={handleGoogleSignup}
+                disabled={googleLoading}
               >
-                <div
-                  className={`p-2.5 rounded-xl transition-colors ${selectedRole === item.role ? "bg-white/20" : "bg-white/10"}`}
-                >
-                  <item.icon className="h-5 w-5 text-indigo-50" />
-                </div>
-                <span className="font-semibold text-indigo-50 text-base">
-                  {item.label}
+                <Chrome className="mr-3 h-6 w-6 text-sky-500" />
+                Sign up with Google
+              </Button>
+            </div>
+
+            <div className="relative mb-8">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-white/10" />
+              </div>
+              <div className="relative flex justify-center text-[10px] uppercase tracking-[0.3em] font-black">
+                <span className="px-4 glass py-1 rounded-full text-muted-foreground/60 border-white/10 italic">
+                  Or use email to sign up
                 </span>
-                {selectedRole === item.role && (
-                  <CheckCircle className="ml-auto h-5 w-5 text-emerald-400" />
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="fullName" className="text-sm font-bold ml-1">
+                  Full Name
+                </Label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-sky-500 transition-colors">
+                    <User className="h-5 w-5 text-muted-foreground/30" />
+                  </div>
+                  <Input
+                    id="fullName"
+                    type="text"
+                    className={`pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.fullName ? "border-destructive/50" : ""}`}
+                    value={formData.fullName}
+                    onChange={(e) =>
+                      setFormData({ ...formData, fullName: e.target.value })
+                    }
+                    placeholder="John Doe"
+                    disabled={isLoading}
+                  />
+                </div>
+                {errors.fullName && (
+                  <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">
+                    {errors.fullName}
+                  </p>
                 )}
               </div>
-            ))}
-          </div>
 
-          <div className="absolute bottom-8 left-12 xl:left-16 flex items-center gap-4 text-sm text-indigo-200/60 font-medium">
-            <span>© {new Date().getFullYear()} Aurora</span>
-            <div className="w-1 h-1 rounded-full bg-indigo-200/40" />
-            <a href="#" className="hover:text-indigo-100 transition-colors">
-              Privacy
-            </a>
-            <div className="w-1 h-1 rounded-full bg-indigo-200/40" />
-            <a href="#" className="hover:text-indigo-100 transition-colors">
-              Terms
-            </a>
-          </div>
-        </div>
-      </div>
-
-      {/* Right Panel - Form Area */}
-      <div className="flex-1 flex flex-col px-6 py-8 lg:px-12 xl:px-20 relative z-10 overflow-y-auto">
-        {/* Top Bar Navigation */}
-        <div className="flex justify-between items-center w-full mb-8 lg:mb-12">
-          {/* Mobile Logo */}
-          <div className="lg:hidden flex items-center gap-2">
-            <div className="p-2 bg-gradient-to-br from-violet-500 to-indigo-600 rounded-xl shadow-lg">
-              <Sparkles className="h-5 w-5 text-white" />
-            </div>
-            <span className="font-bold text-xl tracking-tight text-slate-800 dark:text-white">
-              AURORA
-            </span>
-          </div>
-
-          {/* Empty div for spacing on desktop when no back button */}
-          <div className="hidden lg:block">
-            {selectedRole && (
-              <Button
-                variant="ghost"
-                onClick={handleBack}
-                className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-full transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Change Role
-              </Button>
-            )}
-          </div>
-
-          {/* Login Link & Theme Toggle */}
-          <div className="flex items-center gap-4 ml-auto">
-            <span className="text-sm font-medium text-slate-500 dark:text-slate-400 hidden sm:block">
-              Already have an account?
-            </span>
-            <Link to="/login">
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-full border-slate-200 dark:border-slate-700 bg-white/50 dark:bg-slate-800/50 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/30 dark:hover:text-indigo-400 hover:border-indigo-200 dark:hover:border-indigo-800 transition-all font-semibold"
-              >
-                Sign in
-              </Button>
-            </Link>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-              className="rounded-full bg-white/50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all shadow-sm"
-            >
-              {theme === "light" ? (
-                <Moon className="h-4 w-4" />
-              ) : (
-                <Sun className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-        </div>
-
-        {/* Form Container */}
-        <div className="max-w-xl mx-auto w-full my-auto pb-12">
-          <div className="mb-10 lg:text-left text-center">
-            {!selectedRole ? (
-              <>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-violet-100 dark:bg-violet-900/30 border border-violet-200 dark:border-violet-800/50 rounded-full mb-4 lg:mb-6">
-                  <span className="flex h-2 w-2 rounded-full bg-violet-600 dark:bg-violet-400 animate-pulse"></span>
-                  <span className="text-xs font-bold uppercase tracking-wider text-violet-700 dark:text-violet-300">
-                    Get Started
-                  </span>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-bold ml-1">
+                  Email Address
+                </Label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-sky-500 transition-colors">
+                    <Mail className="h-5 w-5 text-muted-foreground/30" />
+                  </div>
+                  <Input
+                    id="email"
+                    type="email"
+                    className={`pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.email ? "border-destructive/50" : ""}`}
+                    value={formData.email}
+                    onChange={(e) =>
+                      setFormData({ ...formData, email: e.target.value })
+                    }
+                    placeholder="you@example.com"
+                    disabled={isLoading}
+                  />
                 </div>
-                <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white mb-3 tracking-tight">
-                  Choose your path
-                </h2>
-                <p className="text-slate-500 dark:text-slate-400 text-base lg:text-lg">
-                  Select how you want to use Aurora to begin.
-                </p>
-              </>
-            ) : (
-              <>
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-100 dark:bg-indigo-900/30 border border-indigo-200 dark:border-indigo-800/50 rounded-full mb-4 lg:mb-6">
-                  {(() => {
-                    const Icon = roleIcons[selectedRole];
-                    return Icon ? (
-                      <Icon className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-                    ) : null;
-                  })()}
-                  <span className="text-xs font-bold uppercase tracking-wider text-indigo-700 dark:text-indigo-300">
-                    {selectedRole} Account
-                  </span>
-                </div>
-                <h2 className="text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  Complete your profile
-                </h2>
-              </>
-            )}
-          </div>
-
-          {error && (
-            <Alert
-              variant="destructive"
-              className="mb-8 bg-rose-50 dark:bg-rose-900/20 border-rose-200 dark:border-rose-800/50 rounded-2xl shadow-sm"
-            >
-              <AlertCircle className="h-4 w-4 text-rose-600 dark:text-rose-400" />
-              <AlertDescription className="text-rose-700 dark:text-rose-300 font-medium">
-                {error}
-              </AlertDescription>
-            </Alert>
-          )}
-
-          <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {!selectedRole ? (
-              <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl shadow-slate-200/50 dark:shadow-black/20 p-2 sm:p-4">
-                <RoleSelection onSelect={handleRoleSelect} />
+                {errors.email && (
+                  <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">
+                    {errors.email}
+                  </p>
+                )}
               </div>
-            ) : selectedRole === "middleman" ? (
-              <Card className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-xl overflow-hidden">
-                <div className="h-2 bg-gradient-to-r from-violet-500 to-indigo-500 w-full" />
-                <CardContent className="text-center py-12 px-6">
-                  <div className="inline-flex items-center justify-center w-20 h-20 bg-violet-100 dark:bg-violet-900/30 rounded-full mb-6 shadow-inner">
-                    <Sparkles className="h-10 w-10 text-violet-600 dark:text-violet-400" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">
-                    Middleman Program
-                  </h3>
 
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Button
-                      variant="outline"
-                      onClick={handleBack}
-                      className="border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl h-12 px-6 font-semibold text-slate-600 dark:text-slate-300"
-                    >
-                      <ArrowLeft className="mr-2 h-4 w-4" />
-                      Back
-                    </Button>
-                    <Button
-                      onClick={() => navigate("/signup/middleman")}
-                      className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 rounded-xl h-12 px-6 font-semibold shadow-lg shadow-slate-900/20 dark:shadow-white/20 transition-all"
-                    >
-                      Start Application
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-bold ml-1">
+                  Phone Number (Optional)
+                </Label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-sky-500 transition-colors">
+                    <Phone className="h-5 w-5 text-muted-foreground/30" />
                   </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="space-y-6">
-                {/* Google Signup Button */}
-                <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-slate-800 shadow-xl p-6 sm:p-8">
-                  <div className="text-center mb-6">
-                    <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
-                      Quick Signup with Google
-                    </h3>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
-                      Sign up as <strong>{selectedRole}</strong> using your
-                      Google account
+                  <Input
+                    id="phone"
+                    type="tel"
+                    className="pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20"
+                    value={formData.phone}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
+                    placeholder="+1 234 567 8900"
+                    disabled={isLoading}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-bold ml-1">
+                  Password
+                </Label>
+                <div className="relative group">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-sky-500 transition-colors">
+                    <Lock className="h-5 w-5 text-muted-foreground/30" />
+                  </div>
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    className={`pl-12 pr-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.password ? "border-destructive/50" : ""}`}
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    placeholder="••••••••"
+                    disabled={isLoading}
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-muted-foreground/50 hover:text-sky-500 transition-colors"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
+                </div>
+
+                {formData.password && (
+                  <div className="mt-3 px-1 space-y-2">
+                    <div className="flex gap-1.5 h-1">
+                      {[1, 2, 3, 4].map((level) => (
+                        <div
+                          key={level}
+                          className={`flex-1 rounded-full transition-all duration-500 ${
+                            level <= strengthLevel
+                              ? strengthColors[strengthLevel]
+                              : "bg-white/10"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <p
+                      className={`text-[10px] font-black uppercase tracking-widest ${strengthLevel <= 1 ? "text-sky-500" : strengthLevel <= 2 ? "text-blue-500" : "text-cyan-500"}`}
+                    >
+                      {strengthLabels[strengthLevel]}
                     </p>
                   </div>
-
-                  <Button
-                    onClick={handleGoogleSignup}
-                    disabled={googleLoading}
-                    className="w-full h-14 bg-white hover:bg-slate-50 text-slate-900 border-2 border-slate-200 hover:border-slate-300 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-3"
-                  >
-                    <Chrome className="h-5 w-5 text-red-500" />
-                    {googleLoading ? (
-                      <>
-                        <div className="animate-spin rounded-full h-5 w-5 border-2 border-slate-300 border-t-red-500" />
-                        Connecting to Google...
-                      </>
-                    ) : (
-                      <>
-                        Continue with Google as {selectedRole}
-                        <ArrowRight className="h-4 w-4 ml-1" />
-                      </>
-                    )}
-                  </Button>
-
-                  <div className="relative my-6">
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-slate-200 dark:border-slate-700" />
-                    </div>
-                    <div className="relative flex justify-center text-xs uppercase tracking-widest font-bold">
-                      <span className="px-4 bg-white/60 dark:bg-slate-900/60 text-slate-500 dark:text-slate-400 rounded-full">
-                        Or signup with email
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Email Signup Forms */}
-                <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-xl shadow-slate-200/50 dark:shadow-black/20 overflow-hidden">
-                  <div className="p-6 sm:p-8">
-                    {selectedRole === "customer" && (
-                      <CustomerSignupForm
-                        onSubmit={async (formData: {
-                          email: string;
-                          password: string;
-                          full_name: string;
-                          phone?: string;
-                        }) => {
-                          setLoading(true);
-                          try {
-                            const { error } = await signUp(
-                              formData.email,
-                              formData.password,
-                              formData.full_name,
-                              "customer",
-                              {
-                                phone: formData.phone,
-                              },
-                            );
-                            if (error) setError(error.message);
-                            else handleSignupComplete(formData.email);
-                          } catch (err) {
-                            const errorMessage =
-                              err instanceof Error
-                                ? err.message
-                                : "Unknown error";
-                            setError(errorMessage);
-                          } finally {
-                            setLoading(false);
-                          }
-                        }}
-                        onBack={handleBack}
-                        loading={loading}
-                      />
-                    )}
-                    {selectedRole === "seller" && (
-                      <SellerSignupForm
-                        onSubmit={async (formData: {
-                          email: string;
-                          password: string;
-                          full_name: string;
-                          phone?: string;
-                          location?: string;
-                          currency?: string;
-                        }) => {
-                          setLoading(true);
-                          try {
-                            const { error } = await signUp(
-                              formData.email,
-                              formData.password,
-                              formData.full_name,
-                              "seller",
-                              {
-                                phone: formData.phone,
-                                location: formData.location,
-                                currency: formData.currency,
-                              },
-                            );
-                            if (error) setError(error.message);
-                            else handleSignupComplete(formData.email);
-                          } catch (err) {
-                            const errorMessage =
-                              err instanceof Error
-                                ? err.message
-                                : "Unknown error";
-                            setError(errorMessage);
-                          } finally {
-                            setLoading(false);
-                          }
-                        }}
-                        onBack={handleBack}
-                        loading={loading}
-                      />
-                    )}
-                    {selectedRole === "factory" && (
-                      <FactorySignupForm
-                        onSubmit={async (formData: {
-                          email: string;
-                          password: string;
-                          full_name: string;
-                          phone?: string;
-                          location?: string;
-                          currency?: string;
-                          production_capacity?: string;
-                          min_order_quantity?: number;
-                        }) => {
-                          setLoading(true);
-                          try {
-                            const { error } = await signUp(
-                              formData.email,
-                              formData.password,
-                              formData.full_name,
-                              "factory",
-                              {
-                                phone: formData.phone,
-                                location: formData.location,
-                                currency: formData.currency,
-                                production_capacity:
-                                  formData.production_capacity,
-                                min_order_quantity: formData.min_order_quantity,
-                              },
-                            );
-                            if (error) setError(error.message);
-                            else handleSignupComplete(formData.email);
-                          } catch (err) {
-                            const errorMessage =
-                              err instanceof Error
-                                ? err.message
-                                : "Unknown error";
-                            setError(errorMessage);
-                          } finally {
-                            setLoading(false);
-                          }
-                        }}
-                        onBack={handleBack}
-                        loading={loading}
-                      />
-                    )}
-                    {selectedRole === "delivery" && (
-                      <DeliverySignupForm
-                        onSubmit={async (formData: DeliverySignupData) => {
-                          setLoading(true);
-                          try {
-                            const { error } = await signUp(
-                              formData.email,
-                              formData.password,
-                              formData.full_name,
-                              "delivery_driver",
-                              {
-                                phone: formData.phone,
-                                vehicle_type: formData.vehicle_type,
-                                vehicle_number: formData.vehicle_number,
-                              },
-                            );
-                            if (error) setError(error.message);
-                            else handleSignupComplete(formData.email);
-                          } catch (err) {
-                            const errorMessage =
-                              err instanceof Error
-                                ? err.message
-                                : "Unknown error";
-                            setError(errorMessage);
-                          } finally {
-                            setLoading(false);
-                          }
-                        }}
-                        onBack={handleBack}
-                        loading={loading}
-                      />
-                    )}
-                  </div>
-                </div>
+                )}
+                {errors.password && (
+                  <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">
+                    {errors.password}
+                  </p>
+                )}
               </div>
-            )}
+
+              <Button
+                type="submit"
+                className="w-full glass bg-sky-500 hover:bg-sky-600 text-white h-14 text-lg font-bold rounded-2xl shadow-lg shadow-sky-500/20 transition-all active:scale-[0.98]"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                ) : (
+                  "Create Customer Account"
+                )}
+              </Button>
+
+              <p className="text-center text-sm text-muted-foreground font-medium mt-6">
+                Already have an account?{" "}
+                <Link
+                  to={ROUTES.LOGIN}
+                  className="text-sky-500 hover:underline font-bold transition-all underline-offset-4"
+                >
+                  Sign in here
+                </Link>
+              </p>
+            </form>
+          </div>
+
+          {/* Customer Trust Badges */}
+          <div className="bg-white/5 backdrop-blur-3xl px-8 py-5 border-t border-white/10">
+            <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-sky-500/70" />
+                <span>Secure Shopping</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-sky-500/70" />
+                <span>Instant Access</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="h-4 w-4 text-sky-500/70" />
+                <span>Global Products</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>

@@ -122,6 +122,7 @@ const mockConversation: ConversationListItem = {
     title: "Test Product",
     price: 99.99,
     images: ["image1.jpg"],
+    status: "active",
   },
   is_archived: false,
 };
@@ -298,11 +299,14 @@ describe("ChatWindow", () => {
   });
 
   it("truncates long product titles", () => {
-    const longTitleConversation = {
+    const longTitleConversation: ConversationListItem = {
       ...mockConversation,
       product: {
-        ...mockConversation.product,
+        id: "prod-1",
         title: "A".repeat(100),
+        price: 99.99,
+        images: ["image1.jpg"],
+        status: "active",
       },
     };
 
@@ -320,7 +324,11 @@ describe("ChatWindow", () => {
       ...mockConversation,
       context: "trading",
       other_user: {
-        ...mockConversation.other_user,
+        user_id: "user-2",
+        id: "user-2",
+        email: "buyer@example.com",
+        full_name: "John Buyer",
+        avatar_url: null,
         account_type: "factory",
       },
     };
@@ -354,10 +362,7 @@ describe("ChatWindow", () => {
       last_message: "New message!",
     };
 
-    rerender(
-      <ChatWindow conversation={newConversation} onBack={mockOnBack} />,
-      { wrapper },
-    );
+    rerender(<ChatWindow conversation={newConversation} onBack={mockOnBack} />);
 
     // Scroll should happen automatically
     await waitFor(() => {
@@ -506,7 +511,12 @@ describe("ChatWindow - Accessibility", () => {
 
     const { useMessages } = await import("@/hooks/useMessages");
     await waitFor(() => {
-      expect(vi.mocked(useMessages()).sendMessage).toHaveBeenCalled();
+      expect(
+        vi.mocked(useMessages)({
+          conversationId: "conv-1",
+          currentUserId: "user-1",
+        }).sendMessage,
+      ).toHaveBeenCalled();
     });
   });
 

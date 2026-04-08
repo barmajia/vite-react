@@ -17,8 +17,11 @@ export function ConversationItem({
   onClick,
 }: ConversationItemProps) {
   const otherUser = conversation.other_user;
-  const accountType = otherUser?.account_type || "user";
-  const accountTypeConfig = ACCOUNT_TYPE_CONFIG[accountType];
+  const accountType = otherUser?.account_type;
+  const accountTypeConfig =
+    accountType && accountType in ACCOUNT_TYPE_CONFIG
+      ? ACCOUNT_TYPE_CONFIG[accountType as keyof typeof ACCOUNT_TYPE_CONFIG]
+      : ACCOUNT_TYPE_CONFIG.user;
 
   const getTimeAgo = () => {
     if (!conversation.last_message_at) return "";
@@ -70,13 +73,11 @@ export function ConversationItem({
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-2 flex-1 min-w-0">
             {/* Account Type Badge */}
-            {accountTypeConfig && (
-              <span
-                className={`text-xs px-2 py-0.5 rounded-full shrink-0 bg-secondary text-secondary-foreground font-medium`}
-              >
-                {accountTypeConfig.label}
-              </span>
-            )}
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full shrink-0 bg-secondary text-secondary-foreground font-medium`}
+            >
+              {accountTypeConfig.label}
+            </span>
             {/* Last Message */}
             <p className="text-xs text-muted-foreground truncate flex-1">
               {getLastMessage()}

@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useMessages } from "@/hooks/useMessages";
 import { MessageBubble } from "@/components/chat/MessageBubble";
 import { MessageInput } from "@/components/chat/MessageInput";
-import { Button } from "@/components/ui";
+import { Button } from "@/components/ui/button";
 import { Avatar } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -26,8 +26,7 @@ interface ChatWindowProps {
 export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
   const { user } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const conversationContext =
-    conversation.context === "service" ? "services" : conversation.context;
+  const conversationContext = conversation.context;
 
   const {
     messages,
@@ -90,22 +89,28 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
     return contextNames[conversation.context] || "User";
   };
 
-  const getOtherUserAccountType = () => {
-    return conversation.other_user?.account_type || "user";
+  const getOtherUserAccountType = (): keyof typeof ACCOUNT_TYPE_CONFIG => {
+    const accountType = conversation.other_user?.account_type;
+
+    if (accountType && accountType in ACCOUNT_TYPE_CONFIG) {
+      return accountType as keyof typeof ACCOUNT_TYPE_CONFIG;
+    }
+
+    return "user";
   };
 
   const accountTypeConfig = ACCOUNT_TYPE_CONFIG[getOtherUserAccountType()];
 
   return (
-    <div className="flex flex-col h-full">
-      {/* Chat Header */}
-      <div className="flex items-center justify-between p-4 border-b bg-card">
-        <div className="flex items-center gap-3">
+    <div className="flex flex-col h-full bg-background">
+      {/* Sticky Header */}
+      <div className="flex items-center justify-between p-4 border-b bg-card sticky top-0 z-10">
+        <div className="flex items-center gap-3 min-w-0">
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
             onClick={onBack}
-            className="md:hidden"
+            className="md:hidden shrink-0 h-10 w-10 px-0"
           >
             <ArrowLeft className="h-5 w-5" />
           </Button>
@@ -115,43 +120,38 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
             size="md"
             className={accountTypeConfig?.color}
           />
-          <div>
-            <h3 className="font-semibold">{getOtherUserName()}</h3>
-            <p className="text-xs text-muted-foreground">
+          <div className="min-w-0">
+            <h3 className="font-semibold truncate">{getOtherUserName()}</h3>
+            <p className="text-xs text-muted-foreground truncate">
               {accountTypeConfig?.label || "User"}
             </p>
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" disabled>
+          <Button variant="ghost" size="sm" className="h-10 w-10 px-0" disabled>
             <Phone className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon" disabled>
+          <Button variant="ghost" size="sm" className="h-10 w-10 px-0" disabled>
             <Video className="h-5 w-5" />
           </Button>
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="sm" className="h-10 w-10 px-0">
             <MoreVertical className="h-5 w-5" />
           </Button>
         </div>
       </div>
 
       {/* Messages */}
-      <ScrollArea className="flex-1 p-4">
+      <ScrollArea className="flex-1 px-4 py-3">
         <div className="space-y-4">
           {loading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto mb-4"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto mb-4" />
               <p className="text-muted-foreground">Loading messages...</p>
             </div>
           ) : error ? (
             <div className="text-center py-8 text-destructive">
               <p>Error loading messages</p>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={refresh}
-                className="mt-2"
-              >
+              <Button variant="outline" size="sm" onClick={refresh} className="mt-2">
                 Try Again
               </Button>
             </div>
@@ -161,9 +161,7 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
                 <MessageSquare className="h-10 w-10 text-muted-foreground opacity-50" />
               </div>
               <p className="text-muted-foreground">No messages yet</p>
-              <p className="text-sm mt-2">
-                Start the conversation with a greeting!
-              </p>
+              <p className="text-sm mt-2">Start the conversation with a greeting!</p>
             </div>
           ) : (
             messages.map((message) => (
@@ -180,7 +178,13 @@ export function ChatWindow({ conversation, onBack }: ChatWindowProps) {
       </ScrollArea>
 
       {/* Message Input */}
-      <MessageInput onSend={handleSend} disabled={sending || loading} />
+      <div className="border-t bg-card/80 backdrop-blur-sm p-3">
+        <MessageInput
+          conversationId={conversation.id}
+          onSend={handleSend}
+          disabled={sending || loading}
+        />
+      </div>
     </div>
   );
 }

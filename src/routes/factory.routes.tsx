@@ -37,7 +37,7 @@ const FactoryStartChat = lazy(() =>
 
 export const factoryRoutes: RouteObject[] = [
   {
-    path: "factory",
+    path: "factory/dashboard",
     element: (
       <ProtectedRoute allowedAccountTypes={["factory"]}>
         <Suspense fallback={<RouteSkeleton />}>

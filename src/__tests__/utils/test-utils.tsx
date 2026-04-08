@@ -1,16 +1,25 @@
+/// <reference types="vitest/globals" />
+/// <reference types="@testing-library/jest-dom" />
 /**
  * Test Utilities
  * Helper functions for testing React components
  */
 
-import React, { ReactElement } from 'react';
-import { render, RenderOptions, RenderResult, screen, waitFor, fireEvent } from '@testing-library/react';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter } from 'react-router-dom';
-import { vi } from 'vitest';
+import React, { ReactElement } from "react";
+import {
+  render,
+  RenderOptions,
+  RenderResult,
+  screen,
+  waitFor,
+  fireEvent,
+} from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter } from "react-router-dom";
+import { vi } from "vitest";
 
 // Import your providers
-import { AuthProvider } from '@/hooks/useAuth';
+import { AuthProvider } from "@/hooks/useAuth";
 
 // Create a test query client
 export function createTestQueryClient() {
@@ -18,7 +27,7 @@ export function createTestQueryClient() {
     defaultOptions: {
       queries: {
         retry: false,
-        cacheTime: 0,
+        gcTime: 0,
       },
       mutations: {
         retry: false,
@@ -47,7 +56,7 @@ export interface MockAuthOptions {
 
 export function createMockAuth(options: MockAuthOptions = {}) {
   const { user = null, session = null, isLoading = false } = options;
-  
+
   return {
     user,
     session,
@@ -62,7 +71,7 @@ export function createMockAuth(options: MockAuthOptions = {}) {
 }
 
 // Custom render options
-interface CustomRenderOptions extends Omit<RenderOptions, 'wrapper'> {
+interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
   authOptions?: MockAuthOptions;
   queryClient?: QueryClient;
   initialEntries?: string[];
@@ -81,18 +90,11 @@ function AllProviders({
   initialEntries?: string[];
 }) {
   const client = queryClient || createTestQueryClient();
-  
+
   return (
     <QueryClientProvider client={client}>
-      <BrowserRouter
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+      <BrowserRouter>
+        <AuthProvider>{children}</AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
   );
@@ -101,10 +103,11 @@ function AllProviders({
 // Custom render function
 export function customRender(
   ui: ReactElement,
-  options: CustomRenderOptions = {}
+  options: CustomRenderOptions = {},
 ): RenderResult {
-  const { authOptions, queryClient, initialEntries, ...renderOptions } = options;
-  
+  const { authOptions, queryClient, initialEntries, ...renderOptions } =
+    options;
+
   return render(ui, {
     wrapper: (props) => (
       <AllProviders
@@ -119,16 +122,16 @@ export function customRender(
 }
 
 // Re-export everything from testing-library
-export * from '@testing-library/react';
-export { default as userEvent } from '@testing-library/user-event';
+export * from "@testing-library/react";
+export { default as userEvent } from "@testing-library/user-event";
 
 // Custom test utilities
 export const createMockFile = (
-  name: string = 'test.png',
-  type: string = 'image/png',
-  size: number = 1024
+  name: string = "test.png",
+  type: string = "image/png",
+  _size: number = 1024,
 ): File => {
-  return new File(['test content'], name, { type, size });
+  return new File(["test content"], name, { type });
 };
 
 export const mockGeolocation = {
@@ -138,19 +141,30 @@ export const mockGeolocation = {
 };
 
 export const waitForLoadingToFinish = async () => {
-  await waitFor(() => {
-    const loadingElements = screen.queryAllByText(/loading/i);
-    expect(loadingElements.length).toBe(0);
-  }, { timeout: 5000 });
+  await waitFor(
+    () => {
+      const loadingElements = screen.queryAllByText(/loading/i);
+      expect(loadingElements.length).toBe(0);
+    },
+    { timeout: 5000 },
+  );
 };
 
-export const waitForElementToBeRemoved = async (callback: () => HTMLElement | null) => {
-  await vi.waitFor(() => {
-    expect(callback()).not.toBeInTheDocument();
-  }, { timeout: 5000 });
+export const waitForElementToBeRemoved = async (
+  callback: () => HTMLElement | null,
+) => {
+  await vi.waitFor(
+    () => {
+      expect(callback()).not.toBeInTheDocument();
+    },
+    { timeout: 5000 },
+  );
 };
 
-export const selectOption = async (select: HTMLElement, option: string | RegExp) => {
+export const selectOption = async (
+  select: HTMLElement,
+  option: string | RegExp,
+) => {
   fireEvent.mouseDown(select);
   const optionElement = screen.getByText(option);
   fireEvent.click(optionElement);
@@ -175,32 +189,32 @@ export const submitForm = (form: HTMLElement) => {
 
 // Mock data generators
 export const generateMockUser = (overrides = {}) => ({
-  id: 'test-user-id',
-  email: 'test@example.com',
-  full_name: 'Test User',
-  phone: '+1234567890',
-  avatar_url: 'https://example.com/avatar.png',
-  account_type: 'user' as const,
+  id: "test-user-id",
+  email: "test@example.com",
+  full_name: "Test User",
+  phone: "+1234567890",
+  avatar_url: "https://example.com/avatar.png",
+  account_type: "user" as const,
   ...overrides,
 });
 
 export const generateMockProduct = (overrides = {}) => ({
-  id: 'test-product-id',
-  asin: 'TEST123',
-  title: 'Test Product',
-  description: 'Test description',
+  id: "test-product-id",
+  asin: "TEST123",
+  title: "Test Product",
+  description: "Test description",
   price: 99.99,
   quantity: 10,
-  images: ['https://example.com/product.png'],
-  category: 'Electronics',
-  seller_id: 'test-seller-id',
+  images: ["https://example.com/product.png"],
+  category: "Electronics",
+  seller_id: "test-seller-id",
   ...overrides,
 });
 
 export const generateMockOrder = (overrides = {}) => ({
-  id: 'test-order-id',
-  user_id: 'test-user-id',
-  status: 'pending' as const,
+  id: "test-order-id",
+  user_id: "test-user-id",
+  status: "pending" as const,
   total: 99.99,
   items: [],
   created_at: new Date().toISOString(),
@@ -230,10 +244,10 @@ export const expectTestId = (testId: string) => {
 
 // Console mock helpers
 export const mockConsole = {
-  log: vi.spyOn(console, 'log').mockImplementation(() => {}),
-  error: vi.spyOn(console, 'error').mockImplementation(() => {}),
-  warn: vi.spyOn(console, 'warn').mockImplementation(() => {}),
-  info: vi.spyOn(console, 'info').mockImplementation(() => {}),
+  log: vi.spyOn(console, "log").mockImplementation(() => {}),
+  error: vi.spyOn(console, "error").mockImplementation(() => {}),
+  warn: vi.spyOn(console, "warn").mockImplementation(() => {}),
+  info: vi.spyOn(console, "info").mockImplementation(() => {}),
 };
 
 export const restoreConsole = () => {
@@ -247,7 +261,7 @@ export const restoreConsole = () => {
 export const mockTimers = {
   install: () => vi.useFakeTimers(),
   runAll: () => vi.runAllTimers(),
-  runToLast: () => vi.runToLast(),
+  // runToLast: () => vi.runToLast(),
   advanceTo: (time: number) => vi.advanceTimersByTime(time),
   restore: () => vi.useRealTimers(),
 };

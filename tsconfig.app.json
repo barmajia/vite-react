@@ -30,6 +30,7 @@
     "noImplicitThis": true,
     "alwaysStrict": true,
 
+    "types": ["vite/client"],
     /* Path aliases */
     "baseUrl": ".",
     "paths": {
@@ -43,6 +44,5 @@
     }
   },
   "include": ["src"],
-  "exclude": ["src/__tests__", "**/*.test.ts", "**/*.test.tsx"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

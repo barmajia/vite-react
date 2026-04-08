@@ -5,6 +5,7 @@ import { CurrencyProvider } from "@/context/CurrencyContext";
 import { Toaster } from "sonner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
+import { FloatingSignupButton } from "@/components/shared/FloatingSignupButton";
 import { useTranslation } from "react-i18next";
 import { useAppRoutes } from "@/routes/useAppRoutes";
 
@@ -37,6 +38,7 @@ function App() {
             >
               <CookieConsentBanner />
               {routes}
+              <FloatingSignupButton />
             </ErrorBoundary>
           </CurrencyProvider>
         </PreferencesProvider>

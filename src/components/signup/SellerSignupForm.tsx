@@ -177,17 +177,8 @@ export function SellerSignupForm({
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-              <SelectItem value="USD" className="text-gray-900 dark:text-white">
-                USD ($)
-              </SelectItem>
-              <SelectItem value="EUR" className="text-gray-900 dark:text-white">
-                EUR (€)
-              </SelectItem>
               <SelectItem value="EGP" className="text-gray-900 dark:text-white">
                 EGP (ج.م)
-              </SelectItem>
-              <SelectItem value="GBP" className="text-gray-900 dark:text-white">
-                GBP (£)
               </SelectItem>
             </SelectContent>
           </Select>

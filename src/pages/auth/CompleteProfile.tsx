@@ -68,7 +68,7 @@ export function CompleteProfile() {
     if (!authLoading && user) {
       const hasPhone = user.user_metadata?.phone;
       const hasAccountType = user.user_metadata?.account_type;
-      
+
       // If profile is already complete, redirect to dashboard
       if (hasPhone && hasAccountType) {
         redirectToDashboard(accountType);
@@ -82,7 +82,7 @@ export function CompleteProfile() {
         navigate("/middleman");
         break;
       case "factory":
-        navigate("/factory");
+        navigate("/factory/dashboard");
         break;
       case "delivery":
         navigate("/delivery");
@@ -123,7 +123,8 @@ export function CompleteProfile() {
     } catch (error) {
       console.error("Profile completion error:", error);
       toast.error("Failed to complete profile", {
-        description: error instanceof Error ? error.message : "Please try again",
+        description:
+          error instanceof Error ? error.message : "Please try again",
       });
     } finally {
       setLoading(false);
@@ -206,13 +207,34 @@ export function CompleteProfile() {
   };
 
   const getRoleConfig = () => {
-    const configs: Record<string, { title: string; icon: any; color: string }> = {
-      customer: { title: "Complete Your Profile", icon: User, color: "from-blue-500 to-cyan-500" },
-      seller: { title: "Complete Seller Profile", icon: Store, color: "from-emerald-500 to-green-500" },
-      factory: { title: "Complete Factory Profile", icon: Building2, color: "from-purple-500 to-violet-500" },
-      middleman: { title: "Complete Middleman Profile", icon: Sparkles, color: "from-amber-500 to-orange-500" },
-      delivery: { title: "Complete Delivery Profile", icon: Truck, color: "from-rose-500 to-pink-500" },
-    };
+    const configs: Record<string, { title: string; icon: any; color: string }> =
+      {
+        customer: {
+          title: "Complete Your Profile",
+          icon: User,
+          color: "from-blue-500 to-cyan-500",
+        },
+        seller: {
+          title: "Complete Seller Profile",
+          icon: Store,
+          color: "from-emerald-500 to-green-500",
+        },
+        factory: {
+          title: "Complete Factory Profile",
+          icon: Building2,
+          color: "from-purple-500 to-violet-500",
+        },
+        middleman: {
+          title: "Complete Middleman Profile",
+          icon: Sparkles,
+          color: "from-amber-500 to-orange-500",
+        },
+        delivery: {
+          title: "Complete Delivery Profile",
+          icon: Truck,
+          color: "from-rose-500 to-pink-500",
+        },
+      };
     return configs[accountType] || configs.customer;
   };
 
@@ -224,7 +246,9 @@ export function CompleteProfile() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-white to-indigo-50 dark:from-slate-950 dark:via-slate-900 dark:to-indigo-950">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-          <p className="text-muted-foreground animate-pulse">Loading your profile...</p>
+          <p className="text-muted-foreground animate-pulse">
+            Loading your profile...
+          </p>
         </div>
       </div>
     );
@@ -235,14 +259,17 @@ export function CompleteProfile() {
       <div className="w-full max-w-2xl">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${config.color} mb-4 shadow-lg`}>
+          <div
+            className={`inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br ${config.color} mb-4 shadow-lg`}
+          >
             <Icon className="w-8 h-8 text-white" />
           </div>
           <h1 className="text-3xl font-extrabold text-slate-900 dark:text-white mb-2">
             {config.title}
           </h1>
           <p className="text-slate-600 dark:text-slate-400">
-            Welcome, {fullName}! Just a few more details to complete your {accountType} account.
+            Welcome, {fullName}! Just a few more details to complete your{" "}
+            {accountType} account.
           </p>
         </div>
 
@@ -266,7 +293,9 @@ export function CompleteProfile() {
                     id="phone"
                     type="tel"
                     value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, phone: e.target.value })
+                    }
                     placeholder="+1 (555) 123-4567"
                     className="pl-10"
                     required
@@ -283,7 +312,9 @@ export function CompleteProfile() {
                     id="location"
                     type="text"
                     value={formData.location}
-                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, location: e.target.value })
+                    }
                     placeholder="City, Country"
                     className="pl-10"
                     required
@@ -301,7 +332,12 @@ export function CompleteProfile() {
                       id="company_name"
                       type="text"
                       value={formData.company_name}
-                      onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          company_name: e.target.value,
+                        })
+                      }
                       placeholder="Your Company Name"
                       className="pl-10"
                     />
@@ -315,7 +351,9 @@ export function CompleteProfile() {
                 <Textarea
                   id="bio"
                   value={formData.bio}
-                  onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, bio: e.target.value })
+                  }
                   placeholder="Tell us about yourself or your business..."
                   rows={3}
                   className="resize-none"
@@ -331,17 +369,29 @@ export function CompleteProfile() {
                       id="specialization"
                       type="text"
                       value={formData.specialization}
-                      onChange={(e) => setFormData({ ...formData, specialization: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          specialization: e.target.value,
+                        })
+                      }
                       placeholder="e.g., Electronics, Textiles, Furniture"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="production_capacity">Production Capacity</Label>
+                    <Label htmlFor="production_capacity">
+                      Production Capacity
+                    </Label>
                     <Input
                       id="production_capacity"
                       type="text"
                       value={formData.production_capacity}
-                      onChange={(e) => setFormData({ ...formData, production_capacity: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          production_capacity: e.target.value,
+                        })
+                      }
                       placeholder="e.g., 1000 units/month"
                     />
                   </div>
@@ -359,7 +409,12 @@ export function CompleteProfile() {
                     max="100"
                     step="0.1"
                     value={formData.commission_rate}
-                    onChange={(e) => setFormData({ ...formData, commission_rate: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        commission_rate: e.target.value,
+                      })
+                    }
                     placeholder="5.0"
                   />
                   <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -377,7 +432,12 @@ export function CompleteProfile() {
                       id="vehicle_type"
                       type="text"
                       value={formData.vehicle_type}
-                      onChange={(e) => setFormData({ ...formData, vehicle_type: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          vehicle_type: e.target.value,
+                        })
+                      }
                       placeholder="e.g., Motorcycle, Van, Truck"
                     />
                   </div>
@@ -387,7 +447,12 @@ export function CompleteProfile() {
                       id="vehicle_number"
                       type="text"
                       value={formData.vehicle_number}
-                      onChange={(e) => setFormData({ ...formData, vehicle_number: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          vehicle_number: e.target.value,
+                        })
+                      }
                       placeholder="e.g., ABC-1234"
                     />
                   </div>

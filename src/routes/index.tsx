@@ -15,6 +15,7 @@ import { publicRoutes } from "./public.routes";
 import { marketplaceRoutes } from "./marketplace.routes";
 import { storefrontRoutes } from "./storefront.routes";
 import { healthRoutes } from "./health.routes";
+import { sellerRoutes } from "./seller.routes";
 
 // Lazy load error pages
 import { lazy, Suspense } from "react";
@@ -113,6 +114,8 @@ export const appRoutes: RouteObject[] = [
   mainRoutes,
   adminRoute,
   chatRoute,
+  // Seller routes (standalone layout)
+  sellerRoutes,
   // Storefront routes (must be last to avoid catching other routes)
   ...storefrontRoutes,
   ...errorRoutes,

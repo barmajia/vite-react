@@ -1,16 +1,13 @@
 // src/features/services/bookings/pages/ServiceBookingPage.tsx
 import React, { useState, useMemo } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   ArrowLeft,
   Loader2,
   Calendar,
-  CheckCircle2,
   Zap,
   ShieldCheck,
   Clock,
-  Users,
-  DollarSign,
   FileText,
   Activity,
   ArrowRight,
@@ -27,8 +24,6 @@ import { ServicesHeader } from "@/components/layout/ServicesHeader";
 
 // Import Components
 import { BookingCalendar } from "../components/BookingCalendar";
-import { BookingForm } from "../components/BookingForm";
-import { BookingSummary } from "../components/BookingSummary";
 import { ProjectMilestoneBuilder } from "../components/ProjectMilestoneBuilder";
 
 export const ServiceBookingPage = () => {
@@ -97,7 +92,7 @@ export const ServiceBookingPage = () => {
         : listing?.price_numeric || 0;
 
       // Create order/booking in svc_orders
-      const { data: orderData, error: orderError } = await supabase
+      const { data: _orderData, error: orderError } = await supabase
         .from("svc_orders")
         .insert({
           listing_id: listingId,
