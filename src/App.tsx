@@ -7,6 +7,7 @@ import { Toaster } from "sonner";
 import { Layout } from "@/components/layout/Layout";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { CookieConsentBanner } from "@/components/CookieConsentBanner";
+import { VercelAnalytics } from "@/components/VercelAnalytics";
 import { useTranslation } from "react-i18next";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 
@@ -732,6 +733,7 @@ function App() {
               </Routes>
             </ErrorBoundary>
             <CookieConsentBanner />
+            <VercelAnalytics />
           </CurrencyProvider>
         </PreferencesProvider>
       </AuthProvider>
