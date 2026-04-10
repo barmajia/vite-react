@@ -134,7 +134,7 @@ BEGIN
     ELSE RETURN 'health-documents';
   END CASE;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 -- Grant execute permission
 GRANT EXECUTE ON FUNCTION get_health_bucket(text) TO authenticated;

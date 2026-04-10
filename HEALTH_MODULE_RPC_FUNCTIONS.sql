@@ -77,7 +77,7 @@ BEGIN
     TRUE::BOOLEAN,
     NOW();
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;
 
 GRANT EXECUTE ON FUNCTION public.verify_doctor(UUID, UUID, TEXT) TO authenticated, service_role;
 
@@ -179,7 +179,7 @@ BEGIN
     v_appointment_id,
     NOW();
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;
 
 GRANT EXECUTE ON FUNCTION public.schedule_appointment(UUID, UUID, TIMESTAMPTZ, TEXT, VARCHAR) TO authenticated, service_role;
 
@@ -248,7 +248,7 @@ BEGIN
     v_consent_id,
     NOW();
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;
 
 GRANT EXECUTE ON FUNCTION public.submit_consent_form(UUID, VARCHAR, JSONB, TEXT) TO authenticated, service_role;
 
@@ -383,7 +383,7 @@ BEGIN
     v_export_url,
     NOW();
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;
 
 GRANT EXECUTE ON FUNCTION public.export_patient_health_data(UUID, VARCHAR) TO authenticated, service_role;
 
@@ -423,7 +423,7 @@ BEGIN
   ORDER BY hal.accessed_at DESC
   LIMIT p_limit OFFSET p_offset;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;
 
 GRANT EXECUTE ON FUNCTION public.get_health_audit_logs(UUID, INT, INT) TO authenticated, service_role;
 
@@ -466,7 +466,7 @@ BEGIN
   ORDER BY hdp.rating DESC, hdp.full_name ASC
   LIMIT p_limit OFFSET p_offset;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;
 
 GRANT EXECUTE ON FUNCTION public.get_verified_doctors(TEXT, INT, INT) TO anon, authenticated, service_role;
 
@@ -516,7 +516,7 @@ BEGIN
   ORDER BY hm.medicine_name ASC
   LIMIT p_limit OFFSET p_offset;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;
 
 GRANT EXECUTE ON FUNCTION public.get_pharmacy_medicines(TEXT, UUID, INT, INT) TO anon, authenticated, service_role;
 
@@ -532,7 +532,7 @@ BEGIN
     WHERE user_id = p_user_id AND is_active = TRUE
   );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;
 
 -- =====================================================
 -- 9. MEDICINE ORDER RPC
@@ -656,7 +656,7 @@ BEGIN
     v_total_amount,
     NOW();
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 GRANT EXECUTE ON FUNCTION public.create_medicine_order(UUID, JSONB, JSONB) TO authenticated, service_role;
 

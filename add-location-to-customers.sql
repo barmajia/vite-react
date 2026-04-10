@@ -41,6 +41,7 @@ CREATE OR REPLACE FUNCTION public.create_customer_on_signup()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 BEGIN
   -- Only create customer record if account_type is 'customer'

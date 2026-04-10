@@ -305,7 +305,7 @@ BEGIN
     
     RETURN v_review_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 -- Mark review as helpful
 CREATE OR REPLACE FUNCTION mark_review_helpful(p_review_id UUID)
@@ -315,7 +315,7 @@ BEGIN
     VALUES (p_review_id, auth.uid())
     ON CONFLICT (review_id, user_id) DO NOTHING;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 -- Report review for moderation
 CREATE OR REPLACE FUNCTION report_review(p_review_id UUID, p_reason TEXT)
@@ -338,7 +338,7 @@ BEGIN
         auth.uid()
     );
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 -- ============================================
 -- 8. SEED DATA (FOR TESTING)

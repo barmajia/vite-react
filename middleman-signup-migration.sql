@@ -110,6 +110,7 @@ CREATE OR REPLACE FUNCTION "public"."handle_middleman_signup"()
 RETURNS "trigger" 
 LANGUAGE "plpgsql" 
 SECURITY DEFINER 
+  SET search_path TO public, pg_catalog;
 AS $$
 BEGIN
   -- Check if account_type is middleman

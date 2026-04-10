@@ -159,6 +159,7 @@ RETURNS TABLE (
   is_liked_by_user BOOLEAN
 )
 LANGUAGE plpgsql SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 BEGIN
   RETURN QUERY

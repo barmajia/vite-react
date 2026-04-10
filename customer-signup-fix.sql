@@ -13,6 +13,7 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 DECLARE
   acct TEXT := COALESCE(NEW.raw_user_meta_data->>'account_type', 'user');

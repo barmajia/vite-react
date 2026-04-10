@@ -114,7 +114,7 @@ BEGIN
     AND p.is_deleted = false
     AND (p.attributes->>'is_service')::boolean = true;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 -- 10. Seed sample service categories (if they don't exist)
 INSERT INTO categories (name, parent_id) VALUES

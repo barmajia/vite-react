@@ -35,6 +35,6 @@ BEGIN
 
   RETURN NEXT;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 GRANT EXECUTE ON FUNCTION public.customer_signup(uuid, text, text, text) TO service_role;

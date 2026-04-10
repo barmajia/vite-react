@@ -107,6 +107,7 @@ CREATE OR REPLACE FUNCTION public.create_direct_conversation(
     p_context text DEFAULT 'general'::text
 ) RETURNS uuid
 LANGUAGE plpgsql SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 DECLARE
     v_conversation_id uuid;
@@ -162,6 +163,7 @@ RETURNS TABLE (
     unread_count bigint
 )
 LANGUAGE plpgsql SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 BEGIN
     RETURN QUERY

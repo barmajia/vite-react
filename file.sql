@@ -144,6 +144,7 @@ ALTER FUNCTION "public"."calculate_order_commission"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."calculate_seller_analytics"("p_seller_id" "uuid", "p_period_type" "text" DEFAULT '30d'::"text", "p_start_date" "date" DEFAULT NULL::"date", "p_end_date" "date" DEFAULT NULL::"date") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 DECLARE
@@ -285,6 +286,7 @@ ALTER FUNCTION "public"."calculate_seller_analytics"("p_seller_id" "uuid", "p_pe
 
 CREATE OR REPLACE FUNCTION "public"."can_start_conversation"("from_user_id" "uuid", "to_user_id" "uuid", "product_id" "uuid" DEFAULT NULL::"uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 DECLARE
@@ -330,6 +332,7 @@ ALTER FUNCTION "public"."can_start_conversation"("from_user_id" "uuid", "to_user
 
 CREATE OR REPLACE FUNCTION "public"."cleanup_expired_idempotency_keys"() RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 BEGIN
@@ -344,6 +347,7 @@ ALTER FUNCTION "public"."cleanup_expired_idempotency_keys"() OWNER TO "postgres"
 
 CREATE OR REPLACE FUNCTION "public"."create_analytics_snapshot"("p_seller_id" "uuid", "p_period_type" "text" DEFAULT '30d'::"text", "p_start_date" "date" DEFAULT NULL::"date", "p_end_date" "date" DEFAULT NULL::"date") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 DECLARE
@@ -488,6 +492,7 @@ ALTER FUNCTION "public"."enqueue_job"("p_queue_name" "text", "p_payload" "jsonb"
 
 CREATE OR REPLACE FUNCTION "public"."find_nearby_factories"("seller_id" "uuid", "max_distance_km" numeric DEFAULT 100, "limit_count" integer DEFAULT 20) RETURNS TABLE("factory_id" "uuid", "company_name" "text", "distance_km" numeric, "latitude" numeric, "longitude" numeric)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 DECLARE
@@ -555,6 +560,7 @@ ALTER FUNCTION "public"."generate_product_description"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."get_factory_rating"("p_factory_id" "uuid") RETURNS TABLE("average_rating" numeric, "total_reviews" bigint, "delivery_rating" numeric, "quality_rating" numeric, "communication_rating" numeric)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 BEGIN
@@ -576,6 +582,7 @@ ALTER FUNCTION "public"."get_factory_rating"("p_factory_id" "uuid") OWNER TO "po
 
 CREATE OR REPLACE FUNCTION "public"."get_low_stock_products"("threshold" integer DEFAULT 10) RETURNS TABLE("id" "uuid", "asin" "text", "title" "text", "quantity" integer, "seller_id" "uuid")
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 BEGIN
@@ -594,6 +601,7 @@ ALTER FUNCTION "public"."get_low_stock_products"("threshold" integer) OWNER TO "
 
 CREATE OR REPLACE FUNCTION "public"."get_seller_kpis"("p_seller_id" "uuid", "p_period" "text" DEFAULT '30d'::"text") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 DECLARE
@@ -630,6 +638,7 @@ ALTER FUNCTION "public"."get_seller_kpis"("p_seller_id" "uuid", "p_period" "text
 
 CREATE OR REPLACE FUNCTION "public"."get_seller_product_count"("seller_uuid" "uuid") RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 BEGIN
@@ -652,6 +661,7 @@ ALTER FUNCTION "public"."get_seller_product_count"("seller_uuid" "uuid") OWNER T
 
 CREATE OR REPLACE FUNCTION "public"."get_seller_sales_count"("p_seller_id" "uuid", "p_start_date" timestamp with time zone, "p_end_date" timestamp with time zone) RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 BEGIN
@@ -675,6 +685,7 @@ ALTER FUNCTION "public"."get_seller_sales_count"("p_seller_id" "uuid", "p_start_
 
 CREATE OR REPLACE FUNCTION "public"."get_seller_total_customers"("p_seller_id" "uuid") RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 BEGIN
@@ -697,6 +708,7 @@ ALTER FUNCTION "public"."get_seller_total_customers"("p_seller_id" "uuid") OWNER
 
 CREATE OR REPLACE FUNCTION "public"."get_seller_total_revenue"("p_seller_id" "uuid") RETURNS numeric
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 BEGIN
@@ -719,6 +731,7 @@ ALTER FUNCTION "public"."get_seller_total_revenue"("p_seller_id" "uuid") OWNER T
 
 CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   -- Insert into users table

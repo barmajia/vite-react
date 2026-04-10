@@ -237,6 +237,7 @@ CREATE OR REPLACE FUNCTION public.get_public_profile(target_user_id uuid)
 RETURNS jsonb
 LANGUAGE plpgsql
 SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 DECLARE
   profile_data jsonb;

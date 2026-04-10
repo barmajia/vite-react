@@ -58,4 +58,4 @@ BEGIN
         -- Notice we DO NOT update account_type on conflict to prevent escalation
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;

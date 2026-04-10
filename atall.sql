@@ -194,6 +194,7 @@ ALTER TYPE "public"."user_role" OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."add_earnings_to_wallet"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   net_earnings NUMERIC;
@@ -243,6 +244,7 @@ ALTER FUNCTION "public"."add_earnings_to_wallet"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."add_medicine_to_prescription"("p_prescription_id" "uuid", "p_medicine_id" "uuid", "p_dosage_amount" "text", "p_frequency" "text", "p_duration_days" integer, "p_instructions" "text" DEFAULT NULL::"text", "p_quantity" integer DEFAULT NULL::integer, "p_allow_substitution" boolean DEFAULT true) RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_prescription_medicine_id UUID;
@@ -345,6 +347,7 @@ ALTER FUNCTION "public"."add_medicine_to_prescription"("p_prescription_id" "uuid
 
 CREATE OR REPLACE FUNCTION "public"."add_seller_to_conversation"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_seller_id UUID;
@@ -370,6 +373,7 @@ ALTER FUNCTION "public"."add_seller_to_conversation"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."archive_health_messages"() RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_archived_count INTEGER;
@@ -437,6 +441,7 @@ ALTER FUNCTION "public"."archive_old_notifications"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."archive_patient_data"("p_doctor_id" "uuid", "p_patient_id" "uuid", "p_archive_type" "text" DEFAULT 'full'::"text") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_archive_id UUID;
@@ -489,6 +494,7 @@ ALTER FUNCTION "public"."archive_patient_data"("p_doctor_id" "uuid", "p_patient_
 
 CREATE OR REPLACE FUNCTION "public"."assign_delivery_to_driver"("p_order_id" "uuid", "p_seller_latitude" numeric, "p_seller_longitude" numeric) RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_driver_id UUID;
@@ -598,6 +604,7 @@ ALTER FUNCTION "public"."auto_generate_product_description"() OWNER TO "postgres
 
 CREATE OR REPLACE FUNCTION "public"."bulk_upload_medicines"("p_pharmacy_id" "uuid", "p_medicines" "jsonb") RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_medicine JSONB;
@@ -698,6 +705,7 @@ ALTER FUNCTION "public"."calculate_distance"("lat1" numeric, "lon1" numeric, "la
 
 CREATE OR REPLACE FUNCTION "public"."calculate_middle_man_commission"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_commission numeric;
@@ -776,6 +784,7 @@ ALTER FUNCTION "public"."calculate_middle_man_commission"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."calculate_middle_man_margin"("p_product_asin" "text", "p_commission_rate" numeric DEFAULT 5.00, "p_margin_amount" numeric DEFAULT 0) RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_product_price numeric;
@@ -833,6 +842,7 @@ ALTER FUNCTION "public"."calculate_order_commission"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."calculate_seller_analytics"("p_seller_id" "uuid", "p_period_type" "text" DEFAULT '30d'::"text", "p_start_date" "date" DEFAULT NULL::"date", "p_end_date" "date" DEFAULT NULL::"date") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 DECLARE
@@ -974,6 +984,7 @@ ALTER FUNCTION "public"."calculate_seller_analytics"("p_seller_id" "uuid", "p_pe
 
 CREATE OR REPLACE FUNCTION "public"."can_start_conversation"("from_user_id" "uuid", "to_user_id" "uuid", "product_id" "uuid" DEFAULT NULL::"uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 DECLARE
@@ -1019,6 +1030,7 @@ ALTER FUNCTION "public"."can_start_conversation"("from_user_id" "uuid", "to_user
 
 CREATE OR REPLACE FUNCTION "public"."can_start_conversation"("from_user_id" "uuid", "to_user_id" "uuid", "product_id" "uuid" DEFAULT NULL::"uuid", "conversation_type" "text" DEFAULT 'general'::"text") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 DECLARE
@@ -1117,6 +1129,7 @@ ALTER FUNCTION "public"."check_low_stock_and_notify"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."check_product_chat_permission"("p_user_id" "uuid", "p_product_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_allow_chat boolean;
@@ -1153,6 +1166,7 @@ ALTER FUNCTION "public"."check_product_chat_permission"("p_user_id" "uuid", "p_p
 
 CREATE OR REPLACE FUNCTION "public"."cleanup_expired_idempotency_keys"() RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 BEGIN
@@ -1167,6 +1181,7 @@ ALTER FUNCTION "public"."cleanup_expired_idempotency_keys"() OWNER TO "postgres"
 
 CREATE OR REPLACE FUNCTION "public"."cleanup_expired_notifications"() RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_deleted_count integer;
@@ -1209,6 +1224,7 @@ ALTER FUNCTION "public"."cleanup_expired_sessions"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."cleanup_inactive_push_subscriptions"("p_days_inactive" integer DEFAULT 90) RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_deleted_count INTEGER;
@@ -1248,6 +1264,7 @@ ALTER FUNCTION "public"."cleanup_product_images"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."cleanup_typing_indicators"() RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
     DELETE FROM public.health_typing_indicators
@@ -1261,6 +1278,7 @@ ALTER FUNCTION "public"."cleanup_typing_indicators"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."close_health_conversation"("p_conversation_id" "uuid", "p_reason" "text" DEFAULT NULL::"text") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_conversation RECORD;
@@ -1300,6 +1318,7 @@ ALTER FUNCTION "public"."close_health_conversation"("p_conversation_id" "uuid", 
 
 CREATE OR REPLACE FUNCTION "public"."create_analytics_snapshot"("p_seller_id" "uuid", "p_period_type" "text" DEFAULT '30d'::"text", "p_start_date" "date" DEFAULT NULL::"date", "p_end_date" "date" DEFAULT NULL::"date") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 DECLARE
@@ -1362,6 +1381,7 @@ ALTER FUNCTION "public"."create_analytics_snapshot"("p_seller_id" "uuid", "p_per
 
 CREATE OR REPLACE FUNCTION "public"."create_cod_verification_on_order"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   IF NEW.payment_method = 'cod' THEN
@@ -1379,6 +1399,7 @@ ALTER FUNCTION "public"."create_cod_verification_on_order"() OWNER TO "postgres"
 
 CREATE OR REPLACE FUNCTION "public"."create_digital_prescription"("p_appointment_id" "uuid", "p_doctor_id" "uuid", "p_patient_id" "uuid", "p_diagnosis" "text" DEFAULT NULL::"text", "p_symptoms" "text" DEFAULT NULL::"text", "p_notes" "text" DEFAULT NULL::"text", "p_valid_days" integer DEFAULT 30, "p_max_refills" integer DEFAULT 0) RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_prescription_id UUID;
@@ -1444,6 +1465,7 @@ ALTER FUNCTION "public"."create_digital_prescription"("p_appointment_id" "uuid",
 
 CREATE OR REPLACE FUNCTION "public"."create_direct_conversation"("p_target_user_id" "uuid", "p_context" "text" DEFAULT 'general'::"text", "p_product_id" "uuid" DEFAULT NULL::"uuid", "p_appointment_id" "uuid" DEFAULT NULL::"uuid", "p_listing_id" "uuid" DEFAULT NULL::"uuid") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_conversation_id uuid;
@@ -1552,6 +1574,7 @@ ALTER FUNCTION "public"."create_direct_conversation"("p_target_user_id" "uuid", 
 
 CREATE OR REPLACE FUNCTION "public"."create_health_conversation_on_appointment"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_conversation_id UUID;
@@ -1589,6 +1612,7 @@ ALTER FUNCTION "public"."create_health_conversation_on_appointment"() OWNER TO "
 
 CREATE OR REPLACE FUNCTION "public"."create_middle_man_deal"("p_middle_man_id" "uuid", "p_product_asin" "text", "p_commission_rate" numeric DEFAULT 5.00, "p_margin_amount" numeric DEFAULT 0) RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_deal_id uuid;
@@ -1637,6 +1661,7 @@ ALTER FUNCTION "public"."create_middle_man_deal"("p_middle_man_id" "uuid", "p_pr
 
 CREATE OR REPLACE FUNCTION "public"."create_notification_from_template"("p_user_id" "uuid", "p_template_name" "text", "p_variables" "jsonb" DEFAULT '{}'::"jsonb", "p_reference_type" "text" DEFAULT NULL::"text", "p_reference_id" "uuid" DEFAULT NULL::"uuid") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_template RECORD;
@@ -1705,6 +1730,7 @@ ALTER FUNCTION "public"."create_notification_from_template"("p_user_id" "uuid", 
 
 CREATE OR REPLACE FUNCTION "public"."create_or_update_middle_man_deal"("p_product_asin" "text", "p_commission_rate" numeric DEFAULT 5.00, "p_margin_amount" numeric DEFAULT 0) RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_deal_id uuid;
@@ -1784,6 +1810,7 @@ ALTER FUNCTION "public"."create_order_notification"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."create_user_wallet_on_signup"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   INSERT INTO public.user_wallets (user_id, currency)
@@ -1800,6 +1827,7 @@ ALTER FUNCTION "public"."create_user_wallet_on_signup"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."credit_wallet"("p_user_id" "uuid", "p_amount" numeric, "p_reference_type" "text", "p_reference_id" "uuid", "p_description" "text", "p_idempotency_key" "text" DEFAULT NULL::"text", "p_metadata" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_wallet_id UUID;
@@ -1870,6 +1898,7 @@ ALTER FUNCTION "public"."credit_wallet"("p_user_id" "uuid", "p_amount" numeric, 
 
 CREATE OR REPLACE FUNCTION "public"."customer_signup"("p_email" "text", "p_password" "text", "p_full_name" "text", "p_phone" "text" DEFAULT NULL::"text") RETURNS TABLE("auth_user_id" "uuid", "customer_id" "uuid")
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_auth_user auth.users%ROWTYPE;
@@ -1912,6 +1941,7 @@ ALTER FUNCTION "public"."customer_signup"("p_email" "text", "p_password" "text",
 
 CREATE OR REPLACE FUNCTION "public"."debit_wallet"("p_user_id" "uuid", "p_amount" numeric, "p_reference_type" "text", "p_reference_id" "uuid", "p_description" "text", "p_idempotency_key" "text" DEFAULT NULL::"text", "p_metadata" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_wallet_id UUID;
@@ -2091,6 +2121,7 @@ ALTER FUNCTION "public"."enqueue_job"("p_queue_name" "text", "p_payload" "jsonb"
 
 CREATE OR REPLACE FUNCTION "public"."execute_push_campaign"("p_campaign_id" "uuid") RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_campaign RECORD;
@@ -2166,6 +2197,7 @@ ALTER FUNCTION "public"."execute_push_campaign"("p_campaign_id" "uuid") OWNER TO
 
 CREATE OR REPLACE FUNCTION "public"."fill_prescription_medicine"("p_prescription_medicine_id" "uuid", "p_pharmacy_id" "uuid", "p_dispensed_quantity" integer) RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_prescription_medicine RECORD;
@@ -2256,6 +2288,7 @@ ALTER FUNCTION "public"."fill_prescription_medicine"("p_prescription_medicine_id
 
 CREATE OR REPLACE FUNCTION "public"."find_factories"("p_search_term" "text" DEFAULT NULL::"text", "p_location" "text" DEFAULT NULL::"text", "p_is_verified" boolean DEFAULT NULL::boolean, "p_limit" integer DEFAULT 20, "p_offset" integer DEFAULT 0) RETURNS TABLE("user_id" "uuid", "email" "text", "full_name" "text", "phone" "text", "location" "text", "is_verified" boolean, "created_at" timestamp with time zone, "product_count" bigint, "total_revenue" numeric)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   RETURN QUERY
@@ -2300,6 +2333,7 @@ ALTER FUNCTION "public"."find_factories"("p_search_term" "text", "p_location" "t
 
 CREATE OR REPLACE FUNCTION "public"."find_nearby_drivers"("p_latitude" numeric, "p_longitude" numeric, "p_max_distance_km" numeric DEFAULT 50, "p_limit_count" integer DEFAULT 20) RETURNS TABLE("driver_id" "uuid", "full_name" "text", "vehicle_type" "text", "latitude" numeric, "longitude" numeric, "distance_km" numeric, "rating" numeric, "is_verified" boolean)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   RETURN QUERY
@@ -2330,6 +2364,7 @@ ALTER FUNCTION "public"."find_nearby_drivers"("p_latitude" numeric, "p_longitude
 
 CREATE OR REPLACE FUNCTION "public"."find_nearby_drivers_for_middleman"("p_latitude" numeric, "p_longitude" numeric, "p_max_distance_km" numeric DEFAULT 20.0, "p_limit" integer DEFAULT 10) RETURNS TABLE("driver_id" "uuid", "full_name" "text", "vehicle_type" "text", "distance_km" numeric, "rating" numeric)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   RETURN QUERY
@@ -2357,6 +2392,7 @@ ALTER FUNCTION "public"."find_nearby_drivers_for_middleman"("p_latitude" numeric
 
 CREATE OR REPLACE FUNCTION "public"."find_nearby_factories"("p_seller_id" "uuid", "p_max_distance_km" numeric DEFAULT 100, "p_limit_count" integer DEFAULT 20) RETURNS TABLE("factory_id" "uuid", "factory_name" "text", "distance_km" numeric, "latitude" numeric, "longitude" numeric, "location" "text", "is_verified" boolean)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 DECLARE
@@ -2404,6 +2440,7 @@ ALTER FUNCTION "public"."find_nearby_factories"("p_seller_id" "uuid", "p_max_dis
 
 CREATE OR REPLACE FUNCTION "public"."find_nearby_factories"("p_seller_id" "uuid", "p_latitude" numeric, "p_longitude" numeric, "p_max_distance_km" numeric DEFAULT 100, "p_limit_count" integer DEFAULT 20) RETURNS TABLE("factory_id" "uuid", "company_name" "text", "latitude" numeric, "longitude" numeric, "distance_km" numeric, "location" "text", "is_verified" boolean, "rating" numeric)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   RETURN QUERY
@@ -2433,6 +2470,7 @@ ALTER FUNCTION "public"."find_nearby_factories"("p_seller_id" "uuid", "p_latitud
 
 CREATE OR REPLACE FUNCTION "public"."find_nearby_products_for_middleman"("p_latitude" numeric, "p_longitude" numeric, "p_max_distance_km" numeric DEFAULT 50.0, "p_limit" integer DEFAULT 20) RETURNS TABLE("product_id" "uuid", "title" "text", "price" numeric, "images" "jsonb", "seller_name" "text", "distance_km" numeric)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   RETURN QUERY
@@ -2460,6 +2498,7 @@ ALTER FUNCTION "public"."find_nearby_products_for_middleman"("p_latitude" numeri
 
 CREATE OR REPLACE FUNCTION "public"."find_nearby_sellers"("p_latitude" numeric, "p_longitude" numeric, "p_radius_km" numeric DEFAULT 50, "p_limit" integer DEFAULT 20) RETURNS TABLE("user_id" "uuid", "email" "text", "full_name" "text", "phone" "text", "location" "text", "latitude" numeric, "longitude" numeric, "distance_km" numeric, "is_verified" boolean, "created_at" timestamp with time zone)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   EARTH_RADIUS_KM CONSTANT NUMERIC := 6371;
@@ -2517,6 +2556,7 @@ ALTER FUNCTION "public"."find_nearby_sellers"("p_latitude" numeric, "p_longitude
 
 CREATE OR REPLACE FUNCTION "public"."generate_cod_verification_key"("p_order_id" "uuid", "p_key_length" integer DEFAULT 6, "p_expiry_hours" integer DEFAULT 24) RETURNS "text"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_verification_key TEXT;
@@ -2622,6 +2662,7 @@ ALTER FUNCTION "public"."generate_cod_verification_key"("p_order_id" "uuid", "p_
 
 CREATE OR REPLACE FUNCTION "public"."generate_medicine_qr_code"("p_pharmacy_id" "uuid", "p_medicine_id" "uuid", "p_batch_number" "text") RETURNS "text"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_qr_code TEXT;
@@ -2653,6 +2694,7 @@ ALTER FUNCTION "public"."generate_medicine_qr_code"("p_pharmacy_id" "uuid", "p_m
 
 CREATE OR REPLACE FUNCTION "public"."generate_patient_archive_json"("p_doctor_id" "uuid", "p_patient_id" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_patient_data JSONB;
@@ -2787,6 +2829,7 @@ ALTER FUNCTION "public"."generate_patient_archive_json"("p_doctor_id" "uuid", "p
 
 CREATE OR REPLACE FUNCTION "public"."generate_pharmacy_daily_report"("p_pharmacy_id" "uuid", "p_report_date" "date" DEFAULT CURRENT_DATE) RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_report_id UUID;
@@ -2908,6 +2951,7 @@ ALTER FUNCTION "public"."generate_product_description"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."generate_website_embed_code"("p_website_id" "uuid") RETURNS "text"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_api_key TEXT;
@@ -2928,6 +2972,7 @@ ALTER FUNCTION "public"."generate_website_embed_code"("p_website_id" "uuid") OWN
 
 CREATE OR REPLACE FUNCTION "public"."get_cod_reconciliation_report"("p_start_date" "date" DEFAULT (CURRENT_DATE - '7 days'::interval), "p_end_date" "date" DEFAULT CURRENT_DATE) RETURNS TABLE("date" "date", "total_cod_orders" bigint, "total_cod_amount" numeric, "verified_orders" bigint, "pending_orders" bigint, "failed_orders" bigint, "collected_amount" numeric, "deposited_amount" numeric, "pending_deposit" numeric)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   RETURN QUERY
@@ -2956,6 +3001,7 @@ ALTER FUNCTION "public"."get_cod_reconciliation_report"("p_start_date" "date", "
 
 CREATE OR REPLACE FUNCTION "public"."get_driver_cod_orders"("p_driver_id" "uuid") RETURNS TABLE("order_id" "uuid", "customer_name" "text", "customer_phone" "text", "delivery_address" "jsonb", "total_amount" numeric, "verification_key" "text", "expires_at" timestamp with time zone, "status" "text", "created_at" timestamp with time zone)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   RETURN QUERY
@@ -2986,6 +3032,7 @@ ALTER FUNCTION "public"."get_driver_cod_orders"("p_driver_id" "uuid") OWNER TO "
 
 CREATE OR REPLACE FUNCTION "public"."get_factory_rating"("p_factory_id" "uuid") RETURNS TABLE("average_rating" numeric, "total_reviews" bigint, "delivery_rating" numeric, "quality_rating" numeric, "communication_rating" numeric)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 BEGIN
@@ -3007,6 +3054,7 @@ ALTER FUNCTION "public"."get_factory_rating"("p_factory_id" "uuid") OWNER TO "po
 
 CREATE OR REPLACE FUNCTION "public"."get_feed_posts"("p_limit" integer DEFAULT 20, "p_offset" integer DEFAULT 0, "p_user_id" "uuid" DEFAULT NULL::"uuid", "p_post_type" "text" DEFAULT NULL::"text") RETURNS TABLE("id" "uuid", "user_id" "uuid", "seller_id" "uuid", "product_id" "uuid", "content" "text", "media_urls" "jsonb", "post_type" "text", "likes_count" integer, "comments_count" integer, "shares_count" integer, "created_at" timestamp with time zone, "author_full_name" "text", "author_avatar_url" "text", "author_account_type" "text", "is_verified" boolean, "product_title" "text", "product_price" numeric, "product_image" "text", "is_liked_by_user" boolean)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   RETURN QUERY
@@ -3052,6 +3100,7 @@ ALTER FUNCTION "public"."get_feed_posts"("p_limit" integer, "p_offset" integer, 
 
 CREATE OR REPLACE FUNCTION "public"."get_health_conversation_messages"("p_conversation_id" "uuid", "p_limit" integer DEFAULT 50, "p_offset" integer DEFAULT 0, "p_before_timestamp" timestamp with time zone DEFAULT NULL::timestamp with time zone) RETURNS TABLE("id" "uuid", "sender_id" "uuid", "sender_role" "text", "content" "text", "message_type" "text", "attachment_url" "text", "attachment_name" "text", "attachment_size" bigint, "attachment_type" "text", "is_read" boolean, "read_at" timestamp with time zone, "created_at" timestamp with time zone, "sender_name" "text", "sender_avatar" "text")
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
     -- Security check
@@ -3102,6 +3151,7 @@ ALTER FUNCTION "public"."get_health_conversation_messages"("p_conversation_id" "
 
 CREATE OR REPLACE FUNCTION "public"."get_health_conversations_list"("p_limit" integer DEFAULT 20, "p_offset" integer DEFAULT 0, "p_status" "text" DEFAULT 'active'::"text") RETURNS TABLE("conversation_id" "uuid", "appointment_id" "uuid", "other_party_id" "uuid", "other_party_name" "text", "other_party_avatar" "text", "other_party_role" "text", "last_message" "text", "last_message_at" timestamp with time zone, "unread_count" bigint, "conversation_type" "text", "status" "text", "created_at" timestamp with time zone)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_user_id UUID := auth.uid();
@@ -3168,6 +3218,7 @@ ALTER FUNCTION "public"."get_health_conversations_list"("p_limit" integer, "p_of
 
 CREATE OR REPLACE FUNCTION "public"."get_low_stock_products"("threshold" integer DEFAULT 10) RETURNS TABLE("id" "uuid", "asin" "text", "title" "text", "quantity" integer, "seller_id" "uuid")
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 BEGIN
@@ -3186,6 +3237,7 @@ ALTER FUNCTION "public"."get_low_stock_products"("threshold" integer) OWNER TO "
 
 CREATE OR REPLACE FUNCTION "public"."get_middle_man_ids"() RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_user_id uuid;
@@ -3211,6 +3263,7 @@ ALTER FUNCTION "public"."get_middle_man_ids"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."get_or_create_conversation"("p_other_user_id" "uuid", "p_product_id" "uuid" DEFAULT NULL::"uuid") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'public'
     AS $$
 DECLARE
@@ -3257,6 +3310,7 @@ ALTER FUNCTION "public"."get_or_create_conversation"("p_other_user_id" "uuid", "
 
 CREATE OR REPLACE FUNCTION "public"."get_or_create_direct_conversation"("p_user1_id" "uuid", "p_user2_id" "uuid", "p_display_name" "text" DEFAULT NULL::"text") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'public', 'pg_catalog'
     AS $$
 DECLARE
@@ -3370,6 +3424,7 @@ ALTER FUNCTION "public"."get_or_create_direct_conversation"("p_user1_id" "uuid",
 
 CREATE OR REPLACE FUNCTION "public"."get_or_create_health_conversation"("p_doctor_id" "uuid", "p_patient_id" "uuid", "p_appointment_id" "uuid" DEFAULT NULL::"uuid") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_conversation_id UUID;
@@ -3430,6 +3485,7 @@ ALTER FUNCTION "public"."get_or_create_health_conversation"("p_doctor_id" "uuid"
 
 CREATE OR REPLACE FUNCTION "public"."get_or_create_service_conversation"("p_provider_id" "uuid", "p_listing_id" "uuid") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_conversation_id UUID;
@@ -3459,6 +3515,7 @@ ALTER FUNCTION "public"."get_or_create_service_conversation"("p_provider_id" "uu
 
 CREATE OR REPLACE FUNCTION "public"."get_prescription_details"("p_prescription_id" "uuid", "p_requesting_user_id" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_prescription RECORD;
@@ -3589,6 +3646,7 @@ ALTER FUNCTION "public"."get_prescription_details"("p_prescription_id" "uuid", "
 
 CREATE OR REPLACE FUNCTION "public"."get_product_image_url"("image_path" "text") RETURNS "text"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   RETURN storage.storage_url('product-images', image_path);
@@ -3623,6 +3681,7 @@ ALTER FUNCTION "public"."get_provider_revenue"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."get_provider_revenue"("p_provider_id" "uuid") RETURNS numeric
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_revenue NUMERIC;
@@ -3643,6 +3702,7 @@ ALTER FUNCTION "public"."get_provider_revenue"("p_provider_id" "uuid") OWNER TO 
 
 CREATE OR REPLACE FUNCTION "public"."get_provider_user_id"("p_provider_id" "uuid") RETURNS "uuid"
     LANGUAGE "sql" STABLE SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
   SELECT user_id FROM public.svc_providers WHERE id = p_provider_id;
 $$;
@@ -3653,6 +3713,7 @@ ALTER FUNCTION "public"."get_provider_user_id"("p_provider_id" "uuid") OWNER TO 
 
 CREATE OR REPLACE FUNCTION "public"."get_public_profile"("p_user_id" "uuid") RETURNS TABLE("user_id" "uuid", "email" "text", "full_name" "text", "phone" "text", "avatar_url" "text", "account_type" "text", "location" "text", "currency" "text", "is_verified" boolean, "created_at" timestamp with time zone, "product_count" bigint, "total_sales" bigint, "total_revenue" numeric, "average_rating" numeric, "review_count" bigint, "store_name" "text", "is_factory" boolean, "is_middle_man" boolean, "is_seller" boolean)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   RETURN QUERY
@@ -3718,6 +3779,7 @@ ALTER FUNCTION "public"."get_public_profile"("p_user_id" "uuid") OWNER TO "postg
 
 CREATE OR REPLACE FUNCTION "public"."get_seller_kpis"("p_seller_id" "uuid", "p_period" "text" DEFAULT '30d'::"text") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 DECLARE
@@ -3754,6 +3816,7 @@ ALTER FUNCTION "public"."get_seller_kpis"("p_seller_id" "uuid", "p_period" "text
 
 CREATE OR REPLACE FUNCTION "public"."get_seller_product_count"("seller_uuid" "uuid") RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 BEGIN
@@ -3776,6 +3839,7 @@ ALTER FUNCTION "public"."get_seller_product_count"("seller_uuid" "uuid") OWNER T
 
 CREATE OR REPLACE FUNCTION "public"."get_seller_sales_count"("p_seller_id" "uuid", "p_start_date" timestamp with time zone, "p_end_date" timestamp with time zone) RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 BEGIN
@@ -3799,6 +3863,7 @@ ALTER FUNCTION "public"."get_seller_sales_count"("p_seller_id" "uuid", "p_start_
 
 CREATE OR REPLACE FUNCTION "public"."get_seller_total_customers"("p_seller_id" "uuid") RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 BEGIN
@@ -3821,6 +3886,7 @@ ALTER FUNCTION "public"."get_seller_total_customers"("p_seller_id" "uuid") OWNER
 
 CREATE OR REPLACE FUNCTION "public"."get_seller_total_revenue"("p_seller_id" "uuid") RETURNS numeric
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'pg_catalog', 'public'
     AS $$
 BEGIN
@@ -3843,6 +3909,7 @@ ALTER FUNCTION "public"."get_seller_total_revenue"("p_seller_id" "uuid") OWNER T
 
 CREATE OR REPLACE FUNCTION "public"."get_typing_indicators"("p_conversation_id" "uuid") RETURNS TABLE("user_id" "uuid", "user_name" "text", "is_typing" boolean, "last_activity" timestamp with time zone)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
     RETURN QUERY
@@ -3899,6 +3966,7 @@ ALTER FUNCTION "public"."get_unread_push_count"("p_user_id" "uuid") OWNER TO "po
 
 CREATE OR REPLACE FUNCTION "public"."get_user_conversations"("p_user_id" "uuid") RETURNS TABLE("conversation_id" "uuid", "product_id" "uuid", "last_message" "text", "last_message_at" timestamp with time zone, "created_at" timestamp with time zone, "is_archived" boolean, "other_user_id" "uuid", "other_user_name" "text", "other_user_avatar" "text", "other_user_account_type" "text", "unread_count" bigint)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   RETURN QUERY
@@ -3939,6 +4007,7 @@ ALTER FUNCTION "public"."get_user_conversations"("p_user_id" "uuid") OWNER TO "p
 
 CREATE OR REPLACE FUNCTION "public"."get_user_conversations_with_products"("p_user_id" "uuid") RETURNS TABLE("conversation_id" "uuid", "product_id" "uuid", "product_title" "text", "product_price" numeric, "product_image" "text", "last_message" "text", "last_message_at" timestamp with time zone, "created_at" timestamp with time zone, "other_user_id" "uuid", "other_user_name" "text", "other_user_avatar" "text", "unread_count" bigint)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   RETURN QUERY
@@ -4012,6 +4081,7 @@ ALTER TABLE "public"."websites" OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."get_website_by_domain"("p_domain" "text") RETURNS "public"."websites"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_website public.websites;
@@ -4033,6 +4103,7 @@ ALTER FUNCTION "public"."get_website_by_domain"("p_domain" "text") OWNER TO "pos
 
 CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'public'
     AS $$
 DECLARE
@@ -4262,6 +4333,7 @@ ALTER FUNCTION "public"."handle_new_user"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."handle_oauth_signup"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
     -- Log new OAuth signup (you can customize this for your analytics)
@@ -4291,6 +4363,7 @@ COMMENT ON FUNCTION "public"."handle_oauth_signup"() IS 'Trigger function to log
 
 CREATE OR REPLACE FUNCTION "public"."handle_service_booking_notifications"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_provider_id UUID;
@@ -4389,6 +4462,7 @@ ALTER FUNCTION "public"."handle_service_booking_notifications"() OWNER TO "postg
 
 CREATE OR REPLACE FUNCTION "public"."has_google_account_linked"() RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     current_user_id UUID;
@@ -4442,6 +4516,7 @@ ALTER FUNCTION "public"."haversine_distance"("lat1" double precision, "lon1" dou
 
 CREATE OR REPLACE FUNCTION "public"."initialize_user_notification_settings"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   -- Create default notification settings when new user is created
@@ -4459,6 +4534,7 @@ ALTER FUNCTION "public"."initialize_user_notification_settings"() OWNER TO "post
 
 CREATE OR REPLACE FUNCTION "public"."is_admin_user"() RETURNS boolean
     LANGUAGE "sql" STABLE SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
   SELECT EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND is_admin = true);
 $$;
@@ -4469,6 +4545,7 @@ ALTER FUNCTION "public"."is_admin_user"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."log_activity"("p_action_type" "text", "p_action_category" "text", "p_description" "text" DEFAULT NULL::"text", "p_metadata" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_log_id uuid;
@@ -4499,6 +4576,7 @@ ALTER FUNCTION "public"."log_activity"("p_action_type" "text", "p_action_categor
 
 CREATE OR REPLACE FUNCTION "public"."log_error"("p_error_type" "text", "p_error_message" "text", "p_stack_trace" "text" DEFAULT NULL::"text", "p_screen_name" "text" DEFAULT NULL::"text", "p_metadata" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_log_id uuid;
@@ -4529,6 +4607,7 @@ ALTER FUNCTION "public"."log_error"("p_error_type" "text", "p_error_message" "te
 
 CREATE OR REPLACE FUNCTION "public"."log_payment_activity"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   INSERT INTO public.activity_logs (
@@ -4588,6 +4667,7 @@ ALTER FUNCTION "public"."log_payment_status_change"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."log_prescription_access"("p_prescription_id" "uuid", "p_access_type" "text" DEFAULT 'view'::"text") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
     INSERT INTO public.health_prescription_access_log (
@@ -4637,6 +4717,7 @@ ALTER FUNCTION "public"."log_wallet_transaction"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."mark_health_messages_read"("p_conversation_id" "uuid", "p_message_ids" "uuid"[] DEFAULT NULL::"uuid"[]) RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_count INTEGER;
@@ -4711,6 +4792,7 @@ ALTER FUNCTION "public"."mark_health_messages_read"("p_conversation_id" "uuid", 
 
 CREATE OR REPLACE FUNCTION "public"."mark_notification_read"("p_notification_id" "uuid") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   UPDATE notifications
@@ -4725,6 +4807,7 @@ ALTER FUNCTION "public"."mark_notification_read"("p_notification_id" "uuid") OWN
 
 CREATE OR REPLACE FUNCTION "public"."mark_notifications_read"("p_user_id" "uuid") RETURNS integer
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_count integer;
@@ -4744,6 +4827,7 @@ ALTER FUNCTION "public"."mark_notifications_read"("p_user_id" "uuid") OWNER TO "
 
 CREATE OR REPLACE FUNCTION "public"."mark_push_notification_opened"("p_notification_id" "uuid") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
     -- Update notification log
@@ -4788,6 +4872,7 @@ ALTER FUNCTION "public"."messages_tsvector_trigger"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."prevent_account_type_change"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   -- If account_type is being changed, revert to original value
@@ -4804,6 +4889,7 @@ ALTER FUNCTION "public"."prevent_account_type_change"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."process_fawry_payment"("p_order_id" "uuid", "p_fawry_reference" "text", "p_amount" numeric, "p_gateway_response" "jsonb", "p_idempotency_key" "text") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_transaction_id UUID;
@@ -4864,6 +4950,7 @@ ALTER FUNCTION "public"."process_fawry_payment"("p_order_id" "uuid", "p_fawry_re
 
 CREATE OR REPLACE FUNCTION "public"."process_medicine_order_payment"("p_order_id" "uuid", "p_payment_amount" numeric, "p_prescription_id" "uuid" DEFAULT NULL::"uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_pharmacy_share DECIMAL;
@@ -4957,6 +5044,7 @@ ALTER FUNCTION "public"."process_medicine_order_payment"("p_order_id" "uuid", "p
 
 CREATE OR REPLACE FUNCTION "public"."process_qr_scan"("p_pharmacy_id" "uuid", "p_user_id" "uuid", "p_qr_code" "text", "p_scan_type" "text", "p_device_info" "text" DEFAULT NULL::"text", "p_location_lat" double precision DEFAULT NULL::double precision, "p_location_lng" double precision DEFAULT NULL::double precision) RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_inventory RECORD;
@@ -5096,6 +5184,7 @@ ALTER FUNCTION "public"."products_tsvector_trigger"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."register_push_subscription"("p_token" "text", "p_platform" "text", "p_app_version" "text" DEFAULT NULL::"text", "p_device_model" "text" DEFAULT NULL::"text", "p_os_version" "text" DEFAULT NULL::"text") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_subscription_id UUID;
@@ -5140,6 +5229,7 @@ ALTER FUNCTION "public"."register_push_subscription"("p_token" "text", "p_platfo
 
 CREATE OR REPLACE FUNCTION "public"."request_payout"("p_user_id" "uuid", "p_amount" numeric, "p_payout_method" "text", "p_bank_details" "jsonb" DEFAULT NULL::"jsonb", "p_idempotency_key" "text" DEFAULT NULL::"text") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_wallet_id UUID;
@@ -5251,6 +5341,7 @@ ALTER FUNCTION "public"."restore_product_inventory_on_cancel"() OWNER TO "postgr
 
 CREATE OR REPLACE FUNCTION "public"."run_daily_patient_backup"("p_doctor_id" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_backup_id UUID;
@@ -5339,6 +5430,7 @@ ALTER FUNCTION "public"."run_daily_patient_backup"("p_doctor_id" "uuid") OWNER T
 
 CREATE OR REPLACE FUNCTION "public"."search_auth_users"("p_query" "text", "p_current_user_id" "uuid") RETURNS TABLE("id" "uuid", "email" "text", "raw_user_meta_data" "jsonb", "created_at" timestamp with time zone)
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'auth', 'pg_catalog'
     AS $$
 BEGIN
@@ -5363,6 +5455,7 @@ ALTER FUNCTION "public"."search_auth_users"("p_query" "text", "p_current_user_id
 
 CREATE OR REPLACE FUNCTION "public"."search_health_messages"("p_conversation_id" "uuid", "p_search_term" "text", "p_limit" integer DEFAULT 20) RETURNS TABLE("id" "uuid", "content" "text", "message_type" "text", "created_at" timestamp with time zone, "sender_role" "text")
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
     RETURN QUERY
@@ -5390,6 +5483,7 @@ ALTER FUNCTION "public"."search_health_messages"("p_conversation_id" "uuid", "p_
 
 CREATE OR REPLACE FUNCTION "public"."search_public_profiles"("p_search_term" "text" DEFAULT NULL::"text", "p_account_type" "text" DEFAULT NULL::"text", "p_location" "text" DEFAULT NULL::"text", "p_limit" integer DEFAULT 20, "p_offset" integer DEFAULT 0) RETURNS TABLE("user_id" "uuid", "full_name" "text", "avatar_url" "text", "account_type" "text", "location" "text", "is_verified" boolean, "product_count" bigint, "total_revenue" numeric, "average_rating" numeric, "store_name" "text")
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   RETURN QUERY
@@ -5447,6 +5541,7 @@ ALTER FUNCTION "public"."search_public_profiles"("p_search_term" "text", "p_acco
 
 CREATE OR REPLACE FUNCTION "public"."search_users_for_chat"("p_query" "text", "p_current_user_id" "uuid") RETURNS TABLE("id" "uuid", "user_id" "text", "email" "text", "full_name" "text", "avatar_url" "text", "account_type" "text")
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   RETURN QUERY
@@ -5468,6 +5563,7 @@ ALTER FUNCTION "public"."search_users_for_chat"("p_query" "text", "p_current_use
 
 CREATE OR REPLACE FUNCTION "public"."send_health_message"("p_conversation_id" "uuid", "p_content" "text", "p_message_type" "text" DEFAULT 'text'::"text", "p_attachment_url" "text" DEFAULT NULL::"text", "p_attachment_name" "text" DEFAULT NULL::"text", "p_attachment_size" bigint DEFAULT NULL::bigint, "p_attachment_type" "text" DEFAULT NULL::"text", "p_metadata" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_message_id UUID;
@@ -5563,6 +5659,7 @@ ALTER FUNCTION "public"."send_health_message"("p_conversation_id" "uuid", "p_con
 
 CREATE OR REPLACE FUNCTION "public"."send_push_campaign"("p_title" "text", "p_body" "text", "p_target_user_ids" "uuid"[] DEFAULT NULL::"uuid"[], "p_target_account_types" "text"[] DEFAULT NULL::"text"[], "p_data" "jsonb" DEFAULT '{}'::"jsonb", "p_notification_type" "text" DEFAULT 'system'::"text", "p_scheduled_at" timestamp with time zone DEFAULT NULL::timestamp with time zone) RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_campaign_id UUID;
@@ -5623,6 +5720,7 @@ ALTER FUNCTION "public"."send_push_campaign"("p_title" "text", "p_body" "text", 
 
 CREATE OR REPLACE FUNCTION "public"."send_push_notification"("p_user_id" "uuid", "p_title" "text", "p_body" "text", "p_data" "jsonb" DEFAULT '{}'::"jsonb", "p_notification_type" "text" DEFAULT 'system'::"text", "p_priority" "text" DEFAULT 'normal'::"text", "p_skip_quiet_hours" boolean DEFAULT false) RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_notification_id UUID;
@@ -5765,6 +5863,7 @@ ALTER FUNCTION "public"."set_updated_at"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."share_prescription_with_pharmacy"("p_prescription_id" "uuid", "p_pharmacy_id" "uuid", "p_valid_hours" integer DEFAULT 72) RETURNS "text"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_share_token TEXT;
@@ -5799,6 +5898,7 @@ ALTER FUNCTION "public"."share_prescription_with_pharmacy"("p_prescription_id" "
 
 CREATE OR REPLACE FUNCTION "public"."split_payment_to_parties"("p_order_id" "uuid", "p_transaction_id" "uuid", "p_total_amount" numeric) RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_order RECORD;
@@ -5894,6 +5994,7 @@ ALTER FUNCTION "public"."split_payment_to_parties"("p_order_id" "uuid", "p_trans
 
 CREATE OR REPLACE FUNCTION "public"."sync_participant_account_type"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_account_type text;
@@ -5912,6 +6013,7 @@ ALTER FUNCTION "public"."sync_participant_account_type"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."track_deal_click"("p_unique_slug" "text") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   UPDATE public.middle_man_deals
@@ -5927,6 +6029,7 @@ ALTER FUNCTION "public"."track_deal_click"("p_unique_slug" "text") OWNER TO "pos
 
 CREATE OR REPLACE FUNCTION "public"."trigger_push_appointment_reminder"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_patient_user_id UUID;
@@ -5977,6 +6080,7 @@ ALTER FUNCTION "public"."trigger_push_appointment_reminder"() OWNER TO "postgres
 
 CREATE OR REPLACE FUNCTION "public"."trigger_push_low_stock_alert"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
     IF NEW.quantity_in_stock <= 10 AND NEW.is_available = true THEN
@@ -6009,6 +6113,7 @@ ALTER FUNCTION "public"."trigger_push_low_stock_alert"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."trigger_push_on_medicine_order_status"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_patient_user_id UUID;
@@ -6066,6 +6171,7 @@ ALTER FUNCTION "public"."trigger_push_on_medicine_order_status"() OWNER TO "post
 
 CREATE OR REPLACE FUNCTION "public"."trigger_push_on_prescription_created"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
     -- Notify patient about new prescription
@@ -6101,6 +6207,7 @@ ALTER FUNCTION "public"."trigger_push_on_prescription_created"() OWNER TO "postg
 
 CREATE OR REPLACE FUNCTION "public"."trigger_push_payment_received"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
     v_user_id UUID;
@@ -6134,6 +6241,7 @@ ALTER FUNCTION "public"."trigger_push_payment_received"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."update_conversation_on_deal_proposal"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   UPDATE conversations
@@ -6325,6 +6433,7 @@ ALTER FUNCTION "public"."update_freelancer_stats_on_completion"() OWNER TO "post
 
 CREATE OR REPLACE FUNCTION "public"."update_health_conversation_on_message"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
     IF TG_OP = 'INSERT' AND NOT NEW.is_deleted THEN
@@ -6708,6 +6817,7 @@ ALTER FUNCTION "public"."update_seller_stats_on_order_delivered"() OWNER TO "pos
 
 CREATE OR REPLACE FUNCTION "public"."update_svc_conv_on_message"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
   IF TG_OP = 'INSERT' AND NOT NEW.is_read THEN -- Assuming is_read false means new/unread logic or just update text
@@ -6812,6 +6922,7 @@ ALTER FUNCTION "public"."update_trading_conv_on_message"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."update_typing_indicator"("p_conversation_id" "uuid", "p_is_typing" boolean) RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 BEGIN
     INSERT INTO public.health_typing_indicators (
@@ -6863,6 +6974,7 @@ ALTER FUNCTION "public"."update_user_last_seen"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."user_is_in_conversation"("p_conversation_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     SET "search_path" TO 'public'
     AS $$
 BEGIN
@@ -6932,6 +7044,7 @@ ALTER FUNCTION "public"."validate_wallet_balance"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."verify_cod_verification_key"("p_verification_key" "text", "p_driver_id" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
     AS $$
 DECLARE
   v_key_record RECORD;
