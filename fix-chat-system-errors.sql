@@ -404,6 +404,7 @@ CREATE OR REPLACE FUNCTION public.create_services_conversation(
 )
 RETURNS uuid
 LANGUAGE plpgsql SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 DECLARE
     v_conversation_id uuid;
@@ -440,6 +441,7 @@ CREATE OR REPLACE FUNCTION public.create_trading_conversation(
 )
 RETURNS uuid
 LANGUAGE plpgsql SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 DECLARE
     v_conversation_id uuid;

@@ -112,7 +112,7 @@ BEGIN
     
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 -- Drop existing trigger if exists
 DROP TRIGGER IF EXISTS set_participant_account_type_trigger ON public.conversation_participants;
@@ -159,7 +159,7 @@ BEGIN
     
     RETURN v_conversation_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 -- Function to get conversation with participants
 CREATE OR REPLACE FUNCTION public.get_conversation_with_participants(
@@ -189,7 +189,7 @@ BEGIN
     WHERE c.id = p_conversation_id
     GROUP BY c.id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 -- ═══════════════════════════════════════════════════════════════════════
 -- 5. Row Level Security (RLS) Policies

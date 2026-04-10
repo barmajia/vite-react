@@ -67,6 +67,7 @@ CREATE OR REPLACE FUNCTION public.check_product_chat_permission(
   p_product_id uuid
 ) RETURNS boolean
 LANGUAGE plpgsql SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 DECLARE
   v_allow_chat boolean;
@@ -108,6 +109,7 @@ CREATE OR REPLACE FUNCTION public.create_trading_conversation(
   p_conversation_type text DEFAULT 'product_inquiry'::text
 ) RETURNS uuid
 LANGUAGE plpgsql SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 DECLARE
   v_conversation_id uuid;
@@ -189,6 +191,7 @@ RETURNS TABLE (
   unread_count bigint
 )
 LANGUAGE plpgsql SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 BEGIN
   RETURN QUERY

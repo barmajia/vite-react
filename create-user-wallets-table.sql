@@ -49,6 +49,7 @@ CREATE OR REPLACE FUNCTION public.create_wallet_for_new_user()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 BEGIN
     INSERT INTO public.user_wallets (user_id, balance, pending_balance, total_earned, total_withdrawn)
@@ -113,6 +114,7 @@ CREATE OR REPLACE FUNCTION public.record_wallet_transaction(
 RETURNS uuid
 LANGUAGE plpgsql
 SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 DECLARE
     v_wallet_balance numeric;

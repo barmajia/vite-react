@@ -164,7 +164,7 @@ BEGIN
     NEW.updated_at = NOW();
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 DROP TRIGGER IF EXISTS update_health_doctor_timestamp ON public.health_doctor_profiles;
 CREATE TRIGGER update_health_doctor_timestamp 
@@ -205,7 +205,7 @@ BEGIN
     END IF;
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 DROP TRIGGER IF EXISTS trigger_update_patient_visits ON public.health_appointments;
 CREATE TRIGGER trigger_update_patient_visits 

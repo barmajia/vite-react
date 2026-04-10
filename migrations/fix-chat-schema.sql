@@ -71,6 +71,7 @@ RETURNS TABLE(
   account_type text
 )
 LANGUAGE plpgsql SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 BEGIN
   RETURN QUERY
@@ -110,6 +111,7 @@ CREATE OR REPLACE FUNCTION public.get_or_create_direct_conversation(
 RETURNS uuid
 LANGUAGE plpgsql
 SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 DECLARE
   v_conversation_id uuid;

@@ -36,7 +36,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 CREATE OR REPLACE FUNCTION sync_participant_account_type()
 RETURNS TRIGGER AS $$
@@ -62,7 +62,7 @@ BEGIN
   
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 -- Step 5: Recreate triggers
 CREATE TRIGGER trigger_lock_account_type

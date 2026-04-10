@@ -157,6 +157,7 @@ CREATE OR REPLACE FUNCTION public.ensure_shop_exists()
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 DECLARE
   v_user_id UUID := auth.uid();

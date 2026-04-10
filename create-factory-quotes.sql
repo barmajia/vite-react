@@ -147,7 +147,7 @@ BEGIN
   END IF;
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 -- Trigger to check expiry on update
 CREATE TRIGGER trg_factory_quotes_auto_expire

@@ -30,6 +30,7 @@ RETURNS TABLE (
   is_seller BOOLEAN
 )
 LANGUAGE plpgsql SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 BEGIN
   RETURN QUERY
@@ -114,6 +115,7 @@ RETURNS TABLE (
   store_name TEXT
 )
 LANGUAGE plpgsql SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 BEGIN
   RETURN QUERY

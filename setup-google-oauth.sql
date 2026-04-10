@@ -68,7 +68,7 @@ BEGIN
     
     RETURN has_google;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 -- Grant execute to authenticated users
 GRANT EXECUTE ON FUNCTION public.has_google_account_linked() TO authenticated;
@@ -95,7 +95,7 @@ BEGIN
     
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 -- Create trigger for new user signups
 DROP TRIGGER IF EXISTS on_oauth_user_created ON auth.users;

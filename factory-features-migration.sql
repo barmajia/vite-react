@@ -257,6 +257,7 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 DECLARE
   v_current_revenue NUMERIC;
@@ -348,6 +349,7 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 BEGIN
   RETURN QUERY
@@ -378,6 +380,7 @@ CREATE OR REPLACE FUNCTION update_production_status(
 RETURNS BOOLEAN
 LANGUAGE plpgsql
 SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 DECLARE
   v_seller_id UUID;
@@ -417,6 +420,7 @@ CREATE OR REPLACE FUNCTION cleanup_expired_quotes()
 RETURNS VOID
 LANGUAGE plpgsql
 SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 BEGIN
   UPDATE quote_requests

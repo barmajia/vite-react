@@ -87,7 +87,7 @@ BEGIN
         updated_at = now();
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 -- Create trigger to auto-create user record on signup
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;

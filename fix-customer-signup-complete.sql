@@ -64,6 +64,7 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger
 LANGUAGE plpgsql
 SECURITY DEFINER
+  SET search_path TO public, pg_catalog;
 AS $$
 DECLARE
   acct TEXT := COALESCE(NEW.raw_user_meta_data->>'account_type', 'user');
@@ -200,7 +201,7 @@ BEGIN
   success := TRUE;
   RETURN NEXT;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path TO public, pg_catalog;;
 
 GRANT EXECUTE ON FUNCTION public.customer_signup(uuid, text, text, text) TO service_role;
 
