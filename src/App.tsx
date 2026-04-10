@@ -100,6 +100,7 @@ import { AdminMiddlemen } from "@/pages/admin/AdminMiddlemen";
 import { AdminConversations } from "@/pages/admin/AdminConversations";
 import { AdminDelivery } from "@/pages/admin/AdminDelivery";
 import { AdminSettings } from "@/pages/admin/AdminSettings";
+import { AdminReads } from "@/pages/admin/AdminReads";
 
 // ==================== Middleman ====================
 import { MiddlemanDashboard } from "@/pages/middleman/MiddlemanDashboard";
@@ -152,6 +153,9 @@ import { ProviderStoriesPage } from "@/pages/services/ProviderStoriesPage";
 import { PrivacyPolicyPage } from "@/pages/legal/PrivacyPolicyPage";
 import { TermsOfServicePage } from "@/pages/legal/TermsOfServicePage";
 import { CookiePolicyPage } from "@/pages/legal/CookiePolicyPage";
+
+// ==================== Reads (Books) ====================
+import { ReadsPage } from "@/pages/reads/ReadsPage";
 
 // ==================== Health ====================
 import { HealthMessagesPage } from "@/features/health/pages/HealthMessagesPage";
@@ -265,6 +269,11 @@ function App() {
                     />
                     <Route path="brands" element={<Brands />} />
                     <Route path="brands/:id" element={<BrandProducts />} />
+                  </Route>
+
+                  {/* ==================== READS (BOOKS) VERTICAL ==================== */}
+                  <Route path="reads">
+                    <Route index element={<ReadsPage />} />
                   </Route>
 
                   {/* Redirect /product/:id to /products/:asin */}
@@ -698,6 +707,7 @@ function App() {
                     element={<AdminProductEdit />}
                   />
                   <Route path="products/new" element={<AdminProductNew />} />
+                  <Route path="reads" element={<AdminReads />} />
                   <Route path="orders" element={<AdminOrders />} />
                   <Route path="factories" element={<AdminFactories />} />
                   <Route path="middlemen" element={<AdminMiddlemen />} />
