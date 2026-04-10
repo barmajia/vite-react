@@ -80,10 +80,13 @@ import { DataExport } from "@/features/health/pages/DataExport";
 
 // ==================== Factory ====================
 import { FactoryDashboardPage } from "@/pages/factory/FactoryDashboardPage";
+import { ImprovedFactoryDashboard } from "@/pages/factory/ImprovedFactoryDashboard";
 import { FactoryProductionPage } from "@/pages/factory/FactoryProductionPage";
 import { FactoryQuotesPage } from "@/pages/factory/FactoryQuotesPage";
 import { FactoryConnectionsPage } from "@/pages/factory/FactoryConnectionsPage";
 import { FactoryStartChat } from "@/pages/factory/FactoryStartChat";
+import { FactoryWelcomePage } from "@/pages/factory/FactoryWelcomePage";
+import { FactorySettings } from "@/pages/factory/FactorySettings";
 
 // ==================== Admin ====================
 import { AdminLayout } from "@/pages/admin/AdminLayout";
@@ -103,6 +106,7 @@ import { AdminSettings } from "@/pages/admin/AdminSettings";
 
 // ==================== Middleman ====================
 import { MiddlemanDashboard } from "@/pages/middleman/MiddlemanDashboard";
+import { ImprovedMiddlemanDashboard } from "@/pages/middleman/ImprovedMiddlemanDashboard";
 import { MiddlemanDeals } from "@/pages/middleman/MiddlemanDeals";
 import { MiddlemanCreateDeal } from "@/pages/middleman/MiddlemanCreateDeal";
 import { MiddlemanDealDetails } from "@/pages/middleman/MiddlemanDealDetails";
@@ -112,6 +116,7 @@ import { MiddlemanConnections } from "@/pages/middleman/MiddlemanConnections";
 import { MiddlemanCommission } from "@/pages/middleman/MiddlemanCommission";
 import { MiddlemanProfile } from "@/pages/middleman/MiddlemanProfile";
 import { MiddlemanSettings } from "@/pages/middleman/MiddlemanSettings";
+import { MiddlemanWelcomePage } from "@/pages/middleman/MiddlemanWelcomePage";
 
 // ==================== Wallet ====================
 import { WalletDashboard } from "@/pages/wallet/WalletDashboard";
@@ -131,6 +136,21 @@ import { OrderTracking } from "@/pages/customer/OrderTracking";
 import { CommissionReport } from "@/pages/seller/CommissionReport";
 import { BecomeSellerPage } from "@/pages/seller/BecomeSellerPage";
 import { SellerAnalyticsPage } from "@/pages/seller/SellerAnalyticsPage";
+import { SellerWelcomePage } from "@/pages/seller/SellerWelcomePage";
+import { SellerDashboard } from "@/pages/seller/SellerDashboard";
+import { SellerSettings } from "@/pages/seller/SellerSettings";
+
+// ==================== Freelancer ====================
+import { FreelancerDashboard } from "@/pages/freelancer/FreelancerDashboard";
+import { FreelancerWelcomePage } from "@/pages/freelancer/FreelancerWelcomePage";
+
+// ==================== Healthcare ====================
+import { HealthcareDashboard } from "@/pages/healthcare/HealthcareDashboard";
+import { HealthcareWelcomePage } from "@/pages/healthcare/HealthcareWelcomePage";
+
+// ==================== Pharmacy ====================
+import { PharmacyDashboard } from "@/pages/pharmacy/PharmacyDashboard";
+import { PharmacyWelcomePage } from "@/pages/pharmacy/PharmacyWelcomePage";
 
 // ==================== Messages ====================
 import { MessagesPage } from "@/pages/messages/MessagesPage";
@@ -496,8 +516,9 @@ function App() {
                       </ProtectedRoute>
                     }
                   >
-                    <Route index element={<MiddlemanDashboard />} />
-                    <Route path="dashboard" element={<MiddlemanDashboard />} />
+                    <Route index element={<MiddlemanWelcomePage />} />
+                    <Route path="welcome" element={<MiddlemanWelcomePage />} />
+                    <Route path="dashboard" element={<ImprovedMiddlemanDashboard />} />
                     <Route path="deals" element={<MiddlemanDeals />} />
                     <Route path="deals/new" element={<MiddlemanCreateDeal />} />
                     <Route
@@ -567,6 +588,30 @@ function App() {
                   {/* ==================== SELLER VERTICAL ==================== */}
                   <Route path="seller">
                     <Route
+                      index
+                      element={
+                        <ProtectedRoute allowedAccountTypes={["seller"]}>
+                          <SellerWelcomePage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="welcome"
+                      element={
+                        <ProtectedRoute allowedAccountTypes={["seller"]}>
+                          <SellerWelcomePage />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="dashboard"
+                      element={
+                        <ProtectedRoute allowedAccountTypes={["seller"]}>
+                          <SellerDashboard />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
                       path="commission"
                       element={
                         <ProtectedRoute allowedAccountTypes={["seller"]}>
@@ -595,7 +640,12 @@ function App() {
                       </ProtectedRoute>
                     }
                   >
-                    <Route index element={<FactoryDashboardPage />} />
+                    <Route index element={<FactoryWelcomePage />} />
+                    <Route path="welcome" element={<FactoryWelcomePage />} />
+                    <Route
+                      path="dashboard"
+                      element={<ImprovedFactoryDashboard />}
+                    />
                     <Route
                       path="production"
                       element={<FactoryProductionPage />}
@@ -606,6 +656,49 @@ function App() {
                       element={<FactoryConnectionsPage />}
                     />
                     <Route path="start-chat" element={<FactoryStartChat />} />
+                    <Route path="settings" element={<FactorySettings />} />
+                  </Route>
+
+                  {/* ==================== FREELANCER VERTICAL ==================== */}
+                  <Route
+                    path="freelancer"
+                    element={
+                      <ProtectedRoute allowedAccountTypes={["freelancer"]}>
+                        <Outlet />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<FreelancerWelcomePage />} />
+                    <Route path="welcome" element={<FreelancerWelcomePage />} />
+                    <Route path="dashboard" element={<FreelancerDashboard />} />
+                  </Route>
+
+                  {/* ==================== HEALTHCARE VERTICAL ==================== */}
+                  <Route
+                    path="healthcare"
+                    element={
+                      <ProtectedRoute allowedAccountTypes={["healthcare"]}>
+                        <Outlet />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<HealthcareWelcomePage />} />
+                    <Route path="welcome" element={<HealthcareWelcomePage />} />
+                    <Route path="dashboard" element={<HealthcareDashboard />} />
+                  </Route>
+
+                  {/* ==================== PHARMACY VERTICAL ==================== */}
+                  <Route
+                    path="pharmacy"
+                    element={
+                      <ProtectedRoute allowedAccountTypes={["pharmacy"]}>
+                        <Outlet />
+                      </ProtectedRoute>
+                    }
+                  >
+                    <Route index element={<PharmacyWelcomePage />} />
+                    <Route path="welcome" element={<PharmacyWelcomePage />} />
+                    <Route path="dashboard" element={<PharmacyDashboard />} />
                   </Route>
 
                   {/* ==================== PROFILE & SOCIAL (Cross-Vertical) ==================== */}

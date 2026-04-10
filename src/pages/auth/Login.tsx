@@ -109,6 +109,42 @@ export function Login() {
             navigate("/services/dashboard");
             return;
           }
+
+          // Check user profile for account type and onboarding status
+          const { data: userProfile } = await supabase
+            .from("users")
+            .select("account_type, onboarding_completed")
+            .eq("user_id", data.user.id)
+            .single();
+
+          if (userProfile) {
+            const { account_type, onboarding_completed } = userProfile;
+
+            // Redirect based on account type and onboarding status
+            if (account_type === "seller" && !onboarding_completed) {
+              navigate("/seller/welcome");
+              return;
+            } else if (account_type === "seller") {
+              navigate("/seller/analytics");
+              return;
+            }
+
+            if (account_type === "factory" && !onboarding_completed) {
+              navigate("/factory/welcome");
+              return;
+            } else if (account_type === "factory") {
+              navigate("/factory/dashboard");
+              return;
+            }
+
+            if (account_type === "middleman" && !onboarding_completed) {
+              navigate("/middleman/welcome");
+              return;
+            } else if (account_type === "middleman") {
+              navigate("/middleman/dashboard");
+              return;
+            }
+          }
         }
 
         navigate("/services");
