@@ -25,6 +25,7 @@ import {
   Factory,
   Moon,
   Sun,
+  Book,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +47,7 @@ export function AdminLayout() {
     { icon: Home, label: "Dashboard", path: "/admin" },
     { icon: Users, label: "Users", path: "/admin/users", badge: "New" },
     { icon: Package, label: "Products", path: "/admin/products" },
+    { icon: Book, label: "Reads", path: "/admin/reads" },
     { icon: ShoppingCart, label: "Orders", path: "/admin/orders" },
     { icon: Factory, label: "Factories", path: "/admin/factories" },
     { icon: Handshake, label: "Middlemen", path: "/admin/middlemen" },
