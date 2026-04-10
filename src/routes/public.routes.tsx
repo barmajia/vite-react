@@ -23,6 +23,11 @@ const FeedPage = lazy(() =>
 const Reviews = lazy(() =>
   import("@/pages/Reviews").then((m) => ({ default: m.default })),
 );
+const PublicDealPage = lazy(() =>
+  import("@/pages/public/PublicDealPage").then((m) => ({
+    default: m.PublicDealPage,
+  })),
+);
 
 export const publicRoutes: RouteObject[] = [
   {
@@ -62,6 +67,14 @@ export const publicRoutes: RouteObject[] = [
     element: (
       <Suspense fallback={<RouteSkeleton />}>
         <Reviews />
+      </Suspense>
+    ),
+  },
+  {
+    path: "deal/:slug",
+    element: (
+      <Suspense fallback={<RouteSkeleton />}>
+        <PublicDealPage />
       </Suspense>
     ),
   },

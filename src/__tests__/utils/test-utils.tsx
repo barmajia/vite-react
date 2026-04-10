@@ -80,9 +80,7 @@ interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
 // All the providers
 function AllProviders({
   children,
-  authOptions,
   queryClient,
-  initialEntries,
 }: {
   children: React.ReactNode;
   authOptions?: MockAuthOptions;

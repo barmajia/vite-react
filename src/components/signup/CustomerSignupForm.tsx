@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { CustomerSignupData } from "@/types/signup";
+import { CustomerSignupFormData } from "@/types/signup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { User, Mail, Phone, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
 
 interface CustomerSignupFormProps {
-  onSubmit: (data: CustomerSignupData) => Promise<void>;
+  onSubmit: (data: CustomerSignupFormData) => Promise<void>;
   onBack: () => void;
   loading: boolean;
 }
@@ -16,8 +16,7 @@ export function CustomerSignupForm({
   onBack,
   loading,
 }: CustomerSignupFormProps) {
-  const [formData, setFormData] = useState<CustomerSignupData>({
-    account_type: "customer",
+  const [formData, setFormData] = useState<CustomerSignupFormData>({
     email: "",
     password: "",
     full_name: "",

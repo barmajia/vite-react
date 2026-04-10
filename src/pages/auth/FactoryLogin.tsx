@@ -39,8 +39,8 @@ export function FactoryLogin() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const { signInWithGoogle } = useAuth();
-      const result = await signInWithGoogle();
+      const { signUpWithGoogle } = useAuth();
+      const result = await signUpWithGoogle('factory');
       if (result.error) {
         setError(result.error.message ?? "Google sign-in failed");
         toast.error(result.error.message ?? "Google sign-in failed");

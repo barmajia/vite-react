@@ -31,7 +31,11 @@ interface SellerProfile {
   avatar_url: string | null;
 }
 
-export function SellerHeader() {
+interface SellerHeaderProps {
+  onToggleSidebar?: () => void;
+}
+
+export function SellerHeader({ onToggleSidebar }: SellerHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
@@ -39,7 +43,9 @@ export function SellerHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [sellerProfile, setSellerProfile] = useState<SellerProfile | null>(null);
+  const [sellerProfile, setSellerProfile] = useState<SellerProfile | null>(
+    null,
+  );
 
   // Scroll detection
   useEffect(() => {
@@ -52,11 +58,13 @@ export function SellerHeader() {
   useEffect(() => {
     const fetchSellerProfile = async () => {
       if (!user) return;
-      
+
       try {
         const { data, error } = await supabase
           .from("sellers")
-          .select("user_id, company_name, full_name, email, is_verified, avatar_url")
+          .select(
+            "user_id, company_name, full_name, email, is_verified, avatar_url",
+          )
           .eq("user_id", user.id)
           .eq("is_factory", false)
           .maybeSingle();
@@ -101,20 +109,27 @@ export function SellerHeader() {
           "fixed top-0 left-0 right-0 z-[100] transition-all duration-700",
           isScrolled
             ? "py-2 bg-background/40 backdrop-blur-3xl border-b border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
-            : "py-6 bg-transparent border-b border-transparent"
+            : "py-6 bg-transparent border-b border-transparent",
         )}
       >
         <div className="container mx-auto px-6">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <Link to="/seller" className="flex items-center gap-3 group transition-transform duration-500 hover:scale-105">
+            <Link
+              to="/seller"
+              className="flex items-center gap-3 group transition-transform duration-500 hover:scale-105"
+            >
               <div className="relative">
                 <div className="absolute -inset-2 bg-emerald-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <Store className="h-10 w-10 text-emerald-500 relative z-10" />
               </div>
               <div className="flex flex-col">
-                <span className="text-xl font-black italic tracking-tighter leading-none text-white group-hover:text-emerald-400 transition-colors">AURORA</span>
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-60 leading-none mt-1 text-white/80">Seller Portal</span>
+                <span className="text-xl font-black italic tracking-tighter leading-none text-white group-hover:text-emerald-400 transition-colors">
+                  AURORA
+                </span>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-60 leading-none mt-1 text-white/80">
+                  Seller Portal
+                </span>
               </div>
             </Link>
 
@@ -124,7 +139,11 @@ export function SellerHeader() {
                 onClick={() => setTheme(theme === "light" ? "dark" : "light")}
                 className="p-3 glass bg-white/5 hover:bg-white/10 text-foreground/60 hover:text-foreground rounded-2xl transition-all duration-500 hover:scale-110 border border-white/10"
               >
-                {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5 text-amber-400" />}
+                {theme === "light" ? (
+                  <Moon className="h-5 w-5" />
+                ) : (
+                  <Sun className="h-5 w-5 text-amber-400" />
+                )}
               </button>
               <Link to="/seller/login">
                 <button className="glass bg-white/5 border-white/10 h-12 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">
@@ -150,13 +169,16 @@ export function SellerHeader() {
         "fixed top-0 left-0 right-0 z-[100] transition-all duration-700",
         isScrolled
           ? "py-2 bg-background/40 backdrop-blur-3xl border-b border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
-          : "py-6 bg-transparent border-b border-transparent"
+          : "py-6 bg-transparent border-b border-transparent",
       )}
     >
       <div className="container mx-auto px-6">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link to="/seller/dashboard" className="flex items-center gap-3 group transition-transform duration-500 hover:scale-105">
+          <Link
+            to="/seller/dashboard"
+            className="flex items-center gap-3 group transition-transform duration-500 hover:scale-105"
+          >
             <div className="relative">
               <div className="absolute -inset-2 bg-emerald-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
               <Store className="h-10 w-10 text-emerald-500 relative z-10" />
@@ -181,7 +203,7 @@ export function SellerHeader() {
                   "flex items-center gap-2 px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all duration-500",
                   location.pathname.startsWith(to)
                     ? "text-emerald-500 bg-emerald-500/5 border border-emerald-500/20"
-                    : "text-foreground/60 hover:text-foreground hover:bg-white/5 border border-transparent"
+                    : "text-foreground/60 hover:text-foreground hover:bg-white/5 border border-transparent",
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -196,7 +218,11 @@ export function SellerHeader() {
               onClick={() => setTheme(theme === "light" ? "dark" : "light")}
               className="p-3 glass bg-white/5 hover:bg-white/10 text-foreground/60 hover:text-foreground rounded-2xl transition-all duration-500 hover:scale-110 border border-white/10"
             >
-              {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5 text-amber-400" />}
+              {theme === "light" ? (
+                <Moon className="h-5 w-5" />
+              ) : (
+                <Sun className="h-5 w-5 text-amber-400" />
+              )}
             </button>
 
             <div className="relative">
@@ -205,7 +231,8 @@ export function SellerHeader() {
                 className="flex items-center gap-3 glass bg-white/5 border-white/10 hover:bg-white/10 p-2 rounded-2xl transition-all duration-500 group"
               >
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold">
-                  {sellerProfile?.full_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+                  {sellerProfile?.full_name?.charAt(0).toUpperCase() ||
+                    user.email?.charAt(0).toUpperCase()}
                 </div>
                 <div className="hidden lg:flex flex-col items-start pr-2">
                   <span className="text-[10px] font-black italic tracking-tight">
@@ -215,7 +242,10 @@ export function SellerHeader() {
                     {sellerProfile?.is_verified ? "Verified" : "Pending"}
                   </span>
                 </div>
-                <ChevronDown size={14} className="hidden lg:block text-muted-foreground/60 transition-transform" />
+                <ChevronDown
+                  size={14}
+                  className="hidden lg:block text-muted-foreground/60 transition-transform"
+                />
               </button>
 
               {/* Dropdown */}
@@ -223,34 +253,53 @@ export function SellerHeader() {
                 <div className="absolute right-0 top-full mt-2 w-72 glass p-4 rounded-[2rem] shadow-2xl border-white/10 z-[200]">
                   <div className="flex items-center gap-4 p-4 mb-2">
                     <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white text-2xl font-bold">
-                      {sellerProfile?.full_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
+                      {sellerProfile?.full_name?.charAt(0).toUpperCase() ||
+                        user.email?.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-black italic">{sellerProfile?.full_name || "Seller User"}</p>
-                      <p className="text-[10px] text-muted-foreground/60 truncate">{user.email}</p>
+                      <p className="text-sm font-black italic">
+                        {sellerProfile?.full_name || "Seller User"}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground/60 truncate">
+                        {user.email}
+                      </p>
                       {sellerProfile?.is_verified && (
                         <div className="flex items-center gap-1 mt-1">
                           <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                          <span className="text-[9px] font-black uppercase text-emerald-500">Verified Seller</span>
+                          <span className="text-[9px] font-black uppercase text-emerald-500">
+                            Verified Seller
+                          </span>
                         </div>
                       )}
                     </div>
                   </div>
 
                   <div className="space-y-1 mb-2">
-                    <Link to="/seller/dashboard" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all">
+                    <Link
+                      to="/seller/dashboard"
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all"
+                    >
                       <BarChart3 className="h-4 w-4 text-emerald-500" />
                       <span className="text-xs font-bold">Dashboard</span>
                     </Link>
-                    <Link to="/seller/products" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all">
+                    <Link
+                      to="/seller/products"
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all"
+                    >
                       <Package className="h-4 w-4 text-emerald-500" />
                       <span className="text-xs font-bold">Products</span>
                     </Link>
-                    <Link to="/seller/orders" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all">
+                    <Link
+                      to="/seller/orders"
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all"
+                    >
                       <TrendingUp className="h-4 w-4 text-emerald-500" />
                       <span className="text-xs font-bold">Orders</span>
                     </Link>
-                    <Link to="/seller/settings" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all">
+                    <Link
+                      to="/seller/settings"
+                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all"
+                    >
                       <Settings className="h-4 w-4 text-emerald-500" />
                       <span className="text-xs font-bold">Settings</span>
                     </Link>
@@ -290,7 +339,9 @@ export function SellerHeader() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <Icon className="h-6 w-6 text-emerald-500" />
-                <span className="text-sm font-black uppercase tracking-widest">{label}</span>
+                <span className="text-sm font-black uppercase tracking-widest">
+                  {label}
+                </span>
               </Link>
             ))}
             <div className="pt-4 border-t border-white/10">
@@ -300,14 +351,18 @@ export function SellerHeader() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <User className="h-6 w-6 text-emerald-500" />
-                <span className="text-sm font-black uppercase tracking-widest">Profile</span>
+                <span className="text-sm font-black uppercase tracking-widest">
+                  Profile
+                </span>
               </Link>
               <button
                 onClick={handleSignOut}
                 className="w-full flex items-center justify-center gap-4 p-4 rounded-2xl bg-rose-500/10 text-rose-500 transition-all mt-2"
               >
                 <LogOut className="h-6 w-6" />
-                <span className="text-sm font-black uppercase tracking-widest">Sign Out</span>
+                <span className="text-sm font-black uppercase tracking-widest">
+                  Sign Out
+                </span>
               </button>
             </div>
           </nav>

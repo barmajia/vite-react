@@ -1,44 +1,37 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import {
-  Factory,
+  Handshake,
   LogOut,
   User,
-  Package,
-  TrendingUp,
-  Settings,
   ChevronDown,
-  BarChart3,
-  MessageSquare,
   Menu,
   X,
   CheckCircle2,
   Moon,
   Sun,
+  DollarSign,
+  BarChart3,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { Logo } from "@/components/shared/Logo";
 
-interface FactoryProfile {
-  id: string;
-  user_id: string;
-  company_name: string | null;
-  full_name: string;
-  email: string;
-  is_verified: boolean;
-  avatar_url: string | null;
-  production_capacity: string | null;
-  specialization: string | null;
-}
-
-interface FactoryHeaderProps {
+interface MiddlemanHeaderProps {
   onToggleSidebar?: () => void;
 }
 
-export function FactoryHeader({ onToggleSidebar }: FactoryHeaderProps) {
+interface MiddlemanProfile {
+  id: string;
+  user_id: string;
+  full_name: string;
+  email: string;
+  commission_rate: number;
+  total_earnings: number;
+}
+
+export function MiddlemanHeader({ onToggleSidebar }: MiddlemanHeaderProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, signOut } = useAuth();
@@ -46,47 +39,38 @@ export function FactoryHeader({ onToggleSidebar }: FactoryHeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [factoryProfile, setFactoryProfile] = useState<FactoryProfile | null>(
-    null,
-  );
+  const [middlemanProfile, setMiddlemanProfile] = useState<MiddlemanProfile | null>(null);
 
-  // Scroll detection
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Fetch factory profile
   useEffect(() => {
-    const fetchFactoryProfile = async () => {
+    const fetchMiddlemanProfile = async () => {
       if (!user) return;
-
       try {
         const { data, error } = await supabase
-          .from("sellers")
-          .select(
-            "user_id, company_name, full_name, email, is_verified, avatar_url, production_capacity, specialization",
-          )
+          .from("middle_men")
+          .select("id, user_id, commission_rate, total_earnings")
           .eq("user_id", user.id)
-          .eq("is_factory", true)
           .maybeSingle();
-
         if (error) return;
         if (data) {
-          setFactoryProfile({
-            id: user.id,
+          setMiddlemanProfile({
             ...data,
+            full_name: user.user_metadata?.full_name || "Middleman",
+            email: user.email || "",
           });
         }
       } catch {
         // Silently fail
       }
     };
-    fetchFactoryProfile();
+    fetchMiddlemanProfile();
   }, [user]);
 
-  // Close dropdowns on route change
   useEffect(() => {
     setIsProfileOpen(false);
     setIsMobileMenuOpen(false);
@@ -94,21 +78,15 @@ export function FactoryHeader({ onToggleSidebar }: FactoryHeaderProps) {
 
   const handleSignOut = async () => {
     await signOut();
-    navigate("/factory");
+    navigate("/middleman");
   };
 
   const navLinks = [
-    { to: "/factory/dashboard", label: "Dashboard", icon: BarChart3 },
-    { to: "/factory/dashboard/production", label: "Production", icon: Package },
-    { to: "/factory/dashboard/quotes", label: "Quotes", icon: MessageSquare },
-    {
-      to: "/factory/dashboard/connections",
-      label: "Connections",
-      icon: TrendingUp,
-    },
+    { to: "/middleman/dashboard", label: "Dashboard", icon: BarChart3 },
+    { to: "/middleman/deals", label: "Deals", icon: Handshake },
+    { to: "/middleman/earnings", label: "Earnings", icon: DollarSign },
   ];
 
-  // If not logged in, show public header
   if (!user) {
     return (
       <header
@@ -116,49 +94,36 @@ export function FactoryHeader({ onToggleSidebar }: FactoryHeaderProps) {
           "fixed top-0 left-0 right-0 z-[100] transition-all duration-700",
           isScrolled
             ? "py-2 bg-background/40 backdrop-blur-3xl border-b border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
-            : "py-6 bg-transparent border-b border-transparent",
+            : "py-6 bg-transparent border-b border-transparent"
         )}
       >
         <div className="container mx-auto px-6">
           <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <Link
-              to="/factory"
-              className="flex items-center gap-3 group transition-transform duration-500 hover:scale-105"
-            >
+            <Link to="/middleman" className="flex items-center gap-3 group transition-transform duration-500 hover:scale-105">
               <div className="relative">
-                <div className="absolute -inset-2 bg-blue-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                <Factory className="h-10 w-10 text-blue-500 relative z-10" />
+                <div className="absolute -inset-2 bg-amber-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+                <Handshake className="h-10 w-10 text-amber-500 relative z-10" />
               </div>
               <div className="flex flex-col">
-                <span className="text-xl font-black italic tracking-tighter leading-none text-white group-hover:text-blue-400 transition-colors">
-                  AURORA
-                </span>
-                <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-60 leading-none mt-1 text-white/80">
-                  Factory Portal
-                </span>
+                <span className="text-xl font-black italic tracking-tighter leading-none text-white group-hover:text-amber-400 transition-colors">AURORA</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-60 leading-none mt-1 text-white/80">Middleman Portal</span>
               </div>
             </Link>
 
-            {/* Auth Buttons */}
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setTheme(theme === "light" ? "dark" : "light")}
                 className="p-3 glass bg-white/5 hover:bg-white/10 text-foreground/60 hover:text-foreground rounded-2xl transition-all duration-500 hover:scale-110 border border-white/10"
               >
-                {theme === "light" ? (
-                  <Moon className="h-5 w-5" />
-                ) : (
-                  <Sun className="h-5 w-5 text-amber-400" />
-                )}
+                {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5 text-amber-400" />}
               </button>
-              <Link to="/factory/login">
+              <Link to="/middleman/login">
                 <button className="glass bg-white/5 border-white/10 h-12 px-6 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all">
                   Login
                 </button>
               </Link>
-              <Link to="/factory/signup">
-                <button className="h-12 px-6 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-blue-500/30 hover:scale-105 transition-all">
+              <Link to="/middleman/signup">
+                <button className="h-12 px-6 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-amber-500/30 hover:scale-105 transition-all">
                   Sign Up
                 </button>
               </Link>
@@ -169,38 +134,32 @@ export function FactoryHeader({ onToggleSidebar }: FactoryHeaderProps) {
     );
   }
 
-  // If logged in, show authenticated header
   return (
     <header
       className={cn(
         "fixed top-0 left-0 right-0 z-[100] transition-all duration-700",
         isScrolled
           ? "py-2 bg-background/40 backdrop-blur-3xl border-b border-white/5 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
-          : "py-6 bg-transparent border-b border-transparent",
+          : "py-6 bg-transparent border-b border-transparent"
       )}
     >
       <div className="container mx-auto px-6">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link
-            to="/factory/dashboard"
-            className="flex items-center gap-3 group transition-transform duration-500 hover:scale-105"
-          >
+          <Link to="/middleman/dashboard" className="flex items-center gap-3 group transition-transform duration-500 hover:scale-105">
             <div className="relative">
-              <div className="absolute -inset-2 bg-blue-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-              <Factory className="h-10 w-10 text-blue-500 relative z-10" />
+              <div className="absolute -inset-2 bg-amber-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+              <Handshake className="h-10 w-10 text-amber-500 relative z-10" />
             </div>
             <div className="flex flex-col">
-              <span className="text-xl font-black italic tracking-tighter leading-none text-white group-hover:text-blue-400 transition-colors">
+              <span className="text-xl font-black italic tracking-tighter leading-none text-white group-hover:text-amber-400 transition-colors">
                 AURORA
               </span>
               <span className="text-[10px] font-black uppercase tracking-[0.4em] opacity-60 leading-none mt-1 text-white/80">
-                {factoryProfile?.company_name || "Factory Dashboard"}
+                {middlemanProfile?.full_name || "Middleman Dashboard"}
               </span>
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-2">
             {navLinks.map(({ to, label, icon: Icon }) => (
               <Link
@@ -209,8 +168,8 @@ export function FactoryHeader({ onToggleSidebar }: FactoryHeaderProps) {
                 className={cn(
                   "flex items-center gap-2 px-5 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all duration-500",
                   location.pathname.startsWith(to)
-                    ? "text-blue-500 bg-blue-500/5 border border-blue-500/20"
-                    : "text-foreground/60 hover:text-foreground hover:bg-white/5 border border-transparent",
+                    ? "text-amber-500 bg-amber-500/5 border border-amber-500/20"
+                    : "text-foreground/60 hover:text-foreground hover:bg-white/5 border border-transparent"
                 )}
               >
                 <Icon className="h-4 w-4" />
@@ -219,17 +178,12 @@ export function FactoryHeader({ onToggleSidebar }: FactoryHeaderProps) {
             ))}
           </nav>
 
-          {/* Profile Actions */}
           <div className="flex items-center gap-3">
             <button
               onClick={() => setTheme(theme === "light" ? "dark" : "light")}
               className="p-3 glass bg-white/5 hover:bg-white/10 text-foreground/60 hover:text-foreground rounded-2xl transition-all duration-500 hover:scale-110 border border-white/10"
             >
-              {theme === "light" ? (
-                <Moon className="h-5 w-5" />
-              ) : (
-                <Sun className="h-5 w-5 text-amber-400" />
-              )}
+              {theme === "light" ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5 text-amber-400" />}
             </button>
 
             <div className="relative">
@@ -237,70 +191,49 @@ export function FactoryHeader({ onToggleSidebar }: FactoryHeaderProps) {
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
                 className="flex items-center gap-3 glass bg-white/5 border-white/10 hover:bg-white/10 p-2 rounded-2xl transition-all duration-500 group"
               >
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold">
-                  {factoryProfile?.full_name?.charAt(0).toUpperCase() ||
-                    user.email?.charAt(0).toUpperCase()}
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold">
+                  {middlemanProfile?.full_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
                 </div>
                 <div className="hidden lg:flex flex-col items-start pr-2">
                   <span className="text-[10px] font-black italic tracking-tight">
-                    {factoryProfile?.full_name || "Factory User"}
+                    {middlemanProfile?.full_name || "Middleman"}
                   </span>
-                  <span className="text-[8px] font-black uppercase tracking-widest text-blue-500/60">
-                    {factoryProfile?.is_verified ? "Verified" : "Pending"}
+                  <span className="text-[8px] font-black uppercase tracking-widest text-amber-500/60">
+                    {middlemanProfile?.commission_rate || 5}% commission
                   </span>
                 </div>
-                <ChevronDown
-                  size={14}
-                  className="hidden lg:block text-muted-foreground/60 transition-transform"
-                />
+                <ChevronDown size={14} className="hidden lg:block text-muted-foreground/60 transition-transform" />
               </button>
 
-              {/* Dropdown */}
               {isProfileOpen && (
                 <div className="absolute right-0 top-full mt-2 w-72 glass p-4 rounded-[2rem] shadow-2xl border-white/10 z-[200]">
                   <div className="flex items-center gap-4 p-4 mb-2">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold">
-                      {factoryProfile?.full_name?.charAt(0).toUpperCase() ||
-                        user.email?.charAt(0).toUpperCase()}
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white text-2xl font-bold">
+                      {middlemanProfile?.full_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-black italic">
-                        {factoryProfile?.full_name || "Factory User"}
-                      </p>
-                      <p className="text-[10px] text-muted-foreground/60 truncate">
-                        {user.email}
-                      </p>
-                      {factoryProfile?.is_verified && (
-                        <div className="flex items-center gap-1 mt-1">
-                          <CheckCircle2 className="h-3 w-3 text-blue-500" />
-                          <span className="text-[9px] font-black uppercase text-blue-500">
-                            Verified Factory
-                          </span>
-                        </div>
-                      )}
+                      <p className="text-sm font-black italic">{middlemanProfile?.full_name || "Middleman"}</p>
+                      <p className="text-[10px] text-muted-foreground/60 truncate">{user.email}</p>
+                      <div className="flex items-center gap-1 mt-1">
+                        <CheckCircle2 className="h-3 w-3 text-amber-500" />
+                        <span className="text-[9px] font-black uppercase text-amber-500">
+                          {middlemanProfile?.commission_rate || 5}% rate
+                        </span>
+                      </div>
                     </div>
                   </div>
 
                   <div className="space-y-1 mb-2">
-                    <Link
-                      to="/factory/dashboard"
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all"
-                    >
-                      <BarChart3 className="h-4 w-4 text-blue-500" />
+                    <Link to="/middleman/dashboard" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all">
+                      <BarChart3 className="h-4 w-4 text-amber-500" />
                       <span className="text-xs font-bold">Dashboard</span>
                     </Link>
-                    <Link
-                      to="/factory/dashboard/production"
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all"
-                    >
-                      <Package className="h-4 w-4 text-blue-500" />
-                      <span className="text-xs font-bold">Production</span>
+                    <Link to="/middleman/earnings" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all">
+                      <DollarSign className="h-4 w-4 text-amber-500" />
+                      <span className="text-xs font-bold">Earnings</span>
                     </Link>
-                    <Link
-                      to="/factory/dashboard/settings"
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all"
-                    >
-                      <Settings className="h-4 w-4 text-blue-500" />
+                    <Link to="/middleman/settings" className="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all">
+                      <User className="h-4 w-4 text-amber-500" />
                       <span className="text-xs font-bold">Settings</span>
                     </Link>
                   </div>
@@ -316,7 +249,6 @@ export function FactoryHeader({ onToggleSidebar }: FactoryHeaderProps) {
               )}
             </div>
 
-            {/* Mobile Menu Toggle */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="p-3 glass bg-white/5 hover:bg-white/10 text-foreground rounded-2xl transition-all duration-500 lg:hidden border border-white/10"
@@ -327,7 +259,6 @@ export function FactoryHeader({ onToggleSidebar }: FactoryHeaderProps) {
         </div>
       </div>
 
-      {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className="lg:hidden fixed inset-0 top-16 z-[150] bg-background/95 backdrop-blur-3xl p-6 animate-in slide-in-from-right duration-300">
           <nav className="space-y-4">
@@ -338,31 +269,17 @@ export function FactoryHeader({ onToggleSidebar }: FactoryHeaderProps) {
                 className="flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition-all"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
-                <Icon className="h-6 w-6 text-blue-500" />
-                <span className="text-sm font-black uppercase tracking-widest">
-                  {label}
-                </span>
+                <Icon className="h-6 w-6 text-amber-500" />
+                <span className="text-sm font-black uppercase tracking-widest">{label}</span>
               </Link>
             ))}
             <div className="pt-4 border-t border-white/10">
-              <Link
-                to="/factory/dashboard"
-                className="flex items-center gap-4 p-4 rounded-2xl hover:bg-white/5 transition-all"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                <User className="h-6 w-6 text-blue-500" />
-                <span className="text-sm font-black uppercase tracking-widest">
-                  Profile
-                </span>
-              </Link>
               <button
                 onClick={handleSignOut}
                 className="w-full flex items-center justify-center gap-4 p-4 rounded-2xl bg-rose-500/10 text-rose-500 transition-all mt-2"
               >
                 <LogOut className="h-6 w-6" />
-                <span className="text-sm font-black uppercase tracking-widest">
-                  Sign Out
-                </span>
+                <span className="text-sm font-black uppercase tracking-widest">Sign Out</span>
               </button>
             </div>
           </nav>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
+import { middlemanSignup } from "@/hooks/useRoleSignup";
 import { toast } from "sonner";
 import { Button } from "@/components/ui";
 import { Input } from "@/components/ui";
@@ -144,79 +145,28 @@ export function MiddlemanSignup() {
     setError(null);
 
     try {
-      // Step 1: Create Auth Account
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: formData.email,
-        password: formData.password,
-        options: {
-          data: {
-            account_type: "middleman",
-            full_name: formData.full_name,
-          },
-        },
-      });
-
-      if (authError) throw authError;
-      if (!authData.user) throw new Error("Failed to create account");
-
-      // Step 2: Insert into users table
-      const { error: userError } = await supabase.from("users").insert({
-        user_id: authData.user.id,
-        email: formData.email,
-        full_name: formData.full_name,
-        phone: formData.phone,
-        account_type: "middleman",
-        preferred_language: formData.preferred_language,
-        theme_preference: formData.theme_preference,
-      });
-
-      if (userError) throw userError;
-
-      // Step 3: Insert into business_profiles
-      const { error: businessError } = await supabase
-        .from("business_profiles")
-        .insert({
-          user_id: authData.user.id,
-          role: "middleman",
-          company_name: formData.company_name,
-          location: formData.location,
-          currency: formData.currency,
-          commission_rate: formData.commission_rate,
-          is_verified: false,
-        });
-
-      if (businessError) throw businessError;
-
-      // Step 4: Insert into middleman_profiles
-      const { error: middlemanError } = await supabase
-        .from("middleman_profiles")
-        .insert({
-          user_id: authData.user.id,
-          company_name: formData.company_name,
-          location: formData.location,
-          currency: formData.currency,
-          commission_rate: formData.commission_rate,
-          is_verified: false,
-          specialization: formData.specialization,
-          website_url: formData.website_url,
-          description: formData.description,
-          tax_id: formData.tax_id,
-          business_license_url: businessLicenseUrl,
-          years_of_experience: formData.years_of_experience
-            ? parseInt(formData.years_of_experience)
-            : null,
-        });
-
-      if (middlemanError) throw middlemanError;
-
-      toast.success(
-        "Account created successfully! Please check your email to verify.",
+      const result = await middlemanSignup(
+        formData.email,
+        formData.password,
+        formData.full_name,
+        formData.phone,
+        formData.location,
+        formData.currency,
+        formData.commission_rate,
+        formData.specialization,
       );
-      navigate("/login");
+
+      if (result.success) {
+        toast.success(
+          "Account created successfully! Please check your email to verify.",
+        );
+        navigate("/middleman/dashboard?signup=success");
+      } else {
+        throw new Error(result.error || "Signup failed");
+      }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "Unknown error";
-      console.error("Signup error:", errorMessage);
-      setError(errorMessage || "Signup failed. Please try again.");
+      setError(errorMessage);
       toast.error(errorMessage || "Signup failed");
     } finally {
       setLoading(false);

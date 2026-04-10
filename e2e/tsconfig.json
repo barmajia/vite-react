@@ -14,7 +14,8 @@
     "paths": {
       "@/*": ["../src/*"]
     },
-    "types": ["@playwright/test", "node"]
+    "types": ["@playwright/test", "node"],
+    "ignoreDeprecations": "5.0"
   },
   "include": ["**/*.ts", "**/*.tsx", "**/*.spec.ts", "**/*.test.ts"],
   "exclude": ["node_modules"]

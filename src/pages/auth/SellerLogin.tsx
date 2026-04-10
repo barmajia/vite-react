@@ -20,10 +20,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { supabase } from "@/lib/supabase";
 import { isValidEmail } from "@/lib/utils";
-import { sanitizeReturnUrl } from "@/lib/security";
 import { toast } from "sonner";
-import { Logo } from "@/components/shared/Logo";
-import { ROUTES } from "@/lib/constants";
+
 
 export function SellerLogin() {
   const { t } = useTranslation();
@@ -41,8 +39,8 @@ export function SellerLogin() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const { signInWithGoogle } = useAuth();
-      const result = await signInWithGoogle();
+      const { signUpWithGoogle } = useAuth();
+      const result = await signUpWithGoogle('seller');
       if (result.error) {
         setError(result.error.message ?? "Google sign-in failed");
         toast.error(result.error.message ?? "Google sign-in failed");
@@ -94,11 +92,11 @@ export function SellerLogin() {
         if (data?.user) {
           const { data: seller } = await supabase
             .from("sellers")
-            .select("id, account_type, is_factory")
+            .select("id, account_type")
             .eq("user_id", data.user.id)
             .maybeSingle();
 
-          if (!seller || seller.is_factory) {
+          if (seller ) {
             toast.error("Access denied: Seller account not found");
             await supabase.auth.signOut();
             setIsLoading(false);

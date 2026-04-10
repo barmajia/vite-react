@@ -20,21 +20,21 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button, Input, Label } from "@/components/ui";
-import { useAuth } from "@/hooks/useAuth";
-import { ROUTES } from "@/lib/constants";
 import { isValidEmail } from "@/lib/utils";
 import { toast } from "sonner";
 import { useTheme } from "@/hooks/useTheme";
-import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/useAuth";
+import { sellerSignup } from "@/hooks/useRoleSignup";
 
 export function SellerSignup() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { signUp, signInWithGoogle } = useAuth();
+  const { signUpWithGoogle } = useAuth();
   const { theme, setTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     businessName: "",
@@ -56,12 +56,11 @@ export function SellerSignup() {
   const handleGoogleSignUp = async () => {
     setIsLoading(true);
     try {
-      const result = await signInWithGoogle("seller");
+      const result = await signUpWithGoogle("seller");
       if (result.error) {
         toast.error(result.error.message ?? "Google signup failed");
       } else {
         toast.success("Account created! Please complete your seller profile.");
-        navigate("/seller/dashboard?signup=success");
       }
     } catch {
       toast.error("Google signup failed");
@@ -131,6 +130,32 @@ export function SellerSignup() {
     setErrors({});
   };
 
+  const handleGetLocation = () => {
+    setIsLocating(true);
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setFormData((prev) => ({
+            ...prev,
+            location: `${position.coords.latitude}, ${position.coords.longitude}`,
+          }));
+          setIsLocating(false);
+          toast.success("Location retrieved successfully");
+        },
+        (error) => {
+          console.warn("Geolocation error:", error);
+          setFormData((prev) => ({ ...prev, location: "0, 0" }));
+          setIsLocating(false);
+          toast.info("Using default location (0, 0)");
+        }
+      );
+    } else {
+      setFormData((prev) => ({ ...prev, location: "0, 0" }));
+      setIsLocating(false);
+      toast.info("Geolocation not supported. Using (0, 0).");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -138,22 +163,19 @@ export function SellerSignup() {
 
     setIsLoading(true);
     try {
-      const { error } = await signUp(
+      const result = await sellerSignup(
         formData.email,
         formData.password,
         formData.businessName,
-        "seller",
-        {
-          phone: formData.phone,
-          location: formData.location,
-        },
+        formData.phone,
+        formData.location,
       );
 
-      if (error) {
-        toast.error(error.message ?? "Failed to create seller account");
-      } else {
+      if (result.success) {
         toast.success("Seller account created successfully!");
         navigate("/seller/dashboard?signup=success");
+      } else {
+        toast.error(result.error ?? "Failed to create seller account");
       }
     } catch {
       toast.error("Failed to create seller account");
@@ -500,14 +522,23 @@ export function SellerSignup() {
                       <Input
                         id="location"
                         type="text"
-                        className={`pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.location ? "border-destructive/50" : ""}`}
+                        className={`pl-12 pr-24 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.location ? "border-destructive/50" : ""}`}
                         value={formData.location}
                         onChange={(e) =>
                           setFormData({ ...formData, location: e.target.value })
                         }
-                        placeholder="City, Country"
-                        disabled={isLoading}
+                        placeholder="Coordinates or Address"
+                        disabled={isLoading || isLocating}
                       />
+                      <button
+                        type="button"
+                        onClick={handleGetLocation}
+                        disabled={isLocating || isLoading}
+                        className="absolute inset-y-0 right-2 my-2 px-3 flex items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30 transition-colors font-bold text-xs uppercase"
+                        aria-label="Get Current Location"
+                      >
+                        {isLocating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Locate"}
+                      </button>
                     </div>
                     {errors.location && (
                       <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">

@@ -743,74 +743,49 @@ ALTER FUNCTION "public"."calculate_distance"("lat1" numeric, "lon1" numeric, "la
 
 CREATE OR REPLACE FUNCTION "public"."calculate_middle_man_commission"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_catalog'
     AS $$
 DECLARE
-  v_commission numeric;
-  v_rate numeric;
-  v_margin numeric;
-  v_deal_id uuid;
-  v_product_asin text;
+  v_commission NUMERIC;
+  v_rate NUMERIC;
+  v_margin NUMERIC;
+  v_deal RECORD;
 BEGIN
-  -- Only calculate if Middle Man exists and Order is Confirmed
   IF NEW.middle_man_id IS NOT NULL 
-     AND NEW.status = 'confirmed' 
-     AND OLD.status IS DISTINCT FROM 'confirmed' THEN
+    AND NEW.status = 'confirmed' 
+    AND OLD.status IS DISTINCT FROM 'confirmed' THEN
     
-    -- Get product ASIN from order_items
-    SELECT oi.asin INTO v_product_asin 
-    FROM public.order_items oi 
-    WHERE oi.order_id = NEW.id 
+    SELECT commission_rate, margin_amount, id, seller_id 
+    INTO v_deal
+    FROM public.middle_man_deals
+    WHERE middle_man_id = NEW.middle_man_id
+      AND product_asin = (SELECT asin FROM public.order_items WHERE order_id = NEW.id LIMIT 1)
+      AND is_active = true
+      AND approval_status IN ('auto_approved', 'pending_approval')
+      AND (expires_at IS NULL OR expires_at > NOW())
     LIMIT 1;
     
-    -- Get deal-specific commission rate
-    SELECT commission_rate, margin_amount, id 
-    INTO v_rate, v_margin, v_deal_id
-    FROM public.middle_man_deals 
-    WHERE middle_man_id = NEW.middle_man_id 
-      AND product_asin = v_product_asin
-    LIMIT 1;
-    
-    -- Default rate if no deal found
-    v_rate := COALESCE(v_rate, 5.00);
-    
-    -- Calculate commission: percentage OR fixed margin
-    IF COALESCE(v_margin, 0) > 0 THEN
-      v_commission := v_margin;
-    ELSE
-      v_commission := (NEW.total * (v_rate / 100));
+    IF v_deal.id IS NOT NULL THEN
+      IF COALESCE(v_deal.margin_amount, 0) > 0 THEN
+        v_commission := v_deal.margin_amount;
+      ELSE
+        v_commission := NEW.total * (v_deal.commission_rate / 100);
+      END IF;
+      
+      INSERT INTO public.commissions (
+        middle_man_id, order_id, deal_id, amount, commission_rate, status
+      ) VALUES (
+        NEW.middle_man_id, NEW.id, v_deal.id, v_commission, v_deal.commission_rate, 'pending'
+      );
+      
+      UPDATE public.middle_men SET pending_earnings = pending_earnings + v_commission
+      WHERE user_id = NEW.middle_man_id;
+      
+      UPDATE public.middle_man_deals 
+      SET conversions = conversions + 1, total_revenue = total_revenue + NEW.total
+      WHERE id = v_deal.id;
     END IF;
-    
-    -- Create commission record
-    INSERT INTO public.commissions (
-      middle_man_id,
-      order_id,
-      deal_id,
-      amount,
-      commission_rate,
-      status
-    ) VALUES (
-      NEW.middle_man_id,
-      NEW.id,
-      v_deal_id,
-      v_commission,
-      v_rate,
-      'pending'
-    );
-    
-    -- Update pending earnings
-    UPDATE public.middle_men 
-    SET pending_earnings = pending_earnings + v_commission 
-    WHERE user_id = NEW.middle_man_id;
-    
-    -- Update deal stats
-    UPDATE public.middle_man_deals
-    SET conversions = conversions + 1,
-        total_revenue = total_revenue + NEW.total,
-        updated_at = now()
-    WHERE id = v_deal_id;
-    
   END IF;
-  
   RETURN NEW;
 END;
 $$;
@@ -1194,6 +1169,69 @@ $$;
 
 
 ALTER FUNCTION "public"."check_product_chat_permission"("p_user_id" "uuid", "p_product_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."claim_and_create_promo_deal"("p_product_asin" "text", "p_margin_type" "text", "p_margin_value" numeric, "p_expires_days" integer DEFAULT 30, "p_promo_tags" "text"[] DEFAULT '{}'::"text"[]) RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_catalog'
+    AS $$
+DECLARE
+  v_mm_id UUID := auth.uid();
+  v_deal_id UUID;
+  v_slug TEXT;
+  v_product RECORD;
+  v_seller RECORD;
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.middle_men WHERE user_id = v_mm_id) THEN
+    RAISE EXCEPTION 'User is not registered as a Middle Man';
+  END IF;
+
+  SELECT p.*, s.allow_middleman_promo, s.require_middleman_approval
+  INTO v_product
+  FROM public.products p
+  JOIN public.sellers s ON s.user_id = p.seller_id
+  WHERE p.asin = p_product_asin AND p.status = 'active' AND p.is_deleted = false;
+
+  IF v_product IS NULL THEN RAISE EXCEPTION 'Product not found or inactive'; END IF;
+  IF NOT v_product.allow_middleman_promo THEN RAISE EXCEPTION 'Seller does not allow middleman promotions for this product'; END IF;
+
+  v_slug := 'mm-' || SUBSTRING(v_mm_id::text, 1, 8) || '-' || v_product.asin;
+
+  INSERT INTO public.middle_man_deals (
+    middle_man_id, product_asin, product_id, seller_id,
+    commission_rate, margin_amount, unique_slug, is_active,
+    approval_status, expires_at, promo_tags, created_at
+  ) VALUES (
+    v_mm_id, v_product.asin, v_product.id, v_product.seller_id,
+    CASE WHEN p_margin_type = 'percentage' THEN p_margin_value ELSE 0 END,
+    CASE WHEN p_margin_type = 'fixed' THEN p_margin_value ELSE 0 END,
+    v_slug, true, 
+    CASE WHEN v_product.require_middleman_approval THEN 'pending_approval' ELSE 'auto_approved' END,
+    NOW() + (p_expires_days || ' days')::INTERVAL,
+    p_promo_tags, NOW()
+  )
+  ON CONFLICT (middle_man_id, product_asin) DO UPDATE SET
+    commission_rate = EXCLUDED.commission_rate,
+    margin_amount = EXCLUDED.margin_amount,
+    is_active = true,
+    expires_at = EXCLUDED.expires_at,
+    promo_tags = EXCLUDED.promo_tags,
+    updated_at = NOW()
+  RETURNING id, unique_slug INTO v_deal_id, v_slug;
+
+  RETURN jsonb_build_object(
+    'success', true, 'deal_id', v_deal_id, 'promo_slug', v_slug,
+    'share_url', 'https://yourdomain.com/deal/' || v_slug,
+    'estimated_earnings', CASE 
+      WHEN p_margin_type = 'percentage' THEN v_product.price * (p_margin_value / 100)
+      ELSE p_margin_value 
+    END
+  );
+END;
+$$;
+
+
+ALTER FUNCTION "public"."claim_and_create_promo_deal"("p_product_asin" "text", "p_margin_type" "text", "p_margin_value" numeric, "p_expires_days" integer, "p_promo_tags" "text"[]) OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."cleanup_expired_idempotency_keys"() RETURNS "void"
@@ -1825,6 +1863,89 @@ $$;
 
 
 ALTER FUNCTION "public"."create_order_notification"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."create_secure_order"("p_user_id" "uuid", "p_seller_id" "uuid", "p_items" "jsonb", "p_shipping_address_id" "uuid", "p_payment_method" "text" DEFAULT 'cash'::"text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_catalog'
+    AS $$
+DECLARE
+  v_order_id uuid;
+  v_item jsonb;
+  v_product record;
+  v_subtotal numeric := 0;
+  v_shipping numeric := 10; -- Example: Fixed shipping or calculate dynamically
+  v_tax numeric := 0;       -- Example: 0% tax
+  v_total numeric := 0;
+BEGIN
+  -- 1. Validate Seller Ownership & Check Inventory
+  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)
+  LOOP
+    SELECT * INTO v_product FROM public.products WHERE asin = v_item->>'asin';
+    
+    IF v_product IS NULL THEN
+      RAISE EXCEPTION 'Product with ASIN % not found', v_item->>'asin';
+    END IF;
+    
+    IF v_product.seller_id != p_seller_id THEN
+      RAISE EXCEPTION 'Seller does not own product %', v_item->>'asin';
+    END IF;
+    
+    IF v_product.quantity < (v_item->>'quantity')::int THEN
+      RAISE EXCEPTION 'Insufficient stock for %', v_item->>'asin';
+    END IF;
+  END LOOP;
+
+  -- 2. Create Order Header (Pending Status)
+  INSERT INTO public.orders (
+    user_id, seller_id, shipping_address_id, payment_method, 
+    subtotal, shipping, tax, total, status, payment_status, created_at
+  )
+  VALUES (
+    p_user_id, p_seller_id, p_shipping_address_id, p_payment_method, 
+    v_subtotal, v_shipping, v_tax, v_subtotal + v_shipping + v_tax, 'pending', 'pending', now()
+  )
+  RETURNING id INTO v_order_id;
+
+  -- 3. Create Order Items & Deduct Inventory Atomically
+  FOR v_item IN SELECT * FROM jsonb_array_elements(p_items)
+  LOOP
+    INSERT INTO public.order_items (
+      order_id, asin, product_name, quantity, unit_price, total_price
+    )
+    SELECT 
+      v_order_id,
+      v_item->>'asin',
+      p.title,
+      (v_item->>'quantity')::int,
+      p.price,
+      (v_item->>'quantity')::int * p.price
+    FROM public.products p
+    WHERE p.asin = v_item->>'asin';
+    
+    -- Update Product Inventory
+    UPDATE public.products
+    SET quantity = quantity - (v_item->>'quantity')::int,
+        updated_at = now()
+    WHERE asin = v_item->>'asin';
+    
+    -- Accumulate Subtotal
+    v_subtotal := v_subtotal + ((v_item->>'quantity')::int * (SELECT price FROM public.products WHERE asin = v_item->>'asin'));
+  END LOOP;
+  
+  -- 4. Finalize Totals
+  v_total := v_subtotal + v_shipping + v_tax;
+  UPDATE public.orders
+  SET subtotal = v_subtotal,
+      total = v_total
+  WHERE id = v_order_id;
+
+  RETURN jsonb_build_object('success', true, 'order_id', v_order_id, 'total', v_total);
+END;
+$$;
+
+
+ALTER FUNCTION "public"."create_secure_order"("p_user_id" "uuid", "p_seller_id" "uuid", "p_items" "jsonb", "p_shipping_address_id" "uuid", "p_payment_method" "text") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."create_user_wallet_on_signup"() RETURNS "trigger"
@@ -3258,6 +3379,32 @@ $$;
 ALTER FUNCTION "public"."get_low_stock_products"("threshold" integer) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."get_marketplace_products_for_middlemen"("p_category" "text" DEFAULT NULL::"text", "p_min_price" numeric DEFAULT 0, "p_max_price" numeric DEFAULT 99999, "p_min_stock" integer DEFAULT 5, "p_limit" integer DEFAULT 20, "p_offset" integer DEFAULT 0) RETURNS TABLE("asin" "text", "title" "text", "description" "text", "price" numeric, "images" "jsonb", "seller_id" "uuid", "seller_name" "text", "seller_rating" numeric, "stock_quantity" integer, "category" "text", "is_local_brand" boolean)
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    p.asin, p.title, p.description, p.price, p.images,
+    p.seller_id, s.full_name as seller_name, 
+    COALESCE((SELECT AVG(rating) FROM public.reviews WHERE asin = p.asin AND is_approved = true), 0) as seller_rating,
+    p.quantity as stock_quantity, p.category, p.is_local_brand
+  FROM public.products p
+  JOIN public.sellers s ON s.user_id = p.seller_id
+  WHERE p.status = 'active'
+    AND p.is_deleted = false
+    AND p.quantity >= p_min_stock
+    AND p.price BETWEEN p_min_price AND p_max_price
+    AND (p_category IS NULL OR p.category ILIKE '%' || p_category || '%')
+  ORDER BY p.created_at DESC
+  LIMIT p_limit OFFSET p_offset;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."get_marketplace_products_for_middlemen"("p_category" "text", "p_min_price" numeric, "p_max_price" numeric, "p_min_stock" integer, "p_limit" integer, "p_offset" integer) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."get_middle_man_ids"() RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -3440,6 +3587,68 @@ $$;
 
 
 ALTER FUNCTION "public"."get_or_create_direct_conversation"("p_user1_id" "uuid", "p_user2_id" "uuid", "p_display_name" "text") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."get_or_create_direct_conversation_v2"("p_user1_id" "uuid", "p_user2_id" "uuid", "p_display_name" "text" DEFAULT NULL::"text", "p_context_type" "text" DEFAULT 'general'::"text", "p_context_id" "uuid" DEFAULT NULL::"uuid") RETURNS "uuid"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_id uuid;
+  v_user1_role text := 'customer';
+  v_user2_role text := 'customer';
+BEGIN
+  IF auth.uid() IS NULL OR auth.uid() <> p_user1_id THEN
+    RAISE EXCEPTION 'Access denied: can only create conversations for yourself';
+  END IF;
+
+  IF p_user1_id = p_user2_id THEN
+    RAISE EXCEPTION 'Cannot start conversation with yourself';
+  END IF;
+
+  -- Reuse existing conversation if present
+  SELECT c.id INTO v_id
+  FROM public.conversations c
+  JOIN public.conversation_participants a
+    ON a.conversation_id = c.id AND a.user_id = p_user1_id
+  JOIN public.conversation_participants b
+    ON b.conversation_id = c.id AND b.user_id = p_user2_id
+  WHERE c.type = 'direct'
+    AND c.is_archived = false
+  LIMIT 1;
+
+  IF v_id IS NOT NULL THEN
+    RETURN v_id;
+  END IF;
+
+  v_id := gen_random_uuid();
+
+  INSERT INTO public.conversations (
+    id, name, type, context, product_id, is_archived, created_at, updated_at
+  )
+  VALUES (
+    v_id,
+    COALESCE(p_display_name, 'Direct Chat'),
+    'direct',
+    p_context_type,
+    p_context_id,
+    false,
+    now(),
+    now()
+  );
+
+  INSERT INTO public.conversation_participants (
+    conversation_id, user_id, role, account_type, joined_at
+  )
+  VALUES
+    (v_id, p_user1_id, v_user1_role, v_user1_role, now()),
+    (v_id, p_user2_id, v_user2_role, v_user2_role, now());
+
+  RETURN v_id;
+END;
+$$;
+
+
+ALTER FUNCTION "public"."get_or_create_direct_conversation_v2"("p_user1_id" "uuid", "p_user2_id" "uuid", "p_display_name" "text", "p_context_type" "text", "p_context_id" "uuid") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."get_or_create_health_conversation"("p_doctor_id" "uuid", "p_patient_id" "uuid", "p_appointment_id" "uuid" DEFAULT NULL::"uuid") RETURNS "uuid"
@@ -5596,6 +5805,30 @@ $$;
 ALTER FUNCTION "public"."search_public_profiles"("p_search_term" "text", "p_account_type" "text", "p_location" "text", "p_limit" integer, "p_offset" integer) OWNER TO "postgres";
 
 
+CREATE OR REPLACE FUNCTION "public"."search_users"("p_query" "text", "p_exclude_user_id" "uuid", "p_limit" integer DEFAULT 50) RETURNS TABLE("id" "uuid", "user_id" "uuid", "email" "text", "full_name" "text", "avatar_url" "text", "account_type" "text")
+    LANGUAGE "sql" SECURITY DEFINER
+    AS $$
+  SELECT
+    u.user_id AS id,
+    u.user_id AS user_id,
+    u.email,
+    u.full_name,
+    u.avatar_url,
+    u.account_type
+  FROM public.users u
+  WHERE u.user_id <> p_exclude_user_id
+    AND (
+      u.full_name ILIKE '%' || p_query || '%' OR
+      u.email     ILIKE '%' || p_query || '%'
+    )
+  ORDER BY u.full_name NULLS LAST
+  LIMIT p_limit;
+$$;
+
+
+ALTER FUNCTION "public"."search_users"("p_query" "text", "p_exclude_user_id" "uuid", "p_limit" integer) OWNER TO "postgres";
+
+
 CREATE OR REPLACE FUNCTION "public"."search_users_for_chat"("p_query" "text", "p_current_user_id" "uuid") RETURNS TABLE("id" "uuid", "user_id" "text", "email" "text", "full_name" "text", "avatar_url" "text", "account_type" "text")
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -5615,6 +5848,111 @@ $$;
 
 
 ALTER FUNCTION "public"."search_users_for_chat"("p_query" "text", "p_current_user_id" "uuid") OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."seller_signup"("p_email" "text", "p_password" "text", "p_full_name" "text", "p_phone" "text" DEFAULT NULL::"text", "p_location" "text" DEFAULT NULL::"text", "p_currency" "text" DEFAULT 'USD'::"text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_catalog'
+    AS $$
+DECLARE
+  v_user_id uuid;
+BEGIN
+  -- Get current authenticated user ID (must be called after supabase.auth.signUp)
+  v_user_id := auth.uid();
+  
+  IF v_user_id IS NULL THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'error', 'User must be authenticated first. Call supabase.auth.signUp() before this RPC.'
+    );
+  END IF;
+  
+  -- 1. Create/Update public.users with account_type as ARRAY (text[])
+  INSERT INTO public.users (
+    user_id,
+    email,
+    full_name,
+    phone,
+    account_type,  -- ✅ text[] column
+    location,
+    currency,
+    created_at,
+    updated_at
+  ) VALUES (
+    v_user_id,
+    p_email,
+    p_full_name,
+    p_phone,
+    ARRAY['user', 'seller']::text[],  -- ✅ Array format for users.account_type
+    p_location,
+    p_currency,
+    NOW(),
+    NOW()
+  )
+  ON CONFLICT (user_id) DO UPDATE SET
+    full_name = EXCLUDED.full_name,
+    phone = EXCLUDED.phone,
+    account_type = EXCLUDED.account_type,
+    location = EXCLUDED.location,
+    currency = EXCLUDED.currency,
+    updated_at = NOW();
+  
+  -- 2. Create/Update public.sellers with account_type as STRING (text)
+  INSERT INTO public.sellers (
+    user_id,
+    email,
+    full_name,
+    phone,
+    location,
+    currency,
+    account_type,  -- ✅ text column (single value)
+    is_verified,
+    is_factory,
+    created_at,
+    updated_at
+  ) VALUES (
+    v_user_id,
+    p_email,
+    p_full_name,
+    p_phone,
+    p_location,
+    p_currency,
+    'seller',  -- ✅ Single string for sellers.account_type
+    FALSE,
+    FALSE,
+    NOW(),
+    NOW()
+  )
+  ON CONFLICT (user_id) DO UPDATE SET
+    email = EXCLUDED.email,
+    full_name = EXCLUDED.full_name,
+    phone = EXCLUDED.phone,
+    location = EXCLUDED.location,
+    currency = EXCLUDED.currency,
+    updated_at = NOW();
+  
+  -- 3. Create user wallet (optional but recommended)
+  INSERT INTO public.user_wallets (user_id, currency)
+  VALUES (v_user_id, COALESCE(p_currency, 'USD'))
+  ON CONFLICT (user_id) DO NOTHING;
+  
+  RETURN jsonb_build_object(
+    'success', true,
+    'user_id', v_user_id,
+    'account_type', ARRAY['user', 'seller'],
+    'message', 'Seller account created successfully'
+  );
+  
+EXCEPTION WHEN OTHERS THEN
+  RETURN jsonb_build_object(
+    'success', false,
+    'error', SQLERRM
+  );
+END;
+$$;
+
+
+ALTER FUNCTION "public"."seller_signup"("p_email" "text", "p_password" "text", "p_full_name" "text", "p_phone" "text", "p_location" "text", "p_currency" "text") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."send_health_message"("p_conversation_id" "uuid", "p_content" "text", "p_message_type" "text" DEFAULT 'text'::"text", "p_attachment_url" "text" DEFAULT NULL::"text", "p_attachment_name" "text" DEFAULT NULL::"text", "p_attachment_size" bigint DEFAULT NULL::bigint, "p_attachment_type" "text" DEFAULT NULL::"text", "p_metadata" "jsonb" DEFAULT '{}'::"jsonb") RETURNS "uuid"
@@ -6106,12 +6444,12 @@ ALTER FUNCTION "public"."sync_user_roles"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."track_deal_click"("p_unique_slug" "text") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
+    SET "search_path" TO 'public', 'pg_catalog'
     AS $$
 BEGIN
   UPDATE public.middle_man_deals
-  SET clicks = clicks + 1,
-      updated_at = now()
-  WHERE unique_slug = p_unique_slug;
+  SET clicks = clicks + 1, updated_at = now()
+  WHERE unique_slug = p_unique_slug AND is_active = true;
 END;
 $$;
 
@@ -6727,6 +7065,50 @@ $$;
 
 
 ALTER FUNCTION "public"."update_order_payment_status"() OWNER TO "postgres";
+
+
+CREATE OR REPLACE FUNCTION "public"."update_order_status_secure"("p_order_id" "uuid", "p_seller_id" "uuid", "p_new_status" "text") RETURNS "jsonb"
+    LANGUAGE "plpgsql" SECURITY DEFINER
+    AS $$
+DECLARE
+  v_current_status text;
+BEGIN
+  -- 1. Verify Ownership
+  IF NOT EXISTS (
+    SELECT 1 FROM public.orders WHERE id = p_order_id AND seller_id = p_seller_id
+  ) THEN
+    RAISE EXCEPTION 'Unauthorized: Order does not belong to this seller';
+  END IF;
+
+  -- 2. Get Current Status
+  SELECT status INTO v_current_status FROM public.orders WHERE id = p_order_id;
+
+  -- 3. Validate State Transition
+  IF v_current_status = 'cancelled' OR v_current_status = 'refunded' THEN
+    RAISE EXCEPTION 'Cannot update status of a cancelled/refunded order';
+  END IF;
+
+  IF p_new_status NOT IN ('confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled') THEN
+    RAISE EXCEPTION 'Invalid status transition';
+  END IF;
+
+  -- 4. Update Status with Timestamp
+  UPDATE public.orders
+  SET 
+    status = p_new_status,
+    updated_at = now(),
+    confirmed_at = CASE WHEN p_new_status = 'confirmed' THEN now() ELSE confirmed_at END,
+    shipped_at = CASE WHEN p_new_status = 'shipped' THEN now() ELSE shipped_at END,
+    delivered_at = CASE WHEN p_new_status = 'delivered' THEN now() ELSE delivered_at END,
+    cancelled_at = CASE WHEN p_new_status = 'cancelled' THEN now() ELSE cancelled_at END
+  WHERE id = p_order_id;
+
+  RETURN jsonb_build_object('success', true, 'new_status', p_new_status);
+END;
+$$;
+
+
+ALTER FUNCTION "public"."update_order_status_secure"("p_order_id" "uuid", "p_seller_id" "uuid", "p_new_status" "text") OWNER TO "postgres";
 
 
 CREATE OR REPLACE FUNCTION "public"."update_order_status_timestamps"() RETURNS "trigger"
@@ -7659,6 +8041,12 @@ CREATE TABLE IF NOT EXISTS "public"."conversations" (
     "type" "text" DEFAULT 'group'::"text",
     "created_at" timestamp with time zone DEFAULT "now"(),
     "updated_at" timestamp with time zone DEFAULT "now"(),
+    "context" "text" DEFAULT 'general'::"text",
+    "product_id" "uuid",
+    "is_archived" boolean DEFAULT false,
+    "last_message" "text",
+    "last_message_at" timestamp with time zone,
+    "unread_count" integer DEFAULT 0,
     CONSTRAINT "conversations_type_check" CHECK (("type" = ANY (ARRAY['direct'::"text", 'group'::"text"])))
 );
 
@@ -7992,6 +8380,8 @@ CREATE TABLE IF NOT EXISTS "public"."sellers" (
     "bio" "text",
     "response_rate" integer DEFAULT 0,
     "website_url" "text",
+    "allow_middleman_promo" boolean DEFAULT true,
+    "require_middleman_approval" boolean DEFAULT false,
     CONSTRAINT "sellers_latitude_check" CHECK ((("latitude" >= ('-90'::integer)::numeric) AND ("latitude" <= (90)::numeric))),
     CONSTRAINT "sellers_longitude_check" CHECK ((("longitude" >= ('-180'::integer)::numeric) AND ("longitude" <= (180)::numeric)))
 );
@@ -9012,7 +9402,14 @@ CREATE TABLE IF NOT EXISTS "public"."middle_man_deals" (
     "total_revenue" numeric(10,2) DEFAULT 0,
     "is_active" boolean DEFAULT true,
     "created_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"()
+    "updated_at" timestamp with time zone DEFAULT "now"(),
+    "seller_id" "uuid",
+    "expires_at" timestamp with time zone,
+    "approval_status" "text" DEFAULT 'auto_approved'::"text",
+    "promo_tags" "text"[] DEFAULT '{}'::"text"[],
+    "last_price_synced_at" timestamp with time zone,
+    "max_margin_allowed" numeric DEFAULT 50,
+    CONSTRAINT "middle_man_deals_approval_status_check" CHECK (("approval_status" = ANY (ARRAY['auto_approved'::"text", 'pending_approval'::"text", 'rejected'::"text", 'archived'::"text"])))
 );
 
 
@@ -10238,7 +10635,7 @@ CREATE TABLE IF NOT EXISTS "public"."users" (
     "full_name" "text",
     "phone" "text",
     "avatar_url" "text",
-    "account_type" "text"[] DEFAULT ARRAY['user'::"text"],
+    "account_type" "text" DEFAULT ARRAY['user'::"text"],
     "location" "jsonb",
     "currency" "text" DEFAULT 'EGP'::"text",
     "is_verified" boolean DEFAULT false,
@@ -11523,6 +11920,18 @@ CREATE INDEX "idx_commissions_status" ON "public"."commissions" USING "btree" ("
 
 
 
+CREATE INDEX "idx_conversations_last_message_at" ON "public"."conversations" USING "btree" ("last_message_at" DESC);
+
+
+
+CREATE INDEX "idx_conversations_last_msg" ON "public"."conversations" USING "btree" ("updated_at" DESC NULLS LAST) WHERE ("is_archived" = false);
+
+
+
+CREATE INDEX "idx_conversations_product" ON "public"."conversations" USING "btree" ("product_id");
+
+
+
 CREATE INDEX "idx_conversations_type" ON "public"."conversations" USING "btree" ("type");
 
 
@@ -11883,6 +12292,18 @@ CREATE INDEX "idx_middle_man_deals_slug" ON "public"."middle_man_deals" USING "b
 
 
 
+CREATE INDEX "idx_mm_deals_expires" ON "public"."middle_man_deals" USING "btree" ("expires_at") WHERE (("expires_at" IS NOT NULL) AND ("is_active" = true));
+
+
+
+CREATE INDEX "idx_mm_deals_seller_status" ON "public"."middle_man_deals" USING "btree" ("seller_id", "is_active", "approval_status") WHERE (("is_active" = true) AND ("approval_status" = 'auto_approved'::"text"));
+
+
+
+CREATE INDEX "idx_mm_deals_slug_active" ON "public"."middle_man_deals" USING "btree" ("unique_slug", "is_active") WHERE ("is_active" = true);
+
+
+
 CREATE INDEX "idx_notification_settings_user_id" ON "public"."notification_settings" USING "btree" ("user_id");
 
 
@@ -11940,6 +12361,10 @@ CREATE INDEX "idx_orders_created_at" ON "public"."orders" USING "btree" ("create
 
 
 CREATE INDEX "idx_orders_middle_man" ON "public"."orders" USING "btree" ("middle_man_id");
+
+
+
+CREATE INDEX "idx_orders_middleman_status" ON "public"."orders" USING "btree" ("middle_man_id", "status") WHERE ("middle_man_id" IS NOT NULL);
 
 
 
@@ -12639,7 +13064,7 @@ CREATE OR REPLACE TRIGGER "trigger_calculate_commission" BEFORE INSERT OR UPDATE
 
 
 
-CREATE OR REPLACE TRIGGER "trigger_calculate_middle_man_commission" AFTER UPDATE ON "public"."orders" FOR EACH ROW EXECUTE FUNCTION "public"."calculate_middle_man_commission"();
+CREATE OR REPLACE TRIGGER "trigger_calculate_middle_man_commission" AFTER UPDATE OF "status" ON "public"."orders" FOR EACH ROW EXECUTE FUNCTION "public"."calculate_middle_man_commission"();
 
 
 
@@ -13435,6 +13860,11 @@ ALTER TABLE ONLY "public"."middle_man_deals"
 
 ALTER TABLE ONLY "public"."middle_man_deals"
     ADD CONSTRAINT "middle_man_deals_product_id_fkey" FOREIGN KEY ("product_id") REFERENCES "public"."products"("id") ON DELETE CASCADE;
+
+
+
+ALTER TABLE ONLY "public"."middle_man_deals"
+    ADD CONSTRAINT "middle_man_deals_seller_id_fkey" FOREIGN KEY ("seller_id") REFERENCES "auth"."users"("id");
 
 
 
@@ -18194,6 +18624,12 @@ GRANT ALL ON FUNCTION "public"."check_product_chat_permission"("p_user_id" "uuid
 
 
 
+GRANT ALL ON FUNCTION "public"."claim_and_create_promo_deal"("p_product_asin" "text", "p_margin_type" "text", "p_margin_value" numeric, "p_expires_days" integer, "p_promo_tags" "text"[]) TO "anon";
+GRANT ALL ON FUNCTION "public"."claim_and_create_promo_deal"("p_product_asin" "text", "p_margin_type" "text", "p_margin_value" numeric, "p_expires_days" integer, "p_promo_tags" "text"[]) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."claim_and_create_promo_deal"("p_product_asin" "text", "p_margin_type" "text", "p_margin_value" numeric, "p_expires_days" integer, "p_promo_tags" "text"[]) TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."cleanup_expired_idempotency_keys"() TO "anon";
 GRANT ALL ON FUNCTION "public"."cleanup_expired_idempotency_keys"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."cleanup_expired_idempotency_keys"() TO "service_role";
@@ -18286,6 +18722,12 @@ GRANT ALL ON FUNCTION "public"."create_or_update_middle_man_deal"("p_product_asi
 GRANT ALL ON FUNCTION "public"."create_order_notification"() TO "anon";
 GRANT ALL ON FUNCTION "public"."create_order_notification"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."create_order_notification"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."create_secure_order"("p_user_id" "uuid", "p_seller_id" "uuid", "p_items" "jsonb", "p_shipping_address_id" "uuid", "p_payment_method" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."create_secure_order"("p_user_id" "uuid", "p_seller_id" "uuid", "p_items" "jsonb", "p_shipping_address_id" "uuid", "p_payment_method" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."create_secure_order"("p_user_id" "uuid", "p_seller_id" "uuid", "p_items" "jsonb", "p_shipping_address_id" "uuid", "p_payment_method" "text") TO "service_role";
 
 
 
@@ -18473,6 +18915,12 @@ GRANT ALL ON FUNCTION "public"."get_low_stock_products"("threshold" integer) TO 
 
 
 
+GRANT ALL ON FUNCTION "public"."get_marketplace_products_for_middlemen"("p_category" "text", "p_min_price" numeric, "p_max_price" numeric, "p_min_stock" integer, "p_limit" integer, "p_offset" integer) TO "anon";
+GRANT ALL ON FUNCTION "public"."get_marketplace_products_for_middlemen"("p_category" "text", "p_min_price" numeric, "p_max_price" numeric, "p_min_stock" integer, "p_limit" integer, "p_offset" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_marketplace_products_for_middlemen"("p_category" "text", "p_min_price" numeric, "p_max_price" numeric, "p_min_stock" integer, "p_limit" integer, "p_offset" integer) TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."get_middle_man_ids"() TO "anon";
 GRANT ALL ON FUNCTION "public"."get_middle_man_ids"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_middle_man_ids"() TO "service_role";
@@ -18488,6 +18936,11 @@ GRANT ALL ON FUNCTION "public"."get_or_create_conversation"("p_other_user_id" "u
 GRANT ALL ON FUNCTION "public"."get_or_create_direct_conversation"("p_user1_id" "uuid", "p_user2_id" "uuid", "p_display_name" "text") TO "anon";
 GRANT ALL ON FUNCTION "public"."get_or_create_direct_conversation"("p_user1_id" "uuid", "p_user2_id" "uuid", "p_display_name" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_or_create_direct_conversation"("p_user1_id" "uuid", "p_user2_id" "uuid", "p_display_name" "text") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."get_or_create_direct_conversation_v2"("p_user1_id" "uuid", "p_user2_id" "uuid", "p_display_name" "text", "p_context_type" "text", "p_context_id" "uuid") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."get_or_create_direct_conversation_v2"("p_user1_id" "uuid", "p_user2_id" "uuid", "p_display_name" "text", "p_context_type" "text", "p_context_id" "uuid") TO "service_role";
 
 
 
@@ -18909,9 +19362,20 @@ GRANT ALL ON FUNCTION "public"."search_public_profiles"("p_search_term" "text", 
 
 
 
+GRANT ALL ON FUNCTION "public"."search_users"("p_query" "text", "p_exclude_user_id" "uuid", "p_limit" integer) TO "authenticated";
+GRANT ALL ON FUNCTION "public"."search_users"("p_query" "text", "p_exclude_user_id" "uuid", "p_limit" integer) TO "service_role";
+
+
+
 GRANT ALL ON FUNCTION "public"."search_users_for_chat"("p_query" "text", "p_current_user_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."search_users_for_chat"("p_query" "text", "p_current_user_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."search_users_for_chat"("p_query" "text", "p_current_user_id" "uuid") TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."seller_signup"("p_email" "text", "p_password" "text", "p_full_name" "text", "p_phone" "text", "p_location" "text", "p_currency" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."seller_signup"("p_email" "text", "p_password" "text", "p_full_name" "text", "p_phone" "text", "p_location" "text", "p_currency" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."seller_signup"("p_email" "text", "p_password" "text", "p_full_name" "text", "p_phone" "text", "p_location" "text", "p_currency" "text") TO "service_role";
 
 
 
@@ -19194,6 +19658,12 @@ GRANT ALL ON FUNCTION "public"."update_notifications_updated_at"() TO "service_r
 GRANT ALL ON FUNCTION "public"."update_order_payment_status"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_order_payment_status"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_order_payment_status"() TO "service_role";
+
+
+
+GRANT ALL ON FUNCTION "public"."update_order_status_secure"("p_order_id" "uuid", "p_seller_id" "uuid", "p_new_status" "text") TO "anon";
+GRANT ALL ON FUNCTION "public"."update_order_status_secure"("p_order_id" "uuid", "p_seller_id" "uuid", "p_new_status" "text") TO "authenticated";
+GRANT ALL ON FUNCTION "public"."update_order_status_secure"("p_order_id" "uuid", "p_seller_id" "uuid", "p_new_status" "text") TO "service_role";
 
 
 

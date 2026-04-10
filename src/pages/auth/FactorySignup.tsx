@@ -9,41 +9,45 @@ import {
   Sun,
   Moon,
   ArrowLeft,
-  Factory,
+  Factory as FactoryIcon,
   ShieldCheck,
   Zap,
   ArrowRight,
   Chrome,
   Phone,
   MapPin,
+  Settings,
+  Building2,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button, Input, Label } from "@/components/ui";
-import { useAuth } from "@/hooks/useAuth";
 import { ROUTES } from "@/lib/constants";
 import { isValidEmail } from "@/lib/utils";
 import { toast } from "sonner";
 import { useTheme } from "@/hooks/useTheme";
+import { factorySignup } from "@/hooks/useRoleSignup";
 
 export function FactorySignup() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { signUp, signInWithGoogle } = useAuth();
+  const { signUpWithGoogle } = useAuth();
   const { theme, setTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
-    factoryName: "",
+    companyName: "",
     email: "",
     password: "",
     confirmPassword: "",
     phone: "",
     location: "",
+    specialization: "",
+    productionCapacity: "",
   });
   const [errors, setErrors] = useState<{
-    factoryName?: string;
+    companyName?: string;
     email?: string;
     password?: string;
     confirmPassword?: string;
@@ -54,12 +58,11 @@ export function FactorySignup() {
   const handleGoogleSignUp = async () => {
     setIsLoading(true);
     try {
-      const result = await signInWithGoogle("factory");
+      const result = await signUpWithGoogle("factory");
       if (result.error) {
         toast.error(result.error.message ?? "Google signup failed");
       } else {
         toast.success("Factory account created! Please complete your profile.");
-        navigate("/factory/dashboard?signup=success");
       }
     } catch {
       toast.error("Google signup failed");
@@ -71,10 +74,10 @@ export function FactorySignup() {
   const validateStep1 = () => {
     const newErrors: typeof errors = {};
 
-    if (!formData.factoryName.trim()) {
-      newErrors.factoryName = "Factory name is required";
-    } else if (formData.factoryName.trim().length < 2) {
-      newErrors.factoryName = "Factory name must be at least 2 characters";
+    if (!formData.companyName.trim()) {
+      newErrors.companyName = "Company name is required";
+    } else if (formData.companyName.trim().length < 2) {
+      newErrors.companyName = "Company name must be at least 2 characters";
     }
 
     if (!formData.email) {
@@ -136,22 +139,24 @@ export function FactorySignup() {
 
     setIsLoading(true);
     try {
-      const { error } = await signUp(
+      const result = await factorySignup(
         formData.email,
         formData.password,
-        formData.factoryName,
-        "factory",
-        {
-          phone: formData.phone,
-          location: formData.location,
-        },
+        formData.companyName,
+        formData.phone,
+        formData.location,
+        "USD",
+        formData.specialization || undefined,
+        formData.productionCapacity
+          ? parseInt(formData.productionCapacity)
+          : undefined,
       );
 
-      if (error) {
-        toast.error(error.message ?? "Failed to create factory account");
-      } else {
+      if (result.success) {
         toast.success("Factory account created successfully!");
         navigate("/factory/dashboard?signup=success");
+      } else {
+        toast.error(result.error ?? "Failed to create factory account");
       }
     } catch {
       toast.error("Failed to create factory account");
@@ -182,7 +187,7 @@ export function FactorySignup() {
 
   useEffect(() => {
     const firstInput = document.querySelector<HTMLInputElement>(
-      step === 1 ? "#factoryName" : "#phone",
+      step === 1 ? "#companyName" : "#phone",
     );
     firstInput?.focus();
   }, [step]);
@@ -228,10 +233,10 @@ export function FactorySignup() {
           <Factory className="h-8 w-8 text-blue-500 animate-pulse" />
         </div>
         <h1 className="text-4xl font-black tracking-tighter bg-gradient-to-br from-blue-500 to-indigo-600 bg-clip-text text-transparent">
-          Register Your Factory
+          Register Factory
         </h1>
         <p className="mt-3 text-muted-foreground font-medium">
-          Connect with global buyers and scale your production
+          Connect with global buyers & scale production
         </p>
       </div>
 
@@ -277,24 +282,36 @@ export function FactorySignup() {
               {step === 1 ? (
                 <div className="space-y-6 animate-in slide-in-from-right-4 duration-500">
                   <div className="space-y-2">
-                    <Label htmlFor="factoryName" className="text-sm font-bold ml-1">
-                      Factory Name
+                    <Label
+                      htmlFor="factoryName"
+                      className="text-sm font-bold ml-1"
+                    >
+                      Company Name
                     </Label>
                     <div className="relative group">
                       <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-blue-500 transition-colors">
-                        <Factory className="h-5 w-5 text-muted-foreground/30" />
+                        <Building2 className="h-5 w-5 text-muted-foreground/30" />
                       </div>
                       <Input
-                        id="factoryName"
+                        id="companyName"
                         type="text"
-                        className={`pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.factoryName ? "border-destructive/50" : ""}`}
-                        value={formData.factoryName}
-                        onChange={(e) => setFormData({ ...formData, factoryName: e.target.value })}
-                        placeholder="Your Factory Name"
+                        className={`pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.companyName ? "border-destructive/50" : ""}`}
+                        value={formData.companyName}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            companyName: e.target.value,
+                          })
+                        }
+                        placeholder="Your Factory or Business Name"
                         disabled={isLoading}
                       />
                     </div>
-                    {errors.factoryName && <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">{errors.factoryName}</p>}
+                    {errors.companyName && (
+                      <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">
+                        {errors.companyName}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
@@ -310,16 +327,25 @@ export function FactorySignup() {
                         type="email"
                         className={`pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.email ? "border-destructive/50" : ""}`}
                         value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, email: e.target.value })
+                        }
                         placeholder="factory@example.com"
                         disabled={isLoading}
                       />
                     </div>
-                    {errors.email && <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">{errors.email}</p>}
+                    {errors.email && (
+                      <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">
+                        {errors.email}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="password" className="text-sm font-bold ml-1">
+                    <Label
+                      htmlFor="password"
+                      className="text-sm font-bold ml-1"
+                    >
                       Password
                     </Label>
                     <div className="relative group">
@@ -331,7 +357,9 @@ export function FactorySignup() {
                         type={showPassword ? "text" : "password"}
                         className={`pl-12 pr-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.password ? "border-destructive/50" : ""}`}
                         value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, password: e.target.value })
+                        }
                         placeholder="••••••••"
                         disabled={isLoading}
                       />
@@ -340,7 +368,11 @@ export function FactorySignup() {
                         className="absolute inset-y-0 right-0 pr-4 flex items-center text-muted-foreground/50 hover:text-blue-500 transition-colors"
                         onClick={() => setShowPassword(!showPassword)}
                       >
-                        {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        {showPassword ? (
+                          <EyeOff className="h-5 w-5" />
+                        ) : (
+                          <Eye className="h-5 w-5" />
+                        )}
                       </button>
                     </div>
 
@@ -351,21 +383,32 @@ export function FactorySignup() {
                             <div
                               key={level}
                               className={`flex-1 rounded-full transition-all duration-500 ${
-                                level <= strengthLevel ? strengthColors[strengthLevel] : "bg-white/10"
+                                level <= strengthLevel
+                                  ? strengthColors[strengthLevel]
+                                  : "bg-white/10"
                               }`}
                             />
                           ))}
                         </div>
-                        <p className={`text-[10px] font-black uppercase tracking-widest ${strengthLevel <= 1 ? "text-destructive" : strengthLevel <= 2 ? "text-orange-500" : "text-blue-500"}`}>
+                        <p
+                          className={`text-[10px] font-black uppercase tracking-widest ${strengthLevel <= 1 ? "text-destructive" : strengthLevel <= 2 ? "text-orange-500" : "text-blue-500"}`}
+                        >
                           {strengthLabels[strengthLevel]}
                         </p>
                       </div>
                     )}
-                    {errors.password && <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">{errors.password}</p>}
+                    {errors.password && (
+                      <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">
+                        {errors.password}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword" className="text-sm font-bold ml-1">
+                    <Label
+                      htmlFor="confirmPassword"
+                      className="text-sm font-bold ml-1"
+                    >
                       Confirm Password
                     </Label>
                     <div className="relative group">
@@ -377,19 +420,34 @@ export function FactorySignup() {
                         type={showConfirmPassword ? "text" : "password"}
                         className={`pl-12 pr-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.confirmPassword ? "border-destructive/50" : ""}`}
                         value={formData.confirmPassword}
-                        onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            confirmPassword: e.target.value,
+                          })
+                        }
                         placeholder="••••••••"
                         disabled={isLoading}
                       />
                       <button
                         type="button"
                         className="absolute inset-y-0 right-0 pr-4 flex items-center text-muted-foreground/50 hover:text-blue-500 transition-colors"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                       >
-                        {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-5 w-5" />
+                        ) : (
+                          <Eye className="h-5 w-5" />
+                        )}
                       </button>
                     </div>
-                    {errors.confirmPassword && <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">{errors.confirmPassword}</p>}
+                    {errors.confirmPassword && (
+                      <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">
+                        {errors.confirmPassword}
+                      </p>
+                    )}
                   </div>
 
                   <Button
@@ -417,16 +475,25 @@ export function FactorySignup() {
                         type="tel"
                         className={`pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.phone ? "border-destructive/50" : ""}`}
                         value={formData.phone}
-                        onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, phone: e.target.value })
+                        }
                         placeholder="+20 123 456 7890"
                         disabled={isLoading}
                       />
                     </div>
-                    {errors.phone && <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">{errors.phone}</p>}
+                    {errors.phone && (
+                      <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">
+                        {errors.phone}
+                      </p>
+                    )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="location" className="text-sm font-bold ml-1">
+                    <Label
+                      htmlFor="location"
+                      className="text-sm font-bold ml-1"
+                    >
                       Factory Location
                     </Label>
                     <div className="relative group">
@@ -438,12 +505,76 @@ export function FactorySignup() {
                         type="text"
                         className={`pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.location ? "border-destructive/50" : ""}`}
                         value={formData.location}
-                        onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({ ...formData, location: e.target.value })
+                        }
                         placeholder="City, Country"
                         disabled={isLoading}
                       />
                     </div>
-                    {errors.location && <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">{errors.location}</p>}
+                    {errors.location && (
+                      <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">
+                        {errors.location}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Specialization */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="specialization"
+                      className="text-sm font-bold ml-1"
+                    >
+                      Specialization (Optional)
+                    </Label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-blue-500 transition-colors">
+                        <Settings className="h-5 w-5 text-muted-foreground/30" />
+                      </div>
+                      <Input
+                        id="specialization"
+                        type="text"
+                        className="pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20"
+                        value={formData.specialization}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            specialization: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., Textiles, Electronics, Auto Parts"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Production Capacity */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="productionCapacity"
+                      className="text-sm font-bold ml-1"
+                    >
+                      Monthly Capacity (Units) (Optional)
+                    </Label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-blue-500 transition-colors">
+                        <FactoryIcon className="h-5 w-5 text-muted-foreground/30" />
+                      </div>
+                      <Input
+                        id="productionCapacity"
+                        type="number"
+                        className="pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20"
+                        value={formData.productionCapacity}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            productionCapacity: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., 50000"
+                        disabled={isLoading}
+                      />
+                    </div>
                   </div>
 
                   <div className="flex gap-3 pt-2">
@@ -461,7 +592,11 @@ export function FactorySignup() {
                       className="flex-[2] glass bg-blue-500 hover:bg-blue-600 text-white h-14 text-lg font-bold rounded-2xl shadow-lg shadow-blue-500/20 active:scale-[0.98]"
                       disabled={isLoading}
                     >
-                      {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Create Factory Account"}
+                      {isLoading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        "Register Factory"
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -484,14 +619,14 @@ export function FactorySignup() {
             <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
               <div className="flex items-center gap-2">
                 <ShieldCheck className="h-4 w-4 text-blue-500/70" />
-                <span>Verified Factories</span>
+                <span>Verified Manufacturers</span>
               </div>
               <div className="flex items-center gap-2">
                 <Zap className="h-4 w-4 text-blue-500/70" />
-                <span>Fast Setup</span>
+                <span>B2B Network</span>
               </div>
               <div className="flex items-center gap-2">
-                <Factory className="h-4 w-4 text-blue-500/70" />
+                <Building2 className="h-4 w-4 text-blue-500/70" />
                 <span>Global Reach</span>
               </div>
             </div>

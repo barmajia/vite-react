@@ -20,10 +20,6 @@ import { CompleteProfile } from "@/pages/auth/CompleteProfile";
 export const authRoutes: RouteObject[] = [
   // SELLER ROUTES
   {
-    path: "/seller",
-    element: <SellerWelcome />,
-  },
-  {
     path: "/seller/login",
     element: <SellerLogin />,
   },
@@ -34,10 +30,6 @@ export const authRoutes: RouteObject[] = [
 
   // FACTORY ROUTES
   {
-    path: "/factory",
-    element: <FactoryWelcome />,
-  },
-  {
     path: "/factory/login",
     element: <FactoryLogin />,
   },
@@ -47,10 +39,6 @@ export const authRoutes: RouteObject[] = [
   },
 
   // MIDDLEMAN ROUTES
-  {
-    path: "/middleman",
-    element: <MiddlemanWelcome />,
-  },
   {
     path: "/middleman/login",
     element: <MiddlemanLogin />,

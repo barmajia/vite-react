@@ -9,8 +9,6 @@ test.describe("Site flow + lag detection", () => {
   const fuzz = (ms: number) => Math.max(ms, 1);
 
   test("public navigation flow should be responsive", async ({ page }) => {
-    const baseURL = page.context().baseURL;
-
     const measureLoad = async (url: string) => {
       const start = performance.now();
       await page.goto(url, { waitUntil: "domcontentloaded" });
@@ -37,13 +35,12 @@ test.describe("Site flow + lag detection", () => {
     test.info().annotations.push({
       type: "latency",
       description: `home=${homeLatency}ms, products=${productsLatency}ms, categories=${categoriesLatency}ms, about=${aboutLatency}ms`,
-      value: "",
     });
   });
 
   test("auth protected route and chat route smoke test", async ({ page }) => {
-    const email = process.env.E2E_USER_EMAIL;
-    const password = process.env.E2E_USER_PASSWORD;
+    const email = process.env.E2E_USER_EMAIL || "";
+    const password = process.env.E2E_USER_PASSWORD || "";
 
     test.skip(
       !email || !password,

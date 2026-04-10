@@ -1,16 +1,12 @@
-import { RouteObject } from "react-router-dom";
 import { lazy, Suspense } from "react";
+import { RouteObject } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { MiddlemanLayout } from "@/features/middleman/components/MiddlemanLayout";
+import { RouteSkeleton } from "@/components/shared/RouteSkeleton";
+import { MiddlemanWelcome } from "@/features/middleman/pages/MiddlemanWelcome";
 
-const RouteSkeleton = () => (
-  <div className="flex items-center justify-center min-h-[400px]">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-  </div>
-);
-
-// Lazy load middleman pages
 const MiddlemanDashboard = lazy(() =>
-  import("@/pages/middleman/MiddlemanDashboard").then((m) => ({
+  import("@/features/middleman/pages/MiddlemanDashboard").then((m) => ({
     default: m.MiddlemanDashboard,
   })),
 );
@@ -20,8 +16,8 @@ const MiddlemanDeals = lazy(() =>
   })),
 );
 const MiddlemanCreateDeal = lazy(() =>
-  import("@/pages/middleman/MiddlemanCreateDeal").then((m) => ({
-    default: m.MiddlemanCreateDeal,
+  import("@/features/middleman/pages/MiddlemanDealNew").then((m) => ({
+    default: m.MiddlemanDealNew,
   })),
 );
 const MiddlemanDealDetails = lazy(() =>
@@ -59,98 +55,119 @@ const MiddlemanSettings = lazy(() =>
     default: m.MiddlemanSettings,
   })),
 );
+const ProductDiscovery = lazy(() =>
+  import("@/features/middleman/pages/ProductDiscovery").then((m) => ({
+    default: m.ProductDiscovery,
+  })),
+);
 
-export const middlemanRoutes: RouteObject[] = [
-  {
-    path: "middleman",
-    element: (
-      <ProtectedRoute allowedAccountTypes={["middleman"]}>
+export const middlemanRoutes: RouteObject = {
+  path: "/middleman",
+  children: [
+    {
+      index: true,
+      element: (
         <Suspense fallback={<RouteSkeleton />}>
-          <MiddlemanDashboard />
+          <MiddlemanWelcome />
         </Suspense>
-      </ProtectedRoute>
-    ),
-    children: [
-      {
-        index: true,
-        element: (
-          <Suspense fallback={<RouteSkeleton />}>
-            <MiddlemanDashboard />
-          </Suspense>
-        ),
-      },
-      {
-        path: "deals",
-        element: (
-          <Suspense fallback={<RouteSkeleton />}>
-            <MiddlemanDeals />
-          </Suspense>
-        ),
-      },
-      {
-        path: "deals/new",
-        element: (
-          <Suspense fallback={<RouteSkeleton />}>
-            <MiddlemanCreateDeal />
-          </Suspense>
-        ),
-      },
-      {
-        path: "deals/:dealId",
-        element: (
-          <Suspense fallback={<RouteSkeleton />}>
-            <MiddlemanDealDetails />
-          </Suspense>
-        ),
-      },
-      {
-        path: "orders",
-        element: (
-          <Suspense fallback={<RouteSkeleton />}>
-            <MiddlemanOrders />
-          </Suspense>
-        ),
-      },
-      {
-        path: "analytics",
-        element: (
-          <Suspense fallback={<RouteSkeleton />}>
-            <MiddlemanAnalytics />
-          </Suspense>
-        ),
-      },
-      {
-        path: "connections",
-        element: (
-          <Suspense fallback={<RouteSkeleton />}>
-            <MiddlemanConnections />
-          </Suspense>
-        ),
-      },
-      {
-        path: "commission",
-        element: (
-          <Suspense fallback={<RouteSkeleton />}>
-            <MiddlemanCommission />
-          </Suspense>
-        ),
-      },
-      {
-        path: "profile",
-        element: (
-          <Suspense fallback={<RouteSkeleton />}>
-            <MiddlemanProfile />
-          </Suspense>
-        ),
-      },
-      {
-        path: "settings",
-        element: (
-          <Suspense fallback={<RouteSkeleton />}>
-            <MiddlemanSettings />
-          </Suspense>
-        ),
-      },
-    ],
+      ),
+    },
+    {
+      element: (
+        <ProtectedRoute allowedAccountTypes={["middleman"]}>
+          <MiddlemanLayout />
+        </ProtectedRoute>
+      ),
+      children: [
+        {
+          path: "dashboard",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <MiddlemanDashboard />
+            </Suspense>
+          ),
+        },
+    {
+      path: "deals",
+      element: (
+        <Suspense fallback={<RouteSkeleton />}>
+          <MiddlemanDeals />
+        </Suspense>
+      ),
+    },
+    {
+      path: "deals/new",
+      element: (
+        <Suspense fallback={<RouteSkeleton />}>
+          <MiddlemanCreateDeal />
+        </Suspense>
+      ),
+    },
+    {
+      path: "deals/:dealId",
+      element: (
+        <Suspense fallback={<RouteSkeleton />}>
+          <MiddlemanDealDetails />
+        </Suspense>
+      ),
+    },
+    {
+      path: "orders",
+      element: (
+        <Suspense fallback={<RouteSkeleton />}>
+          <MiddlemanOrders />
+        </Suspense>
+      ),
+    },
+    {
+      path: "analytics",
+      element: (
+        <Suspense fallback={<RouteSkeleton />}>
+          <MiddlemanAnalytics />
+        </Suspense>
+      ),
+    },
+    {
+      path: "connections",
+      element: (
+        <Suspense fallback={<RouteSkeleton />}>
+          <MiddlemanConnections />
+        </Suspense>
+      ),
+    },
+    {
+      path: "commission",
+      element: (
+        <Suspense fallback={<RouteSkeleton />}>
+          <MiddlemanCommission />
+        </Suspense>
+      ),
+    },
+    {
+      path: "profile",
+      element: (
+        <Suspense fallback={<RouteSkeleton />}>
+          <MiddlemanProfile />
+        </Suspense>
+      ),
+    },
+    {
+      path: "settings",
+      element: (
+        <Suspense fallback={<RouteSkeleton />}>
+          <MiddlemanSettings />
+        </Suspense>
+      ),
+    },
+    {
+      path: "marketplace",
+      element: (
+        <Suspense fallback={<RouteSkeleton />}>
+          <ProductDiscovery />
+        </Suspense>
+      ),
+    },
+  ],
   },
-];
+  ],
+};

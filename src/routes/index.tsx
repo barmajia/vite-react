@@ -55,13 +55,13 @@ const mainRoutes: RouteObject = {
     // Services routes
     ...servicesRoutes,
     // Middleman routes
-    ...middlemanRoutes,
+    middlemanRoutes,
     // Wallet routes
     ...walletRoutes,
     // Marketplace routes
     ...marketplaceRoutes,
     // Factory routes
-    ...factoryRoutes,
+    factoryRoutes,
     // Profile routes
     ...profileRoutes,
     // Public info pages

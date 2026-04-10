@@ -1,4 +1,5 @@
 import { createClient, Session } from "@supabase/supabase-js";
+import type { Database } from "@/lib/database.types";
 import { escapeRegExp } from "@/utils/sanitize";
 import { SECURITY_CONFIG } from "@/lib/security";
 
@@ -98,7 +99,7 @@ const cookieStorage = {
 /**
  * Create Supabase client with security enhancements
  */
-export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,

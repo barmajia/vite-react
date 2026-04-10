@@ -2,7 +2,6 @@ import { useNavigate, Link } from "react-router-dom";
 import {
   ArrowRight,
   Handshake,
-  TrendingUp,
   Shield,
   Users,
   DollarSign,

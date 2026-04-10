@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { SellerSignupData } from "@/types/signup";
+import { SellerSignupFormData } from "@/types/signup";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/select";
 
 interface SellerSignupFormProps {
-  onSubmit: (data: SellerSignupData) => Promise<void>;
+  onSubmit: (data: SellerSignupFormData) => Promise<void>;
   onBack: () => void;
   loading: boolean;
 }
@@ -22,13 +22,11 @@ export function SellerSignupForm({
   onBack,
   loading,
 }: SellerSignupFormProps) {
-  const [formData, setFormData] = useState<SellerSignupData>({
-    account_type: "seller",
+  const [formData, setFormData] = useState<SellerSignupFormData>({
     email: "",
     password: "",
     full_name: "",
     phone: "",
-    company_name: "",
     location: "",
     currency: "USD",
   });
@@ -123,25 +121,6 @@ export function SellerSignupForm({
         <h3 className="font-semibold text-gray-900 dark:text-white">
           Business Information
         </h3>
-
-        <div>
-          <Label
-            htmlFor="company_name"
-            className="text-gray-700 dark:text-gray-200"
-          >
-            Company Name
-          </Label>
-          <Input
-            id="company_name"
-            value={formData.company_name}
-            onChange={(e) =>
-              setFormData({ ...formData, company_name: e.target.value })
-            }
-            placeholder="Your Company Ltd."
-            required
-            className="bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder:text-gray-400 dark:placeholder:text-gray-500"
-          />
-        </div>
 
         <div>
           <Label

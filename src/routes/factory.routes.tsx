@@ -1,99 +1,69 @@
-import { RouteObject } from "react-router-dom";
 import { lazy, Suspense } from "react";
+import { RouteObject } from "react-router-dom";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { FactoryLayout } from "@/features/factory/components/FactoryLayout";
+import { RouteSkeleton } from "@/components/shared/RouteSkeleton";
+import { FactoryWelcome } from "@/features/factory/pages/FactoryWelcome";
 
-const RouteSkeleton = () => (
-  <div className="flex items-center justify-center min-h-[400px]">
-    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-  </div>
-);
-
-// Lazy load factory pages
-const FactoryDashboardPage = lazy(() =>
-  import("@/pages/factory/FactoryDashboardPage").then((m) => ({
-    default: m.FactoryDashboardPage,
+const FactoryDashboard = lazy(() =>
+  import("@/features/factory/pages/FactoryDashboard").then((m) => ({
+    default: m.FactoryDashboard,
   })),
 );
-const FactoryProductionPage = lazy(() =>
-  import("@/pages/factory/FactoryProductionPage").then((m) => ({
-    default: m.FactoryProductionPage,
+const FactoryProduction = lazy(() =>
+  import("@/features/factory/pages/FactoryProduction").then((m) => ({
+    default: m.FactoryProduction,
   })),
 );
-const FactoryQuotesPage = lazy(() =>
-  import("@/pages/factory/FactoryQuotesPage").then((m) => ({
-    default: m.FactoryQuotesPage,
-  })),
-);
-const FactoryConnectionsPage = lazy(() =>
-  import("@/pages/factory/FactoryConnectionsPage").then((m) => ({
-    default: m.FactoryConnectionsPage,
-  })),
-);
-const FactoryStartChat = lazy(() =>
-  import("@/pages/factory/FactoryStartChat").then((m) => ({
-    default: m.FactoryStartChat,
+const FactoryConnections = lazy(() =>
+  import("@/features/factory/pages/FactoryConnections").then((m) => ({
+    default: m.FactoryConnections,
   })),
 );
 
-export const factoryRoutes: RouteObject[] = [
-  {
-    path: "factory/dashboard",
-    element: (
-      <ProtectedRoute allowedAccountTypes={["factory"]}>
+export const factoryRoutes: RouteObject = {
+  path: "/factory",
+  children: [
+    {
+      index: true,
+      element: (
         <Suspense fallback={<RouteSkeleton />}>
-          <FactoryDashboardPage />
+          <FactoryWelcome />
         </Suspense>
-      </ProtectedRoute>
-    ),
-    children: [
-      {
-        index: true,
-        element: (
-          <Suspense fallback={<RouteSkeleton />}>
-            <FactoryDashboardPage />
-          </Suspense>
-        ),
-      },
-      {
-        path: "production",
-        element: (
-          <ProtectedRoute allowedAccountTypes={["factory"]}>
+      ),
+    },
+    {
+      element: (
+        <ProtectedRoute allowedAccountTypes={["factory"]}>
+          <FactoryLayout />
+        </ProtectedRoute>
+      ),
+      children: [
+        {
+          path: "dashboard",
+          element: (
             <Suspense fallback={<RouteSkeleton />}>
-              <FactoryProductionPage />
+              <FactoryDashboard />
             </Suspense>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "quotes",
-        element: (
-          <ProtectedRoute allowedAccountTypes={["factory"]}>
-            <Suspense fallback={<RouteSkeleton />}>
-              <FactoryQuotesPage />
-            </Suspense>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "connections",
-        element: (
-          <ProtectedRoute allowedAccountTypes={["factory"]}>
-            <Suspense fallback={<RouteSkeleton />}>
-              <FactoryConnectionsPage />
-            </Suspense>
-          </ProtectedRoute>
-        ),
-      },
-      {
-        path: "start-chat",
-        element: (
-          <ProtectedRoute>
-            <Suspense fallback={<RouteSkeleton />}>
-              <FactoryStartChat />
-            </Suspense>
-          </ProtectedRoute>
-        ),
-      },
-    ],
+          ),
+        },
+    {
+      path: "production",
+      element: (
+        <Suspense fallback={<RouteSkeleton />}>
+          <FactoryProduction />
+        </Suspense>
+      ),
+    },
+    {
+      path: "connections",
+      element: (
+        <Suspense fallback={<RouteSkeleton />}>
+          <FactoryConnections />
+        </Suspense>
+      ),
+    },
+  ],
   },
-];
+  ],
+};

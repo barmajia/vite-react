@@ -109,14 +109,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
 
-      // Check current cache
+      // 1. Optimistic load from cache
       const cached = getNexusProfile();
       if (cached && cached.uuid === u.id) {
         setProfile(cached);
-        return;
+        // Do NOT return here. We strictly query the database to ensure 100% accuracy.
       }
 
-      // Fetch one-time transition data
+      // 2. 100% Source of Truth: Fetch from 'users' table
       try {
         const { data, error } = await supabase
           .from("users")
@@ -125,17 +125,37 @@ export function AuthProvider({ children }: AuthProviderProps) {
           .maybeSingle();
 
         if (data) {
+          // data.account_type could be an array like ['user', 'seller'] or a string
+          let primaryAccountType = "user";
+
+          if (Array.isArray(data.account_type)) {
+            // Extract the highest-priority role (e.g. seller over user)
+            primaryAccountType =
+              data.account_type.find((role) => role !== "user") || "user";
+          } else if (typeof data.account_type === "string") {
+            primaryAccountType = data.account_type;
+          }
+
           const newProfile: NexusProfile = {
             uuid: u.id,
             full_name:
               data.full_name || u.user_metadata?.full_name || "Nexus User",
-            account_type: data.account_type || "user",
+            account_type: primaryAccountType,
           };
+
           setProfile(newProfile);
           saveNexusProfile(newProfile);
+        } else if (!cached) {
+          // If they don't even exist in users table but have an auth record
+          const fallbackProfile: NexusProfile = {
+            uuid: u.id,
+            full_name: u.user_metadata?.full_name || "Nexus User",
+            account_type: "user",
+          };
+          setProfile(fallbackProfile);
         }
       } catch (err) {
-        console.warn("Nexus profile sync bypassed");
+        console.warn("Nexus profile sync encountered an error:", err);
       }
     };
 
@@ -510,17 +530,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Sign out from Supabase
       await supabase.auth.signOut();
 
-      // Clear state
+      // Clear all local session data
       setSession(null);
       setUser(null);
+
+      // Clear any residual session data from storage
+      sessionStorage.clear();
+      localStorage.removeItem("sb-***-auth-token"); // Clear any Supabase tokens
+
+      console.log("[Auth] User signed out, all local data cleared");
     } catch (error) {
-      console.error("Error signing out:", error);
-      // Still clear local storage even if sign out fails
+      console.error("[Auth] Error signing out:", error);
+      // Still clear all local data even if sign out fails
       clearAuthStorage();
       clearNexusProfile();
       setProfile(null);
       setSession(null);
       setUser(null);
+      sessionStorage.clear();
     }
   };
 

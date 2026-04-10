@@ -25,7 +25,7 @@ export function ProtectedRoute({
   allowedAccountTypes,
   redirectTo = "/login",
 }: ProtectedRouteProps) {
-  const { user, loading } = useAuth();
+  const { user, profile, loading } = useAuth();
   const location = useLocation();
 
   // Show loading spinner while auth state resolves
@@ -56,8 +56,28 @@ export function ProtectedRoute({
 
   // Check account type restriction
   if (allowedAccountTypes && allowedAccountTypes.length > 0) {
-    const accountType = user.user_metadata?.account_type;
-    if (!accountType || !allowedAccountTypes.includes(accountType)) {
+    // Use profile.account_type from database (fresh) instead of user_metadata (stale JWT)
+    // account_type can be an array like ['user', 'seller'] or a single string
+    const rawAccountType =
+      profile?.account_type || user.user_metadata?.account_type;
+    const accountTypes = Array.isArray(rawAccountType)
+      ? rawAccountType
+      : [rawAccountType];
+
+    // Check if ANY of the user's types matches ANY of the allowed types
+    const hasAccess = accountTypes.some(
+      (type) => type && allowedAccountTypes.includes(type),
+    );
+
+    if (!hasAccess) {
+      // Log access denial for audit purposes
+      console.warn(
+        `[ProtectedRoute] Access denied: user ${user.id.slice(0, 8)}... ` +
+          `with types [${accountTypes.join(", ")}] ` +
+          `tried to access [${allowedAccountTypes.join(", ")}] ` +
+          `at ${location.pathname}`,
+      );
+
       return (
         <div className="min-h-[60vh] flex items-center justify-center">
           <div className="text-center max-w-md p-8">
