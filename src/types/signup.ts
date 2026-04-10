@@ -18,7 +18,7 @@ export type AccountType =
   | "admin";
 
 /** Account types stored as array in users table */
-export type AccountTypeArray = AccountType[];
+export type AccountTypeArray = (AccountType | "user")[];
 
 /** Role display names for UI */
 export type RoleDisplayName =

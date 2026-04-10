@@ -114,23 +114,35 @@ export function AuthCallback() {
                 storedAccountType === "middleman"
               ) {
                 // Upsert to users table
-                await supabase.from("users").upsert({
-                  user_id: user.id,
-                  email: user.email || "",
-                  full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "",
-                  account_type: ["user", storedAccountType],
-                }, { onConflict: "user_id" });
+                await supabase.from("users").upsert(
+                  {
+                    user_id: user.id,
+                    email: user.email || "",
+                    full_name:
+                      user.user_metadata?.full_name ||
+                      user.email?.split("@")[0] ||
+                      "",
+                    account_type: ["user", storedAccountType],
+                  },
+                  { onConflict: "user_id" },
+                );
 
                 if (storedAccountType === "seller") {
                   // Upsert to sellers table
-                  await supabase.from("sellers").upsert({
-                    user_id: user.id,
-                    email: user.email || "",
-                    full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "",
-                    account_type: "seller",
-                    is_factory: false,
-                  }, { onConflict: "user_id" });
-                  
+                  await supabase.from("sellers").upsert(
+                    {
+                      user_id: user.id,
+                      email: user.email || "",
+                      full_name:
+                        user.user_metadata?.full_name ||
+                        user.email?.split("@")[0] ||
+                        "",
+                      account_type: "seller",
+                      is_factory: false,
+                    },
+                    { onConflict: "user_id" },
+                  );
+
                   sessionStorage.removeItem("google_signup_account_type");
                   toast.success("Welcome back, Seller!");
                   navigate("/seller/dashboard", { replace: true });
@@ -138,18 +150,46 @@ export function AuthCallback() {
                 }
 
                 if (storedAccountType === "factory") {
-                  // Upsert to sellers table as factory
-                  await supabase.from("sellers").upsert({
-                    user_id: user.id,
-                    email: user.email || "",
-                    full_name: user.user_metadata?.full_name || user.email?.split("@")[0] || "",
-                    account_type: "factory",
-                    is_factory: true,
-                  }, { onConflict: "user_id" });
-                  
+                  // Upsert to sellers table with is_factory = true
+                  await supabase.from("sellers").upsert(
+                    {
+                      user_id: user.id,
+                      email: user.email || "",
+                      full_name:
+                        user.user_metadata?.full_name ||
+                        user.email?.split("@")[0] ||
+                        "",
+                      account_type: "factory",
+                      is_factory: true,
+                    },
+                    { onConflict: "user_id" },
+                  );
+
                   sessionStorage.removeItem("google_signup_account_type");
                   toast.success("Welcome back, Factory!");
                   navigate("/factory/dashboard", { replace: true });
+                  return;
+                }
+
+                if (storedAccountType === "middleman") {
+                  // Upsert to sellers table with is_middleman = true
+                  await supabase.from("sellers").upsert(
+                    {
+                      user_id: user.id,
+                      email: user.email || "",
+                      full_name:
+                        user.user_metadata?.full_name ||
+                        user.email?.split("@")[0] ||
+                        "",
+                      account_type: "middleman",
+                      is_middleman: true,
+                    },
+                    { onConflict: "user_id" },
+                  );
+
+                  sessionStorage.removeItem("google_signup_account_type");
+                  toast.success("Welcome back, Middleman!");
+                  navigate("/middleman/dashboard", { replace: true });
                   return;
                 }
               }

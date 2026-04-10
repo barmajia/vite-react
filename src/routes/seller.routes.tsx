@@ -4,6 +4,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { SellerLayout } from "@/features/seller/components/SellerLayout";
 import { RouteSkeleton } from "@/components/shared/RouteSkeleton";
 import { SellerWelcome } from "@/features/seller/pages/SellerWelcome";
+import { AddNewProduct } from "@/features/seller/pages/AddNewProduct";
 
 const SellerDashboard = lazy(() =>
   import("@/features/seller/pages/SellerDashboard").then((m) => ({
@@ -57,39 +58,47 @@ export const sellerRoutes: RouteObject = {
             </Suspense>
           ),
         },
-      {
-      path: "products",
-      element: (
-        <Suspense fallback={<RouteSkeleton />}>
-          <SellerProducts />
-        </Suspense>
-      ),
-      },
-      {
-      path: "orders",
-      element: (
-        <Suspense fallback={<RouteSkeleton />}>
-          <SellerOrders />
-        </Suspense>
-      ),
-      },
-      {
-      path: "analytics",
-      element: (
-        <Suspense fallback={<RouteSkeleton />}>
-          <SellerAnalytics />
-        </Suspense>
-      ),
-      },
-      {
-      path: "wallet",
-      element: (
-        <Suspense fallback={<RouteSkeleton />}>
-          <SellerWallet />
-        </Suspense>
-      ),
-      }, 
-  
+        {
+          path: "products",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <SellerProducts />
+            </Suspense>
+          ),
+        },
+        {
+          path: "products/new",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <AddNewProduct />
+            </Suspense>
+          ),
+        },
+        {
+          path: "orders",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <SellerOrders />
+            </Suspense>
+          ),
+        },
+        {
+          path: "analytics",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <SellerAnalytics />
+            </Suspense>
+          ),
+        },
+        {
+          path: "wallet",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <SellerWallet />
+            </Suspense>
+          ),
+        },
+      ],
+    },
   ],
-}
 };
