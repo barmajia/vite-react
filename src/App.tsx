@@ -18,6 +18,8 @@ import HealthLayout from "@/features/health/layouts/HealthLayout";
 import { Login } from "@/pages/auth/Login";
 import { SignupPage } from "@/pages/signup/SignupPage";
 import { MiddlemanSignup } from "@/pages/middleman/MiddlemanSignup";
+import WebMarketplace from "@/pages/middleman/webmarketplace/WebMarketplace";
+import SiteEditor from "@/pages/middleman/webmarketplace/SiteEditor";
 import { AuthCallback } from "@/pages/auth/AuthCallback";
 
 // ==================== Public Pages ====================
@@ -498,6 +500,8 @@ function App() {
                   >
                     <Route index element={<MiddlemanDashboard />} />
                     <Route path="dashboard" element={<MiddlemanDashboard />} />
+                    <Route path="webmarketplace" element={<WebMarketplace />} />
+                    <Route path="editor" element={<SiteEditor />} />
                     <Route path="deals" element={<MiddlemanDeals />} />
                     <Route path="deals/new" element={<MiddlemanCreateDeal />} />
                     <Route
