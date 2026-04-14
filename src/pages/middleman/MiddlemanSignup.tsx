@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -20,7 +21,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle, Upload } from "lucide-react";
 
 type SignupStep =
   | "account"
@@ -172,42 +173,49 @@ export function MiddlemanSignup() {
 
       if (userError) throw userError;
 
-      // Step 3: Insert into business_profiles
-      const { error: businessError } = await supabase
-        .from("business_profiles")
-        .insert({
-          user_id: authData.user.id,
-          role: "middleman",
-          company_name: formData.company_name,
-          location: formData.location,
-          currency: formData.currency,
-          commission_rate: formData.commission_rate,
-          is_verified: false,
-        });
+      // Step 3: Insert into middleman_profiles using RPC function
+      // This uses the handle_middleman_signup trigger and updates the profile
+      const { error: middlemanError } = await supabase.rpc('update_middleman_profile', {
+        p_user_id: authData.user.id,
+        p_full_name: formData.full_name,
+        p_company_name: formData.company_name,
+        p_specialization: formData.specialization,
+        p_website_url: formData.website_url,
+        p_description: formData.description,
+        p_tax_id: formData.tax_id,
+        p_business_license_url: businessLicenseUrl,
+        p_years_of_experience: formData.years_of_experience ? parseInt(formData.years_of_experience) : null,
+        p_location: formData.location,
+        p_currency: formData.currency,
+        p_commission_rate: formData.commission_rate,
+      });
 
-      if (businessError) throw businessError;
-
-      // Step 4: Insert into middleman_profiles
-      const { error: middlemanError } = await supabase
-        .from("middleman_profiles")
-        .insert({
-          user_id: authData.user.id,
-          company_name: formData.company_name,
-          location: formData.location,
-          currency: formData.currency,
-          commission_rate: formData.commission_rate,
-          is_verified: false,
-          specialization: formData.specialization,
-          website_url: formData.website_url,
-          description: formData.description,
-          tax_id: formData.tax_id,
-          business_license_url: businessLicenseUrl,
-          years_of_experience: formData.years_of_experience
-            ? parseInt(formData.years_of_experience)
-            : null,
-        });
-
-      if (middlemanError) throw middlemanError;
+      if (middlemanError) {
+        // Fallback to direct insert if RPC doesn't exist
+        console.log("RPC not found, using direct insert:", middlemanError);
+        const { error: directError } = await supabase
+          .from("middleman_profiles")
+          .upsert({
+            user_id: authData.user.id,
+            full_name: formData.full_name,
+            company_name: formData.company_name,
+            specialization: formData.specialization,
+            website_url: formData.website_url,
+            description: formData.description,
+            tax_id: formData.tax_id,
+            business_license_url: businessLicenseUrl,
+            years_of_experience: formData.years_of_experience
+              ? parseInt(formData.years_of_experience)
+              : null,
+            location: formData.location,
+            currency: formData.currency,
+            commission_rate: formData.commission_rate,
+            is_verified: false,
+            verification_status: 'pending',
+          }, { onConflict: 'user_id' });
+        
+        if (directError) throw directError;
+      }
 
       toast.success(
         "Account created successfully! Please check your email to verify.",

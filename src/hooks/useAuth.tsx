@@ -29,6 +29,10 @@ type SignupMetadata = {
   production_capacity?: string;
   min_order_quantity?: number;
   commission_rate?: number;
+  company_name?: string;
+  specialization?: string;
+  years_of_experience?: number;
+  tax_id?: string;
 };
 
 type AuthContextType = {
@@ -51,6 +55,20 @@ type AuthContextType = {
       | "delivery_driver",
     metadata?: SignupMetadata,
   ) => Promise<{ error: Error | null }>;
+  signUpMiddleman: (
+    email: string,
+    password: string,
+    fullName: string,
+    phone: string,
+    companyName: string,
+    location: string,
+    currency: string,
+    commissionRate: number,
+    specialization?: string,
+    yearsOfExperience?: number,
+    taxId?: string,
+    bio?: string,
+  ) => Promise<{ error: Error | null; data?: any }>;
   signUpWithRole: (
     email: string,
     password: string,
@@ -289,6 +307,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       metadata.commission_rate !== undefined
         ? Number(metadata.commission_rate)
         : undefined;
+    const sanitizedCompanyName = metadata.company_name?.trim();
+    const sanitizedSpecialization = metadata.specialization?.trim();
+    const sanitizedYearsOfExperience =
+      metadata.years_of_experience !== undefined
+        ? Number(metadata.years_of_experience)
+        : undefined;
+    const sanitizedTaxId = metadata.tax_id?.trim();
 
     // Validate email format
     if (!validateEmail(sanitizedEmail)) {
@@ -688,12 +713,137 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  /**
+   * Sign up specifically as Middleman using dedicated RPC function
+   * This creates user + middleman profile + wallet in a single transaction
+   */
+  const signUpMiddleman = async (
+    email: string,
+    password: string,
+    fullName: string,
+    phone: string,
+    companyName: string,
+    location: string,
+    currency: string,
+    commissionRate: number,
+    specialization?: string,
+    yearsOfExperience?: number,
+    taxId?: string,
+    bio?: string,
+  ) => {
+    // Input validation
+    if (!email || !password || !fullName || !companyName) {
+      return { 
+        error: new Error("Email, password, full name, and company name are required"),
+        data: null 
+      };
+    }
+
+    const sanitizedEmail = email.trim().toLowerCase();
+    const sanitizedName = fullName.trim();
+    const sanitizedPhone = phone.trim();
+    const sanitizedCompanyName = companyName.trim();
+    const sanitizedLocation = location?.trim() || "";
+    const sanitizedCurrency = currency?.trim() || "USD";
+    const sanitizedSpecialization = specialization?.trim();
+    const sanitizedTaxId = taxId?.trim();
+    const sanitizedBio = bio?.trim();
+
+    // Validate email format
+    if (!validateEmail(sanitizedEmail)) {
+      return { error: new Error("Please enter a valid email address"), data: null };
+    }
+
+    // Check for malicious input
+    if (
+      detectSqlInjection(email) ||
+      detectXss(email) ||
+      detectSqlInjection(fullName) ||
+      detectXss(fullName) ||
+      detectSqlInjection(companyName) ||
+      detectXss(companyName)
+    ) {
+      console.warn("Malicious input detected in middleman signup attempt");
+      return { error: new Error("Invalid input detected"), data: null };
+    }
+
+    // Rate limiting for signup
+    const rateLimitKey = `signup:middleman:${sanitizedEmail}`;
+    if (!signupRateLimiter.isAllowed(rateLimitKey)) {
+      const waitTime = signupRateLimiter.getBlockTimeRemaining(rateLimitKey);
+      return {
+        error: new Error(
+          `Too many signup attempts. Try again in ${waitTime} seconds.`,
+        ),
+        data: null,
+      };
+    }
+
+    // Password validation
+    const passwordCheck = validatePassword(password);
+    if (!passwordCheck.isValid) {
+      return { error: new Error(passwordCheck.errors[0]), data: null };
+    }
+
+    // Validate commission rate
+    if (commissionRate < 0 || commissionRate > 100) {
+      return { 
+        error: new Error("Commission rate must be between 0 and 100"),
+        data: null 
+      };
+    }
+
+    try {
+      // Call the dedicated middleman signup RPC function
+      const { data, error } = await supabase.rpc("signup_middleman", {
+        p_email: sanitizedEmail,
+        p_password: password,
+        p_full_name: sanitizedName,
+        p_phone: sanitizedPhone,
+        p_company_name: sanitizedCompanyName,
+        p_location: sanitizedLocation,
+        p_currency: sanitizedCurrency,
+        p_commission_rate: commissionRate,
+        p_specialization: sanitizedSpecialization || null,
+        p_years_of_experience: yearsOfExperience || null,
+        p_tax_id: sanitizedTaxId || null,
+        p_bio: sanitizedBio || null,
+      });
+
+      if (error) {
+        console.error("Middleman signup RPC error:", error);
+        signupRateLimiter.recordAttempt(rateLimitKey);
+        return { error: error as Error, data: null };
+      }
+
+      // Clear rate limiter on successful signup
+      signupRateLimiter.clear(rateLimitKey);
+
+      // Check if the RPC returned success
+      if (!data?.success) {
+        return { 
+          error: new Error(data?.error || "Failed to create middleman account"),
+          data: null 
+        };
+      }
+
+      return { error: null, data };
+    } catch (err) {
+      console.error("Unexpected middleman signup error:", err);
+      return {
+        error: new Error("An unexpected error occurred. Please try again."),
+        data: null,
+      };
+    }
+  };
+
   const value = {
     session,
     user,
     loading,
     signIn,
     signUp,
+    signUpMiddleman,
     signUpWithRole,
     signUpWithGoogle,
     signInWithGoogle,

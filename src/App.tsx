@@ -102,16 +102,7 @@ import { AdminDelivery } from "@/pages/admin/AdminDelivery";
 import { AdminSettings } from "@/pages/admin/AdminSettings";
 
 // ==================== Middleman ====================
-import { MiddlemanDashboard } from "@/pages/middleman/MiddlemanDashboard";
-import { MiddlemanDeals } from "@/pages/middleman/MiddlemanDeals";
-import { MiddlemanCreateDeal } from "@/pages/middleman/MiddlemanCreateDeal";
-import { MiddlemanDealDetails } from "@/pages/middleman/MiddlemanDealDetails";
-import { MiddlemanOrders } from "@/pages/middleman/MiddlemanOrders";
-import { MiddlemanAnalytics } from "@/pages/middleman/MiddlemanAnalytics";
-import { MiddlemanConnections } from "@/pages/middleman/MiddlemanConnections";
-import { MiddlemanCommission } from "@/pages/middleman/MiddlemanCommission";
-import { MiddlemanProfile } from "@/pages/middleman/MiddlemanProfile";
-import { MiddlemanSettings } from "@/pages/middleman/MiddlemanSettings";
+import { MiddlemanDashboardPage } from "@/components/middleman-dashboard/MiddlemanDashboardPage";
 
 // ==================== Wallet ====================
 import { WalletDashboard } from "@/pages/wallet/WalletDashboard";
@@ -489,34 +480,13 @@ function App() {
 
                   {/* ==================== MIDDLEMAN VERTICAL ==================== */}
                   <Route
-                    path="middleman"
+                    path="middleman/*"
                     element={
                       <ProtectedRoute allowedAccountTypes={["middleman"]}>
-                        <Outlet />
+                        <MiddlemanDashboardPage />
                       </ProtectedRoute>
                     }
-                  >
-                    <Route index element={<MiddlemanDashboard />} />
-                    <Route path="dashboard" element={<MiddlemanDashboard />} />
-                    <Route path="deals" element={<MiddlemanDeals />} />
-                    <Route path="deals/new" element={<MiddlemanCreateDeal />} />
-                    <Route
-                      path="deals/:dealId"
-                      element={<MiddlemanDealDetails />}
-                    />
-                    <Route path="orders" element={<MiddlemanOrders />} />
-                    <Route path="analytics" element={<MiddlemanAnalytics />} />
-                    <Route
-                      path="connections"
-                      element={<MiddlemanConnections />}
-                    />
-                    <Route
-                      path="commission"
-                      element={<MiddlemanCommission />}
-                    />
-                    <Route path="profile" element={<MiddlemanProfile />} />
-                    <Route path="settings" element={<MiddlemanSettings />} />
-                  </Route>
+                  />
 
                   {/* ==================== WALLET VERTICAL ==================== */}
                   <Route
