@@ -14,7 +14,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   TrendingUp,
   Package,
-  Users,
   DollarSign,
   ArrowUpRight,
   ArrowDownRight,
@@ -28,7 +27,6 @@ import {
   CheckCircle2,
   XCircle,
   ShoppingCart,
-  Eye,
   ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";

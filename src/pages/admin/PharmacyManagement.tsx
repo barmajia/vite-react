@@ -1,7 +1,7 @@
-import ComingSoon from "../../components/ComingSoon";
+import { ComingSoon } from "../../components/ComingSoon";
 
 const PharmacyManagement: React.FC = () => (
-  <ComingSoon featureName="Pharmacy Management" />
+  <ComingSoon title="Pharmacy Management" />
 );
 
 export default PharmacyManagement;

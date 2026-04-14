@@ -26,7 +26,7 @@ import { Logo } from "@/components/shared/Logo";
 export function MiddlemanLogin() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
   const { theme, setTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -39,7 +39,6 @@ export function MiddlemanLogin() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const { signInWithGoogle } = useAuth();
       const result = await signInWithGoogle();
       if (result.error) {
         setError(result.error.message ?? "Google sign-in failed");

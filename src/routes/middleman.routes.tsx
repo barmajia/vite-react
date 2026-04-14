@@ -55,9 +55,34 @@ const MiddlemanSettings = lazy(() =>
     default: m.MiddlemanSettings,
   })),
 );
+const MiddlemanStoreSettings = lazy(() =>
+  import("@/pages/middleman/MiddlemanStoreSettings").then((m) => ({
+    default: m.MiddlemanStoreSettings,
+  })),
+);
+const MiddlemanStoreOrders = lazy(() =>
+  import("@/pages/middleman/MiddlemanStoreOrders").then((m) => ({
+    default: m.MiddlemanStoreOrders,
+  })),
+);
 const ProductDiscovery = lazy(() =>
   import("@/features/middleman/pages/ProductDiscovery").then((m) => ({
     default: m.ProductDiscovery,
+  })),
+);
+const TemplateSelection = lazy(() =>
+  import("@/features/middleman/pages/TemplateSelection").then((m) => ({
+    default: m.TemplateSelection,
+  })),
+);
+const StoreSetup = lazy(() =>
+  import("@/features/middleman/pages/StoreSetup").then((m) => ({
+    default: m.StoreSetup,
+  })),
+);
+const PublicStorePage = lazy(() =>
+  import("@/features/middleman/pages/PublicStorePage").then((m) => ({
+    default: m.PublicStorePage,
   })),
 );
 
@@ -156,6 +181,22 @@ export const middlemanRoutes: RouteObject = {
       element: (
         <Suspense fallback={<RouteSkeleton />}>
           <MiddlemanSettings />
+        </Suspense>
+      ),
+    },
+    {
+      path: "settings/store",
+      element: (
+        <Suspense fallback={<RouteSkeleton />}>
+          <MiddlemanStoreSettings />
+        </Suspense>
+      ),
+    },
+    {
+      path: "settings/orders",
+      element: (
+        <Suspense fallback={<RouteSkeleton />}>
+          <MiddlemanStoreOrders />
         </Suspense>
       ),
     },

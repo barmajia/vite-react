@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -60,14 +60,14 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
     setIsFullscreen(true);
   };
 
-  const navigate = (direction: "prev" | "next") => {
+  const navigate = useCallback((direction: "prev" | "next") => {
     setSelectedIndex((prev) => {
       if (direction === "prev") {
         return prev === 0 ? allImages.length - 1 : prev - 1;
       }
       return prev === allImages.length - 1 ? 0 : prev + 1;
     });
-  };
+  }, [allImages.length]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

@@ -6,6 +6,7 @@ import App from "./App.tsx";
 import "./index.css";
 import "./i18n/config"; // Initialize i18next
 import { RTL_LANGUAGES, LANGUAGE_STORAGE_KEY } from "./i18n/config";
+import "@/utils/production-guard";
 
 // Apply saved language direction on initial load
 function applyStoredLanguage() {

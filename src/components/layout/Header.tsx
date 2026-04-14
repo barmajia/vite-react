@@ -17,7 +17,6 @@ import {
   Palette,
   Wrench,
   Sparkles,
-  Zap,
   Store,
   Factory,
   Handshake,

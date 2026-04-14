@@ -3,8 +3,29 @@ import {
   sanitizeReturnUrl,
   isDangerousUrl,
 } from "../../lib/security";
+import { sanitizeXSS } from "../../lib/security-utils";
 
 describe("Security Utilities", () => {
+  describe("sanitizeXSS", () => {
+    test("removes script tags by default and escapes HTML", () => {
+      const input = "<script>alert('xss')</script><p>Hi</p>";
+      const expected = "&lt;p&gt;Hi&lt;/p&gt;";
+      expect(sanitizeXSS(input)).toBe(expected);
+    });
+
+    test("preserves basic HTML when allowed", () => {
+      const input = "<script>alert('xss')</script><p>Hi</p>";
+      const expected = "<p>Hi</p>";
+      expect(sanitizeXSS(input, { allowBasicHTML: true })).toBe(expected);
+    });
+
+    test("removes event handlers and dangerous attributes by default", () => {
+      const input = "<div onclick='evil()'>Click</div>";
+      const expected = "&lt;div&gt;Click&lt;/div&gt;";
+      expect(sanitizeXSS(input)).toBe(expected);
+      expect(sanitizeXSS(input, { allowBasicHTML: true })).toBe("<div>Click</div>");
+    });
+  });
   describe("isValidReturnUrl", () => {
     test("allows safe relative URLs", () => {
       expect(isValidReturnUrl("/")).toBe(true);

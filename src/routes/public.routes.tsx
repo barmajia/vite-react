@@ -28,6 +28,11 @@ const PublicDealPage = lazy(() =>
     default: m.PublicDealPage,
   })),
 );
+const PublicStorePage = lazy(() =>
+  import("@/pages/public/PublicStorePage").then((m) => ({
+    default: m.PublicStorePage,
+  })),
+);
 
 export const publicRoutes: RouteObject[] = [
   {
@@ -75,6 +80,14 @@ export const publicRoutes: RouteObject[] = [
     element: (
       <Suspense fallback={<RouteSkeleton />}>
         <PublicDealPage />
+      </Suspense>
+    ),
+  },
+  {
+    path: "store/:storeSlug",
+    element: (
+      <Suspense fallback={<RouteSkeleton />}>
+        <PublicStorePage />
       </Suspense>
     ),
   },

@@ -1,5 +1,5 @@
-import ComingSoon from "../../components/ComingSoon";
+import { ComingSoon } from "../../components/ComingSoon";
 
-const Clients: React.FC = () => <ComingSoon featureName="Clients Dashboard" />;
+const Clients: React.FC = () => <ComingSoon title="Clients Dashboard" />;
 
 export default Clients;

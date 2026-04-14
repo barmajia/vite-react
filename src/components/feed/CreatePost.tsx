@@ -69,7 +69,7 @@ export const CreatePost = ({ onPostCreated }: CreatePostProps) => {
           <div className="flex items-center justify-between">
             <Select
               value={postType}
-              onValueChange={(v) => setPostType(v as any)}
+              onValueChange={(v) => setPostType(v as "announcement" | "product" | "update" | "promotion")}
             >
               <SelectTrigger className="w-[180px]">
                 <SelectValue />

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,12 +9,10 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Search, Package, Clock, CheckCircle, XCircle, Truck, Eye } from "lucide-react";
-import { toast } from "sonner";
+import { Search, Clock, CheckCircle, XCircle, Truck, Eye } from "lucide-react";
 
 export function SellerOrders() {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
 
   const { data: orders, isLoading } = useQuery({
@@ -34,20 +32,6 @@ export function SellerOrders() {
       return data;
     },
     enabled: !!user?.id,
-  });
-
-  const updateOrderMutation = useMutation({
-    mutationFn: async ({ orderId, status }: { orderId: string; status: string }) => {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq("id", orderId);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["seller-orders"] });
-      toast.success("Order updated");
-    },
   });
 
   const getStatusBadge = (status: string) => {

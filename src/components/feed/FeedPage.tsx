@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { feedService } from "@/services/feedService";
 import type { Post } from "@/types/feed";
 import { CreatePost } from "./CreatePost";
@@ -12,11 +12,7 @@ export const FeedPage = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
 
-  useEffect(() => {
-    loadPosts();
-  }, [filter]);
-
-  const loadPosts = async () => {
+  const loadPosts = useCallback(async () => {
     try {
       setLoading(true);
       const data = await feedService.getFeedPosts({
@@ -31,7 +27,11 @@ export const FeedPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
+
+  useEffect(() => {
+    loadPosts();
+  }, [loadPosts]);
 
   const handlePostCreated = () => {
     loadPosts();

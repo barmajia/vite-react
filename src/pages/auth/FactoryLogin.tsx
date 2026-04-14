@@ -26,7 +26,7 @@ import { Logo } from "@/components/shared/Logo";
 export function FactoryLogin() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, signUpWithGoogle } = useAuth();
   const { theme, setTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -39,8 +39,7 @@ export function FactoryLogin() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const { signUpWithGoogle } = useAuth();
-      const result = await signUpWithGoogle('factory');
+      const result = await signUpWithGoogle("factory");
       if (result.error) {
         setError(result.error.message ?? "Google sign-in failed");
         toast.error(result.error.message ?? "Google sign-in failed");

@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/popover";
 
 interface MessageInputProps {
-  conversationId: string;
+  _conversationId: string;
   onSend: (
     content: string,
     type: "text" | "image" | "file",
@@ -21,7 +21,7 @@ interface MessageInputProps {
 }
 
 export function MessageInput({
-  conversationId,
+  _conversationId,
   onSend,
   disabled = false,
 }: MessageInputProps) {

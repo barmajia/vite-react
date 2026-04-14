@@ -6,7 +6,7 @@
  * Uses new hospitals table with hospital_type column
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import {
   MapPin,
@@ -96,14 +96,9 @@ export function HospitalDetailPage() {
   const [loading, setLoading] = useState(true);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
-  useEffect(() => {
-    fetchHospital();
-  }, [hospitalId]);
-
-  const fetchHospital = async () => {
+  const fetchHospital = useCallback(async () => {
     setLoading(true);
     try {
-      // Get hospital details from new hospitals table
       const { data: hospitalData, error: hospitalError } = await supabase
         .from("hospitals")
         .select(
@@ -136,7 +131,6 @@ export function HospitalDetailPage() {
         return;
       }
 
-      // Filter health-related services
       const healthProducts = (hospitalData.health_services || []).filter(
         (p: any) => p.category === "Health & Medical" && p.status === "active",
       );
@@ -144,7 +138,6 @@ export function HospitalDetailPage() {
       setHospital({
         ...hospitalData,
         healthProducts,
-        // Ensure arrays exist
         specialties: hospitalData.specialties || [],
         features: hospitalData.features || [],
         opening_hours: hospitalData.opening_hours || {},
@@ -155,7 +148,11 @@ export function HospitalDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [hospitalId, navigate, t]);
+
+  useEffect(() => {
+    fetchHospital();
+  }, [hospitalId, fetchHospital]);
 
   const handleContactHospital = () => {
     if (!user) {

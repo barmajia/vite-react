@@ -2979,6 +2979,48 @@ $$;
 
 ALTER FUNCTION "public"."generate_patient_archive_json"("p_doctor_id" "uuid", "p_patient_id" "uuid") OWNER TO "postgres";
 
+-- Link a newly created auth user profile to internal application tables
+CREATE OR REPLACE FUNCTION "public"."link_user_profile_on_signup"(
+  "p_user_id" uuid,
+  "p_email" text,
+  "p_full_name" text,
+  "p_account_type" text
+) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER
+AS $$
+BEGIN
+  -- Upsert into users table
+  INSERT INTO public.users (user_id, email, full_name, account_type)
+  VALUES (p_user_id, p_email, p_full_name, p_account_type)
+  ON CONFLICT (user_id) DO UPDATE
+    SET email = EXCLUDED.email,
+        full_name = EXCLUDED.full_name,
+        account_type = EXCLUDED.account_type;
+
+  -- Create basic profile for the account type
+  IF p_account_type = 'customer' THEN
+    INSERT INTO public.customers (user_id, name, email, created_at, updated_at)
+    VALUES (p_user_id, p_full_name, p_email, NOW(), NOW())
+    ON CONFLICT (user_id) DO UPDATE SET name = EXCLUDED.name, email = EXCLUDED.email, updated_at = NOW();
+  ELSIF p_account_type IN ('seller', 'factory', 'middleman') THEN
+    IF p_account_type = 'seller' THEN
+      INSERT INTO public.sellers (user_id, email, full_name, account_type, is_factory, is_middleman)
+      VALUES (p_user_id, p_email, p_full_name, 'seller', false, false)
+      ON CONFLICT (user_id) DO UPDATE SET email = EXCLUDED.email, full_name = EXCLUDED.full_name, account_type = EXCLUDED.account_type;
+    ELSIF p_account_type = 'factory' THEN
+      INSERT INTO public.sellers (user_id, email, full_name, account_type, is_factory, is_middleman)
+      VALUES (p_user_id, p_email, p_full_name, 'factory', true, false)
+      ON CONFLICT (user_id) DO UPDATE SET is_factory = EXCLUDED.is_factory, account_type = EXCLUDED.account_type;
+    ELSIF p_account_type = 'middleman' THEN
+      INSERT INTO public.sellers (user_id, email, full_name, account_type, is_factory, is_middleman)
+      VALUES (p_user_id, p_email, p_full_name, 'middleman', false, true)
+      ON CONFLICT (user_id) DO UPDATE SET account_type = EXCLUDED.account_type;
+    END IF;
+  END IF;
+END;
+$$;
+
+
 
 CREATE OR REPLACE FUNCTION "public"."generate_pharmacy_daily_report"("p_pharmacy_id" "uuid", "p_report_date" "date" DEFAULT CURRENT_DATE) RETURNS "uuid"
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -20806,7 +20848,6 @@ ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TAB
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "anon";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "authenticated";
 ALTER DEFAULT PRIVILEGES FOR ROLE "postgres" IN SCHEMA "public" GRANT ALL ON TABLES TO "service_role";
-
 
 
 

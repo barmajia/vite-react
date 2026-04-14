@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useCallback,
   type ReactNode,
 } from "react";
 import { supabase } from "@/lib/supabase";
@@ -104,28 +105,20 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
     }
   }, [preferences.language]);
 
-  // Sync with Supabase when user logs in
-  useEffect(() => {
-    if (user && !loading) {
-      fetchUserPreferences();
-    }
-  }, [user, loading]);
-
-  const fetchUserPreferences = async () => {
+  const fetchUserPreferences = useCallback(async () => {
+    if (!user) return;
     try {
-      // Try to fetch from database with simplified query
       const { data, error } = await supabase
         .from("users")
         .select(
           "preferred_language, preferred_currency, theme_preference, sidebar_state",
         )
-        .eq("user_id", user!.id)
-        .maybeSingle(); // Use maybeSingle instead of single to handle no rows gracefully
+        .eq("user_id", user.id)
+        .maybeSingle();
 
       if (error) {
-        // 406 means columns don't exist - silently use localStorage
         if (error.code === "406" || error.message.includes("Cannot coerce")) {
-          console.log("Database preferences not available, using localStorage");
+          // Table doesn't exist yet - expected for new users
         } else {
           console.warn("Database preference error:", error.message);
         }
@@ -139,19 +132,24 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
           language: data.preferred_language || preferences.language,
           currency: data.preferred_currency || preferences.currency,
           sidebar: (data.sidebar_state as SidebarState) || preferences.sidebar,
-          cookieConsent: preferences.cookieConsent, // Keep local consent
+          cookieConsent: preferences.cookieConsent,
         };
 
         setPreferences(dbPrefs);
         localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(dbPrefs));
       }
     } catch (error) {
-      // Silently fail - localStorage preferences will be used
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       console.debug("Using localStorage preferences:", errorMessage);
     }
-  };
+  }, [user, preferences]);
+
+  useEffect(() => {
+    if (user && !loading) {
+      fetchUserPreferences();
+    }
+  }, [user, loading, fetchUserPreferences]);
 
   const updatePreference = async <K extends keyof UserPreferences>(
     key: K,

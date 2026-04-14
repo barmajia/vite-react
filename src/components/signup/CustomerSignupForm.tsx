@@ -13,7 +13,7 @@ interface CustomerSignupFormProps {
 
 export function CustomerSignupForm({
   onSubmit,
-  onBack,
+  _onBack,
   loading,
 }: CustomerSignupFormProps) {
   const [formData, setFormData] = useState<CustomerSignupFormData>({

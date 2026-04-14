@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, PieChart, Pie, Cell,
 } from "recharts";
 
 export function SellerAnalytics() {
@@ -30,8 +29,6 @@ export function SellerAnalytics() {
     date: new Date(d.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
     revenue: d.revenue,
   })) || [];
-
-  const COLORS = ["#10b981", "#3b82f6", "#8b5cf6", "#f59e0b", "#ef4444"];
 
   return (
     <div className="space-y-6">

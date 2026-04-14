@@ -20,7 +20,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { Logo } from "@/components/shared/Logo";
 
 interface FactoryProfile {
   id: string;

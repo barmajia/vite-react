@@ -22,11 +22,10 @@ import { supabase } from "@/lib/supabase";
 import { isValidEmail } from "@/lib/utils";
 import { toast } from "sonner";
 
-
 export function SellerLogin() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn, signUpWithGoogle } = useAuth();
   const { theme, setTheme } = useTheme();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -39,8 +38,7 @@ export function SellerLogin() {
   const handleGoogleSignIn = async () => {
     setIsLoading(true);
     try {
-      const { signUpWithGoogle } = useAuth();
-      const result = await signUpWithGoogle('seller');
+      const result = await signUpWithGoogle("seller");
       if (result.error) {
         setError(result.error.message ?? "Google sign-in failed");
         toast.error(result.error.message ?? "Google sign-in failed");
@@ -96,7 +94,7 @@ export function SellerLogin() {
             .eq("user_id", data.user.id)
             .maybeSingle();
 
-          if (seller ) {
+          if (seller) {
             toast.error("Access denied: Seller account not found");
             await supabase.auth.signOut();
             setIsLoading(false);

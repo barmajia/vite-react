@@ -1,5 +1,5 @@
 // src/features/health/pages/BookingPage.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams, Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -34,6 +34,21 @@ export default function BookingPage() {
     notes: "",
   });
 
+  const fetchDoctor = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("health_doctor_profiles")
+        .select(`*, users:user_id (*)`)
+        .eq("user_id", doctorId)
+        .single();
+      if (error) throw error;
+      if (data) setDoctor(data);
+    } catch (error) {
+       console.error("Error fetching doctor:", error);
+       toast.error("Node synchronization failure.");
+    }
+  }, [doctorId]);
+
   useEffect(() => {
     if (!user) {
       toast.error("Authorized session required for engagement.");
@@ -50,22 +65,7 @@ export default function BookingPage() {
     }));
 
     fetchDoctor();
-  }, [doctorId, user]);
-
-  const fetchDoctor = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("health_doctor_profiles")
-        .select(`*, users:user_id (*)`)
-        .eq("user_id", doctorId)
-        .single();
-      if (error) throw error;
-      if (data) setDoctor(data);
-    } catch (error) {
-       console.error("Error fetching doctor:", error);
-       toast.error("Node synchronization failure.");
-    }
-  };
+  }, [doctorId, user, navigate, searchParams, fetchDoctor]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

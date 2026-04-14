@@ -279,6 +279,6 @@ export interface Database {
         Returns: Json;
       };
     };
-    Enums: {};
+    Enums: Record<string, never>;
   };
 }

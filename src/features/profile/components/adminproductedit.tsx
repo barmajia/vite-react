@@ -1,7 +1,7 @@
 // src/features/profile/components/AdminProductEdit.tsx
 // Admin Product Edit Page - Edit existing product
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -66,130 +66,6 @@ export function AdminProductEdit() {
     is_local_brand: false,
   });
 
-  // 1️⃣ Get authenticated user first and check if admin
-  useEffect(() => {
-    const getUser = async () => {
-      if (!user) {
-        console.warn("⚠️ User not authenticated, waiting...");
-        return;
-      }
-      console.log("✅ Authenticated user:", user.id);
-      setCurrentUser(user.id);
-
-      // Check if user is admin by checking admin_users table
-      const { data: adminData } = await supabase
-        .from("admin_users")
-        .select("user_id")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      const isUserAdmin = !!adminData;
-      setIsAdmin(isUserAdmin);
-      console.log(
-        "👑 Is admin:",
-        isUserAdmin,
-        adminData ? "(found in admin_users)" : "(not in admin_users table)",
-      );
-
-      fetchProduct();
-    };
-    getUser();
-  }, [user, id]);
-
-  // 2️⃣ Fetch product - Admin can view any product
-  const fetchProduct = async () => {
-    try {
-      console.log("🔍 Fetching product:", id);
-
-      const { data, error } = await supabase
-        .from("products")
-        .select("*")
-        .eq("id", id)
-        .eq("is_deleted", false) // Don't show deleted products
-        .single();
-
-      if (error) {
-        console.error("❌ Supabase fetch error:", error);
-        if (error.code === "PGRST116") {
-          toast.error("Product not found or has been deleted");
-        } else {
-          toast.error("Failed to load product: " + error.message);
-        }
-        navigate("/admin/products");
-        return;
-      }
-
-      if (!data) {
-        toast.error("Product not found");
-        navigate("/admin/products");
-        return;
-      }
-
-      console.log("✅ Product loaded:", data);
-      console.log("👤 Product seller_id:", data.seller_id);
-      console.log("👤 Current user:", currentUser);
-      console.log("🖼️ Raw images from DB:", data.images);
-      console.log(
-        "🖼️ Images type:",
-        typeof data.images,
-        Array.isArray(data.images),
-      );
-
-      // Normalize images to handle both string[] and object[] formats
-      const normalizeImages = (raw: any) => {
-        if (!raw) return [];
-        if (!Array.isArray(raw)) {
-          console.warn("⚠️ Images is not an array:", raw);
-          return [];
-        }
-        return raw
-          .map((img: any) => {
-            if (typeof img === "string") {
-              // Convert storage path to public URL if needed
-              const url = img.startsWith("http")
-                ? img
-                : supabase.storage.from("product-images").getPublicUrl(img).data
-                    ?.publicUrl || img;
-              return { url, alt: "Product image" };
-            }
-            if (img?.url) {
-              const url = img.url.startsWith("http")
-                ? img.url
-                : supabase.storage.from("product-images").getPublicUrl(img.url)
-                    .data?.publicUrl || img.url;
-              return { ...img, url };
-            }
-            return { url: "", alt: "" };
-          })
-          .filter((img: any) => img.url);
-      };
-
-      setFormData({
-        title: data.title || "",
-        description: data.description || "",
-        brand: data.brand || "",
-        price: Number(data.price) || 0,
-        quantity: Number(data.quantity) || 0,
-        status: (data.status as "draft" | "active" | "inactive") || "draft",
-        category: data.category || "",
-        subcategory: data.subcategory || "",
-        currency: data.currency || "USD",
-        asin: data.asin || "",
-        sku: data.sku || "",
-        attributes: data.attributes || {},
-        images: normalizeImages(data.images),
-        color_hex: data.color_hex || "",
-        is_local_brand: data.is_local_brand || false,
-      });
-    } catch (err) {
-      console.error("💥 Unexpected error fetching product:", err);
-      toast.error("Failed to load product");
-      navigate("/admin/products");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -236,17 +112,79 @@ export function AdminProductEdit() {
     }
   };
 
+  // Fetch product - Admin can view any product
+  const fetchProduct = useCallback(async () => {
+    if (!id) {
+      toast.error("Product ID is missing");
+      navigate("/admin/products");
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("products")
+        .select("*")
+        .eq("id", id)
+        .eq("is_deleted", false)
+        .single();
+
+      if (error) {
+        console.error("❌ Supabase fetch error:", error);
+        if (error.code === "PGRST116") {
+          toast.error("Product not found or has been deleted");
+        } else {
+          toast.error("Failed to load product: " + error.message);
+        }
+        navigate("/admin/products");
+        return;
+      }
+
+      if (!data) {
+        toast.error("Product not found or permission denied");
+        navigate("/admin/products");
+        return;
+      }
+
+      // Populate form with fetched data
+      setFormData({
+        title: data.title || "",
+        description: data.description || "",
+        brand: data.brand || "",
+        price: data.price || 0,
+        quantity: data.quantity || 0,
+        status: data.status || "draft",
+        category: data.category || "",
+        subcategory: data.subcategory || "",
+        currency: data.currency || "USD",
+        asin: data.asin || "",
+        sku: data.sku || "",
+        attributes: data.attributes || {},
+        images: data.images || [],
+        color_hex: data.color_hex || "",
+        is_local_brand: data.is_local_brand || false,
+      });
+    } catch (err) {
+      toast.error("Unexpected error: " + (err as Error).message);
+    } finally {
+      setLoading(false);
+    }
+  }, [id, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!currentUser) {
+    if (!user) {
       toast.error("Authentication required");
-      console.error("❌ Cannot save: User not authenticated");
+      return;
+    }
+
+    if (!id) {
+      toast.error("Product ID is missing");
       return;
     }
 
     setSaving(true);
-    console.log("💾 Saving product:", id, "isAdmin:", isAdmin);
 
     try {
       const updateData = {
@@ -268,59 +206,79 @@ export function AdminProductEdit() {
         updated_at: new Date().toISOString(),
       };
 
-      console.log("📤 Update data:", updateData);
-
-      // Build update query
-      let updateQuery = supabase
+      const { data, error } = await supabase
         .from("products")
         .update(updateData)
-        .eq("id", id);
-
-      // Only apply seller_id filter for non-admins
-      if (!isAdmin) {
-        updateQuery = updateQuery.eq("seller_id", currentUser);
-        console.log("🔒 Non-admin: filtering by seller_id");
-      } else {
-        console.log("👑 Admin: bypassing seller_id filter");
-      }
-
-      // ✅ Execute with minimal select to avoid 406 + confirm success
-      const { data, error } = await updateQuery.select("id").maybeSingle();
+        .eq("id", id)
+        .select()
+        .single();
 
       if (error) {
         console.error("❌ Supabase update error:", error);
 
-        if (error.code === "42501" || error.message?.includes("policy")) {
-          toast.error("Permission denied: Check RLS policies");
-        } else if (error.code === "PGRST116") {
-          toast.error("Product not found or already deleted");
+        if (error.code === "42501") {
+          toast.error("Permission denied");
+        } else if (error.code === "23505") {
+          toast.error("ASIN already exists");
+        } else if (error.code === "23503") {
+          toast.error("Invalid reference: Check seller_id");
         } else {
-          toast.error("Update failed: " + error.message);
+          toast.error("Failed to update product: " + error.message);
         }
         return;
       }
 
       if (!data) {
-        console.warn(
-          "⚠️ Update returned no data - check RLS or product existence",
-        );
-        toast.error("Product not found or permission denied");
+        toast.error("Product update failed");
         return;
       }
 
-      console.log("✅ Update successful:", data);
       toast.success("Product updated successfully!");
 
       setTimeout(() => {
         navigate("/admin/products");
       }, 1000);
     } catch (err) {
-      console.error("💥 JavaScript error:", err);
+      console.error("💥 Error:", err);
       toast.error("Unexpected error: " + (err as Error).message);
     } finally {
       setSaving(false);
     }
   };
+
+  // Check admin status and fetch product
+  useEffect(() => {
+    const checkAdminAndFetchProduct = async () => {
+      if (!user) {
+        toast.error("Authentication required");
+        navigate("/login");
+        return;
+      }
+
+      setCurrentUser(user.id);
+
+      try {
+        const { data: adminData, error: adminError } = await supabase
+          .from("admin_users")
+          .select("user_id")
+          .eq("user_id", user.id)
+          .single();
+
+        if (adminError) {
+          console.error("Admin check error:", adminError);
+        }
+
+        setIsAdmin(!!adminData);
+      } catch (err) {
+        console.error("Admin check failed:", err);
+      }
+
+      // Fetch product regardless of admin status for now
+      await fetchProduct();
+    };
+
+    checkAdminAndFetchProduct();
+  }, [user, fetchProduct, navigate]);
 
   if (loading) {
     return (

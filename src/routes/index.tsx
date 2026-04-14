@@ -19,6 +19,8 @@ import { sellerRoutes } from "./seller.routes";
 
 // Lazy load error pages
 import { lazy, Suspense } from "react";
+import { COMING_SOON_FLAGS } from "@/config/flags";
+import { ComingSoon } from "@/components/ComingSoon";
 const NotFound = lazy(() =>
   import("@/pages/errors/NotFound").then((m) => ({ default: m.NotFound })),
 );
@@ -78,22 +80,24 @@ const adminRoute: RouteObject = {
   children: adminRoutes,
 };
 
-// Chat route (standalone)
+// Chat route (standalone) with optional Coming Soon guard
 const chatRoute: RouteObject = {
   path: "/chat",
   element: (
     <Suspense fallback={<RouteSkeleton />}>
-      <Chat />
+      {COMING_SOON_FLAGS?.COMING_SOON_CHAT ? <ComingSoon /> : <Chat />}
     </Suspense>
   ),
 };
+
+// Coming soon guard and error routes
 
 // Error routes
 const errorRoutes: RouteObject[] = [
   {
     path: "/error",
     element: (
-      <Suspense fallback={<RouteSkeleton />}>
+      <Suspense fallback={<RouteSkeleton />}> 
         <ServerError />
       </Suspense>
     ),
@@ -101,7 +105,7 @@ const errorRoutes: RouteObject[] = [
   {
     path: "*",
     element: (
-      <Suspense fallback={<RouteSkeleton />}>
+      <Suspense fallback={<RouteSkeleton />}> 
         <NotFound />
       </Suspense>
     ),

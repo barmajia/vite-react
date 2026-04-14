@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -29,14 +29,7 @@ export default function LocationVerifier({
   const [error, setError] = useState<string | null>(null);
   const [permission, setPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt');
 
-  useEffect(() => {
-    checkPermission();
-    if (autoVerify) {
-      verifyLocation();
-    }
-  }, []);
-
-  const checkPermission = async () => {
+  const checkPermission = useCallback(async () => {
     if ('permissions' in navigator) {
       try {
         const result = await navigator.permissions.query({ name: 'geolocation' });
@@ -49,9 +42,9 @@ export default function LocationVerifier({
         console.error('Permission check failed:', err);
       }
     }
-  };
+  }, []);
 
-  const verifyLocation = () => {
+  const verifyLocation = useCallback(() => {
     if (!('geolocation' in navigator)) {
       setError('Geolocation is not supported by your browser');
       return;
@@ -100,7 +93,14 @@ export default function LocationVerifier({
         maximumAge: 0
       }
     );
-  };
+  }, [requiredAccuracy, onLocationVerified]);
+
+  useEffect(() => {
+    checkPermission();
+    if (autoVerify) {
+      verifyLocation();
+    }
+  }, [autoVerify, checkPermission, verifyLocation]);
 
   const getAccuracyStatus = () => {
     if (!location) return 'unknown';

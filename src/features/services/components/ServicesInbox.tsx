@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { MessageCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
@@ -40,23 +40,12 @@ export const ServicesInbox = () => {
   const [conversations, setConversations] = useState<ServiceConversation[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    // Only fetch if auth is loaded and user exists
-    if (!authLoading && user) {
-      fetchConversations();
-    } else if (!authLoading && !user) {
-      setConversations([]);
-      setLoading(false);
-    }
-  }, [user, authLoading]);
-
-  const fetchConversations = async () => {
+  const fetchConversations = useCallback(async () => {
     if (!user) return;
 
     try {
       setLoading(true);
 
-      // Get conversations where user is a participant
       const { data: participantData, error: participantError } = await supabase
         .from("conversation_participants")
         .select("conversation_id")
@@ -73,7 +62,6 @@ export const ServicesInbox = () => {
         return;
       }
 
-      // Fetch conversations with product and participant details
       const { data: convos, error } = await supabase
         .from("conversations")
         .select(
@@ -104,9 +92,7 @@ export const ServicesInbox = () => {
 
       if (error) throw error;
 
-      // Map conversations with other user info
       const conversationsWithUsers = (convos || []).map((conv) => {
-        // Find the other participant (not the current user)
         const otherParticipant = conv.participants?.find(
           (p) => p.user_id !== user.id,
         );
@@ -132,7 +118,17 @@ export const ServicesInbox = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    // Only fetch if auth is loaded and user exists
+    if (!authLoading && user) {
+      fetchConversations();
+    } else if (!authLoading && !user) {
+      setConversations([]);
+      setLoading(false);
+    }
+  }, [user, authLoading, fetchConversations]);
 
   const formatTime = (dateString: string | null) => {
     if (!dateString) return "";

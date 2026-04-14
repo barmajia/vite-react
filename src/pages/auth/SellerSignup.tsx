@@ -105,7 +105,7 @@ export function SellerSignup() {
 
     if (!formData.phone.trim()) {
       newErrors.phone = "Phone number is required";
-    } else if (!/^[\d\s\-\+\(\)]{7,15}$/.test(formData.phone.trim())) {
+    } else if (!/^[\d\s+()-]{7,15}$/.test(formData.phone.trim())) {
       newErrors.phone = "Please enter a valid phone number";
     }
 
@@ -147,7 +147,7 @@ export function SellerSignup() {
           setFormData((prev) => ({ ...prev, location: "0, 0" }));
           setIsLocating(false);
           toast.info("Using default location (0, 0)");
-        }
+        },
       );
     } else {
       setFormData((prev) => ({ ...prev, location: "0, 0" }));
@@ -537,7 +537,11 @@ export function SellerSignup() {
                         className="absolute inset-y-0 right-2 my-2 px-3 flex items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-500 hover:bg-emerald-500/30 transition-colors font-bold text-xs uppercase"
                         aria-label="Get Current Location"
                       >
-                        {isLocating ? <Loader2 className="h-4 w-4 animate-spin" /> : "Locate"}
+                        {isLocating ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Locate"
+                        )}
                       </button>
                     </div>
                     {errors.location && (

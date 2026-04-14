@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, Lock, Shield } from 'lucide-react';
@@ -18,11 +18,7 @@ export default function SecureRoom({
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  useEffect(() => {
-    checkAuthorization();
-  }, [requiredRole]);
-
-  const checkAuthorization = async () => {
+  const checkAuthorization = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
 
@@ -53,7 +49,11 @@ export default function SecureRoom({
     } finally {
       setLoading(false);
     }
-  };
+  }, [requiredRole]);
+
+  useEffect(() => {
+    checkAuthorization();
+  }, [checkAuthorization]);
 
   if (loading) {
     return (

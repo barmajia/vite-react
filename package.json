@@ -21,6 +21,7 @@
     "test:e2e:report": "playwright show-report",
     "test:all": "npm run test:run && npm run test:e2e",
     "test:components": "vitest run src/__tests__/components",
+    "security:check": "npm audit --production",
     "test:hooks": "vitest run src/__tests__/hooks",
     "test:utils": "vitest run src/__tests__/utils",
     "test:e2e:auth": "playwright test e2e/auth.spec.ts",

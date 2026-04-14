@@ -9,13 +9,13 @@ export function NotFound() {
     <div className="min-h-[60vh] flex items-center justify-center px-4">
       <div className="text-center space-y-6">
         <div className="space-y-2">
-          <h1 className="text-9xl font-bold text-primary">404</h1>
-          <h2 className="text-3xl font-bold">{t('errors.notFound')}</h2>
+          <h1 className="text-4xl sm:text-6xl md:text-8xl font-bold text-primary">404</h1>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold">{t('errors.notFound')}</h2>
           <p className="text-muted-foreground max-w-md mx-auto">
             {t('errors.notFoundDesc')}
           </p>
         </div>
-        <div className="flex justify-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-center gap-4 items-center">
           <Button asChild>
             <Link to={ROUTES.HOME}>{t('errors.goHome')}</Link>
           </Button>

@@ -57,7 +57,7 @@ type AuthContextType = {
       | "factory"
       | "delivery_driver",
     metadata?: SignupMetadata,
-  ) => Promise<{ error: Error | null }>;
+  ) => Promise<{ error: Error | null; data?: any }>;
   signUpWithRole: (
     email: string,
     password: string,
@@ -419,6 +419,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Clear rate limiter on successful signup
       signupRateLimiter.clear(rateLimitKey);
 
+      // Link user profile via server-side RPC to create related records (customers/sellers)
+      if ((data as any)?.user?.id) {
+        try {
+          const resolvedAccountTypeFinal =
+            accountType === "delivery_driver" ? "delivery" : accountType;
+          // Use RPC to link user profile on signup
+          // @ts-expect-error - RPC method not in typed interface but exists in Supabase
+          await (supabase as any).rpc("link_user_profile_on_signup", {
+            p_user_id: (data as any).user.id,
+            p_email: sanitizedEmail,
+            p_full_name: sanitizedName,
+            p_account_type: resolvedAccountTypeFinal ?? "customer",
+          });
+        } catch (rpcErr) {
+          if (import.meta.env.DEV) {
+            console.error("Failed to link user profile on signup:", rpcErr);
+          }
+        }
+      }
+
       // User profile is safely created via the secure database trigger (`handle_new_user`)
       // which has been updated to validate the requested account_type.
 
@@ -537,8 +557,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Clear any residual session data from storage
       sessionStorage.clear();
       localStorage.removeItem("sb-***-auth-token"); // Clear any Supabase tokens
-
-      console.log("[Auth] User signed out, all local data cleared");
     } catch (error) {
       console.error("[Auth] Error signing out:", error);
       // Still clear all local data even if sign out fails

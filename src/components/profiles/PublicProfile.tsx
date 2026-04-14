@@ -1,5 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 // src/components/profiles/PublicProfile.tsx
 // Universal Public Profile Component for all account types
+// Note: Uses type assertions for flexible profile fields across multiple account types
 
 import React, { useState } from "react";
 import { usePublicProfile } from "../../hooks/usePublicProfile";

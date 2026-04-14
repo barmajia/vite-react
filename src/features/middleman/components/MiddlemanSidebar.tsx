@@ -1,7 +1,6 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
-  Package,
   ShoppingCart,
   Users,
   MessageSquare,
@@ -12,7 +11,8 @@ import {
   ChevronRight,
   Handshake,
   DollarSign,
-  Link,
+  Store,
+  Package,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,6 +34,8 @@ export function MiddlemanSidebar({ isOpen, onToggle }: MiddlemanSidebarProps) {
     { name: "Connections", href: "/middleman/connections", icon: Users },
     { name: "Earnings", href: "/middleman/earnings", icon: DollarSign },
     { name: "Messages", href: "/middleman/messages", icon: MessageSquare },
+    { name: "My Store", href: "/middleman/settings/store", icon: Store },
+    { name: "Store Orders", href: "/middleman/settings/orders", icon: Package },
     { name: "Analytics", href: "/middleman/analytics", icon: BarChart3 },
     { name: "Settings", href: "/middleman/settings", icon: Settings },
   ];

@@ -1,7 +1,5 @@
-import ComingSoon from "../../components/ComingSoon";
+import { ComingSoon } from "../../components/ComingSoon";
 
-const Listings: React.FC = () => (
-  <ComingSoon featureName="Listings Dashboard" />
-);
+const Listings: React.FC = () => <ComingSoon title="Listings Dashboard" />;
 
 export default Listings;

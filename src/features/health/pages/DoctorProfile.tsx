@@ -1,13 +1,9 @@
 // src/features/health/pages/DoctorProfile.tsx
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   MapPin,
   Star,
-  Clock,
-  Calendar,
-  Phone,
-  Mail,
   Award,
   CheckCircle2,
   Heart,
@@ -26,7 +22,6 @@ import {
   AlertCircle,
   Shield,
   Activity,
-  Zap,
   ArrowRight,
   TrendingUp,
 } from "lucide-react";
@@ -66,12 +61,7 @@ const DoctorProfile: React.FC = () => {
   const [reviews, setReviews] = useState<Review[]>([]);
   const [activeTab, setActiveTab] = useState("about");
 
-  useEffect(() => {
-    fetchDoctor();
-    fetchReviews();
-  }, [doctorId]);
-
-  const fetchDoctor = async () => {
+  const fetchDoctor = useCallback(async () => {
     setLoading(true);
     try {
       const { data, error } = await supabaseHealth
@@ -87,9 +77,9 @@ const DoctorProfile: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [doctorId]);
 
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     try {
       const { data } = await supabaseHealth
         .from("health_reviews")
@@ -101,7 +91,12 @@ const DoctorProfile: React.FC = () => {
     } catch (error) {
       console.error("Error fetching reviews:", error);
     }
-  };
+  }, [doctorId]);
+
+  useEffect(() => {
+    fetchDoctor();
+    fetchReviews();
+  }, [doctorId, fetchDoctor, fetchReviews]);
 
   const handleBookAppointment = () => {
     if (!user) {

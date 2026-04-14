@@ -1,31 +1,33 @@
-import React from "react";
-import { Construction } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { useTranslation } from "react-i18next";
+import { ROUTES } from "@/lib/constants";
 
-interface ComingSoonProps {
-  featureName?: string;
-}
-
-const ComingSoon: React.FC<ComingSoonProps> = ({ featureName }) => {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
-      <div className="bg-blue-50 p-6 rounded-full mb-6">
-        <Construction className="w-16 h-16 text-blue-500" />
-      </div>
-      <h1 className="text-3xl font-bold text-gray-800 mb-2">
-        {featureName || "This Feature"} is Coming Soon
-      </h1>
-      <p className="text-gray-600 max-w-md mb-8">
-        We are currently building this page. It will be available in the next
-        phase of the Aurora platform.
-      </p>
-      <button
-        onClick={() => window.history.back()}
-        className="px-6 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-700 transition"
-      >
-        Go Back
-      </button>
-    </div>
-  );
+type ComingSoonProps = {
+  title?: string;
+  description?: string;
 };
 
-export default ComingSoon;
+export function ComingSoon({ title, description }: ComingSoonProps) {
+  const { t } = useTranslation();
+  return (
+    <div className="min-h-screen flex items-center justify-center px-4">
+      <div className="text-center space-y-4">
+        <div className="space-y-2">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold">Coming Soon</h1>
+          <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+            {title ?? t("general.comingSoon")}
+          </h2>
+          <p className="text-muted-foreground max-w-md mx-auto">
+            {description ?? t("general.comingSoonDesc")}
+          </p>
+        </div>
+        <div className="flex flex-col sm:flex-row justify-center gap-4 items-center">
+          <Button asChild>
+            <Link to={ROUTES.HOME}>{t("general.goHome")}</Link>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}

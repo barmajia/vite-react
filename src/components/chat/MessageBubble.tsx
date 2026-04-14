@@ -19,7 +19,7 @@ export function MessageBubble({
   onDelete,
   showAvatar = false,
 }: MessageBubbleProps) {
-  const getTimeAgo = () => {
+  const _getTimeAgo = () => {
     try {
       const date = new Date(message.created_at);
       return formatDistanceToNow(date, { addSuffix: true });

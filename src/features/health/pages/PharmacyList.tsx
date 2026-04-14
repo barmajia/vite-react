@@ -4,11 +4,9 @@ import { useNavigate } from "react-router-dom";
 import {
   Search,
   MapPin,
-  Clock,
   Phone,
   Star,
   Filter,
-  CheckCircle2,
   Truck,
   Pill,
   Shield,

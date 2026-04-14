@@ -12,6 +12,7 @@ const RouteSkeleton = () => (
 const MarketplaceGrid = lazy(() => import('@/pages/marketplace/MarketplaceGrid'));
 const TemplateDetails = lazy(() => import('@/pages/marketplace/TemplateDetails'));
 const MarketplaceCheckout = lazy(() => import('@/pages/marketplace/MarketplaceCheckout'));
+const StoreTemplateMarketplace = lazy(() => import('@/pages/marketplace/StoreTemplateMarketplace'));
 
 export const marketplaceRoutes: RouteObject[] = [
   {
@@ -33,16 +34,24 @@ export const marketplaceRoutes: RouteObject[] = [
           </Suspense>
         ),
       },
-      {
-        path: ':id/checkout',
-        element: (
-          <ProtectedRoute>
-            <Suspense fallback={<RouteSkeleton />}>
-              <MarketplaceCheckout />
-            </Suspense>
-          </ProtectedRoute>
-        ),
-      },
-    ],
+{
+    path: ':id/checkout',
+    element: (
+      <ProtectedRoute>
+        <Suspense fallback={<RouteSkeleton />}>
+          <MarketplaceCheckout />
+        </Suspense>
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: 'templates',
+    element: (
+      <Suspense fallback={<RouteSkeleton />}>
+        <StoreTemplateMarketplace />
+      </Suspense>
+    ),
+  },
+],
   },
 ];
