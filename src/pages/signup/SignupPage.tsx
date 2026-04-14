@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
-import { UserRole, DeliverySignupData } from "@/types/signup";
+import { UserRole, DeliverySignupData, MiddlemanSignupData } from "@/types/signup";
 import { CustomerSignupForm } from "@/components/signup/CustomerSignupForm";
 import { SellerSignupForm } from "@/components/signup/SellerSignupForm";
 import { FactorySignupForm } from "@/components/signup/FactorySignupForm";
 import { DeliverySignupForm } from "@/components/signup/DeliverySignupForm";
+import { MiddlemanSignupForm } from "@/components/signup/MiddlemanSignupForm";
 import { RoleSelection } from "@/components/signup/RoleSelection";
 import {
   Card,
@@ -396,35 +397,39 @@ export function SignupPage() {
                 <RoleSelection onSelect={handleRoleSelect} />
               </div>
             ) : selectedRole === "middleman" ? (
-              <Card className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-xl overflow-hidden">
-                <div className="h-2 bg-gradient-to-r from-violet-500 to-indigo-500 w-full" />
-                <CardContent className="text-center py-12 px-6">
-                  <div className="inline-flex items-center justify-center w-20 h-20 bg-violet-100 dark:bg-violet-900/30 rounded-full mb-6 shadow-inner">
-                    <Sparkles className="h-10 w-10 text-violet-600 dark:text-violet-400" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-8">
-                    Middleman Program
-                  </h3>
-
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                    <Button
-                      variant="outline"
-                      onClick={handleBack}
-                      className="border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl h-12 px-6 font-semibold text-slate-600 dark:text-slate-300"
-                    >
-                      <ArrowLeft className="mr-2 h-4 w-4" />
-                      Back
-                    </Button>
-                    <Button
-                      onClick={() => navigate("/signup/middleman")}
-                      className="bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-100 rounded-xl h-12 px-6 font-semibold shadow-lg shadow-slate-900/20 dark:shadow-white/20 transition-all"
-                    >
-                      Start Application
-                      <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
+              <MiddlemanSignupForm
+                loading={loading}
+                onBack={handleBack}
+                onGoogleSignup={handleGoogleSignup}
+                onSubmit={async (formData: MiddlemanSignupData) => {
+                  setLoading(true);
+                  try {
+                    const { error } = await signUp(
+                      formData.email,
+                      formData.password,
+                      formData.full_name,
+                      "middleman",
+                      {
+                        phone: formData.phone,
+                        company_name: formData.company_name,
+                        location: formData.location,
+                        currency: formData.currency,
+                        commission_rate: formData.commission_rate,
+                        specialization: formData.specialization,
+                        years_of_experience: formData.years_of_experience,
+                        tax_id: formData.tax_id,
+                      },
+                    );
+                    if (error) setError(error.message);
+                    else handleSignupComplete(formData.email);
+                  } catch (err) {
+                    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+                    setError(errorMessage);
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              />
             ) : (
               <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-xl border border-slate-200 dark:border-slate-800 rounded-[2rem] shadow-xl shadow-slate-200/50 dark:shadow-black/20 overflow-hidden">
                 <div className="p-6 sm:p-8">
