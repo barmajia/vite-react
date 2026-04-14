@@ -30,6 +30,9 @@ export function Layout() {
     location.pathname.startsWith("/hospital") ||
     location.pathname.startsWith("/doctor");
 
+  // Check if current route is a middleman route (has its own header)
+  const isMiddlemanRoute = location.pathname.startsWith("/middleman");
+
   // Check if current route is a seller dashboard route
   const isSellerRoute =
     location.pathname.startsWith("/dashboard") ||
@@ -43,14 +46,16 @@ export function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Only show Header if NOT middleman route */}
       {showLayout &&
         !isHealthRoute &&
         !isServicesRoute &&
+        !isMiddlemanRoute &&
         (isSellerRoute ? <SellerDashboardHeader /> : <Header />)}
       <main
         className={cn(
           "flex-1",
-          isServicesRoute || isHealthRoute
+          isServicesRoute || isHealthRoute || isMiddlemanRoute
             ? "pt-0"
             : isSellerRoute
               ? "pt-16"
@@ -59,7 +64,10 @@ export function Layout() {
       >
         <Outlet />
       </main>
-      {showLayout && !isServicesRoute && !isSellerRoute && <Footer />}
+      {showLayout &&
+        !isServicesRoute &&
+        !isSellerRoute &&
+        !isMiddlemanRoute && <Footer />}
     </div>
   );
 }

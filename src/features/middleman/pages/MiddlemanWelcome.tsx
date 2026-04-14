@@ -332,7 +332,7 @@ export function MiddlemanWelcome() {
               <Button
                 size="lg"
                 className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-lg px-8 py-6 rounded-xl shadow-2xl shadow-amber-500/30 transition-all duration-300 hover:scale-105 hover:shadow-amber-500/40"
-                onClick={() => navigate("/signup/middleman")}
+                onClick={() => navigate("/middleman/signup")}
               >
                 {t("middleman.welcome.hero.signupCta") ||
                   "Sign Up as Middleman"}

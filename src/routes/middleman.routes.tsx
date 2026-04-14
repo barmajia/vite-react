@@ -112,103 +112,127 @@ export const middlemanRoutes: RouteObject = {
             </Suspense>
           ),
         },
-    {
-      path: "deals",
-      element: (
-        <Suspense fallback={<RouteSkeleton />}>
-          <MiddlemanDeals />
-        </Suspense>
-      ),
+        {
+          path: "deals",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <MiddlemanDeals />
+            </Suspense>
+          ),
+        },
+        {
+          path: "deals/new",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <MiddlemanCreateDeal />
+            </Suspense>
+          ),
+        },
+        {
+          path: "deals/:dealId",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <MiddlemanDealDetails />
+            </Suspense>
+          ),
+        },
+        {
+          path: "orders",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <MiddlemanOrders />
+            </Suspense>
+          ),
+        },
+        {
+          path: "analytics",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <MiddlemanAnalytics />
+            </Suspense>
+          ),
+        },
+        {
+          path: "connections",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <MiddlemanConnections />
+            </Suspense>
+          ),
+        },
+        {
+          path: "commission",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <MiddlemanCommission />
+            </Suspense>
+          ),
+        },
+        {
+          path: "profile",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <MiddlemanProfile />
+            </Suspense>
+          ),
+        },
+        {
+          path: "settings",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <MiddlemanSettings />
+            </Suspense>
+          ),
+        },
+        {
+          path: "settings/store",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <MiddlemanStoreSettings />
+            </Suspense>
+          ),
+        },
+        {
+          path: "settings/orders",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <MiddlemanStoreOrders />
+            </Suspense>
+          ),
+        },
+        {
+          path: "marketplace",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <ProductDiscovery />
+            </Suspense>
+          ),
+        },
+        {
+          path: "template-selection",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <TemplateSelection />
+            </Suspense>
+          ),
+        },
+        {
+          path: "store-setup",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <StoreSetup />
+            </Suspense>
+          ),
+        },
+        {
+          path: "store/:slug",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <PublicStorePage />
+            </Suspense>
+          ),
+        },
+      ],
     },
-    {
-      path: "deals/new",
-      element: (
-        <Suspense fallback={<RouteSkeleton />}>
-          <MiddlemanCreateDeal />
-        </Suspense>
-      ),
-    },
-    {
-      path: "deals/:dealId",
-      element: (
-        <Suspense fallback={<RouteSkeleton />}>
-          <MiddlemanDealDetails />
-        </Suspense>
-      ),
-    },
-    {
-      path: "orders",
-      element: (
-        <Suspense fallback={<RouteSkeleton />}>
-          <MiddlemanOrders />
-        </Suspense>
-      ),
-    },
-    {
-      path: "analytics",
-      element: (
-        <Suspense fallback={<RouteSkeleton />}>
-          <MiddlemanAnalytics />
-        </Suspense>
-      ),
-    },
-    {
-      path: "connections",
-      element: (
-        <Suspense fallback={<RouteSkeleton />}>
-          <MiddlemanConnections />
-        </Suspense>
-      ),
-    },
-    {
-      path: "commission",
-      element: (
-        <Suspense fallback={<RouteSkeleton />}>
-          <MiddlemanCommission />
-        </Suspense>
-      ),
-    },
-    {
-      path: "profile",
-      element: (
-        <Suspense fallback={<RouteSkeleton />}>
-          <MiddlemanProfile />
-        </Suspense>
-      ),
-    },
-    {
-      path: "settings",
-      element: (
-        <Suspense fallback={<RouteSkeleton />}>
-          <MiddlemanSettings />
-        </Suspense>
-      ),
-    },
-    {
-      path: "settings/store",
-      element: (
-        <Suspense fallback={<RouteSkeleton />}>
-          <MiddlemanStoreSettings />
-        </Suspense>
-      ),
-    },
-    {
-      path: "settings/orders",
-      element: (
-        <Suspense fallback={<RouteSkeleton />}>
-          <MiddlemanStoreOrders />
-        </Suspense>
-      ),
-    },
-    {
-      path: "marketplace",
-      element: (
-        <Suspense fallback={<RouteSkeleton />}>
-          <ProductDiscovery />
-        </Suspense>
-      ),
-    },
-  ],
-  },
   ],
 };

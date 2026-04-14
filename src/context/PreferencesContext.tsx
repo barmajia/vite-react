@@ -126,24 +126,28 @@ export function PreferencesProvider({ children }: PreferencesProviderProps) {
       }
 
       if (data) {
-        const dbPrefs = {
-          theme:
-            (data.theme_preference as ThemePreference) || preferences.theme,
-          language: data.preferred_language || preferences.language,
-          currency: data.preferred_currency || preferences.currency,
-          sidebar: (data.sidebar_state as SidebarState) || preferences.sidebar,
-          cookieConsent: preferences.cookieConsent,
-        };
+        setPreferences((prev) => {
+          const dbPrefs: UserPreferences = {
+            theme: (data.theme_preference as ThemePreference) || prev.theme,
+            language: data.preferred_language || prev.language,
+            currency: data.preferred_currency || prev.currency,
+            sidebar: (data.sidebar_state as SidebarState) || prev.sidebar,
+            cookieConsent: prev.cookieConsent,
+          };
 
-        setPreferences(dbPrefs);
-        localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(dbPrefs));
+          localStorage.setItem(
+            PREFERENCES_STORAGE_KEY,
+            JSON.stringify(dbPrefs),
+          );
+          return dbPrefs;
+        });
       }
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : "Unknown error";
       console.debug("Using localStorage preferences:", errorMessage);
     }
-  }, [user, preferences]);
+  }, [user]);
 
   useEffect(() => {
     if (user && !loading) {
