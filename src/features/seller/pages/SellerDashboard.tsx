@@ -28,6 +28,7 @@ import {
   XCircle,
   ShoppingCart,
   ChevronRight,
+  PieChart,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -67,7 +68,7 @@ export function SellerDashboard() {
     error: ordersError,
     refetch: refetchOrders,
   } = useQuery({
-    queryKey: ["seller-recent-orders", user?.id],
+    queryKey: ["seller-recent-orders", user?.id, period],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
@@ -86,8 +87,9 @@ export function SellerDashboard() {
     data: products,
     isLoading: productsLoading,
     error: productsError,
+    refetch: refetchProducts,
   } = useQuery({
-    queryKey: ["seller-products-dashboard", user?.id],
+    queryKey: ["seller-products-dashboard", user?.id, period],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("products")
@@ -96,6 +98,50 @@ export function SellerDashboard() {
         .eq("is_deleted", false);
       if (error) throw error;
       return data as Product[];
+    },
+    enabled: !!user?.id,
+  });
+
+  // Fetch top selling products
+  const {
+    data: topProducts,
+    isLoading: topProductsLoading,
+    refetch: refetchTopProducts,
+  } = useQuery({
+    queryKey: ["seller-top-products", user?.id, period],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("order_items")
+        .select(`
+          product_id,
+          products!inner(title),
+          quantity,
+          unit_price
+        `)
+        .eq("products.seller_id", user?.id)
+        .order("quantity", { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user?.id,
+  });
+
+  // Fetch order status breakdown
+  const {
+    data: orderStatusBreakdown,
+    isLoading: statusLoading,
+    refetch: refetchOrderStatusBreakdown,
+  } = useQuery({
+    queryKey: ["seller-order-status", user?.id, period],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("orders")
+        .select("status, count")
+        .eq("seller_id", user?.id)
+        .group("status");
+      if (error) throw error;
+      return data as { status: string; count: number }[];
     },
     enabled: !!user?.id,
   });
@@ -116,9 +162,28 @@ export function SellerDashboard() {
       : 0,
   };
 
+  // Format top products for display
+  const formattedTopProducts = topProducts?.map((item: any) => ({
+    id: item.product_id,
+    title: item.products?.title || "Unknown Product",
+    quantitySold: item.quantity,
+    revenue: (item.quantity || 0) * (item.unit_price || 0),
+  })) || [];
+
+  // Format order status breakdown for pie chart
+  const formattedStatusBreakdown = orderStatusBreakdown?.map((status: any) => ({
+    status: status.status,
+    count: status.count,
+  })) || [];
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await Promise.all([refetchOrders()]);
+    await Promise.all([
+      refetchOrders(),
+      refetchProducts(),
+      refetchTopProducts(),
+      refetchOrderStatusBreakdown()
+    ]);
     setIsRefreshing(false);
     toast.success("Dashboard refreshed");
   };
@@ -168,7 +233,10 @@ export function SellerDashboard() {
     );
   };
 
-  if (ordersLoading || productsLoading) {
+  const isLoading = ordersLoading || productsLoading || topProductsLoading || statusLoading;
+  const hasError = ordersError || productsError;
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
@@ -181,7 +249,7 @@ export function SellerDashboard() {
     );
   }
 
-  if (ordersError || productsError) {
+  if (hasError) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <Card className="max-w-md">
