@@ -111,10 +111,10 @@ export const ProjectWorkspace = () => {
 
   if (loading) {
      return (
-       <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+       <div className="min-h-screen bg-background flex items-center justify-center">
           <div className="text-center space-y-6">
-             <Loader2 className="h-12 w-12 text-primary animate-spin mx-auto" />
-             <p className="text-[10px] font-black uppercase tracking-[0.5em] text-primary/40 animate-pulse italic">Synchronizing Neural Workspace...</p>
+             <Loader2 className="h-10 w-10 text-primary animate-spin mx-auto" />
+             <p className="text-[10px] font-medium uppercase tracking-[0.3em] text-muted-foreground animate-pulse">Loading Workspace...</p>
           </div>
        </div>
      );
@@ -123,38 +123,38 @@ export const ProjectWorkspace = () => {
   const isProvider = user?.id === project?.provider?.user_id;
 
   return (
-    <div className="h-screen bg-[#050505] text-white flex flex-col font-sans overflow-hidden">
+    <div className="h-screen bg-background text-foreground flex flex-col overflow-hidden">
       
       {/* Top Header Navigation */}
-      <header className="h-20 glass bg-black/40 border-b border-white/5 flex items-center justify-between px-8 relative z-[100] shrink-0">
-         <div className="flex items-center gap-6">
+      <header className="h-16 glass bg-white/5 border-b border-border flex items-center justify-between px-6 relative z-[100] shrink-0">
+         <div className="flex items-center gap-4">
             <Button 
                variant="ghost" 
                onClick={() => navigate(-1)}
-               className="h-10 w-10 p-0 rounded-xl glass border-white/5 opacity-40 hover:opacity-100 transition-all"
+               className="h-9 w-9 p-0 rounded-lg hover:bg-white/5"
             >
                <ArrowLeft className="h-4 w-4" />
             </Button>
-            <div className="h-10 w-px bg-white/5" />
-            <div className="space-y-1">
-               <div className="flex items-center gap-3">
-                  <Badge className="bg-primary/20 text-primary border-primary/30 text-[8px] font-black uppercase tracking-[0.3em] px-2 py-0.5">PROJECT_SECURE</Badge>
-                  <span className="text-[10px] font-black text-white/20 uppercase tracking-tighter italic">ID: {projectId?.slice(0, 12)}</span>
+            <div className="h-8 w-px bg-border" />
+            <div className="space-y-0.5">
+               <div className="flex items-center gap-2">
+                  <Badge variant="secondary" className="text-[9px] font-semibold uppercase tracking-wider px-2 py-0">SECURE PROJECT</Badge>
+                  <span className="text-[10px] text-muted-foreground uppercase tabular-nums">ID: {projectId?.slice(0, 8)}</span>
                </div>
-               <h1 className="text-sm font-black italic tracking-tighter uppercase leading-none">{project?.listing?.title}</h1>
+               <h1 className="text-sm font-bold tracking-tight">{project?.listing?.title}</h1>
             </div>
          </div>
 
          <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center gap-4 mr-6">
+            <div className="hidden md:flex items-center gap-3 mr-4">
                <div className="text-right">
-                  <p className="text-[8px] font-black text-white/20 uppercase tracking-widest">Workspace Status</p>
-                  <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest italic animate-pulse">Connection Optimal</p>
+                  <p className="text-[9px] font-semibold text-muted-foreground uppercase">Status</p>
+                  <p className="text-[10px] font-bold text-emerald-500 uppercase">Secure Connection</p>
                </div>
-               <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+               <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             </div>
-            <Avatar name={project?.provider?.provider_name} className="h-10 w-10 border border-white/10 rounded-xl" />
-            <Button variant="ghost" className="h-10 w-10 p-0 rounded-xl glass border-white/5 opacity-40 hover:opacity-100"><MoreVertical className="h-4 w-4" /></Button>
+            <Avatar name={project?.provider?.provider_name} className="h-9 w-9 border border-border rounded-lg" />
+            <Button variant="ghost" className="h-9 w-9 p-0 rounded-lg"><MoreVertical className="h-4 w-4" /></Button>
          </div>
       </header>
 
@@ -170,24 +170,24 @@ export const ProjectWorkspace = () => {
                        msg.sender_id === user?.id ? "ml-auto items-end" : "mr-auto items-start",
                        msg.sender_id === 'system' && "mx-auto items-center text-center opacity-40"
                     )}>
-                       {msg.sender_id !== 'system' && (
-                          <div className="flex items-center gap-3 mb-1">
-                             <span className="text-[8px] font-black uppercase tracking-widest text-white/20 italic">
-                                {msg.sender_id === user?.id ? "Client Node" : "Provider Node"}
-                             </span>
-                             <span className="text-[8px] font-black text-white/10">{new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                          </div>
-                       )}
-                       <div className={cn(
-                          "p-6 rounded-[2rem] text-sm font-medium italic leading-relaxed",
-                          msg.sender_id === user?.id 
-                            ? "bg-primary text-white shadow-2xl shadow-primary/20 rounded-tr-none" 
-                            : msg.sender_id === 'system'
-                              ? "bg-white/5 border border-white/10 text-[10px] uppercase font-black tracking-widest"
-                              : "bg-white/5 glass border border-white/5 text-white/80 rounded-tl-none shadow-xl"
-                       )}>
-                          {msg.content}
-                       </div>
+                        {msg.sender_id !== 'system' && (
+                           <div className="flex items-center gap-3 mb-1">
+                              <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                 {msg.sender_id === user?.id ? "Client" : "Partner"}
+                              </span>
+                              <span className="text-[9px] text-muted-foreground/50">{new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                           </div>
+                        )}
+                        <div className={cn(
+                           "p-4 rounded-2xl text-[13px] leading-relaxed",
+                           msg.sender_id === user?.id 
+                             ? "bg-primary text-primary-foreground shadow-lg rounded-tr-none" 
+                             : msg.sender_id === 'system'
+                               ? "bg-muted text-[10px] uppercase font-bold tracking-wider"
+                               : "bg-card border border-border text-foreground rounded-tl-none shadow-sm"
+                        )}>
+                           {msg.content}
+                        </div>
                     </div>
                  ))}
                  <div ref={scrollRef} />
@@ -195,114 +195,115 @@ export const ProjectWorkspace = () => {
            </ScrollArea>
 
            {/* Input Area */}
-           <div className="p-8 border-t border-white/5 bg-black/20 shrink-0">
-              <div className="max-w-3xl mx-auto relative group">
-                 <Input 
-                   value={newMessage}
-                   onChange={(e) => setNewMessage(e.target.value)}
-                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                   placeholder="Transmit intelligence to workspace node..."
-                   className="h-16 pl-8 pr-32 bg-white/5 border-white/5 rounded-[2rem] text-sm font-medium italic placeholder:text-white/10 focus:border-primary/40 focus:ring-primary/10 transition-all font-sans"
-                 />
-                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                    <Button variant="ghost" className="h-10 w-10 p-0 rounded-xl text-white/20 hover:text-white hover:bg-white/5"><Paperclip className="h-4 w-4" /></Button>
-                    <Button 
-                      onClick={handleSendMessage}
-                      className="h-12 w-12 rounded-xl bg-primary text-white shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all"
-                    >
-                       <Send className="h-4 w-4" />
-                    </Button>
-                 </div>
-              </div>
-           </div>
+            <div className="p-6 border-t border-border bg-background/50 shrink-0">
+               <div className="max-w-3xl mx-auto relative group">
+                  <Input 
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                    placeholder="Type a message..."
+                    className="h-12 pl-6 pr-24 bg-background border-border rounded-xl text-[13px] focus:ring-1 focus:ring-primary/20 transition-all"
+                  />
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                     <Button variant="ghost" size="icon" className="h-9 w-9 rounded-lg text-muted-foreground"><Paperclip className="h-4 w-4" /></Button>
+                     <Button 
+                       onClick={handleSendMessage}
+                       size="icon"
+                       className="h-9 w-9 rounded-lg bg-primary text-primary-foreground shadow-md hover:scale-105 active:scale-95 transition-all"
+                     >
+                        <Send className="h-4 w-4" />
+                     </Button>
+                  </div>
+               </div>
+            </div>
         </div>
 
-        {/* RIGHT: Management Matrix */}
-        <div className="w-[450px] hidden xl:flex flex-col bg-black/40 backdrop-blur-3xl shrink-0 p-8 space-y-10 overflow-y-auto border-l border-white/5">
+        {/* RIGHT: Management Section */}
+        <div className="w-[380px] hidden xl:flex flex-col bg-card/30 backdrop-blur-xl shrink-0 p-6 space-y-8 overflow-y-auto border-l border-border">
            
-           <div className="space-y-6">
+           <div className="space-y-4">
               <div className="flex items-center justify-between">
-                 <div className="flex items-center gap-3">
-                    <Activity className="h-5 w-5 text-primary" />
-                    <h2 className="text-[10px] font-black uppercase tracking-[0.4em] italic outline-none">Operational Metrics</h2>
+                 <div className="flex items-center gap-2.5">
+                    <Activity className="h-4 w-4 text-primary" />
+                    <h2 className="text-[11px] font-bold uppercase tracking-wider">Project Overview</h2>
                  </div>
-                 <Button variant="ghost" className="h-8 w-8 p-0 glass border-white/5 opacity-40 hover:opacity-100"><Info className="h-3 w-3" /></Button>
+                 <Button variant="ghost" className="h-7 w-7 p-0 rounded-lg hover:bg-white/5"><Info className="h-3.5 w-3.5 text-muted-foreground" /></Button>
               </div>
 
-              <div className="glass-card p-8 rounded-[2.5rem] border-white/5 bg-white/5 space-y-6 shadow-2xl">
-                 <div className="space-y-4">
+              <div className="glass-card p-6 rounded-2xl border-border bg-card/50 space-y-5 shadow-sm">
+                 <div className="space-y-3">
                     <div className="flex justify-between items-end">
-                       <span className="text-[9px] font-black uppercase tracking-widest text-white/20 italic">Total Project Completion</span>
-                       <span className="text-xl font-black italic tracking-tighter text-primary">32%</span>
+                       <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">Overall Progress</span>
+                       <span className="text-lg font-bold tabular-nums">32%</span>
                     </div>
-                    <Progress value={32} className="h-2 bg-white/5 border border-white/5" />
+                    <Progress value={32} className="h-1.5" />
                  </div>
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5 text-center">
-                       <p className="text-[7px] font-black uppercase tracking-widest text-white/10 mb-1">Contract Value</p>
-                       <p className="text-lg font-black italic tracking-tighter text-foreground">{project?.currency} {project?.agreed_price?.toLocaleString()}</p>
+                 <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 rounded-xl bg-muted/50 border border-border text-center">
+                       <p className="text-[9px] font-medium uppercase text-muted-foreground mb-1">Contract Value</p>
+                       <p className="text-base font-bold tabular-nums">{project?.currency} {project?.agreed_price?.toLocaleString()}</p>
                     </div>
-                    <div className="p-4 rounded-2xl bg-white/5 border border-white/5 text-center">
-                       <p className="text-[7px] font-black uppercase tracking-widest text-white/10 mb-1">Active Phases</p>
-                       <p className="text-lg font-black italic tracking-tighter text-emerald-500">1 / {milestones.length}</p>
+                    <div className="p-3 rounded-xl bg-muted/50 border border-border text-center">
+                       <p className="text-[9px] font-medium uppercase text-muted-foreground mb-1">Active Phases</p>
+                       <p className="text-base font-bold text-emerald-500 tabular-nums">1 / {milestones.length}</p>
                     </div>
                  </div>
               </div>
            </div>
 
-           <div className="space-y-8 flex-1">
-              <div className="flex items-center gap-3">
-                 <Layers className="h-5 w-5 text-primary" />
-                 <h2 className="text-[10px] font-black uppercase tracking-[0.4em] italic outline-none">Deployment Roadmap</h2>
+           <div className="space-y-6 flex-1">
+              <div className="flex items-center gap-2.5">
+                 <Layers className="h-4 w-4 text-primary" />
+                 <h2 className="text-[11px] font-bold uppercase tracking-wider">Milestones</h2>
               </div>
               
-              <div className="space-y-4">
+              <div className="space-y-3">
                  {milestones.map((milestone, idx) => (
                     <div key={milestone.id} className={cn(
-                       "group glass-card p-6 rounded-[2.5rem] bg-white/[0.03] border border-white/5 relative overflow-hidden transition-all duration-500",
-                       milestone.status === 'approved' ? "opacity-40" : "hover:bg-white/[0.07] hover:scale-[1.02]"
+                       "group glass-card p-5 rounded-2xl bg-card/40 border border-border relative overflow-hidden transition-all duration-300",
+                       milestone.status === 'approved' ? "opacity-50" : "hover:border-primary/20"
                     )}>
-                        <div className="flex items-center justify-between pointer-events-none mb-4">
+                        <div className="flex items-center justify-between mb-4">
                             <div className="flex items-center gap-3">
-                               <div className={cn("w-8 h-8 rounded-xl glass bg-white/5 border-white/5 flex items-center justify-center text-[10px] font-black italic", milestone.status === 'approved' && "text-emerald-500")}>
-                                  {milestone.status === 'approved' ? <CheckCircle2 className="h-4 w-4" /> : idx + 1}
+                               <div className={cn("w-7 h-7 rounded-lg glass bg-muted flex items-center justify-center text-[11px] font-bold", milestone.status === 'approved' && "text-emerald-500")}>
+                                  {milestone.status === 'approved' ? <CheckCircle2 className="h-3.5 w-3.5" /> : idx + 1}
                                </div>
-                               <h4 className="text-sm font-black italic tracking-tighter uppercase leading-none">{milestone.title}</h4>
+                               <h4 className="text-[13px] font-bold tracking-tight">{milestone.title}</h4>
                             </div>
-                            <span className="text-[8px] font-black text-white/20 uppercase tracking-widest italic">{milestone.dueDate || "TBD"}</span>
+                            <span className="text-[9px] font-medium text-muted-foreground uppercase">{milestone.dueDate || "TBD"}</span>
                         </div>
                         
-                        <div className="flex justify-between items-end border-t border-white/5 pt-4">
-                           <div className="space-y-1">
-                              <p className="text-[7px] font-black text-white/20 uppercase tracking-widest">Phase Value</p>
-                              <p className="text-xl font-black italic tracking-tighter leading-none">{project?.currency} {milestone.amount.toLocaleString()}</p>
+                        <div className="flex justify-between items-center border-t border-border/50 pt-3">
+                           <div className="space-y-0.5">
+                              <p className="text-[9px] font-medium text-muted-foreground uppercase">Phase Value</p>
+                              <p className="text-base font-bold tabular-nums">{project?.currency} {milestone.amount.toLocaleString()}</p>
                            </div>
                            
                            {isProvider ? (
                               milestone.status === 'pending' && (
-                                 <Button size="sm" className="h-10 rounded-xl bg-primary text-white text-[9px] font-black uppercase tracking-widest shadow-lg shadow-primary/20">Submit Phase</Button>
+                                 <Button size="sm" className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-[10px] font-bold uppercase tracking-wide">Submit Phase</Button>
                               )
                            ) : (
                               milestone.status === 'submitted' && (
-                                 <Button size="sm" className="h-10 rounded-xl bg-emerald-500 text-white text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">Verify & Pay</Button>
+                                 <Button size="sm" className="h-9 px-4 rounded-lg bg-emerald-500 text-white text-[10px] font-bold uppercase tracking-wide">Approve & Release</Button>
                               )
                            )}
                         </div>
                     </div>
                  ))}
                  
-                 <Button variant="ghost" className="w-full h-16 rounded-[2rem] border border-dashed border-white/10 text-[10px] font-black uppercase tracking-widest text-white/20 hover:text-white hover:bg-white/5 transition-all">
-                    Initialize Change Order
+                 <Button variant="outline" className="w-full h-12 rounded-xl border-dashed border-border text-[10px] font-bold uppercase tracking-wide text-muted-foreground hover:text-foreground hover:bg-muted transition-all">
+                    Request Change
                  </Button>
               </div>
            </div>
 
-           <div className="space-y-6 pb-12 pt-10 border-t border-white/5">
-              <div className="flex items-center gap-4">
-                 <ShieldCheck className="h-5 w-5 text-emerald-500" />
-                 <h3 className="text-[10px] font-black uppercase tracking-widest italic outline-none">Vault Protection v4</h3>
+           <div className="space-y-4 pb-8 pt-6 border-t border-border">
+              <div className="flex items-center gap-3">
+                 <ShieldCheck className="h-4 w-4 text-emerald-500" />
+                 <h3 className="text-[10px] font-bold uppercase tracking-wider">Secure Escrow Protection</h3>
               </div>
-              <p className="text-[10px] font-medium text-foreground/40 italic leading-relaxed">System identity verified. Secure escrow channel is active. Funds are encrypted and held until milestone verification.</p>
+              <p className="text-[10px] text-muted-foreground leading-relaxed">Your transaction is protected. Funds are held securely in escrow and only released when milestones are verified and approved.</p>
            </div>
         </div>
 

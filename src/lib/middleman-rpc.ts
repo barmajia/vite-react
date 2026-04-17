@@ -31,13 +31,13 @@ export const claimPromo = (args: ClaimPromoArgs) =>
  */
 export const getMarketplaceProducts = (args: GetMarketplaceProductsArgs = {}) =>
   supabase.rpc("get_marketplace_products_for_middlemen", {
-    p_category: args.p_category || null,
-    p_min_price: args.p_min_price || 0,
-    p_max_price: args.p_max_price || 99999,
-    p_min_stock: args.p_min_stock || 5,
-    p_limit: args.p_limit || 20,
-    p_offset: args.p_offset || 0,
-  });
+    p_category: args.p_category ?? null,
+    p_min_price: args.p_min_price ?? 0,
+    p_max_price: args.p_max_price ?? 99999,
+    p_min_stock: args.p_min_stock ?? 5,
+    p_limit: args.p_limit ?? 20,
+    p_offset: args.p_offset ?? 0,
+  } as GetMarketplaceProductsArgs);
 
 // Export all RPC functions as a single object
 export const middlemanRpc = {

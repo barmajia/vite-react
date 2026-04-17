@@ -154,6 +154,7 @@ export interface SellerSignupFormData {
   confirmPassword: string;
   phone: string;
   location: string;
+  currency?: string; // Optional currency selection
 }
 
 /** Seller signup response from RPC */

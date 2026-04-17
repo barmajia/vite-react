@@ -35,9 +35,12 @@ export function Layout() {
 
   // Check if current route is a seller dashboard route
   const isSellerRoute =
+    location.pathname.startsWith("/seller") ||
     location.pathname.startsWith("/dashboard") ||
-    location.pathname.startsWith("/onboarding") ||
-    location.pathname.startsWith("/store/");
+    location.pathname.startsWith("/onboarding");
+
+  // Check if current route is a factory route
+  const isFactoryRoute = location.pathname.startsWith("/factory");
 
   // Scroll to top on route change
   useEffect(() => {
@@ -46,20 +49,21 @@ export function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      {/* Only show Header if NOT middleman route */}
+      {/* Header logic: Standalone modules (Seller, Factory, Middleman, Services, Health) handle their own headers */}
       {showLayout &&
         !isHealthRoute &&
         !isServicesRoute &&
         !isMiddlemanRoute &&
-        (isSellerRoute ? <SellerDashboardHeader /> : <Header />)}
+        !isFactoryRoute &&
+        !isSellerRoute && (
+          <Header />
+        )}
       <main
         className={cn(
           "flex-1",
-          isServicesRoute || isHealthRoute || isMiddlemanRoute
+          isServicesRoute || isHealthRoute || isMiddlemanRoute || isFactoryRoute || isSellerRoute
             ? "pt-0"
-            : isSellerRoute
-              ? "pt-16"
-              : "pt-24",
+            : "pt-24",
         )}
       >
         <Outlet />

@@ -47,12 +47,12 @@ const ServicesLayout: React.FC = () => {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-6">
          <div className={cn(
-           "w-20 h-20 glass border animate-pulse rounded-[2rem] flex items-center justify-center shadow-2xl transition-all duration-700",
+           "w-20 h-20 glass rounded-3xl flex items-center justify-center shadow-2xl transition-all duration-1000 animate-float",
            themeClasses.split(' ').slice(0, 3).join(' ')
          )}>
             <Activity className={cn("h-10 w-10", themeClasses.split(' ').pop())} />
          </div>
-         <p className="text-[10px] font-black uppercase tracking-[0.5em] text-foreground/20 italic animate-pulse">Syncing Services Matrix...</p>
+         <p className="text-[11px] font-black uppercase tracking-[0.5em] text-foreground/40 animate-pulse">Establishing Neural Link...</p>
       </div>
     );
   }
@@ -60,19 +60,19 @@ const ServicesLayout: React.FC = () => {
   if (error) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <div className="text-center max-w-md space-y-8">
-          <div className="w-24 h-24 rounded-[2.5rem] glass bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto shadow-2xl">
-            <Shield className="w-10 h-10 text-red-500" />
+        <div className="text-center max-w-md space-y-8 p-12 glass rounded-[3rem] border-destructive/20 shadow-destructive/10">
+          <div className="w-20 h-20 rounded-[2rem] glass bg-destructive/10 border border-destructive/20 flex items-center justify-center mx-auto shadow-2xl">
+            <Shield className="w-8 h-8 text-destructive" />
           </div>
           <div className="space-y-4">
-             <h2 className="text-4xl font-black italic tracking-tighter uppercase text-foreground">Operational Failure</h2>
-             <p className="text-sm font-medium italic text-foreground/40 leading-relaxed">{error}</p>
+             <h2 className="text-3xl font-black tracking-tight text-foreground uppercase">Fatal Error</h2>
+             <p className="text-sm text-muted-foreground leading-relaxed font-medium uppercase tracking-tight">{error}</p>
           </div>
           <Button
             onClick={() => navigate("/services")}
-            className="h-16 px-10 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black uppercase tracking-widest text-[10px] shadow-lg shadow-primary/20"
+            className="h-14 w-full rounded-2xl bg-destructive text-white font-black uppercase tracking-widest text-[11px] shadow-2xl shadow-destructive/40 hover:scale-105 active:scale-95 transition-all"
           >
-            Reconnect Matrix
+            Reconnect Terminal
           </Button>
         </div>
       </div>
@@ -80,38 +80,40 @@ const ServicesLayout: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background transition-colors duration-1000">
+    <div className="min-h-screen bg-background selection:bg-primary/20 transition-colors duration-1000">
       <ServicesVerticalHeader />
       <main className="pt-24 min-h-screen">
         <Outlet />
       </main>
       
-      {/* Bottom Floating Menu or Progress Indicator can go here */}
-      <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[90] hidden lg:block">
-         <div className="p-2 glass bg-white/5 border border-white/10 rounded-[2.5rem] flex items-center gap-2 backdrop-blur-3xl shadow-2xl">
+      {/* 💎 Premium Floating Module Navigator */}
+      <div className="fixed bottom-12 left-1/2 -translate-x-1/2 z-[100] hidden lg:block">
+         <div className="p-3 glass rounded-full flex items-center gap-3 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] border-white/20">
              {[
-               { icon: Code, color: "cyan", path: "/services/programmer", activeClass: "bg-cyan-500 shadow-cyan-500/40" },
-               { icon: Globe, color: "amber", path: "/services/translator", activeClass: "bg-amber-500 shadow-amber-500/40" },
-               { icon: Palette, color: "violet", path: "/services/designer", activeClass: "bg-violet-500 shadow-violet-500/40" },
-               { icon: Wrench, color: "emerald", path: "/services/home", activeClass: "bg-emerald-500 shadow-emerald-500/40" },
+               { icon: Code, color: "cyan", path: "/services/programmer", activeClass: "bg-cyan-500 shadow-[0_0_20px_rgba(6,182,212,0.5)]" },
+               { icon: Globe, color: "amber", path: "/services/translator", activeClass: "bg-amber-500 shadow-[0_0_20px_rgba(245,158,11,0.5)]" },
+               { icon: Palette, color: "violet", path: "/services/designer", activeClass: "bg-violet-500 shadow-[0_0_20px_rgba(139,92,246,0.5)]" },
+               { icon: Wrench, color: "emerald", path: "/services/home", activeClass: "bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.5)]" },
              ].map((item, idx) => (
                 <button
                   key={idx}
                   onClick={() => navigate(item.path)}
                   className={cn(
-                    "w-12 h-12 rounded-[1.5rem] flex items-center justify-center transition-all duration-500",
+                    "w-14 h-14 rounded-full flex items-center justify-center transition-all duration-700 relative group",
                     location.pathname.includes(item.path)
-                      ? cn(item.activeClass, "text-white shadow-lg")
-                      : "text-foreground/40 hover:text-foreground hover:bg-white/5"
+                      ? cn(item.activeClass, "text-white scale-110")
+                      : "text-foreground/30 hover:text-foreground hover:bg-white/5 active:scale-90"
                   )}
                 >
-                   <item.icon className="h-5 w-5" />
+                   <item.icon className={cn("h-6 w-6 transition-transform group-hover:scale-110", location.pathname.includes(item.path) && "animate-pulse")} />
+                   {location.pathname.includes(item.path) && (
+                     <div className="absolute -bottom-1 w-1.5 h-1.5 bg-white rounded-full shadow-[0_0_10px_white]" />
+                   )}
                 </button>
              ))}
          </div>
       </div>
       
-      {/* 🔮 Global Communication FAB */}
       <ServicesChatFAB />
     </div>
   );

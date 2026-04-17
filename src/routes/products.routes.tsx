@@ -58,6 +58,12 @@ const OrderSuccessPage = lazy(() =>
   })),
 );
 
+const PaymentResult = lazy(() =>
+  import("@/pages/checkout/PaymentResult").then((m) => ({
+    default: m.default,
+  })),
+);
+
 // Orders
 const OrdersListPage = lazy(() =>
   import("@/features/orders/pages/OrdersListPage").then((m) => ({
@@ -191,6 +197,14 @@ export const productRoutes: RouteObject[] = [
           <OrderSuccessPage />
         </Suspense>
       </ProtectedRoute>
+    ),
+  },
+  {
+    path: "payment-result",
+    element: (
+      <Suspense fallback={<RouteSkeleton />}>
+        <PaymentResult />
+      </Suspense>
     ),
   },
   {

@@ -1,0 +1,1 @@
+import{j as o}from"./query-sN8szw9N.js";import{a9 as t}from"./index-BuYimDhB.js";import"./vendor-5VPWIZQ2.js";import"./supabase-CQv0lq4t.js";import"./icons-CCmGro89.js";import"./state-B2bFNCFC.js";import"./ui-rrt8RlSG.js";import"./utils-Qm4_4bAc.js";const x=()=>o.jsx(t,{title:"Reviews"});export{x as default};

@@ -36,7 +36,20 @@
     "agreeToTerms": "Ich stimme den Nutzungsbedingungen und der Datenschutzrichtlinie zu",
     "joinNow": "Jetzt beitreten",
     "signupForProducts": "Für Produkte registrieren",
-    "signupForServices": "Für Dienste registrieren"
+    "signupForServices": "Für Dienste registrieren",
+    "passwordMinLength8": "Password must be at least 8 characters",
+    "signInWithGoogle": "Sign in with Google",
+    "signUpWithGoogle": "Sign up with Google",
+    "orContinueWith": "Or continue with",
+    "orUseEmail": "or use email to sign up",
+    "googleAuthFailed": "Failed to sign in with Google. Please try again.",
+    "googleAuthSuccess": "Successfully signed in with Google!",
+    "completingSignIn": "Completing sign in...",
+    "pleaseWait": "Please wait while we complete your authentication.",
+    "signInFailed": "Sign in failed",
+    "backToLogin": "Back to login",
+    "signInSuccess": "Sign in successful!",
+    "redirecting": "Redirecting you now..."
   },
   "home": {
     "newArrivals": "Neue Ankünfte",
@@ -70,6 +83,68 @@
       "subtitle": "Abonnieren Sie unseren Newsletter für exklusive Angebote, Neuheiten und Insider-Rabatte.",
       "emailPlaceholder": "Geben Sie Ihre E-Mail ein",
       "subscribe": "Abonnieren"
+    },
+    "multiRolePlatform": "Multi-Role Platform",
+    "handpicked": "Handpicked",
+    "browse": "Browse",
+    "whyChooseUs": "Why Choose Us",
+    "builtForSuccess": "Built for Success",
+    "builtForSuccessDesc": "Everything you need to thrive in the digital marketplace",
+    "testimonialsTitle": "Testimonials",
+    "lovedByThousands": "Loved by Thousands",
+    "seeWhatUsersSay": "See what our users have to say",
+    "whyChooseAuroraTitle": "Why Choose Aurora?",
+    "ecosystemDesc": "A complete B2B2C ecosystem connecting everyone in the supply chain",
+    "multiRolePlatformDesc": "5 different roles working together seamlessly",
+    "secureTrusted": "Secure & Trusted",
+    "secureTrustedDesc": "Verified users and secure transactions",
+    "growBusiness": "Grow Your Business",
+    "growBusinessDesc": "Tools and analytics to scale your operations",
+    "startToday": "Start Today",
+    "readyToGetStarted": "Ready to Get Started?",
+    "joinThousands": "Join thousands of users already using Aurora to buy, sell, and grow their businesses",
+    "createFreeAccount": "Create Free Account",
+    "signIn": "Sign In",
+    "getStartedFree": "Get Started Free",
+    "globalReach": "Global Reach",
+    "securePlatform": "Secure Platform",
+    "support247": "24/7 Support",
+    "chooseYourRole": "Choose Your Role",
+    "chooseYourRoleDesc": "Join our platform as any of these roles and start your journey",
+    "multipleRoles": "Multiple Roles",
+    "joinAs": "Join as",
+    "activeUsers": "Active Users",
+    "productsListed": "Products Listed",
+    "verifiedSellers": "Verified Sellers",
+    "satisfactionRate": "Satisfaction Rate",
+    "roles": {
+      "customer": "Customer",
+      "customerDesc": "Browse and buy products from sellers",
+      "seller": "Seller",
+      "sellerDesc": "Sell products to customers and factories",
+      "factory": "Factory",
+      "factoryDesc": "Manufacture products for wholesale",
+      "middleman": "Middleman",
+      "middlemanDesc": "Connect buyers and sellers, earn commissions",
+      "delivery": "Delivery",
+      "deliveryDesc": "Deliver orders and earn per delivery"
+    },
+    "testimonials": {
+      "0": {
+        "name": "Sarah Johnson",
+        "role": "Seller",
+        "content": "Aurora transformed my small business into a thriving online store. The multi-role platform is genius!"
+      },
+      "1": {
+        "name": "Ahmed Hassan",
+        "role": "Factory Owner",
+        "content": "We've doubled our production capacity thanks to Aurora's seamless factory-customer connections."
+      },
+      "2": {
+        "name": "Maria Garcia",
+        "role": "Middleman",
+        "content": "The commission system is transparent and fair. I've built a sustainable income connecting buyers and sellers."
+      }
     }
   },
   "footer": {
@@ -164,7 +239,16 @@
     "subtotal": "Zwischensumme",
     "removeItem": "Artikel entfernen",
     "continueShopping": "Weiter einkaufen",
-    "proceedToCheckout": "Zur Kasse gehen"
+    "proceedToCheckout": "Zur Kasse gehen",
+    "title": "Shopping Bag",
+    "item": "Item",
+    "items": "Items",
+    "inBag": "in your bag",
+    "emptyTitle": "Your Bag is Empty",
+    "emptyDescription": "Looks like you haven't added anything to your cart yet. Discover our premium collections and start shopping today!",
+    "startShopping": "Start Shopping",
+    "freeShippingBadge": "You're eligible for free express shipping on this order!",
+    "termsNotice": "By proceeding to checkout, you agree to our Terms of Service and Privacy Policy. Taxes and shipping calculated at checkout."
   },
   "settings": {
     "title": "Einstellungen",
@@ -430,7 +514,19 @@
     "browseSubcategories": "Unterkategorien durchsuchen",
     "backToCategories": "Zurück zu den Kategorien",
     "viewProducts": "Produkte anzeigen",
-    "items": "{{count}} Artikel"
+    "items": "{{count}} Artikel",
+    "browseCategoriesDesc": "Browse through our extensive collection of products organized by categories for easy shopping",
+    "searchPlaceholder": "Search categories...",
+    "noResults": "No categories found",
+    "tryDifferentSearch": "Try a different search term",
+    "categoriesFound": "Categories Found",
+    "viewAllProducts": "View All Products",
+    "products": "products",
+    "trending": "Trending",
+    "trendingCategories": "Trending Categories",
+    "can'tFindCategory": "Can't Find What You're Looking For?",
+    "browseAllProducts": "Browse All Products",
+    "contactUs": "Contact Us"
   },
   "categories": {
     "electronics": "Elektronik",
@@ -850,7 +946,48 @@
     "searchHospitals": "Krankenhäuser suchen...",
     "hospital": "Krankenhaus",
     "clinic": "Klinik",
-    "medicalCenter": "Medizinisches Zentrum"
+    "medicalCenter": "Medizinisches Zentrum",
+    "auroraHealth": "Aurora Health",
+    "emergencyCare": "Emergency Care",
+    "outpatientServices": "Outpatient Services",
+    "diagnosticServices": "Diagnostic Services",
+    "surgicalServices": "Surgical Services",
+    "maternityCare": "Maternity Care",
+    "pediatricCare": "Pediatric Care",
+    "cardiology": "Cardiology",
+    "orthopedics": "Orthopedics",
+    "neurology": "Neurology",
+    "oncology": "Oncology",
+    "radiology": "Radiology",
+    "laboratory": "Laboratory",
+    "pharmacy": "Pharmacy",
+    "rehabilitation": "Rehabilitation",
+    "mentalHealth": "Mental Health",
+    "dermatology": "Dermatology",
+    "generalMedicine": "General Medicine",
+    "familyMedicine": "Family Medicine",
+    "internalMedicine": "Internal Medicine",
+    "pediatrics": "Pediatrics",
+    "obstetrics": "Obstetrics",
+    "gynecology": "Gynecology",
+    "urology": "Urology",
+    "gastroenterology": "Gastroenterology",
+    "endocrinology": "Endocrinology",
+    "rheumatology": "Rheumatology",
+    "pulmonology": "Pulmonology",
+    "nephrology": "Nephrology",
+    "hematology": "Hematology",
+    "immunology": "Immunology",
+    "infectiousDisease": "Infectious Disease",
+    "geriatrics": "Geriatrics",
+    "sportsMedicine": "Sports Medicine",
+    "painManagement": "Pain Management",
+    "sleepMedicine": "Sleep Medicine",
+    "nutrition": "Nutrition",
+    "physicalTherapy": "Physical Therapy",
+    "occupationalTherapy": "Occupational Therapy",
+    "speechTherapy": "Speech Therapy",
+    "respiratoryTherapy": "Respiratory Therapy"
   },
   "pharmacy": {
     "auroraPharmacy": "Aurora Apotheke",
@@ -900,5 +1037,270 @@
     "viewDetails": "Details anzeigen",
     "callPharmacy": "Apotheke anrufen",
     "getDirections": "Wegbeschreibung"
+  },
+  "servicesNexus": {
+    "programmer": {
+      "title": "Elite Programmer Matrix",
+      "subtitle": "Connecting with global architecture masters.",
+      "searchPlaceholder": "Search Engineer ID or Stack...",
+      "secureLink": "Secure Nexus Link",
+      "verification": "Neural Verification Active",
+      "label": "DEV_MODE",
+      "tag": "Nexus Architecture"
+    },
+    "translator": {
+      "title": "Linguistic Processor Matrix",
+      "subtitle": "Native precision across 40+ language nodes.",
+      "searchPlaceholder": "Filter Language Protocol...",
+      "secureLink": "Initiate Protocol",
+      "label": "LINGUA_LINK",
+      "tag": "Global Translation Hub"
+    },
+    "designer": {
+      "title": "Aesthetik Archive",
+      "subtitle": "High-fidelity visual systems & creative ops.",
+      "searchPlaceholder": "Filter Visual Asset...",
+      "secureLink": "Secure Link",
+      "label": "CREATIVE_CORE",
+      "tag": "Visual Identity System"
+    },
+    "home": {
+      "title": "Facility Management Matrix",
+      "subtitle": "Certified maintenance nodes & smart home protocols.",
+      "searchPlaceholder": "Filter Maintenance Sector...",
+      "secureLink": "Dispatch Node",
+      "label": "HOME_FIX",
+      "tag": "Facility Maintenance",
+      "verification": "Facility Trust Active"
+    },
+    "generic": {
+      "label": "SERVICES",
+      "tag": "Elite Nexus"
+    },
+    "signup": {
+      "title": "NEURAL ONBOARDING",
+      "subtitle": "Select your entry protocol to join the global service matrix.",
+      "tagline": "AURORA_NEXUS_v1.0",
+      "provider": {
+        "title": "Operational Provider",
+        "subtitle": "Offer specialized high-fidelity assets.",
+        "desc": "Join as an elite technician or specialist and offer your services to the global network.",
+        "cta": "Start Provisioning"
+      },
+      "consumer": {
+        "title": "Nexus Client",
+        "subtitle": "Hire & book specialized nodes.",
+        "desc": "Access the global pool of verified specialists for your specific project requirements.",
+        "cta": "Access Nexus"
+      },
+      "benefits": {
+        "compare": "Browse & Compare",
+        "compareDesc": "Top-rated neural nodes",
+        "payments": "Secure Protocol",
+        "paymentsDesc": "Escrow vault protection",
+        "booking": "Instant Manifest",
+        "bookingDesc": "Real-time sync availability",
+        "chat": "Direct Synchronization",
+        "chatDesc": "Encrypted communication link"
+      }
+    },
+    "chat": {
+      "title": "Communication Matrix",
+      "subtitle": "Secure endpoint for global synchronization.",
+      "typeMessage": "Initialize transmission...",
+      "online": "Online",
+      "offline": "Offline",
+      "lastSeen": "Last Sync",
+      "noMessages": "Nexus Standby. Select identification to begin.",
+      "systemEstablish": "LINK_ESTABLISHED: End-to-end encryption active via Aurora Nexus.",
+      "context": "Operational Context"
+    },
+    "fab": {
+      "quickConnect": "Quick Connect",
+      "nexusLink": "Nexus Link v1.0",
+      "searchIdentification": "Search Identification...",
+      "frequentTransmissions": "Frequent Transmissions",
+      "fullHub": "Open Full Intelligence Hub",
+      "vaultActive": "Aurora Vault Protocol Active"
+    }
+  },
+  "factoryWelcome": {
+    "badge": "For Manufacturers & Producers",
+    "heroTitle": "Power Your Factory",
+    "heroTitleAccent": "Reach the World",
+    "heroSubtitle": "Join Aurora's manufacturing network. Manage production, connect with global buyers, and scale your operations with enterprise-grade tools.",
+    "cta": {
+      "signup": "Sign Up as Factory",
+      "login": "Login as Factory"
+    },
+    "badges": {
+      "verified": "Verified Factories",
+      "global": "Global Network",
+      "support": "24/7 Support"
+    },
+    "stats": {
+      "factories": "Active Factories",
+      "countries": "Countries Reached",
+      "satisfaction": "Satisfaction Rate",
+      "unitsProduced": "Units Produced"
+    },
+    "benefits": {
+      "title": "Why Choose Aurora for Your Factory",
+      "heading": "Everything You Need to Scale Production",
+      "description": "From order management to quality control, Aurora provides the complete toolkit for modern manufacturers.",
+      "globalReach": {
+        "title": "Connect with Global Buyers",
+        "description": "Reach manufacturers, wholesalers, and buyers from over 50+ countries worldwide."
+      },
+      "analytics": {
+        "title": "Advanced Analytics",
+        "description": "Track production performance, sales trends, and market demand with real-time dashboards."
+      },
+      "qualityControl": {
+        "title": "Quality Control",
+        "description": "Built-in QC workflows ensure every batch meets standards before shipment."
+      },
+      "production": {
+        "title": "Production Management",
+        "description": "Manage orders, timelines, and capacity all in one centralized platform."
+      },
+      "efficiency": {
+        "title": "Streamlined Operations",
+        "description": "Automate workflows, reduce manual overhead, and scale production effortlessly."
+      },
+      "partnerships": {
+        "title": "Build Partnerships",
+        "description": "Connect with trusted suppliers, middlemen, and delivery partners for seamless logistics."
+      }
+    },
+    "steps": {
+      "title": "Getting Started",
+      "heading": "Three Steps to Go Live",
+      "description": "Set up your factory presence on Aurora in minutes, not weeks.",
+      "register": {
+        "title": "Register Your Factory",
+        "description": "Create your account and set up your factory profile with capabilities and certifications."
+      },
+      "list": {
+        "title": "List Your Products",
+        "description": "Add your product catalog with pricing, MOQs, and production lead times."
+      },
+      "grow": {
+        "title": "Grow & Scale",
+        "description": "Receive orders, manage production, and expand your business globally."
+      }
+    },
+    "features": {
+      "analytics": {
+        "title": "Real-Time Production Analytics",
+        "description": "Monitor production metrics, track order fulfillment, and optimize capacity utilization with live dashboards and automated reports.",
+        "f1": "Production pipeline tracking",
+        "f2": "Revenue and order analytics",
+        "f3": "Performance benchmarks"
+      },
+      "marketplace": {
+        "title": "Global Marketplace Access",
+        "description": "Showcase your capabilities to thousands of buyers worldwide. Get discovered through smart matching and verified supplier profiles.",
+        "f1": "Verified supplier badge",
+        "f2": "Smart buyer-factory matching",
+        "f3": "Multi-currency support"
+      }
+    },
+    "finalCta": {
+      "badge": "Ready to Transform Your Business?",
+      "title": "Start Manufacturing Smarter Today",
+      "description": "Join hundreds of factories already using Aurora to streamline operations, reach new markets, and grow their business globally.",
+      "signupButton": "Create Factory Account",
+      "loginButton": "Existing Factory? Sign In",
+      "free": "Free to get started",
+      "nocard": "No credit card required",
+      "setup": "Setup in under 5 minutes"
+    }
+  },
+  "middleman": {
+    "welcome": {
+      "hero": {
+        "badge": "Become a Trusted Connector",
+        "title": "Bridge Deals,",
+        "title2": "Earn Rewards",
+        "subtitle": "Connect buyers with sellers, facilitate transactions, and earn commissions on every successful deal. Join Aurora's growing network of professional middlemen.",
+        "signupCta": "Sign Up as Middleman",
+        "loginCta": "Login as Middleman",
+        "trust": {
+          "global": "Global Network",
+          "secure": "Secure Payments",
+          "support": "24/7 Support"
+        }
+      },
+      "stats": {
+        "activeMiddlemen": "Active Middlemen",
+        "dealsClosed": "Deals Closed",
+        "commissionsPaid": "Commissions Paid ($)",
+        "satisfactionRate": "Satisfaction Rate"
+      },
+      "benefits": {
+        "title": "Why Become a Middleman?",
+        "heading": "Everything You Need to Succeed",
+        "subheading": "Our platform provides all the tools and support you need to build a thriving middleman business.",
+        "earnCommission": {
+          "title": "Earn Commission on Every Deal",
+          "desc": "Get paid for successfully connecting buyers with sellers. Our transparent commission system ensures you're rewarded for every connection."
+        },
+        "connect": {
+          "title": "Connect Buyers & Sellers",
+          "desc": "Build your network by bringing together businesses that complement each other. Create lasting partnerships and grow your influence."
+        },
+        "track": {
+          "title": "Track Your Earnings",
+          "desc": "Real-time analytics dashboard shows your commissions, pending deals, and growth metrics. Never wonder where your money is."
+        },
+        "secure": {
+          "title": "Secure & Transparent",
+          "desc": "All transactions are protected and tracked. Get paid automatically when deals close with our escrow-based system."
+        },
+        "global": {
+          "title": "Global Marketplace",
+          "desc": "Access buyers and sellers from around the world. No geographical limits - connect businesses across borders."
+        },
+        "fast": {
+          "title": "Fast Deal Closure",
+          "desc": "Our streamlined process helps deals close faster. Average deal closure time is just 48 hours."
+        }
+      },
+      "howItWorks": {
+        "1": {
+          "title": "Sign Up & Get Verified",
+          "desc": "Create your middleman account and complete the verification process. It only takes a few minutes."
+        },
+        "2": {
+          "title": "Find Opportunities",
+          "desc": "Browse buyer requests and seller offerings. Identify matching opportunities where you can add value."
+        },
+        "3": {
+          "title": "Connect & Negotiate",
+          "desc": "Introduce buyers to sellers, facilitate negotiations, and help both parties reach an agreement."
+        },
+        "4": {
+          "title": "Earn Commission",
+          "desc": "Once the deal closes, your commission is automatically calculated and paid out. Simple and transparent."
+        },
+        "title": "How It Works",
+        "heading": "Start Earning in 4 Simple Steps",
+        "subheading": "Our streamlined process makes it easy to get started and start earning commissions."
+      },
+      "testimonial": {
+        "content": "The commission system is transparent and fair. I've built a sustainable income connecting buyers and sellers across multiple industries. Aurora gave me the tools to turn my network into a real business.",
+        "avatar": "MG",
+        "name": "Maria Garcia",
+        "role": "Professional Middleman"
+      },
+      "finalCta": {
+        "badge": "Start Today",
+        "heading": "Ready to Start Connecting?",
+        "subheading": "Join thousands of middlemen already earning commissions on Aurora. Create your account today and start building your network.",
+        "signupBtn": "Sign Up as Middleman",
+        "loginBtn": "Login as Middleman"
+      }
+    }
   }
 }

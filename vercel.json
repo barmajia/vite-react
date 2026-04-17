@@ -64,5 +64,12 @@
       "source": "/(.*)",
       "destination": "/index.html"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/www.(.*)",
+      "destination": "https://$1",
+      "permanent": true
+    }
   ]
 }

@@ -86,6 +86,12 @@ const PublicStorePage = lazy(() =>
   })),
 );
 
+const MyWebsiteBuilder = lazy(() =>
+  import("@/pages/dashboard/MyWebsiteBuilder").then((m) => ({
+    default: m.default,
+  })),
+);
+
 export const middlemanRoutes: RouteObject = {
   path: "/middleman",
   children: [
@@ -97,12 +103,9 @@ export const middlemanRoutes: RouteObject = {
         </Suspense>
       ),
     },
+    // TESTING MODE - All routes unprotected
     {
-      element: (
-        <ProtectedRoute allowedAccountTypes={["middleman"]}>
-          <MiddlemanLayout />
-        </ProtectedRoute>
-      ),
+      element: <MiddlemanLayout />,
       children: [
         {
           path: "dashboard",
@@ -229,6 +232,14 @@ export const middlemanRoutes: RouteObject = {
           element: (
             <Suspense fallback={<RouteSkeleton />}>
               <PublicStorePage />
+            </Suspense>
+          ),
+        },
+        {
+          path: "website",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <MyWebsiteBuilder />
             </Suspense>
           ),
         },

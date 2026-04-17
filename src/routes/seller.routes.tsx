@@ -32,6 +32,12 @@ const SellerWallet = lazy(() =>
   })),
 );
 
+const MyWebsiteBuilder = lazy(() =>
+  import("@/pages/dashboard/MyWebsiteBuilder").then((m) => ({
+    default: m.default,
+  })),
+);
+
 export const sellerRoutes: RouteObject = {
   path: "/seller",
   children: [
@@ -95,6 +101,14 @@ export const sellerRoutes: RouteObject = {
           element: (
             <Suspense fallback={<RouteSkeleton />}>
               <SellerWallet />
+            </Suspense>
+          ),
+        },
+        {
+          path: "website",
+          element: (
+            <Suspense fallback={<RouteSkeleton />}>
+              <MyWebsiteBuilder />
             </Suspense>
           ),
         },

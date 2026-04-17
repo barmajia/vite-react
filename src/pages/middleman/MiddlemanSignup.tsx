@@ -1,10 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { middlemanSignup } from "@/hooks/useRoleSignup";
-import { toast } from "sonner";
-import { Button } from "@/components/ui";
-import { Input } from "@/components/ui";
-import { Label } from "@/components/ui";
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  Loader2,
+  Sun,
+  Moon,
+  ArrowLeft,
+  ArrowRight,
+  Chrome,
+  Phone,
+  MapPin,
+  User,
+  Handshake,
+  ShieldCheck,
+  Zap,
+  Building2,
+  Briefcase,
+  DollarSign,
+  Globe,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { Button, Input, Label } from "@/components/ui";
 import {
   Select,
   SelectContent,
@@ -12,123 +33,162 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Progress } from "@/components/ui/progress";
-import {
-  CheckCircle2,
-  AlertCircle,
-  Handshake,
-  ArrowRight,
-  ArrowLeft,
-  FileText,
-  User,
-  Building2,
-  Settings,
-  Shield,
-  Zap,
-  Moon,
-  Sun,
-} from "lucide-react";
+import { isValidEmail } from "@/lib/utils";
+import { toast } from "sonner";
 import { useTheme } from "@/hooks/useTheme";
-import { cn } from "@/lib/utils";
-
-type SignupStep =
-  | "account"
-  | "personal"
-  | "business"
-  | "verification"
-  | "preferences";
-
-interface FormData {
-  email: string;
-  password: string;
-  full_name: string;
-  phone: string;
-  company_name: string;
-  location: string;
-  currency: string;
-  commission_rate: number;
-  specialization: string;
-  website_url: string;
-  description: string;
-  years_of_experience: string;
-  preferred_language: string;
-  theme_preference: string;
-}
+import { useAuth } from "@/hooks/useAuth";
+import { middlemanSignup } from "@/hooks/useRoleSignup";
 
 export function MiddlemanSignup() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
+  const { signUpWithGoogle } = useAuth();
   const { theme, setTheme } = useTheme();
-  const [currentStep, setCurrentStep] = useState<SignupStep>("account");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLocating, setIsLocating] = useState(false);
+  const [step, setStep] = useState(1);
 
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState({
+    full_name: "",
     email: "",
     password: "",
-    full_name: "",
+    confirmPassword: "",
     phone: "",
-    company_name: "",
     location: "",
+    company_name: "",
     currency: "USD",
     commission_rate: 5,
     specialization: "",
-    website_url: "",
-    description: "",
-    years_of_experience: "",
-    preferred_language: "en",
-    theme_preference: "system",
   });
 
-  const steps: SignupStep[] = [
-    "account",
-    "personal",
-    "business",
-    "verification",
-    "preferences",
-  ];
-  const currentStepIndex = steps.indexOf(currentStep);
+  const [errors, setErrors] = useState<{
+    full_name?: string;
+    email?: string;
+    password?: string;
+    confirmPassword?: string;
+    phone?: string;
+    location?: string;
+    company_name?: string;
+    specialization?: string;
+  }>({});
 
-  const updateFormData = (data: Partial<FormData>) => {
-    setFormData((prev) => ({ ...prev, ...data }));
+  // ── Google Sign-Up ──────────────────────────
+  const handleGoogleSignUp = async () => {
+    setIsLoading(true);
+    try {
+      const result = await signUpWithGoogle("middleman");
+      if (result.error) {
+        toast.error(result.error.message ?? "Google signup failed");
+      } else {
+        toast.success(
+          "Account created! Please complete your middleman profile.",
+        );
+      }
+    } catch {
+      toast.error("Google signup failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
+  // ── Validation ──────────────────────────────
+  const validateStep1 = () => {
+    const newErrors: typeof errors = {};
+
+    if (!formData.full_name.trim()) {
+      newErrors.full_name = "Full name is required";
+    } else if (formData.full_name.trim().length < 2) {
+      newErrors.full_name = "Name must be at least 2 characters";
+    }
+
+    if (!formData.email) {
+      newErrors.email = "Email is required";
+    } else if (!isValidEmail(formData.email)) {
+      newErrors.email = "Please enter a valid email";
+    }
+
+    if (!formData.password) {
+      newErrors.password = "Password is required";
+    } else if (formData.password.length < 8) {
+      newErrors.password = "Password must be at least 8 characters";
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
+      newErrors.password = "Must include uppercase, lowercase, and numbers";
+    }
+
+    if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = "Passwords do not match";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep2 = () => {
+    const newErrors: typeof errors = {};
+
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+    } else if (!/^[\d\s+()-]{7,15}$/.test(formData.phone.trim())) {
+      newErrors.phone = "Please enter a valid phone number";
+    }
+
+    if (!formData.location.trim()) {
+      newErrors.location = "Location is required";
+    } else if (formData.location.trim().length < 2) {
+      newErrors.location = "Location must be at least 2 characters";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // ── Navigation ──────────────────────────────
   const handleNext = () => {
-    const nextIndex = currentStepIndex + 1;
-    if (nextIndex < steps.length) {
-      setCurrentStep(steps[nextIndex]);
+    if (step === 1 && validateStep1()) {
+      setStep(2);
+    } else if (step === 2 && validateStep2()) {
+      setStep(3);
     }
   };
 
   const handleBack = () => {
-    const prevIndex = currentStepIndex - 1;
-    if (prevIndex >= 0) {
-      setCurrentStep(steps[prevIndex]);
+    setStep((s) => Math.max(1, s - 1));
+    setErrors({});
+  };
+
+  // ── Geolocation ─────────────────────────────
+  const handleGetLocation = () => {
+    setIsLocating(true);
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setFormData((prev) => ({
+            ...prev,
+            location: `${position.coords.latitude}, ${position.coords.longitude}`,
+          }));
+          setIsLocating(false);
+          toast.success("Location retrieved successfully");
+        },
+        (error) => {
+          console.warn("Geolocation error:", error);
+          setFormData((prev) => ({ ...prev, location: "0, 0" }));
+          setIsLocating(false);
+          toast.info("Using default location (0, 0)");
+        },
+      );
+    } else {
+      setFormData((prev) => ({ ...prev, location: "0, 0" }));
+      setIsLocating(false);
+      toast.info("Geolocation not supported. Using (0, 0).");
     }
   };
 
-  const handleSubmit = async () => {
-    setError(null);
-
-    // Validate before submitting
-    if (!formData.email || !formData.email.includes("@")) {
-      setError("Please enter a valid email address");
-      toast.error("Please enter a valid email address");
-      return;
-    }
-
-    if (!formData.password || formData.password.length < 8) {
-      setError("Password must be at least 8 characters");
-      toast.error("Password must be at least 8 characters");
-      return;
-    }
-
-    if (!formData.full_name || formData.full_name.trim().length < 2) {
-      setError("Please enter your full name");
-      toast.error("Please enter your full name");
-      return;
-    }
-
-    setLoading(true);
+  // ── Submit ──────────────────────────────────
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
 
     try {
       const result = await middlemanSignup(
@@ -144,691 +204,665 @@ export function MiddlemanSignup() {
 
       if (result.success) {
         toast.success(
-          "Account created successfully! Please check your email to verify.",
+          "Middleman account created! Please check your email to verify.",
         );
         navigate("/middleman/dashboard?signup=success");
       } else {
-        // Handle specific Supabase errors
         const errorMsg = result.error || "Signup failed";
-
         if (errorMsg.includes("User already registered")) {
-          setError(
+          toast.error(
             "An account with this email already exists. Please login instead.",
           );
-        } else if (errorMsg.includes("Password should be at least")) {
-          setError("Password must be at least 8 characters long.");
-        } else if (errorMsg.includes("Invalid email")) {
-          setError("Please enter a valid email address.");
         } else if (errorMsg.includes("rate limit")) {
-          setError(
+          toast.error(
             "Too many signup attempts. Please try again in a few minutes.",
           );
         } else {
-          setError(errorMsg);
+          toast.error(errorMsg);
         }
-
-        toast.error(errorMsg || "Signup failed");
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "Unknown error";
-
-      // Better error extraction for Supabase errors
-      let displayError = "An unexpected error occurred. Please try again.";
-
-      if (typeof errorMessage === "string") {
-        if (
-          errorMessage.includes("422") ||
-          errorMessage.includes("Unprocessable")
-        ) {
-          displayError =
-            "Invalid signup data. Please check your email and password.";
-        } else if (errorMessage.includes("User already registered")) {
-          displayError =
-            "An account with this email already exists. Please login instead.";
-        } else if (errorMessage.includes("Password should be at least")) {
-          displayError = "Password must be at least 8 characters long.";
-        } else if (errorMessage.includes("Invalid email")) {
-          displayError = "Please enter a valid email address.";
-        } else {
-          displayError = errorMessage;
-        }
-      }
-
-      setError(displayError);
-      toast.error(displayError);
+      const msg = err instanceof Error ? err.message : "Unknown error";
+      toast.error(
+        msg.includes("422")
+          ? "Invalid signup data. Please check your inputs."
+          : msg,
+      );
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const getStepIcon = (step: SignupStep) => {
-    switch (step) {
-      case "account":
-        return <User className="h-5 w-5" />;
-      case "personal":
-        return <User className="h-5 w-5" />;
-      case "business":
-        return <Building2 className="h-5 w-5" />;
-      case "verification":
-        return <Shield className="h-5 w-5" />;
-      case "preferences":
-        return <Settings className="h-5 w-5" />;
-    }
+  // ── Password Strength ──────────────────────
+  const passwordStrength = () => {
+    const pwd = formData.password;
+    let strength = 0;
+    if (pwd.length >= 8) strength++;
+    if (/[a-z]/.test(pwd) && /[A-Z]/.test(pwd)) strength++;
+    if (/\d/.test(pwd)) strength++;
+    if (/[^a-zA-Z\d]/.test(pwd)) strength++;
+    return strength;
   };
 
-  const renderStep = () => {
-    switch (currentStep) {
-      case "account":
-        return (
-          <div className="space-y-5">
-            <div>
-              <Label
-                htmlFor="email"
-                className="text-xs font-black uppercase tracking-widest text-amber-500/80"
-              >
-                Email Address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                value={formData.email}
-                onChange={(e) => updateFormData({ email: e.target.value })}
-                placeholder="you@company.com"
-                className={cn(
-                  "glass bg-white/5 border-white/10 text-white placeholder:text-white/30 h-12 rounded-xl",
-                  formData.email &&
-                    !formData.email.includes("@") &&
-                    "border-rose-500/50",
-                )}
-              />
-              {formData.email && !formData.email.includes("@") && (
-                <p className="text-xs text-rose-400 mt-1">
-                  Please enter a valid email
-                </p>
-              )}
-            </div>
-            <div>
-              <Label
-                htmlFor="password"
-                className="text-xs font-black uppercase tracking-widest text-amber-500/80"
-              >
-                Password
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                value={formData.password}
-                onChange={(e) => updateFormData({ password: e.target.value })}
-                placeholder="Min 8 characters"
-                minLength={8}
-                className={cn(
-                  "glass bg-white/5 border-white/10 text-white placeholder:text-white/30 h-12 rounded-xl",
-                  formData.password &&
-                    formData.password.length < 8 &&
-                    "border-rose-500/50",
-                  formData.password &&
-                    formData.password.length >= 8 &&
-                    "border-emerald-500/50",
-                )}
-              />
-              {formData.password && (
-                <div className="mt-2">
-                  <div className="flex items-center gap-2">
-                    <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
-                      <div
-                        className={cn(
-                          "h-full transition-all duration-300 rounded-full",
-                          formData.password.length < 8 && "bg-rose-500 w-1/3",
-                          formData.password.length >= 8 &&
-                            formData.password.length < 12 &&
-                            "bg-amber-500 w-2/3",
-                          formData.password.length >= 12 &&
-                            "bg-emerald-500 w-full",
-                        )}
-                      />
-                    </div>
-                    <span
-                      className={cn(
-                        "text-xs font-bold",
-                        formData.password.length < 8 && "text-rose-400",
-                        formData.password.length >= 8 &&
-                          formData.password.length < 12 &&
-                          "text-amber-400",
-                        formData.password.length >= 12 && "text-emerald-400",
-                      )}
-                    >
-                      {formData.password.length < 8
-                        ? "Weak"
-                        : formData.password.length < 12
-                          ? "Medium"
-                          : "Strong"}
-                    </span>
-                  </div>
-                  {formData.password.length < 8 && (
-                    <p className="text-xs text-rose-400 mt-1">
-                      Password must be at least 8 characters
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-            <Button
-              onClick={handleNext}
-              disabled={
-                !formData.email ||
-                !formData.email.includes("@") ||
-                !formData.password ||
-                formData.password.length < 8
-              }
-              className="w-full h-12 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-amber-500/30 hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-            >
-              Continue
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-        );
+  const strengthLevel = passwordStrength();
+  const strengthColors = [
+    "bg-muted/50",
+    "bg-red-500 shadow-red-500/50",
+    "bg-orange-500 shadow-orange-500/50",
+    "bg-yellow-500 shadow-yellow-500/50",
+    "bg-emerald-500 shadow-emerald-500/50",
+  ];
+  const strengthLabels = ["", "Very weak", "Weak", "Fair", "Strong"];
 
-      case "personal":
-        return (
-          <div className="space-y-5">
-            <div>
-              <Label
-                htmlFor="full_name"
-                className="text-xs font-black uppercase tracking-widest text-amber-500/80"
-              >
-                Full Name
-              </Label>
-              <Input
-                id="full_name"
-                value={formData.full_name}
-                onChange={(e) => updateFormData({ full_name: e.target.value })}
-                placeholder="John Doe"
-                className="glass bg-white/5 border-white/10 text-white placeholder:text-white/30 h-12 rounded-xl"
-              />
-            </div>
-            <div>
-              <Label
-                htmlFor="phone"
-                className="text-xs font-black uppercase tracking-widest text-amber-500/80"
-              >
-                Phone Number
-              </Label>
-              <Input
-                id="phone"
-                value={formData.phone}
-                onChange={(e) => updateFormData({ phone: e.target.value })}
-                placeholder="+1 234 567 8900"
-                className="glass bg-white/5 border-white/10 text-white placeholder:text-white/30 h-12 rounded-xl"
-              />
-            </div>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={handleBack}
-                className="h-12 glass bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
-              <Button
-                onClick={handleNext}
-                className="flex-1 h-12 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-amber-500/30 hover:scale-105 transition-all"
-              >
-                Continue
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        );
+  // ── Auto-focus ──────────────────────────────
+  useEffect(() => {
+    const selectors: Record<number, string> = {
+      1: "#full_name",
+      2: "#phone",
+      3: "#company_name",
+    };
+    const el = document.querySelector<HTMLInputElement>(selectors[step]);
+    el?.focus();
+  }, [step]);
 
-      case "business":
-        return (
-          <div className="space-y-5">
-            <div>
-              <Label
-                htmlFor="company_name"
-                className="text-xs font-black uppercase tracking-widest text-amber-500/80"
-              >
-                Company Name
-              </Label>
-              <Input
-                id="company_name"
-                value={formData.company_name}
-                onChange={(e) =>
-                  updateFormData({ company_name: e.target.value })
-                }
-                placeholder="Your Company Ltd."
-                className="glass bg-white/5 border-white/10 text-white placeholder:text-white/30 h-12 rounded-xl"
-              />
-            </div>
-            <div>
-              <Label
-                htmlFor="location"
-                className="text-xs font-black uppercase tracking-widest text-amber-500/80"
-              >
-                Business Location
-              </Label>
-              <Input
-                id="location"
-                value={formData.location}
-                onChange={(e) => updateFormData({ location: e.target.value })}
-                placeholder="City, Country"
-                className="glass bg-white/5 border-white/10 text-white placeholder:text-white/30 h-12 rounded-xl"
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label
-                  htmlFor="currency"
-                  className="text-xs font-black uppercase tracking-widest text-amber-500/80"
-                >
-                  Currency
-                </Label>
-                <Select
-                  value={formData.currency}
-                  onValueChange={(v) => updateFormData({ currency: v })}
-                >
-                  <SelectTrigger className="glass bg-white/5 border-white/10 text-white h-12 rounded-xl">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="glass border-white/10">
-                    <SelectItem value="USD">USD ($)</SelectItem>
-                    <SelectItem value="EUR">EUR (€)</SelectItem>
-                    <SelectItem value="EGP">EGP (ج.م)</SelectItem>
-                    <SelectItem value="GBP">GBP (£)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label
-                  htmlFor="commission_rate"
-                  className="text-xs font-black uppercase tracking-widest text-amber-500/80"
-                >
-                  Commission Rate (%)
-                </Label>
-                <Input
-                  id="commission_rate"
-                  type="number"
-                  value={formData.commission_rate}
-                  onChange={(e) =>
-                    updateFormData({
-                      commission_rate: parseFloat(e.target.value) || 0,
-                    })
-                  }
-                  min="0"
-                  max="100"
-                  step="0.1"
-                  className="glass bg-white/5 border-white/10 text-white h-12 rounded-xl"
-                />
-              </div>
-            </div>
-            <div>
-              <Label
-                htmlFor="specialization"
-                className="text-xs font-black uppercase tracking-widest text-amber-500/80"
-              >
-                Specialization
-              </Label>
-              <Input
-                id="specialization"
-                value={formData.specialization}
-                onChange={(e) =>
-                  updateFormData({ specialization: e.target.value })
-                }
-                placeholder="e.g., Electronics, Textiles"
-                className="glass bg-white/5 border-white/10 text-white placeholder:text-white/30 h-12 rounded-xl"
-              />
-            </div>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={handleBack}
-                className="h-12 glass bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
-              <Button
-                onClick={handleNext}
-                className="flex-1 h-12 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-amber-500/30 hover:scale-105 transition-all"
-              >
-                Continue
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        );
-
-      case "verification":
-        return (
-          <div className="space-y-5">
-            <div className="p-4 glass bg-amber-500/10 border border-amber-500/20 rounded-xl">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                <p className="text-sm text-amber-200">
-                  Your account will be{" "}
-                  <strong className="text-amber-400">
-                    pending verification
-                  </strong>{" "}
-                  until admin approves your profile (1-3 business days).
-                </p>
-              </div>
-            </div>
-            <div>
-              <Label
-                htmlFor="years_of_experience"
-                className="text-xs font-black uppercase tracking-widest text-amber-500/80"
-              >
-                Years of Experience
-              </Label>
-              <Input
-                id="years_of_experience"
-                type="number"
-                value={formData.years_of_experience}
-                onChange={(e) =>
-                  updateFormData({ years_of_experience: e.target.value })
-                }
-                min="0"
-                max="50"
-                placeholder="e.g., 5"
-                className="glass bg-white/5 border-white/10 text-white placeholder:text-white/30 h-12 rounded-xl"
-              />
-            </div>
-            <div className="p-4 glass bg-white/5 border border-white/10 rounded-xl">
-              <div className="flex items-start gap-3">
-                <FileText className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-sm font-bold text-white/80 mb-1">
-                    Manual Verification Required
-                  </p>
-                  <p className="text-xs text-white/50">
-                    Our admin team will review your application and contact you
-                    directly for any required documents.
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={handleBack}
-                className="h-12 glass bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
-              <Button
-                onClick={handleNext}
-                className="flex-1 h-12 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-amber-500/30 hover:scale-105 transition-all"
-              >
-                Continue
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        );
-
-      case "preferences":
-        return (
-          <div className="space-y-5">
-            <div>
-              <Label
-                htmlFor="preferred_language"
-                className="text-xs font-black uppercase tracking-widest text-amber-500/80"
-              >
-                Preferred Language
-              </Label>
-              <Select
-                value={formData.preferred_language}
-                onValueChange={(v) => updateFormData({ preferred_language: v })}
-              >
-                <SelectTrigger className="glass bg-white/5 border-white/10 text-white h-12 rounded-xl">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="glass border-white/10">
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="ar">Arabic</SelectItem>
-                  <SelectItem value="fr">French</SelectItem>
-                  <SelectItem value="es">Spanish</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label
-                htmlFor="theme_preference"
-                className="text-xs font-black uppercase tracking-widest text-amber-500/80"
-              >
-                Theme Preference
-              </Label>
-              <div className="grid grid-cols-3 gap-3">
-                {[
-                  {
-                    value: "system",
-                    label: "System",
-                    icon: <Zap className="h-5 w-5" />,
-                  },
-                  {
-                    value: "light",
-                    label: "Light",
-                    icon: <Sun className="h-5 w-5" />,
-                  },
-                  {
-                    value: "dark",
-                    label: "Dark",
-                    icon: <Moon className="h-5 w-5" />,
-                  },
-                ].map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() =>
-                      updateFormData({ theme_preference: option.value })
-                    }
-                    className={cn(
-                      "flex flex-col items-center gap-2 p-4 rounded-xl border transition-all",
-                      formData.theme_preference === option.value
-                        ? "bg-amber-500/20 border-amber-500/40 text-amber-400"
-                        : "glass bg-white/5 border-white/10 text-white/60 hover:bg-white/10",
-                    )}
-                  >
-                    {option.icon}
-                    <span className="text-xs font-black uppercase tracking-wider">
-                      {option.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="flex gap-3">
-              <Button
-                variant="outline"
-                onClick={handleBack}
-                className="h-12 glass bg-white/5 border-white/10 text-white hover:bg-white/10 rounded-xl"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                className="flex-1 h-12 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl text-xs font-black uppercase tracking-[0.2em] shadow-2xl shadow-amber-500/30 hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={loading}
-              >
-                {loading ? "Creating Account..." : "Complete Signup"}
-              </Button>
-            </div>
-          </div>
-        );
-    }
-  };
-
+  // ── Render ──────────────────────────────────
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      {/* Background Decorations */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-orange-500/10 rounded-full blur-3xl" />
+    <div className="min-h-screen bg-background relative overflow-hidden flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+      {/* ── Immersive Background ── */}
+      <div className="absolute top-[-15%] right-[-5%] w-[50%] h-[50%] bg-amber-500/20 rounded-full blur-[140px] animate-pulse pointer-events-none" />
+      <div className="absolute bottom-[-15%] left-[-5%] w-[50%] h-[50%] bg-orange-500/20 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-[20%] left-[10%] w-[30%] h-[30%] bg-yellow-500/10 rounded-full blur-[100px] pointer-events-none" />
+
+      {/* ── Top Controls ── */}
+      <div className="absolute top-6 left-6 right-6 flex items-center justify-between z-20">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/middleman")}
+          className="glass hover:bg-white/10 text-foreground rounded-full px-4"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          {t("common.back")}
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+          className="glass hover:bg-white/10 rounded-full px-4"
+        >
+          {theme === "light" ? (
+            <Moon className="h-4 w-4 text-amber-500" />
+          ) : (
+            <Sun className="h-4 w-4 text-amber-500" />
+          )}
+          <span className="ml-2 font-medium hidden sm:inline capitalize">
+            {theme === "light" ? t("common.darkMode") : t("common.lightMode")}
+          </span>
+        </Button>
       </div>
 
-      <div className="max-w-3xl mx-auto relative z-10">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="relative">
-              <div className="absolute -inset-3 bg-amber-500/20 rounded-full blur-xl opacity-60 animate-pulse" />
-              <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-2xl shadow-amber-500/40">
-                <Handshake className="h-8 w-8 text-white" />
-              </div>
-            </div>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-black italic tracking-tighter text-white mb-3">
-            Become a{" "}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500">
-              Middleman
-            </span>
-          </h1>
-          <p className="text-base text-white/60 max-w-lg mx-auto">
-            Connect factories with sellers and earn commissions on every deal
-          </p>
+      {/* ── Header ── */}
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center z-10 animate-in fade-in slide-in-from-top-8 duration-1000">
+        <div className="inline-flex items-center justify-center p-3 glass rounded-2xl mb-6 shadow-inner scale-110">
+          <Handshake className="h-8 w-8 text-amber-500 animate-pulse" />
         </div>
+        <h1 className="text-4xl font-black tracking-tighter bg-gradient-to-br from-amber-500 to-orange-600 bg-clip-text text-transparent">
+          Become a Middleman
+        </h1>
+        <p className="mt-3 text-muted-foreground font-medium">
+          Connect factories with sellers and earn commissions on every deal
+        </p>
+      </div>
 
-        {/* Progress Indicator */}
-        <div className="glass bg-white/5 border border-white/10 rounded-2xl p-6 mb-8 backdrop-blur-xl">
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-black uppercase tracking-widest text-amber-500/80">
-              Step {currentStepIndex + 1} of {steps.length}
-            </span>
-            <span className="text-xs font-black uppercase tracking-widest text-white/40 capitalize">
-              {currentStep}
-            </span>
-          </div>
-          <Progress
-            value={((currentStepIndex + 1) / steps.length) * 100}
-            className="h-2 bg-white/10"
-          />
-          <div className="flex justify-between mt-4">
-            {steps.map((step, index) => (
-              <div key={step} className="flex flex-col items-center gap-2">
-                <div
-                  className={cn(
-                    "w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500",
-                    index <= currentStepIndex
-                      ? "bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-lg shadow-amber-500/30"
-                      : "bg-white/5 text-white/30 border border-white/10",
-                  )}
-                >
-                  {index < currentStepIndex ? (
-                    <CheckCircle2 className="h-5 w-5" />
-                  ) : (
-                    getStepIcon(step)
-                  )}
-                </div>
-                <span
-                  className={cn(
-                    "text-[9px] font-black uppercase tracking-wider hidden sm:block",
-                    index <= currentStepIndex
-                      ? "text-amber-400"
-                      : "text-white/30",
-                  )}
-                >
-                  {step}
-                </span>
-              </div>
+      {/* ── Main Card ── */}
+      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-lg z-10">
+        <div className="glass-card p-0 rounded-[2.5rem] shadow-2xl border-white/20 dark:border-white/10 overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-1000">
+          {/* Progress */}
+          <div className="flex gap-1 p-1 bg-white/5 border-b border-white/10">
+            {[1, 2, 3].map((s) => (
+              <div
+                key={s}
+                className={`h-1.5 flex-1 rounded-full transition-all duration-700 ${
+                  step >= s
+                    ? "bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]"
+                    : "bg-white/10"
+                }`}
+              />
             ))}
           </div>
-        </div>
 
-        {/* Theme Toggle */}
-        <div className="flex justify-end mb-4">
-          <button
-            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-            className="p-3 glass bg-white/5 hover:bg-white/10 text-white/60 hover:text-white rounded-xl transition-all duration-500 hover:scale-110 border border-white/10"
-            aria-label="Toggle theme"
-          >
-            {theme === "light" ? (
-              <Moon className="h-5 w-5" />
-            ) : (
-              <Sun className="h-5 w-5 text-amber-400" />
-            )}
-          </button>
-        </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 p-4 glass bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-3">
-            <AlertCircle className="h-5 w-5 text-rose-400 flex-shrink-0" />
-            <p className="text-sm text-rose-200">{error}</p>
-          </div>
-        )}
-
-        {/* Main Form Card */}
-        <div className="glass bg-white/5 border border-white/10 rounded-3xl p-8 backdrop-blur-xl shadow-2xl">
-          <div className="mb-6">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center">
-                {getStepIcon(currentStep)}
-              </div>
-              <h2 className="text-2xl font-black italic tracking-tight text-white capitalize">
-                {currentStep} Information
-              </h2>
+          <div className="p-8 sm:p-10">
+            {/* Step label */}
+            <div className="flex items-center justify-between mb-6">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-500/80">
+                Step {step} of 3
+              </span>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+                {step === 1
+                  ? "Account"
+                  : step === 2
+                    ? "Contact & Location"
+                    : "Business Details"}
+              </span>
             </div>
-            <p className="text-sm text-white/50">
-              {currentStep === "account" && "Set up your login credentials"}
-              {currentStep === "personal" && "Tell us about yourself"}
-              {currentStep === "business" && "Share your business details"}
-              {currentStep === "verification" &&
-                "Upload verification documents"}
-              {currentStep === "preferences" && "Customize your experience"}
-            </p>
+
+            {/* Google Signup – only on step 1 */}
+            {step === 1 && (
+              <>
+                <div className="mb-8">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="w-full glass bg-white/5 border-white/10 hover:bg-white/10 text-foreground h-14 text-lg font-bold rounded-2xl transition-all active:scale-[0.98]"
+                    onClick={handleGoogleSignUp}
+                    disabled={isLoading}
+                  >
+                    <Chrome className="mr-3 h-6 w-6 text-amber-500" />
+                    Sign up with Google
+                  </Button>
+                </div>
+
+                <div className="relative mb-8">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-white/10" />
+                  </div>
+                  <div className="relative flex justify-center text-[10px] uppercase tracking-[0.3em] font-black">
+                    <span className="px-4 glass py-1 rounded-full text-muted-foreground/60 border-white/10 italic">
+                      Or use email
+                    </span>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* ════════ STEP 1 — Account ════════ */}
+              {step === 1 && (
+                <div className="space-y-5 animate-in slide-in-from-right-4 duration-500">
+                  {/* Full Name */}
+                  <div className="space-y-2">
+                    <Label htmlFor="full_name" className="text-sm font-bold ml-1">
+                      Full Name
+                    </Label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-amber-500 transition-colors">
+                        <User className="h-5 w-5 text-muted-foreground/30" />
+                      </div>
+                      <Input
+                        id="full_name"
+                        type="text"
+                        className={`pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.full_name ? "border-destructive/50" : ""}`}
+                        value={formData.full_name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, full_name: e.target.value })
+                        }
+                        placeholder="John Doe"
+                        disabled={isLoading}
+                      />
+                    </div>
+                    {errors.full_name && (
+                      <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">
+                        {errors.full_name}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Email */}
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-sm font-bold ml-1">
+                      Email Address
+                    </Label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-amber-500 transition-colors">
+                        <Mail className="h-5 w-5 text-muted-foreground/30" />
+                      </div>
+                      <Input
+                        id="email"
+                        type="email"
+                        className={`pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.email ? "border-destructive/50" : ""}`}
+                        value={formData.email}
+                        onChange={(e) =>
+                          setFormData({ ...formData, email: e.target.value })
+                        }
+                        placeholder="you@company.com"
+                        disabled={isLoading}
+                      />
+                    </div>
+                    {errors.email && (
+                      <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">
+                        {errors.email}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Password */}
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="text-sm font-bold ml-1">
+                      Password
+                    </Label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-amber-500 transition-colors">
+                        <Lock className="h-5 w-5 text-muted-foreground/30" />
+                      </div>
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        className={`pl-12 pr-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.password ? "border-destructive/50" : ""}`}
+                        value={formData.password}
+                        onChange={(e) =>
+                          setFormData({ ...formData, password: e.target.value })
+                        }
+                        placeholder="••••••••"
+                        disabled={isLoading}
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-muted-foreground/50 hover:text-amber-500 transition-colors"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-5 w-5" />
+                        ) : (
+                          <Eye className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
+
+                    {formData.password && (
+                      <div className="mt-3 px-1 space-y-2">
+                        <div className="flex gap-1.5 h-1">
+                          {[1, 2, 3, 4].map((level) => (
+                            <div
+                              key={level}
+                              className={`flex-1 rounded-full transition-all duration-500 ${
+                                level <= strengthLevel
+                                  ? strengthColors[strengthLevel]
+                                  : "bg-white/10"
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <p
+                          className={`text-[10px] font-black uppercase tracking-widest ${strengthLevel <= 1 ? "text-destructive" : strengthLevel <= 2 ? "text-orange-500" : "text-emerald-500"}`}
+                        >
+                          {strengthLabels[strengthLevel]}
+                        </p>
+                      </div>
+                    )}
+                    {errors.password && (
+                      <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">
+                        {errors.password}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Confirm Password */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="confirmPassword"
+                      className="text-sm font-bold ml-1"
+                    >
+                      Confirm Password
+                    </Label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-amber-500 transition-colors">
+                        <Lock className="h-5 w-5 text-muted-foreground/30" />
+                      </div>
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        className={`pl-12 pr-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.confirmPassword ? "border-destructive/50" : ""}`}
+                        value={formData.confirmPassword}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            confirmPassword: e.target.value,
+                          })
+                        }
+                        placeholder="••••••••"
+                        disabled={isLoading}
+                      />
+                      <button
+                        type="button"
+                        className="absolute inset-y-0 right-0 pr-4 flex items-center text-muted-foreground/50 hover:text-amber-500 transition-colors"
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-5 w-5" />
+                        ) : (
+                          <Eye className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && (
+                      <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">
+                        {errors.confirmPassword}
+                      </p>
+                    )}
+                  </div>
+
+                  <Button
+                    type="button"
+                    className="w-full glass bg-amber-500 hover:bg-amber-600 text-white h-14 text-lg font-bold rounded-2xl shadow-lg shadow-amber-500/20 transition-all active:scale-[0.98]"
+                    onClick={handleNext}
+                    disabled={isLoading}
+                  >
+                    Continue
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </div>
+              )}
+
+              {/* ════════ STEP 2 — Contact & Location ════════ */}
+              {step === 2 && (
+                <div className="space-y-5 animate-in slide-in-from-right-4 duration-500">
+                  {/* Phone */}
+                  <div className="space-y-2">
+                    <Label htmlFor="phone" className="text-sm font-bold ml-1">
+                      Phone Number
+                    </Label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-amber-500 transition-colors">
+                        <Phone className="h-5 w-5 text-muted-foreground/30" />
+                      </div>
+                      <Input
+                        id="phone"
+                        type="tel"
+                        className={`pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.phone ? "border-destructive/50" : ""}`}
+                        value={formData.phone}
+                        onChange={(e) =>
+                          setFormData({ ...formData, phone: e.target.value })
+                        }
+                        placeholder="+20 123 456 7890"
+                        disabled={isLoading}
+                      />
+                    </div>
+                    {errors.phone && (
+                      <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">
+                        {errors.phone}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Location */}
+                  <div className="space-y-2">
+                    <Label htmlFor="location" className="text-sm font-bold ml-1">
+                      Business Location
+                    </Label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-amber-500 transition-colors">
+                        <MapPin className="h-5 w-5 text-muted-foreground/30" />
+                      </div>
+                      <Input
+                        id="location"
+                        type="text"
+                        className={`pl-12 pr-24 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20 ${errors.location ? "border-destructive/50" : ""}`}
+                        value={formData.location}
+                        onChange={(e) =>
+                          setFormData({ ...formData, location: e.target.value })
+                        }
+                        placeholder="City, Country or Coordinates"
+                        disabled={isLoading || isLocating}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleGetLocation}
+                        disabled={isLocating || isLoading}
+                        className="absolute inset-y-0 right-2 my-2 px-3 flex items-center justify-center rounded-xl bg-amber-500/20 text-amber-500 hover:bg-amber-500/30 transition-colors font-bold text-xs uppercase"
+                        aria-label="Get Current Location"
+                      >
+                        {isLocating ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          "Locate"
+                        )}
+                      </button>
+                    </div>
+                    {errors.location && (
+                      <p className="text-[11px] font-bold text-destructive ml-2 tracking-wide uppercase">
+                        {errors.location}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Navigation */}
+                  <div className="flex gap-3 pt-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="flex-1 glass bg-white/5 border-white/10 h-14 text-lg font-bold rounded-2xl active:scale-[0.98]"
+                      onClick={handleBack}
+                      disabled={isLoading}
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      type="button"
+                      className="flex-[2] glass bg-amber-500 hover:bg-amber-600 text-white h-14 text-lg font-bold rounded-2xl shadow-lg shadow-amber-500/20 active:scale-[0.98]"
+                      onClick={handleNext}
+                      disabled={isLoading}
+                    >
+                      Continue
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* ════════ STEP 3 — Business Details & Submit ════════ */}
+              {step === 3 && (
+                <div className="space-y-5 animate-in slide-in-from-right-4 duration-500">
+                  {/* Company Name */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="company_name"
+                      className="text-sm font-bold ml-1"
+                    >
+                      Company / Brand Name
+                    </Label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-amber-500 transition-colors">
+                        <Building2 className="h-5 w-5 text-muted-foreground/30" />
+                      </div>
+                      <Input
+                        id="company_name"
+                        type="text"
+                        className="pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20"
+                        value={formData.company_name}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            company_name: e.target.value,
+                          })
+                        }
+                        placeholder="Your Company Ltd."
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Specialization */}
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="specialization"
+                      className="text-sm font-bold ml-1"
+                    >
+                      Specialization
+                    </Label>
+                    <div className="relative group">
+                      <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none group-focus-within:text-amber-500 transition-colors">
+                        <Briefcase className="h-5 w-5 text-muted-foreground/30" />
+                      </div>
+                      <Input
+                        id="specialization"
+                        type="text"
+                        className="pl-12 h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg placeholder:text-muted-foreground/20"
+                        value={formData.specialization}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            specialization: e.target.value,
+                          })
+                        }
+                        placeholder="e.g., Electronics, Textiles, Food"
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Currency & Commission */}
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-sm font-bold ml-1">Currency</Label>
+                      <Select
+                        value={formData.currency}
+                        onValueChange={(v) =>
+                          setFormData({ ...formData, currency: v })
+                        }
+                      >
+                        <SelectTrigger className="glass bg-white/5 border-white/10 h-14 rounded-2xl text-lg">
+                          <div className="flex items-center gap-3">
+                            <DollarSign className="h-5 w-5 text-muted-foreground/30" />
+                            <SelectValue />
+                          </div>
+                        </SelectTrigger>
+                        <SelectContent className="glass border-white/10">
+                          <SelectItem value="USD">USD ($)</SelectItem>
+                          <SelectItem value="EUR">EUR (€)</SelectItem>
+                          <SelectItem value="EGP">EGP (ج.م)</SelectItem>
+                          <SelectItem value="GBP">GBP (£)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="commission_rate"
+                        className="text-sm font-bold ml-1"
+                      >
+                        Commission %
+                      </Label>
+                      <div className="relative group">
+                        <Input
+                          id="commission_rate"
+                          type="number"
+                          min="0"
+                          max="100"
+                          step="0.5"
+                          className="h-14 glass bg-white/5 border-white/10 rounded-2xl transition-all text-lg text-center"
+                          value={formData.commission_rate}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              commission_rate:
+                                parseFloat(e.target.value) || 0,
+                            })
+                          }
+                          disabled={isLoading}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Verification notice */}
+                  <div className="p-4 glass bg-amber-500/10 border border-amber-500/20 rounded-2xl">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+                      <p className="text-sm text-muted-foreground">
+                        Your account will be{" "}
+                        <strong className="text-amber-500">
+                          pending verification
+                        </strong>{" "}
+                        until admin approval (1-3 business days). You can browse
+                        deals while waiting.
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Navigation */}
+                  <div className="flex gap-3 pt-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="flex-1 glass bg-white/5 border-white/10 h-14 text-lg font-bold rounded-2xl active:scale-[0.98]"
+                      onClick={handleBack}
+                      disabled={isLoading}
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="flex-[2] glass bg-amber-500 hover:bg-amber-600 text-white h-14 text-lg font-bold rounded-2xl shadow-lg shadow-amber-500/20 active:scale-[0.98]"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        "Create Middleman Account"
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Login link */}
+              <p className="text-center text-sm text-muted-foreground font-medium mt-6">
+                Already have a middleman account?{" "}
+                <Link
+                  to="/middleman/login"
+                  className="text-amber-500 hover:underline font-bold transition-all underline-offset-4"
+                >
+                  Sign in here
+                </Link>
+              </p>
+            </form>
           </div>
-          {renderStep()}
+
+          {/* ── Trust Badges ── */}
+          <div className="bg-white/5 backdrop-blur-3xl px-8 py-5 border-t border-white/10">
+            <div className="flex justify-between text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/60">
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-4 w-4 text-amber-500/70" />
+                <span>Verified Brokers</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-amber-500/70" />
+                <span>Instant Setup</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Globe className="h-4 w-4 text-amber-500/70" />
+                <span>Global Network</span>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Info Box */}
-        <div className="mt-8 glass bg-amber-500/5 border border-amber-500/10 rounded-2xl p-6 backdrop-blur-xl">
-          <h3 className="font-black text-base uppercase tracking-widest text-amber-400 mb-4 flex items-center gap-2">
+        {/* ── What happens next ── */}
+        <div className="mt-8 glass bg-white/5 border border-white/10 rounded-2xl p-6 animate-in fade-in duration-1000 delay-300">
+          <h3 className="font-black text-sm uppercase tracking-[0.2em] text-amber-500 mb-4 flex items-center gap-2">
             <Zap className="h-4 w-4" />
             What happens next?
           </h3>
-          <ul className="text-sm text-white/70 space-y-3">
+          <ul className="text-sm text-muted-foreground space-y-3">
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+              <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
               <span>Your account will be created instantly</span>
             </li>
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-              <span>
-                Profile will be pending verification (1-3 business days)
-              </span>
+              <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+              <span>Profile pending verification (1-3 business days)</span>
             </li>
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-              <span>You can start browsing deals while waiting</span>
+              <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+              <span>Browse deals while waiting for approval</span>
             </li>
             <li className="flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-emerald-400 flex-shrink-0 mt-0.5" />
-              <span>Once verified, you can create and manage deals</span>
+              <CheckCircle2 className="h-5 w-5 text-emerald-500 flex-shrink-0 mt-0.5" />
+              <span>Once verified, create and manage deals</span>
             </li>
           </ul>
-        </div>
-
-        {/* Login Link */}
-        <p className="text-center mt-8 text-white/50">
-          Already have an account?{" "}
-          <Link
-            to="/middleman/login"
-            className="text-amber-400 hover:text-amber-300 font-bold underline transition-colors"
-          >
-            Sign in
-          </Link>
-        </p>
-
-        {/* Back to Home */}
-        <div className="text-center mt-4">
-          <Link
-            to="/middleman"
-            className="text-xs text-white/40 hover:text-white/60 transition-colors"
-          >
-            ← Back to Middleman Portal
-          </Link>
         </div>
       </div>
     </div>

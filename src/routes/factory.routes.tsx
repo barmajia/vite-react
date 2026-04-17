@@ -21,6 +21,12 @@ const FactoryConnections = lazy(() =>
   })),
 );
 
+const MyWebsiteBuilder = lazy(() =>
+  import("@/pages/dashboard/MyWebsiteBuilder").then((m) => ({
+    default: m.default,
+  })),
+);
+
 export const factoryRoutes: RouteObject = {
   path: "/factory",
   children: [
@@ -60,6 +66,14 @@ export const factoryRoutes: RouteObject = {
       element: (
         <Suspense fallback={<RouteSkeleton />}>
           <FactoryConnections />
+        </Suspense>
+      ),
+    },
+    {
+      path: "website",
+      element: (
+        <Suspense fallback={<RouteSkeleton />}>
+          <MyWebsiteBuilder />
         </Suspense>
       ),
     },

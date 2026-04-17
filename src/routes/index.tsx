@@ -1,4 +1,4 @@
-import { RouteObject, useRoutes } from "react-router-dom";
+import { RouteObject } from "react-router-dom";
 import { Layout } from "@/components/layout/Layout";
 import { AdminLayout } from "@/pages/admin/AdminLayout";
 
@@ -35,10 +35,13 @@ const Chat = lazy(() =>
 const Home = lazy(() =>
   import("@/pages/public/Home").then((m) => ({ default: m.Home })),
 );
+const StorefrontRouter = lazy(() =>
+  import("@/components/StorefrontRouter").then((m) => ({ default: m.StorefrontRouter })),
+);
 
 import { RouteSkeleton } from "@/components/shared/RouteSkeleton";
 
-// Main application routes with Layout
+// Main application routes with Layout (Public / Customer focus)
 const mainRoutes: RouteObject = {
   path: "/",
   element: <Layout />,
@@ -54,7 +57,7 @@ const mainRoutes: RouteObject = {
     },
     // Product routes
     ...productRoutes,
-    // Services routes
+    // Services routes (Client side browsing)
     ...servicesRoutes,
     // Middleman routes
     middlemanRoutes,
@@ -62,8 +65,6 @@ const mainRoutes: RouteObject = {
     ...walletRoutes,
     // Marketplace routes
     ...marketplaceRoutes,
-    // Factory routes
-    factoryRoutes,
     // Profile routes
     ...profileRoutes,
     // Public info pages
@@ -80,7 +81,7 @@ const adminRoute: RouteObject = {
   children: adminRoutes,
 };
 
-// Chat route (standalone) with optional Coming Soon guard
+// Chat route (standalone)
 const chatRoute: RouteObject = {
   path: "/chat",
   element: (
@@ -89,8 +90,6 @@ const chatRoute: RouteObject = {
     </Suspense>
   ),
 };
-
-// Coming soon guard and error routes
 
 // Error routes
 const errorRoutes: RouteObject[] = [
@@ -115,13 +114,31 @@ const errorRoutes: RouteObject[] = [
 // Combine all routes
 export const appRoutes: RouteObject[] = [
   ...authRoutes, // Auth routes (no layout)
-  mainRoutes,
+  mainRoutes,    // main website / customer path
   adminRoute,
   chatRoute,
-  // Seller routes (standalone layout)
+  // Module-specific routes with their own layouts (Isolated Headers)
   sellerRoutes,
-  // Storefront routes (must be last to avoid catching other routes)
+  factoryRoutes,
+  // Storefront routes
   ...storefrontRoutes,
+  // Public store routes
+  {
+    path: "/store/:slug",
+    element: (
+      <Suspense fallback={<RouteSkeleton />}>
+        <StorefrontRouter />
+      </Suspense>
+    ),
+  },
+  {
+    path: "/s/:slug",
+    element: (
+      <Suspense fallback={<RouteSkeleton />}>
+        <StorefrontRouter />
+      </Suspense>
+    ),
+  },
   ...errorRoutes,
 ];
 

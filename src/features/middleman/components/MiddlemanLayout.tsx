@@ -27,9 +27,10 @@ export function MiddlemanLayout() {
       <MiddlemanSidebar 
         isOpen={isSidebarOpen} 
         onToggle={() => setIsSidebarOpen(!isSidebarOpen)} 
+        className="shrink-0 transition-all duration-300"
       />
       
-      <div className={`flex-1 flex flex-col transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-20'}`}>
+      <div className="flex-1 flex flex-col min-h-0">
         <MiddlemanHeader onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
         
         <main className="flex-1 p-4 md:p-6 overflow-auto">

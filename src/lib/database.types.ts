@@ -134,6 +134,57 @@ export interface Database {
         >;
         Update: Partial<Database["public"]["Tables"]["products"]["Insert"]>;
       };
+      website_settings: {
+        Row: {
+          id: string;
+          user_id: string;
+          template_id: string | null;
+          site_slug: string | null;
+          status: 'draft' | 'active';
+          settings: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<
+          Database["public"]["Tables"]["website_settings"]["Row"],
+          "id" | "created_at" | "updated_at"
+        >;
+        Update: Partial<Database["public"]["Tables"]["website_settings"]["Insert"]>;
+      };
+      site_catalog: {
+        Row: {
+          id: string;
+          user_id: string;
+          product_id: string;
+          display_price: number;
+          is_active: boolean;
+          created_at: string;
+        };
+        Insert: Omit<
+          Database["public"]["Tables"]["site_catalog"]["Row"],
+          "id" | "created_at"
+        >;
+        Update: Partial<Database["public"]["Tables"]["site_catalog"]["Insert"]>;
+      };
+      middleman_profiles: {
+        Row: {
+          id: string;
+          user_id: string;
+          tier: string;
+          commission_rate: number;
+          total_earnings: number;
+          pending_earnings: number;
+          is_verified: boolean;
+          specialization: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: Omit<
+          Database["public"]["Tables"]["middleman_profiles"]["Row"],
+          "id" | "total_earnings" | "pending_earnings" | "created_at" | "updated_at"
+        >;
+        Update: Partial<Database["public"]["Tables"]["middleman_profiles"]["Insert"]>;
+      };
       sellers: {
         Row: {
           user_id: string;

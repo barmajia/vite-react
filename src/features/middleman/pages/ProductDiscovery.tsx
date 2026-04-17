@@ -211,22 +211,22 @@ export function ProductDiscovery() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex gap-2">
-              <Button
-                variant={marginType === "percentage" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setMarginType("percentage")}
-              >
-                Percentage (%)
-              </Button>
-              <Button
-                variant={marginType === "fixed" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setMarginType("fixed")}
-              >
-                Fixed Amount ($)
-              </Button>
-            </div>
+             <div className="flex gap-2">
+               <Button
+                 variant={marginType === "percentage" ? "outline" : "ghost"}
+                 size="sm"
+                 onClick={() => setMarginType("percentage")}
+               >
+                 Percentage (%)
+               </Button>
+               <Button
+                 variant={marginType === "fixed" ? "outline" : "ghost"}
+                 size="sm"
+                 onClick={() => setMarginType("fixed")}
+               >
+                 Fixed Amount ($)
+               </Button>
+             </div>
 
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
